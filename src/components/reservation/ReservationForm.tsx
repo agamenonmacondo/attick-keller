@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, Users, User, Phone, Envelope, ChatCircle, CheckCircle, ArrowLeft, ArrowRight, Wine } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils/cn";
+import { useAuth } from "@/lib/auth/auth-provider";
 
 // Step schemas
 const step1Schema = z.object({
@@ -67,6 +69,9 @@ const slideVariants = {
 export default function ReservationForm() {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
+  const [submitted, setSubmitted] = useState(false);
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
   const form = useForm<FullData>({
     resolver: zodResolver(fullSchema),
@@ -81,6 +86,43 @@ export default function ReservationForm() {
       specialRequests: "",
     },
   });
+
+  // Require auth to reserve
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, loading, router]);
+
+  // Pre-fill form with user data when authenticated
+  useEffect(() => {
+    if (user) {
+      const name = user.user_metadata?.name || user.user_metadata?.full_name || '';
+      const phone = user.phone || '';
+      const email = user.email || '';
+      if (name) form.setValue('name', name);
+      if (phone) form.setValue('phone', phone);
+      if (email) form.setValue('email', email);
+    }
+  }, [user, form]);
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-ak-wine border-t-transparent" />
+      </div>
+    );
+  }
+
+  // Don't render form if not authenticated
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-ak-wine border-t-transparent" />
+      </div>
+    );
+  }
 
   const goNext = async () => {
     let valid = false;

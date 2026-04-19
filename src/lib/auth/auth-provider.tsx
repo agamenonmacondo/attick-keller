@@ -22,19 +22,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
-    auth.getUser().then((u) => {
-      setUser(u)
-      setLoading(false)
-    })
-
-    // Listen for auth changes
-    const { data: { subscription } } = auth.onAuthStateChange((event, session) => {
+    // Handle OAuth redirect — Supabase puts tokens in URL hash
+    // This processes the hash fragment and establishes the session
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // Clean up URL hash after OAuth redirect
+        if (window.location.hash.includes('access_token')) {
+          window.history.replaceState(null, '', window.location.pathname)
+        }
+      }
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    // Also check/get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      // Clean up hash if session exists (from OAuth redirect)
+      if (session && window.location.hash.includes('access_token')) {
+        window.history.replaceState(null, '', window.location.pathname)
+      }
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
   }, [])
 
   const signInWithPhone = async (phone: string) => {

@@ -50,10 +50,11 @@ export const auth = {
 
   // Google OAuth
   async signInWithGoogle() {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://web-rosy-nine-64.vercel.app'
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`
+        redirectTo: origin
       }
     })
     return { data, error }
@@ -61,10 +62,11 @@ export const auth = {
 
   // Facebook OAuth
   async signInWithFacebook() {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://web-rosy-nine-64.vercel.app'
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
       options: {
-        redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`
+        redirectTo: origin
       }
     })
     return { data, error }

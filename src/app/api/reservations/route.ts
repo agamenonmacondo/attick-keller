@@ -7,7 +7,7 @@ const RESTAURANT_ID = 'a0000000-0000-0000-0000-000000000001'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { userId, name, phone, email, date, time, partySize, zone, specialRequests } = body
+    const { userId, name, phone, email, date, time, partySize, zoneId, zone, specialRequests } = body
 
     if (!userId || !date || !time || !partySize || !phone) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
         party_size: partySize,
         status: 'pending',
         special_requests: specialRequests || null,
+        ...(zoneId ? { zone_id: zoneId } : {}),
       }),
     })
 

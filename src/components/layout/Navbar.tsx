@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { List, X, Wine, UserCircle } from "@phosphor-icons/react";
+import { List, X, Wine, UserCircle, SignOut } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils/cn";
 import { useAuth } from "@/lib/auth/auth-provider";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -38,17 +38,26 @@ export default function Navbar() {
         {/* Desktop */}
         <div className="hidden items-center gap-6 md:flex">
           {user ? (
-            <Link
-              href="/perfil"
-              className="flex items-center gap-2 text-sm font-medium text-ak-cream/70 transition-colors hover:text-ak-amber"
-            >
-              {user.user_metadata?.avatar_url ? (
-                <img src={user.user_metadata.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
-              ) : (
-                <UserCircle size={20} className="text-ak-amber" weight="fill" />
-              )}
-              Perfil
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/perfil"
+                className="flex items-center gap-2 text-sm font-medium text-ak-cream/70 transition-colors hover:text-ak-amber"
+              >
+                {user.user_metadata?.avatar_url ? (
+                  <img src={user.user_metadata.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <UserCircle size={20} className="text-ak-amber" weight="fill" />
+                )}
+                Perfil
+              </Link>
+              <button
+                onClick={() => signOut()}
+                className="text-ak-cream/40 hover:text-ak-cream/70 transition-colors"
+                aria-label="Salir"
+              >
+                <SignOut size={18} />
+              </button>
+            </div>
           ) : (
             <Link
               href="/auth/login"

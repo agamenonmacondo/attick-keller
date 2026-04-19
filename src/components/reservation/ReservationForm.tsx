@@ -30,21 +30,22 @@ const step3Schema = z.object({
 
 const fullSchema = step1Schema.and(step2Schema).and(step3Schema);
 
+function formatTime(t: string): string {
+  const [h, m] = t.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  return `${h12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
 type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
 type Step3Data = z.infer<typeof step3Schema>;
 type FullData = z.infer<typeof fullSchema>;
 
 const timeSlots = [
-  "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM",
-  "6:00 PM", "6:30 PM", "7:00 PM", "7:30 PM",
-  "8:00 PM", "8:30 PM", "9:00 PM", "9:30 PM",
-];
-
-const zones = [
-  { id: "interior", label: "Interior" },
-  { id: "terraza", label: "Terraza" },
-  { id: "barra", label: "Barra" },
+  "12:00", "12:30", "13:00", "13:30",
+  "18:00", "18:30", "19:00", "19:30",
+  "20:00", "20:30", "21:00", "21:30",
 ];
 
 const slideVariants = {
@@ -68,6 +69,7 @@ const slideVariants = {
 
 export default function ReservationForm() {
   const [step, setStep] = useState(0);
+  const [zones, setZones] = useState<{id: string; name: string}[]>([]);
   const [direction, setDirection] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const { user, loading } = useAuth();
@@ -105,6 +107,13 @@ export default function ReservationForm() {
       if (email) form.setValue('email', email);
     }
   }, [user, form]);
+
+  // Load zones from API
+  useEffect(() => {
+    fetch('/api/zones').then(r => r.json()).then(data => {
+      if (Array.isArray(data)) setZones(data);
+    }).catch(() => {});
+  }, []);
 
   // Show loading while checking auth
   if (loading) {
@@ -159,7 +168,8 @@ export default function ReservationForm() {
           date: d.date,
           time: d.time,
           partySize: d.partySize,
-          zone: zones.find(z => z.id === d.zone)?.label || d.zone,
+          zoneId: d.zone,
+          zone: zones.find(z => z.id === d.zone)?.name || d.zone,
           specialRequests: d.specialRequests,
         }),
       });
@@ -325,7 +335,7 @@ export default function ReservationForm() {
                           : "bg-ak-cream-light text-ak-charcoal/70 hover:bg-ak-wine/10"
                       )}
                     >
-                      {t}
+                      {formatTime(t)}
                     </button>
                   ))}
                 </div>
@@ -353,7 +363,7 @@ export default function ReservationForm() {
                           : "bg-ak-cream-light text-ak-charcoal/70 hover:bg-ak-wine/10"
                       )}
                     >
-                      {z.label}
+                      {z.name}
                     </button>
                   ))}
                 </div>
@@ -495,7 +505,7 @@ export default function ReservationForm() {
                   { label: "Fecha", value: form.watch("date") },
                   { label: "Hora", value: form.watch("time") },
                   { label: "Personas", value: `${form.watch("partySize") ?? 2}` },
-                  { label: "Zona", value: zones.find((z) => z.id === form.watch("zone"))?.label ?? form.watch("zone") },
+                  { label: "Zona", value: zones.find((z) => z.id === form.watch("zone"))?.name ?? form.watch("zone") },
                 ].map((row) => (
                   <div
                     key={row.label}

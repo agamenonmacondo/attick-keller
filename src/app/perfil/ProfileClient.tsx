@@ -28,10 +28,26 @@ export default function ProfileClient() {
     }
   }, [user, loading, router])
 
+  const [isAdmin, setIsAdmin] = useState(false)
+
   useEffect(() => {
     if (!user) return
     fetchReservations()
+    checkAdmin()
   }, [user])
+
+  const checkAdmin = async () => {
+    if (!user) return
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('auth_user_id', user.id)
+      .eq('is_active', true)
+      .single()
+    if (data && (data.role === 'super_admin' || data.role === 'store_admin')) {
+      setIsAdmin(true)
+    }
+  }
 
   const ensureCustomer = async (): Promise<string | null> => {
     if (!user) return null
@@ -132,6 +148,14 @@ export default function ProfileClient() {
               <Calendar size={18} />
               Nueva Reserva
             </button>
+            {isAdmin && (
+              <button
+                onClick={() => router.push('/admin')}
+                className="bg-[#C9A94E]/10 text-[#C9A94E] font-['DM_Sans'] font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#C9A94E]/20 transition-colors"
+              >
+                Admin
+              </button>
+            )}
             <button
               onClick={handleSignOut}
               className="bg-[#3E2723]/5 text-[#3E2723]/60 font-['DM_Sans'] py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#3E2723]/10 transition-colors"

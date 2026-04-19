@@ -27,7 +27,6 @@ export default function Navbar() {
       )}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        {/* Logo */}
         <Link
           href="/"
           className="flex items-center gap-2 font-[Playfair_Display] text-xl tracking-tight text-ak-cream"
@@ -36,40 +35,28 @@ export default function Navbar() {
           Attick &amp; Keller
         </Link>
 
-        {/* Desktop links */}
-        <div className="hidden items-center gap-8 md:flex">
-          <Link
-            href="/reservar"
-            className="text-sm font-medium text-ak-cream/80 transition-colors hover:text-ak-amber"
-          >
-            Reservar
-          </Link>
+        {/* Desktop */}
+        <div className="hidden items-center gap-6 md:flex">
           {user ? (
             <Link
               href="/perfil"
-              className="flex items-center gap-2 text-sm font-medium text-ak-cream/80 transition-colors hover:text-ak-amber"
+              className="flex items-center gap-2 text-sm font-medium text-ak-cream/70 transition-colors hover:text-ak-amber"
             >
               {user.user_metadata?.avatar_url ? (
                 <img src={user.user_metadata.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
               ) : (
                 <UserCircle size={20} className="text-ak-amber" weight="fill" />
               )}
-              Mi Perfil
+              Perfil
             </Link>
           ) : (
             <Link
               href="/auth/login"
-              className="text-sm font-medium text-ak-cream/80 transition-colors hover:text-ak-amber"
+              className="text-sm font-medium text-ak-cream/70 transition-colors hover:text-ak-amber"
             >
               Ingresar
             </Link>
           )}
-          <Link
-            href="/admin"
-            className="text-sm font-medium text-ak-amber/60 transition-colors hover:text-ak-amber"
-          >
-            Admin
-          </Link>
           <Link
             href="/reservar"
             className="button-press rounded-lg bg-ak-wine px-5 py-2.5 text-sm font-semibold text-ak-cream transition-colors hover:bg-ak-wine-light"
@@ -92,17 +79,10 @@ export default function Navbar() {
       <div
         className={cn(
           "overflow-hidden transition-all duration-500 ease-[var(--ease-out-expo)] md:hidden",
-          mobileOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
+          mobileOpen ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
         )}
       >
         <div className="flex flex-col gap-4 bg-ak-wood/95 px-6 pb-6 pt-2 backdrop-blur-md">
-          <Link
-            href="/reservar"
-            onClick={() => setMobileOpen(false)}
-            className="text-base font-medium text-ak-cream/80 transition-colors hover:text-ak-amber"
-          >
-            Reservar
-          </Link>
           {user ? (
             <Link
               href="/perfil"
@@ -110,7 +90,7 @@ export default function Navbar() {
               className="flex items-center gap-2 text-base font-medium text-ak-cream/80 transition-colors hover:text-ak-amber"
             >
               <UserCircle size={20} className="text-ak-amber" weight="fill" />
-              Mi Perfil
+              Perfil
             </Link>
           ) : (
             <Link

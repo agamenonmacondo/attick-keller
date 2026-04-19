@@ -8,8 +8,8 @@ import { User, Calendar, Clock, MapPin, SignOut, ArrowRight } from '@phosphor-ic
 
 interface Reservation {
   id: string
-  reservation_date: string
-  reservation_time: string
+  date: string
+  time_start: string
   party_size: number
   status: string
   special_requests: string | null
@@ -40,25 +40,13 @@ export default function ProfileClient() {
     const { data: existing } = await supabase
       .from('customers')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('auth_user_id', user.id)
       .single()
     
     if (existing) return existing.id
     
-    // Create customer if not found
-    const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || ''
-    const { data: created } = await supabase
-      .from('customers')
-      .insert({
-        user_id: user.id,
-        name,
-        phone: user.phone || '',
-        email: user.email || '',
-      })
-      .select('id')
-      .single()
-    
-    return created?.id || null
+    // Customer will be created by API on first reservation
+    return null
   }
 
   const fetchReservations = async () => {
@@ -73,9 +61,9 @@ export default function ProfileClient() {
 
     const { data } = await supabase
       .from('reservations')
-      .select('id, reservation_date, reservation_time, party_size, status, special_requests, table_zones(name)')
+      .select('id, date, time_start, party_size, status, special_requests, table_zones(name)')
       .eq('customer_id', customerId)
-      .order('reservation_date', { ascending: false })
+      .order('date', { ascending: false })
 
     setReservations(data || [])
     setLoadingReservations(false)
@@ -182,7 +170,7 @@ export default function ProfileClient() {
                     <div className="flex items-center gap-2">
                       <Calendar size={16} className="text-[#D4922A]" />
                       <span className="font-['DM_Sans'] font-semibold text-[#3E2723]">
-                        {new Date(res.reservation_date + 'T00:00:00').toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'long' })}
+                        {new Date(res.date + 'T00:00:00').toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'long' })}
                       </span>
                     </div>
                     <span className={`text-xs font-['DM_Sans'] font-semibold px-2 py-1 rounded-full border ${statusColors[res.status] || statusColors.pending}`}>
@@ -192,7 +180,7 @@ export default function ProfileClient() {
                   <div className="flex items-center gap-4 text-sm text-[#3E2723]/60 font-['DM_Sans']">
                     <span className="flex items-center gap-1">
                       <Clock size={14} />
-                      {res.reservation_time?.slice(0, 5)}
+                      {res.time_start?.slice(0, 5)}
                     </span>
                     <span>{res.party_size} personas</span>
                     {res.table_zones?.[0]?.name && (

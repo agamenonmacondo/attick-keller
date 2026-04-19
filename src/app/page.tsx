@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 
 const Navbar = dynamic(() => import('@/components/layout/Navbar'))
 const HeroSection = dynamic(() => import('@/components/home/HeroSection'))
-const ReservationCTA = dynamic(() => import('@/components/home/ReservationCTA'))
 const Footer = dynamic(() => import('@/components/layout/Footer'))
 
 export const metadata: Metadata = {
@@ -17,7 +16,6 @@ export default function Home() {
       <Navbar />
       <main className="flex flex-1 flex-col">
         <HeroSection />
-        <ReservationCTA />
       </main>
       <Footer />
     </>

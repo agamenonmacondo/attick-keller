@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, Users, User, Phone, Envelope, ChatCircle, CheckCircle, ArrowLeft, ArrowRight, Wine } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils/cn";
 import { useAuth } from "@/lib/auth/auth-provider";
-import { supabase } from "@/lib/supabase/client";
 
 // Step schemas
 const step1Schema = z.object({
@@ -149,60 +148,28 @@ export default function ReservationForm() {
     setSubmitting(true);
 
     try {
-      // 1. Get or create customer
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('user_id', user!.id)
-        .single();
-
-      let customerId = customer?.id;
-
-      if (!customerId) {
-        const { data: newCustomer } = await supabase
-          .from('customers')
-          .insert({
-            user_id: user!.id,
-            name: d.name,
-            phone: d.phone,
-            email: d.email,
-          })
-          .select('id')
-          .single();
-        customerId = newCustomer?.id;
-      }
-
-      // 2. Create reservation
-      if (customerId) {
-        await supabase.from('reservations').insert({
-          customer_id: customerId,
-          reservation_date: d.date,
-          reservation_time: d.time,
-          party_size: d.partySize,
-          status: 'pending',
-          special_requests: d.specialRequests || null,
-        });
-      }
-
-      // 3. Send confirmation email
-      await fetch('/api/email', {
+      const r = await fetch('/api/reservations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: d.email,
-          type: 'pending',
-          data: {
-            name: d.name,
-            date: d.date,
-            time: d.time,
-            party_size: d.partySize,
-            zone: zones.find(z => z.id === d.zone)?.label || d.zone,
-            special_requests: d.specialRequests,
-          },
+          userId: user!.id,
+          name: d.name,
+          phone: d.phone,
+          email: d.email,
+          date: d.date,
+          time: d.time,
+          partySize: d.partySize,
+          zone: zones.find(z => z.id === d.zone)?.label || d.zone,
+          specialRequests: d.specialRequests,
         }),
       });
 
-      setSubmitted(true);
+      const result = await r.json();
+      if (result.success) {
+        setSubmitted(true);
+      } else {
+        console.error('Reservation failed:', result.error);
+      }
     } catch (err) {
       console.error('Reservation error:', err);
     } finally {

@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const RESEND_API_KEY = 're_JUAswU4E_AQRTvBNGVRwYcnnFsocgoHDz'
-const FROM_EMAIL = 'Attick & Keller <ventas@ccs724.com>'
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -11,6 +8,14 @@ export async function POST(request: NextRequest) {
     if (!to || !type) {
       return NextResponse.json({ error: 'Missing to or type' }, { status: 400 })
     }
+
+    const RESEND_API_KEY = process.env.RESEND_API_KEY
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY not configured')
+      return NextResponse.json({ error: 'Email service not configured' }, { status: 500 })
+    }
+
+    const FROM_EMAIL = 'Attick & Keller <ventas@ccs724.com>'
 
     const templates: Record<string, { subject: string; html: string }> = {
       pending: {

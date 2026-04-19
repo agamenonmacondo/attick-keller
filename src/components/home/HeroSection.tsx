@@ -1,92 +1,156 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
+
+const spring = { type: "spring" as const, stiffness: 100, damping: 20 };
+const easeOutExpo: [number, number, number, number] = [0.23, 1, 0.32, 1];
+
+const stagger = {
+  visible: { transition: { staggerChildren: 0.08 } },
+};
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 24, scale: 0.95 },
-  visible: (i: number) => ({
+  hidden: { opacity: 0, y: 30, scale: 0.97 },
+  visible: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: {
-      delay: i * 0.05,
-      duration: 0.6,
-      ease: [0.23, 1, 0.32, 1] as [number, number, number, number],
-    },
-  }),
+    transition: { duration: 0.8, ease: easeOutExpo },
+  },
+};
+
+const fadeRight = {
+  hidden: { opacity: 0, x: -40 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 1, ease: easeOutExpo },
+  },
 };
 
 export default function HeroSection() {
-  return (
-    <section className="relative min-h-[100dvh] overflow-hidden bg-ak-charcoal">
-      <div className="grid min-h-[100dvh] md:grid-cols-[3fr_2fr]">
-        {/* Left — Text */}
-        <div className="flex flex-col justify-center px-6 py-20 md:px-16 lg:px-24">
-          <motion.h1
-            className="font-[Playfair_Display] text-5xl tracking-tighter text-ak-cream md:text-7xl"
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={0}
-          >
-            Attick &amp; Keller
-          </motion.h1>
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const imgScale = useTransform(scrollYProgress, [0, 1], [1, 1.15]);
+  const overlay = useTransform(scrollYProgress, [0, 1], [0.3, 0.8]);
 
+  return (
+    <section ref={ref} className="relative min-h-[100dvh] overflow-hidden bg-ak-charcoal">
+      {/* Background photo with parallax */}
+      <motion.div className="absolute inset-0" style={{ scale: imgScale }}>
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('/ak_photo_01.jpg')" }}
+        />
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-b from-ak-charcoal/40 via-ak-wine/50 to-ak-charcoal"
+          style={{ opacity: overlay }}
+        />
+      </motion.div>
+
+      {/* Decorative gold lines */}
+      <motion.div
+        className="absolute left-10 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-ak-gold/30 to-transparent"
+        initial={{ scaleY: 0 }}
+        animate={{ scaleY: 1 }}
+        transition={{ duration: 1.5, ease: easeOutExpo, delay: 0.3 }}
+        style={{ transformOrigin: "top" }}
+      />
+      <motion.div
+        className="absolute right-10 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-ak-gold/30 to-transparent"
+        initial={{ scaleY: 0 }}
+        animate={{ scaleY: 1 }}
+        transition={{ duration: 1.5, ease: easeOutExpo, delay: 0.5 }}
+        style={{ transformOrigin: "top" }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-6 text-center">
+        <motion.div
+          className="flex flex-col items-center"
+          variants={stagger}
+          initial="hidden"
+          animate="visible"
+        >
           <motion.p
-            className="mt-4 font-[Caveat] text-2xl text-ak-amber md:text-3xl"
+            className="font-[Caveat] text-2xl tracking-wider text-ak-amber md:text-3xl"
             variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={1}
           >
             Wine and Beer Playground
           </motion.p>
 
-          <motion.p
-            className="mt-6 max-w-md text-base leading-relaxed text-ak-cream/70"
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={2}
+          <motion.h1
+            className="mt-4 font-[Playfair_Display] text-6xl leading-[1.05] tracking-tighter text-ak-cream md:text-8xl lg:text-9xl"
+            variants={fadeRight}
           >
-            Cocina mediterránea, vinos seleccionados y cervezas artesanales en
-            un refugio cálido en Bogotá.
-          </motion.p>
+            Attick
+            <br />
+            <span className="text-ak-amber">&amp; Keller</span>
+          </motion.h1>
 
           <motion.div
-            className="mt-8"
+            className="mt-6 h-px w-0 bg-gradient-to-r from-transparent via-ak-gold to-transparent"
+            variants={{
+              hidden: { width: 0 },
+              visible: { width: 200, transition: { duration: 0.8, ease: easeOutExpo, delay: 0.4 } },
+            }}
+          />
+
+          <motion.p
+            className="mt-6 max-w-lg text-base leading-relaxed text-ak-cream/60 md:text-lg"
             variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={3}
           >
+            Reserva tu mesa en un refugio cálido con cocina mediterránea,
+            vinos seleccionados y cervezas artesanales.
+          </motion.p>
+
+          <motion.div className="mt-10" variants={fadeUp}>
             <Link
               href="/reservar"
-              className="button-press inline-block rounded-lg bg-ak-wine px-8 py-3.5 text-base font-semibold text-ak-cream transition-colors hover:bg-ak-amber hover:text-ak-charcoal"
+              className="group relative inline-flex items-center gap-3 rounded-2xl bg-ak-wine px-10 py-4 text-lg font-semibold text-ak-cream transition-all duration-300 hover:bg-ak-wine-light hover:scale-[1.02] active:scale-[0.98]"
+              style={{ transition: "transform 0.2s cubic-bezier(0.23,1,0.32,1)" }}
             >
               Reservar Mesa
+              <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
             </Link>
           </motion.div>
-        </div>
-
-        {/* Right — Image placeholder */}
-        <div className="relative hidden md:block">
-          <div className="absolute inset-0 bg-gradient-to-l from-ak-charcoal/30 via-ak-wine/40 to-transparent" />
-          <div className="absolute inset-0 bg-ak-wood/60" />
-          {/* Replace with Next.js Image when photos available */}
-          <div className="flex h-full items-center justify-center text-ak-cream/20">
-            <span className="font-[Playfair_Display] text-4xl tracking-tight">
-              A&amp;K
-            </span>
-          </div>
-        </div>
-
-        {/* Mobile image overlay (shown on top, stacked) */}
-        <div className="relative h-64 md:hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-ak-wine/70 to-ak-charcoal" />
-        </div>
+        </motion.div>
       </div>
+
+      {/* Photo strip at bottom */}
+      <motion.div
+        className="absolute bottom-16 left-0 right-0 z-10 flex gap-3 overflow-hidden px-6 opacity-0"
+        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 30 }}
+        transition={{ duration: 0.8, ease: easeOutExpo, delay: 1.2 }}
+      >
+        {["ak_photo_08.jpg", "ak_photo_05.jpg", "ak_photo_12.jpg", "ak_photo_15.jpg", "ak_photo_20.jpg"].map((img, i) => (
+          <motion.div
+            key={img}
+            className="h-32 w-44 flex-shrink-0 overflow-hidden rounded-xl border border-ak-gold/20"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1.4 + i * 0.1, ease: easeOutExpo }}
+          >
+            <div
+              className="h-full w-full bg-cover bg-center transition-transform duration-500 hover:scale-110"
+              style={{ backgroundImage: `url('/${img}')` }}
+            />
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* Location */}
+      <motion.p
+        className="absolute bottom-6 left-0 right-0 z-10 text-center font-[DM_Sans] text-xs tracking-[0.2em] text-ak-cream/30 uppercase"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, delay: 2 }}
+      >
+        Carrera 13 #75-51 · Bogotá
+      </motion.p>
     </section>
   );
 }

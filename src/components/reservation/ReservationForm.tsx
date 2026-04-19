@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, Users, User, Phone, Envelope, ChatCircle, CheckCircle, ArrowLeft, ArrowRight, Wine } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils/cn";
 import { useAuth } from "@/lib/auth/auth-provider";
+import { supabase } from "@/lib/supabase/client";
 
 // Step schemas
 const step1Schema = z.object({
@@ -139,6 +140,74 @@ export default function ReservationForm() {
   const goBack = () => {
     setDirection(-1);
     setStep((s) => Math.max(s - 1, 0));
+  };
+
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitReservation = async () => {
+    const d = form.getValues();
+    setSubmitting(true);
+
+    try {
+      // 1. Get or create customer
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user!.id)
+        .single();
+
+      let customerId = customer?.id;
+
+      if (!customerId) {
+        const { data: newCustomer } = await supabase
+          .from('customers')
+          .insert({
+            user_id: user!.id,
+            name: d.name,
+            phone: d.phone,
+            email: d.email,
+          })
+          .select('id')
+          .single();
+        customerId = newCustomer?.id;
+      }
+
+      // 2. Create reservation
+      if (customerId) {
+        await supabase.from('reservations').insert({
+          customer_id: customerId,
+          reservation_date: d.date,
+          reservation_time: d.time,
+          party_size: d.partySize,
+          status: 'pending',
+          special_requests: d.specialRequests || null,
+        });
+      }
+
+      // 3. Send confirmation email
+      await fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: d.email,
+          type: 'pending',
+          data: {
+            name: d.name,
+            date: d.date,
+            time: d.time,
+            party_size: d.partySize,
+            zone: zones.find(z => z.id === d.zone)?.label || d.zone,
+            special_requests: d.specialRequests,
+          },
+        }),
+      });
+
+      setSubmitted(true);
+    } catch (err) {
+      console.error('Reservation error:', err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const whatsappNumber = process.env.NEXT_PUBLIC_RESTAURANT_PHONE ?? "+573105772708";
@@ -481,19 +550,39 @@ export default function ReservationForm() {
               </div>
 
               <p className="text-center text-sm text-ak-charcoal/60">
-                Al confirmar, te redirigiremos a WhatsApp para finalizar la
-                reserva.
+                Al confirmar, guardaremos tu reserva y te redirigiremos a WhatsApp.
               </p>
 
-              <a
-                href={buildWhatsAppLink()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="button-press flex w-full items-center justify-center gap-2 rounded-lg bg-ak-olive px-6 py-3.5 text-base font-semibold text-ak-cream transition-colors hover:bg-ak-olive/90"
-              >
-                <Wine size={20} weight="fill" />
-                Confirmar por WhatsApp
-              </a>
+              {submitted ? (
+                <div className="flex flex-col items-center gap-3 py-4">
+                  <CheckCircle size={40} className="text-ak-olive" weight="fill" />
+                  <p className="font-[Playfair_Display] text-lg text-ak-charcoal">¡Reserva registrada!</p>
+                  <p className="text-sm text-ak-charcoal/60">Te enviamos un email de confirmación.</p>
+                  <a
+                    href={buildWhatsAppLink()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="button-press flex items-center justify-center gap-2 rounded-lg bg-ak-olive px-6 py-3 text-base font-semibold text-ak-cream transition-colors hover:bg-ak-olive/90"
+                  >
+                    <Wine size={20} weight="fill" />
+                    Confirmar por WhatsApp
+                  </a>
+                  <a href="/perfil" className="text-sm text-ak-wine font-medium hover:underline mt-2">Ver mis reservas</a>
+                </div>
+              ) : (
+                <button
+                  onClick={submitReservation}
+                  disabled={submitting}
+                  className="button-press flex w-full items-center justify-center gap-2 rounded-lg bg-ak-olive px-6 py-3.5 text-base font-semibold text-ak-cream transition-colors hover:bg-ak-olive/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <CheckCircle size={20} weight="fill" />
+                  )}
+                  {submitting ? 'Guardando...' : 'Confirmar Reserva'}
+                </button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

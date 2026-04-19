@@ -2,18 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { List, X, Wine } from "@phosphor-icons/react";
+import { List, X, Wine, UserCircle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils/cn";
-
-const navLinks = [
-  { href: "/", label: "Inicio" },
-  { href: "/experiencia", label: "Experiencia" },
-  { href: "/galeria", label: "Galería" },
-];
+import { useAuth } from "@/lib/auth/auth-provider";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -42,15 +38,32 @@ export default function Navbar() {
 
         {/* Desktop links */}
         <div className="hidden items-center gap-8 md:flex">
-          {navLinks.map((link) => (
+          <Link
+            href="/reservar"
+            className="text-sm font-medium text-ak-cream/80 transition-colors hover:text-ak-amber"
+          >
+            Reservar
+          </Link>
+          {user ? (
             <Link
-              key={link.href}
-              href={link.href}
+              href="/perfil"
+              className="flex items-center gap-2 text-sm font-medium text-ak-cream/80 transition-colors hover:text-ak-amber"
+            >
+              {user.user_metadata?.avatar_url ? (
+                <img src={user.user_metadata.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+              ) : (
+                <UserCircle size={20} className="text-ak-amber" weight="fill" />
+              )}
+              Mi Perfil
+            </Link>
+          ) : (
+            <Link
+              href="/auth/login"
               className="text-sm font-medium text-ak-cream/80 transition-colors hover:text-ak-amber"
             >
-              {link.label}
+              Ingresar
             </Link>
-          ))}
+          )}
           <Link
             href="/reservar"
             className="button-press rounded-lg bg-ak-wine px-5 py-2.5 text-sm font-semibold text-ak-cream transition-colors hover:bg-ak-wine-light"
@@ -77,16 +90,31 @@ export default function Navbar() {
         )}
       >
         <div className="flex flex-col gap-4 bg-ak-wood/95 px-6 pb-6 pt-2 backdrop-blur-md">
-          {navLinks.map((link) => (
+          <Link
+            href="/reservar"
+            onClick={() => setMobileOpen(false)}
+            className="text-base font-medium text-ak-cream/80 transition-colors hover:text-ak-amber"
+          >
+            Reservar
+          </Link>
+          {user ? (
             <Link
-              key={link.href}
-              href={link.href}
+              href="/perfil"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 text-base font-medium text-ak-cream/80 transition-colors hover:text-ak-amber"
+            >
+              <UserCircle size={20} className="text-ak-amber" weight="fill" />
+              Mi Perfil
+            </Link>
+          ) : (
+            <Link
+              href="/auth/login"
               onClick={() => setMobileOpen(false)}
               className="text-base font-medium text-ak-cream/80 transition-colors hover:text-ak-amber"
             >
-              {link.label}
+              Ingresar
             </Link>
-          ))}
+          )}
           <Link
             href="/reservar"
             onClick={() => setMobileOpen(false)}

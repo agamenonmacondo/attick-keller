@@ -33,18 +33,40 @@ export default function ProfileClient() {
     fetchReservations()
   }, [user])
 
-  const fetchReservations = async () => {
-    if (!user) return
-    setLoadingReservations(true)
+  const ensureCustomer = async (): Promise<string | null> => {
+    if (!user) return null
     
-    // Get customer by user id
-    const { data: customer } = await supabase
+    // Try to find existing customer
+    const { data: existing } = await supabase
       .from('customers')
       .select('id')
       .eq('user_id', user.id)
       .single()
+    
+    if (existing) return existing.id
+    
+    // Create customer if not found
+    const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || ''
+    const { data: created } = await supabase
+      .from('customers')
+      .insert({
+        user_id: user.id,
+        name,
+        phone: user.phone || '',
+        email: user.email || '',
+      })
+      .select('id')
+      .single()
+    
+    return created?.id || null
+  }
 
-    if (!customer) {
+  const fetchReservations = async () => {
+    if (!user) return
+    setLoadingReservations(true)
+    
+    const customerId = await ensureCustomer()
+    if (!customerId) {
       setLoadingReservations(false)
       return
     }
@@ -52,7 +74,7 @@ export default function ProfileClient() {
     const { data } = await supabase
       .from('reservations')
       .select('id, reservation_date, reservation_time, party_size, status, special_requests, table_zones(name)')
-      .eq('customer_id', customer.id)
+      .eq('customer_id', customerId)
       .order('reservation_date', { ascending: false })
 
     setReservations(data || [])

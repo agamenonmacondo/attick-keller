@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Attick & Keller — Hero</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@400;500;600;700&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+  :root {
+    --madera: #3E2723;
+    --borgona: #6B2737;
+    --cal: #F5EDE0;
+    --oliva: #5C7A4D;
+    --ambar: #D4922A;
+    --negro: #1E1E1E;
+    --dorado: #C9A94E;
+    --terracota: #A0522D;
+    --ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1080px;
+    height: 1920px;
+    background: var(--cal);
+    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .composition {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  /* Background image with warm overlay */
+  .bg-image {
+    position: absolute;
+    inset: 0;
+    background: url('ak_photo_01.jpg') center/cover no-repeat;
+    filter: brightness(0.35) saturate(0.8);
+  }
+
+  .bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, 
+      rgba(62, 39, 35, 0.3) 0%, 
+      rgba(107, 39, 55, 0.5) 50%, 
+      rgba(62, 39, 35, 0.9) 85%,
+      rgba(62, 39, 35, 1) 100%
+    );
+  }
+
+  /* Decorative gold line */
+  .gold-line {
+    position: absolute;
+    top: 380px;
+    left: 80px;
+    width: 1px;
+    height: 0;
+    background: linear-gradient(180deg, transparent, var(--dorado), transparent);
+  }
+
+  .gold-line-2 {
+    position: absolute;
+    top: 380px;
+    right: 80px;
+    width: 1px;
+    height: 0;
+    background: linear-gradient(180deg, transparent, var(--dorado), transparent);
+  }
+
+  /* Content area */
+  .content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0 80px;
+    z-index: 10;
+  }
+
+  .subtitle-top {
+    font-family: 'Caveat', cursive;
+    color: var(--dorado);
+    font-size: 42px;
+    letter-spacing: 0.05em;
+    opacity: 0;
+    margin-bottom: 24px;
+  }
+
+  .title-main {
+    font-family: 'Playfair Display', serif;
+    color: var(--cal);
+    font-size: 96px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.1;
+    opacity: 0;
+    margin-bottom: 16px;
+  }
+
+  .title-accent {
+    font-family: 'Playfair Display', serif;
+    color: var(--ambar);
+    font-size: 52px;
+    font-weight: 400;
+    font-style: italic;
+    text-align: center;
+    opacity: 0;
+    margin-bottom: 48px;
+  }
+
+  .divider {
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--dorado), transparent);
+    margin-bottom: 48px;
+  }
+
+  .tagline {
+    font-family: 'DM Sans', sans-serif;
+    color: rgba(245, 237, 224, 0.7);
+    font-size: 28px;
+    font-weight: 400;
+    text-align: center;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0;
+    margin-bottom: 64px;
+  }
+
+  .cta-button {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--borgona);
+    color: var(--cal);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    padding: 24px 64px;
+    border-radius: 16px;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.9);
+    letter-spacing: 0.02em;
+  }
+
+  .cta-arrow {
+    font-size: 28px;
+    opacity: 0.6;
+  }
+
+  /* Bottom location */
+  .location {
+    position: absolute;
+    bottom: 120px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    color: rgba(245, 237, 224, 0.4);
+    font-size: 20px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0;
+    z-index: 10;
+  }
+
+  /* Photo gallery strip - horizontal scrolling images */
+  .photo-strip {
+    position: absolute;
+    bottom: 200px;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 12px;
+    padding: 0 40px;
+    opacity: 0;
+    z-index: 5;
+  }
+
+  .photo-strip-item {
+    width: 180px;
+    height: 240px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid rgba(201, 169, 78, 0.3);
+    flex-shrink: 0;
+    opacity: 0;
+    transform: translateY(40px);
+  }
+</style>
+</head>
+<body>
+<div class="composition" data-duration="12">
+  <!-- Background -->
+  <div class="bg-image"></div>
+  <div class="bg-overlay"></div>
+
+  <!-- Decorative gold lines -->
+  <div class="gold-line"></div>
+  <div class="gold-line-2"></div>
+
+  <!-- Main content -->
+  <div class="content">
+    <div class="subtitle-top">Wine & Beer Playground</div>
+    <div class="title-main">Attick<br>&amp; Keller</div>
+    <div class="title-accent">Reserva tu mesa</div>
+    <div class="divider"></div>
+    <div class="tagline">Bogotá · Reservas</div>
+    <div class="cta-button">
+      Reservar Ahora
+      <span class="cta-arrow">→</span>
+    </div>
+  </div>
+
+  <!-- Photo strip -->
+  <div class="photo-strip">
+    <img class="photo-strip-item" src="ak_photo_08.jpg" alt="">
+    <img class="photo-strip-item" src="ak_photo_05.jpg" alt="">
+    <img class="photo-strip-item" src="ak_photo_12.jpg" alt="">
+    <img class="photo-strip-item" src="ak_photo_01.jpg" alt="">
+    <img class="photo-strip-item" src="ak_photo_15.jpg" alt="">
+    <img class="photo-strip-item" src="ak_photo_20.jpg" alt="">
+  </div>
+
+  <!-- Location -->
+  <div class="location">Carrera 13 #75-51 · Bogotá</div>
+</div>
+
+<script>
+const tl = gsap.timeline({ repeat: -1, repeatDelay: 2 });
+
+// Scene 1: Background + gold lines entrance (0-2s)
+tl.to('.gold-line', { height: 600, duration: 1.5, ease: 'power2.out' }, 0.3)
+  .to('.gold-line-2', { height: 600, duration: 1.5, ease: 'power2.out' }, 0.5)
+
+// Scene 2: Text reveals (1.5-4.5s)
+  .fromTo('.subtitle-top', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1, ease: 'power2.out' }, 1.5)
+  .fromTo('.title-main', { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out' }, 1.8)
+  .fromTo('.title-accent', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' }, 2.8)
+
+// Scene 3: Divider + tagline (3-4.5s)
+  .to('.divider', { width: 200, duration: 0.8, ease: 'power2.out' }, 3.2)
+  .fromTo('.tagline', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 3.6)
+
+// Scene 4: CTA button (4-5s)
+  .to('.cta-button', { opacity: 1, scale: 1, duration: 0.8, ease: 'back.out(1.5)' }, 4.2)
+  .to('.cta-button', { scale: 1.03, duration: 0.4, yoyo: true, repeat: 1, ease: 'power1.inOut' }, 5.2)
+
+// Scene 5: Photo strip reveal (5-7s)
+  .to('.photo-strip', { opacity: 1, duration: 0.5, ease: 'power2.out' }, 5.5)
+  .to('.photo-strip-item', { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: 'back.out(1.2)' }, 5.7)
+
+// Scene 6: Location (7-8s)
+  .to('.location', { opacity: 1, duration: 0.8, ease: 'power2.out' }, 7.2)
+
+// Scene 7: Hold + subtle pulse (8-10s)
+  .to('.title-main', { scale: 1.02, duration: 2, ease: 'power1.inOut', yoyo: true, repeat: 1 }, 8)
+
+// Scene 8: Exit (10-12s)
+  .to('.photo-strip-item', { opacity: 0, y: -30, duration: 0.4, stagger: 0.05, ease: 'power2.in' }, 10)
+  .to('.cta-button', { opacity: 0, scale: 0.9, duration: 0.5, ease: 'power2.in' }, 10.2)
+  .to('.tagline', { opacity: 0, duration: 0.4, ease: 'power2.in' }, 10.4)
+  .to('.divider', { width: 0, duration: 0.4, ease: 'power2.in' }, 10.6)
+  .to('.title-accent', { opacity: 0, y: -20, duration: 0.4, ease: 'power2.in' }, 10.7)
+  .to('.title-main', { opacity: 0, y: -40, duration: 0.5, ease: 'power2.in' }, 10.9)
+  .to('.subtitle-top', { opacity: 0, y: -20, duration: 0.4, ease: 'power2.in' }, 11.1)
+  .to('.gold-line, .gold-line-2', { height: 0, duration: 0.5, ease: 'power2.in' }, 11.2)
+  .to('.location', { opacity: 0, duration: 0.3, ease: 'power2.in' }, 11.3);
+</script>
+</body>
+</html>

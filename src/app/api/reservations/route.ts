@@ -120,3 +120,50 @@ function incrementTime(time: string, minutes: number): string {
   const newM = totalMin % 60
   return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { id, status } = body
+
+    if (!id || !status) {
+      return NextResponse.json({ error: 'Missing id or status' }, { status: 400 })
+    }
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reservations?id=eq.${id}&select=status`, {
+      headers: { apikey: SRK, Authorization: `Bearer ${SRK}` },
+    })
+    const existing = await res.json()
+    const oldStatus = existing?.[0]?.status
+
+    const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/reservations?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        apikey: SRK,
+        Authorization: `Bearer ${SRK}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify({ status }),
+    })
+
+    if (!updateRes.ok) {
+      return NextResponse.json({ error: 'Update failed' }, { status: 500 })
+    }
+
+    // Log status change
+    await fetch(`${SUPABASE_URL}/rest/v1/reservation_status_log`, {
+      method: 'POST',
+      headers: { apikey: SRK, Authorization: `Bearer ${SRK}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reservation_id: id,
+        old_status: oldStatus,
+        new_status: status,
+      }),
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+  }
+}

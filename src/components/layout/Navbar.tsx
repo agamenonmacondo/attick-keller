@@ -65,6 +65,12 @@ export default function Navbar() {
             </Link>
           )}
           <Link
+            href="/admin"
+            className="text-sm font-medium text-ak-amber/60 transition-colors hover:text-ak-amber"
+          >
+            Admin
+          </Link>
+          <Link
             href="/reservar"
             className="button-press rounded-lg bg-ak-wine px-5 py-2.5 text-sm font-semibold text-ak-cream transition-colors hover:bg-ak-wine-light"
           >

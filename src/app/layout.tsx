@@ -1,24 +1,23 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { AuthProvider } from "@/lib/auth/auth-provider";
+import type { Metadata } from "next"
+import { Playfair_Display, DM_Sans, Caveat } from "next/font/google"
+import "./globals.css"
+import { AuthProvider } from "@/lib/auth/auth-provider"
+
+const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm" })
+const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat" })
 
 export const metadata: Metadata = {
-  title: "Attick & Keller — Wine and Beer Playground",
-  description: "Reserva tu mesa en Attick & Keller. Vinos, cervezas artesanales y cocina mediterránea en Bogotá.",
-};
+  title: "Attick & Keller — Reservas",
+  description: "Reserva tu mesa en Attick & Keller. Bogotá.",
+}
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className="h-full antialiased">
-      <body className="min-h-full flex flex-col font-[DM_Sans]">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+    <html lang="es" className={`${playfair.variable} ${dmSans.variable} ${caveat.variable}`}>
+      <body className="font-['DM_Sans'] bg-[#F5EDE0] text-[#1E1E1E]">
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
-  );
+  )
 }

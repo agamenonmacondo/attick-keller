@@ -52,24 +52,32 @@ export const auth = {
   },
 
   // Google OAuth
-  async signInWithGoogle() {
+  async signInWithGoogle(redirectPath?: string) {
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    let callbackUrl = `${origin}/auth/callback`
+    if (redirectPath) {
+      callbackUrl += `?redirect=${encodeURIComponent(redirectPath)}`
+    }
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: origin ? `${origin}/auth/callback` : undefined,
+        redirectTo: callbackUrl,
       }
     })
     return { data, error }
   },
 
   // Facebook OAuth
-  async signInWithFacebook() {
+  async signInWithFacebook(redirectPath?: string) {
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    let callbackUrl = `${origin}/auth/callback`
+    if (redirectPath) {
+      callbackUrl += `?redirect=${encodeURIComponent(redirectPath)}`
+    }
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
       options: {
-        redirectTo: origin ? `${origin}/auth/callback` : undefined,
+        redirectTo: callbackUrl,
       }
     })
     return { data, error }

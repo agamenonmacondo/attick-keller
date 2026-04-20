@@ -29,6 +29,7 @@ export default function LoginClient() {
   const [fullName, setFullName] = useState('')
   const [telephone, setTelephone] = useState('')
   const [emailMode, setEmailMode] = useState<EmailMode>('login')
+  const redirectPath = searchParams.get('redirect') || undefined
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -97,7 +98,7 @@ export default function LoginClient() {
             </p>
 
             <button
-              onClick={signInWithGoogle}
+              onClick={() => signInWithGoogle(redirectPath)}
               className="w-full flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
               style={{ borderColor: '#4285F4', color: '#4285F4' }}
             >

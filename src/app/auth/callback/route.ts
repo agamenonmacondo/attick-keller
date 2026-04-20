@@ -4,6 +4,12 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
 
+  // Read and validate redirect path — only allow safe relative paths
+  let redirectPath = requestUrl.searchParams.get('redirect') || '/'
+  if (!redirectPath.startsWith('/') || redirectPath.startsWith('//')) {
+    redirectPath = '/'
+  }
+
   // If there's a code (PKCE flow), exchange it
   if (code) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -12,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Dynamic import to avoid SSR issues
     const { createServerClient } = await import('@supabase/ssr')
 
-    let response = NextResponse.redirect(new URL('/', request.url))
+    let response = NextResponse.redirect(new URL(redirectPath, request.url))
 
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
@@ -39,8 +45,7 @@ export async function GET(request: NextRequest) {
     return response
   }
 
-  // If no code, redirect to home — the client-side auth-provider
-  // will pick up the hash fragment tokens (#access_token=...)
-  // This happens with implicit OAuth flow
-  return NextResponse.redirect(new URL('/', request.url))
+  // If no code, redirect to the intended page or home
+  // the client-side auth-provider will pick up hash fragment tokens (#access_token=...)
+  return NextResponse.redirect(new URL(redirectPath, request.url))
 }

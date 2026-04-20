@@ -11,8 +11,8 @@ interface AuthContextType {
   verifyOTP: (phone: string, token: string) => Promise<{ error: string | null }>
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>
   signUpWithEmail: (email: string, password: string, fullName: string, telephone: string) => Promise<{ error: string | null }>
-  signInWithGoogle: () => Promise<void>
-  signInWithFacebook: () => Promise<void>
+  signInWithGoogle: (redirectPath?: string) => Promise<void>
+  signInWithFacebook: (redirectPath?: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -98,12 +98,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: null }
   }
 
-  const signInWithGoogle = async () => {
-    await auth.signInWithGoogle()
+  const signInWithGoogle = async (redirectPath?: string) => {
+    await auth.signInWithGoogle(redirectPath)
   }
 
-  const signInWithFacebook = async () => {
-    await auth.signInWithFacebook()
+  const signInWithFacebook = async (redirectPath?: string) => {
+    await auth.signInWithFacebook(redirectPath)
   }
 
   const signOut = async () => {

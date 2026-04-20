@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, Users, User, Phone, Envelope, ChatCircle, CheckCircle, ArrowLeft, ArrowRight, Wine } from "@phosphor-icons/react";
+import { Calendar, Clock, Users, User, Phone, Envelope, ChatCircle, CheckCircle, ArrowLeft, ArrowRight } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils/cn";
 import { useAuth } from "@/lib/auth/auth-provider";
 
@@ -72,7 +72,6 @@ export default function ReservationForm() {
   const [zones, setZones] = useState<{id: string; name: string}[]>([]);
   const [zonesLoading, setZonesLoading] = useState(true);
   const [direction, setDirection] = useState(1);
-  const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -186,7 +185,12 @@ export default function ReservationForm() {
 
       const result = await r.json();
       if (result.success) {
-        setSubmitted(true);
+        const reservationId = result.reservation?.id;
+        if (reservationId) {
+          router.push(`/reservar/confirmado?id=${encodeURIComponent(reservationId)}`);
+        } else {
+          router.push('/perfil');
+        }
       } else {
         setSubmitError(result.error || 'Error al crear la reserva. Intenta de nuevo.');
       }
@@ -195,14 +199,6 @@ export default function ReservationForm() {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const whatsappNumber = process.env.NEXT_PUBLIC_RESTAURANT_PHONE ?? "+573105772708";
-
-  const buildWhatsAppLink = () => {
-    const d = form.getValues();
-    const msg = `Hola, quiero reservar mesa:\n\nNombre: ${d.name}\nFecha: ${d.date}\nHora: ${d.time}\nPersonas: ${d.partySize}\nZona: ${d.zone}\n${d.specialRequests ? `Notas: ${d.specialRequests}` : ""}`;
-    return `https://wa.me/${whatsappNumber.replace("+", "")}?text=${encodeURIComponent(msg)}`;
   };
 
   const stepLabels = ["Fecha", "Hora y Zona", "Datos", "Confirmar"];
@@ -547,7 +543,7 @@ export default function ReservationForm() {
               </div>
 
               <p className="text-center text-sm text-ak-charcoal/60">
-                Al confirmar, guardaremos tu reserva y te redirigiremos a WhatsApp.
+                Al confirmar, guardaremos tu reserva.
               </p>
 
               {submitError && (
@@ -556,36 +552,18 @@ export default function ReservationForm() {
                 </p>
               )}
 
-              {submitted ? (
-                <div className="flex flex-col items-center gap-3 py-4">
-                  <CheckCircle size={40} className="text-ak-olive" weight="fill" />
-                  <p className="font-[Playfair_Display] text-lg text-ak-charcoal">¡Reserva registrada!</p>
-                  <p className="text-sm text-ak-charcoal/60">Te enviamos un email de confirmación.</p>
-                  <a
-                    href={buildWhatsAppLink()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="button-press flex items-center justify-center gap-2 rounded-lg bg-ak-olive px-6 py-3 text-base font-semibold text-ak-cream transition-colors hover:bg-ak-olive/90"
-                  >
-                    <Wine size={20} weight="fill" />
-                    Confirmar por WhatsApp
-                  </a>
-                  <a href="/perfil" className="text-sm text-ak-wine font-medium hover:underline mt-2">Ver mis reservas</a>
-                </div>
-              ) : (
-                <button
-                  onClick={submitReservation}
-                  disabled={submitting}
-                  className="button-press flex w-full items-center justify-center gap-2 rounded-lg bg-ak-olive px-6 py-3.5 text-base font-semibold text-ak-cream transition-colors hover:bg-ak-olive/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting ? (
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  ) : (
-                    <CheckCircle size={20} weight="fill" />
-                  )}
-                  {submitting ? 'Guardando...' : 'Confirmar Reserva'}
-                </button>
-              )}
+              <button
+                onClick={submitReservation}
+                disabled={submitting}
+                className="button-press flex w-full items-center justify-center gap-2 rounded-lg bg-ak-olive px-6 py-3.5 text-base font-semibold text-ak-cream transition-colors hover:bg-ak-olive/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <CheckCircle size={20} weight="fill" />
+                )}
+                {submitting ? 'Guardando...' : 'Confirmar Reserva'}
+              </button>
             </motion.div>
           )}
         </AnimatePresence>

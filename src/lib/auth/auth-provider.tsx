@@ -59,19 +59,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (error) return { error: error.message }
 
-    // Auto-confirm: if user comes back without email confirmation,
-    // try to sign them in directly (Supabase auto-confirms if disable email confirm is set)
-    if (data.user && !data.session) {
-      // User was created but needs email confirmation
-      // We'll return a success message indicating they should check their email
-      // But also try to sign in directly in case auto-confirm is on
+    // If session exists already, user is auto-confirmed and logged in
+    if (data.session) return { error: null }
+
+    // No session = email confirmation required. Auto-confirm via API.
+    try {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name: fullName }),
+      })
+      // Now try to sign in
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-      if (!signInError) {
-        // Auto sign-in worked, redirect will happen via onAuthStateChange
-        return { error: null }
-      }
-      // If sign-in failed, they need to confirm email
-      return { error: null } // Return success anyway, show message in UI
+      if (!signInError) return { error: null }
+    } catch {
+      // Auto-confirm failed, user needs to check email
     }
 
     return { error: null }

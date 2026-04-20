@@ -252,15 +252,19 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Solo puedes cancelar tu reserva' }, { status: 403 })
   }
 
-  // If cancelling, delete from DB entirely
+  // If cancelling, update status (preserve row for audit/metrics)
   if (status === 'cancelled') {
-    const { error: delError } = await sb
+    const { data, error } = await sb
       .from('reservations')
-      .delete()
+      .update({ status: 'cancelled' })
       .eq('id', reservation_id)
+      .select()
+      .single()
 
-    if (delError) return NextResponse.json({ error: delError.message }, { status: 500 })
-    return NextResponse.json({ success: true, deleted: true })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    sendStatusEmail(sb, reservation_id, 'cancelled').catch(e => console.error('Email error:', e))
+    return NextResponse.json({ reservation: data })
   }
 
   // Other status changes (confirmed, completed)

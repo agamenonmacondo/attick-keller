@@ -95,7 +95,8 @@ export async function POST(request: NextRequest) {
         auth_user_id: user.id,
         restaurant_id: RESTAURANT_ID,
         email: user.email,
-        full_name: user.user_metadata?.full_name || user.user_metadata?.name,
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0],
+        phone: user.user_metadata?.phone || '',
       })
       .select('id')
       .single()

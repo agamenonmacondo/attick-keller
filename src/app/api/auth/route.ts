@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
         auth_user_id: existingUser.id,
         email: existingUser.email,
         full_name: name || existingUser.user_metadata?.full_name || existingUser.email?.split('@')[0],
+        phone: existingUser.user_metadata?.phone || '',
         restaurant_id: 'a0000000-0000-0000-0000-000000000001',
       })
     }

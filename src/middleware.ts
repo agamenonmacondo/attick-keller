@@ -11,7 +11,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Create a Supabase server client to verify the session
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -32,9 +31,13 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // Use getSession() instead of getUser() — getSession() refreshes expired
+  // access tokens using the refresh token, updating cookies via setAll().
+  // getUser() only validates the existing JWT and returns null when expired,
+  // which causes an auth redirect loop for authenticated users with stale tokens.
+  const { data: { session } } = await supabase.auth.getSession()
 
-  if (!user) {
+  if (!session) {
     const redirectUrl = new URL('/auth/login', request.url)
     if (pathname !== '/auth/login') {
       redirectUrl.searchParams.set('redirect', pathname)
@@ -47,7 +50,7 @@ export async function middleware(request: NextRequest) {
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('auth_user_id', user.id)
+      .eq('auth_user_id', session.user.id)
       .eq('is_active', true)
       .single()
 

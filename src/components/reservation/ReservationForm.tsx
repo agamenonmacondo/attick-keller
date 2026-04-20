@@ -72,6 +72,7 @@ export default function ReservationForm() {
   const [zones, setZones] = useState<{id: string; name: string}[]>([]);
   const [zonesLoading, setZonesLoading] = useState(true);
   const [direction, setDirection] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -90,12 +91,10 @@ export default function ReservationForm() {
     },
   });
 
-  // Require auth to reserve
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login?redirect=/reservar');
-    }
-  }, [user, loading, router]);
+  // Note: auth protection is handled by middleware. The client-side
+  // loading/user checks below prevent flash of content, but we do NOT
+  // redirect to login here — that caused redirect loops when the middleware
+  // had a valid session but the client hadn't resolved it yet.
 
   // Pre-fill form with user data when authenticated
   useEffect(() => {
@@ -133,11 +132,17 @@ export default function ReservationForm() {
     );
   }
 
-  // Don't render form if not authenticated
+  // If auth resolved and no user, show message with link to login
   if (!user) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-ak-wine border-t-transparent" />
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <p className="text-ak-charcoal/60">Debes iniciar sesión para reservar.</p>
+        <a
+          href="/auth/login?redirect=/reservar"
+          className="rounded-lg bg-ak-wine px-6 py-3 text-sm font-semibold text-ak-cream transition-colors hover:bg-ak-wine-light"
+        >
+          Iniciar sesión
+        </a>
       </div>
     );
   }
@@ -158,8 +163,6 @@ export default function ReservationForm() {
     setDirection(-1);
     setStep((s) => Math.max(s - 1, 0));
   };
-
-  const [submitting, setSubmitting] = useState(false);
 
   const submitReservation = async () => {
     const d = form.getValues();

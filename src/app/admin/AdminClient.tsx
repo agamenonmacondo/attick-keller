@@ -31,10 +31,10 @@ export default function AdminClient() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login')
-    }
-  }, [user, loading, router])
+    // Auth protection is handled by middleware. No client-side redirect
+    // to avoid redirect loops when middleware has a valid session but
+    // client hasn't resolved it yet.
+  }, [user, loading])
 
   const checkAdmin = useCallback(async () => {
     if (!user) return

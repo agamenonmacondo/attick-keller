@@ -25,10 +25,10 @@ export default function ProfileClient() {
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login')
-    }
-  }, [user, loading, router])
+    // Auth protection is handled by middleware. No client-side redirect
+    // to avoid redirect loops when middleware has a valid session but
+    // client hasn't resolved it yet.
+  }, [user, loading])
 
   const checkAdmin = useCallback(async () => {
     if (!user) return
@@ -93,7 +93,19 @@ export default function ProfileClient() {
     )
   }
 
-  if (!user) return null
+  if (!user) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center gap-4 bg-[#F5EDE0]">
+        <p className="text-[#3E2723]/60">Debes iniciar sesión para ver tu perfil.</p>
+        <a
+          href="/auth/login?redirect=/perfil"
+          className="rounded-lg bg-[#6B2737] px-6 py-3 text-sm font-semibold text-[#F5EDE0] transition-colors hover:bg-[#6B2737]/90"
+        >
+          Iniciar sesión
+        </a>
+      </div>
+    )
+  }
 
   const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]
   const avatar = user.user_metadata?.avatar_url

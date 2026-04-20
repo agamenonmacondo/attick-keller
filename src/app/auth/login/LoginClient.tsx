@@ -5,14 +5,18 @@ import { useAuth } from '@/lib/auth/auth-provider'
 import { Phone, Envelope, ArrowLeft, Check } from '@phosphor-icons/react'
 
 type Step = 'method' | 'phone-input' | 'phone-verify' | 'email-input' | 'success'
+type EmailMode = 'login' | 'signUp'
 
 export default function LoginClient() {
-  const { signInWithPhone, verifyOTP, signInWithEmail, signInWithGoogle, signInWithFacebook } = useAuth()
+  const { signInWithPhone, verifyOTP, signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithFacebook } = useAuth()
   const [step, setStep] = useState<Step>('method')
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [telephone, setTelephone] = useState('')
+  const [emailMode, setEmailMode] = useState<EmailMode>('login')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -38,6 +42,15 @@ export default function LoginClient() {
     setLoading(true)
     setError(null)
     const { error: err } = await signInWithEmail(email, password)
+    if (err) setError(err)
+    else setStep('success')
+    setLoading(false)
+  }
+
+  const handleEmailSignUp = async () => {
+    setLoading(true)
+    setError(null)
+    const { error: err } = await signUpWithEmail(email, password, fullName, telephone)
     if (err) setError(err)
     else setStep('success')
     setLoading(false)
@@ -83,14 +96,30 @@ export default function LoginClient() {
             </button>
 
             <button
-              onClick={() => setStep('email-input')}
+              onClick={() => {
+                setEmailMode('login');
+                setStep('email-input');
+              }}
               className="w-full flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
               style={{ borderColor: charcoal, color: charcoal }}
             >
               <Envelope size={24} />
               <div className="text-left">
-                <div className="font-medium">Correo y contraseña</div>
-                <div className="text-xs opacity-70">Para administradores</div>
+                <div className="font-medium">Iniciar sesión con correo</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
+                setEmailMode('signUp');
+                setStep('email-input');
+              }}
+              className="w-full flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
+              style={{ borderColor: wine, color: wine }}
+            >
+              <Envelope size={24} />
+              <div className="text-left">
+                <div className="font-medium">Crear cuenta con correo</div>
               </div>
             </button>
           </div>
@@ -163,18 +192,43 @@ export default function LoginClient() {
             <button onClick={() => setStep('method')} className="flex items-center gap-2 text-sm" style={{ color: '#8B5E3C' }}>
               <ArrowLeft size={16} /> Volver
             </button>
-            <h2 className="text-xl font-medium" style={{ color: charcoal }}>Iniciar sesión</h2>
-            <p className="text-sm" style={{ color: '#8B5E3C' }}>Para administradores del restaurante</p>
+            <h2 className="text-xl font-medium" style={{ color: charcoal }}>
+              {emailMode === 'login' ? 'Correo y contraseña' : 'Crear cuenta'}
+            </h2>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="correo@attickkeller.com"
+              placeholder="tu@correo.com"
               className="w-full px-4 py-3 rounded-xl border-2 focus:outline-none transition-all"
               style={{ borderColor: charcoal + '30', color: charcoal }}
               onFocus={(e) => e.currentTarget.style.borderColor = charcoal}
               onBlur={(e) => e.currentTarget.style.borderColor = charcoal + '30'}
             />
+            {emailMode === 'signUp' && (
+              <>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Nombre completo"
+                  className="w-full px-4 py-3 rounded-xl border-2 focus:outline-none transition-all"
+                  style={{ borderColor: charcoal + '30', color: charcoal }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = charcoal}
+                  onBlur={(e) => e.currentTarget.style.borderColor = charcoal + '30'}
+                />
+                <input
+                  type="tel"
+                  value={telephone}
+                  onChange={(e) => setTelephone(e.target.value)}
+                  placeholder="Teléfono"
+                  className="w-full px-4 py-3 rounded-xl border-2 focus:outline-none transition-all"
+                  style={{ borderColor: charcoal + '30', color: charcoal }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = charcoal}
+                  onBlur={(e) => e.currentTarget.style.borderColor = charcoal + '30'}
+                />
+              </>
+            )}
             <input
               type="password"
               value={password}
@@ -187,13 +241,38 @@ export default function LoginClient() {
             />
             {error && <p className="text-sm text-red-600">{error}</p>}
             <button
-              onClick={handleEmailLogin}
-              disabled={loading || !email || !password}
+              onClick={emailMode === 'login' ? handleEmailLogin : handleEmailSignUp}
+              disabled={loading || !email || !password || (emailMode === 'signUp' && (!fullName || !telephone))}
               className="w-full py-4 rounded-xl text-white font-medium transition-all duration-200 disabled:opacity-50 active:scale-[0.97]"
-              style={{ backgroundColor: charcoal }}
+              style={{ backgroundColor: emailMode === 'login' ? charcoal : wine }}
             >
-              {loading ? 'Ingresando...' : 'Ingresar'}
+              {loading ? (emailMode === 'login' ? 'Ingresando...' : 'Creando...') : (emailMode === 'login' ? 'Ingresar' : 'Crear cuenta')}
             </button>
+            <p className="text-sm text-center" style={{ color: '#8B5E3C' }}>
+              {emailMode === 'login' ? (
+                <>
+                  ¿No tienes cuenta?{' '}
+                  <button
+                    onClick={() => setEmailMode('signUp')}
+                    className="font-semibold underline"
+                    style={{ color: wine }}
+                  >
+                    Crear cuenta
+                  </button>
+                </>
+              ) : (
+                <>
+                  ¿Ya tienes cuenta?{' '}
+                  <button
+                    onClick={() => setEmailMode('login')}
+                    className="font-semibold underline"
+                    style={{ color: charcoal }}
+                  >
+                    Iniciar sesión
+                  </button>
+                </>
+              )}
+            </p>
           </div>
         )}
 

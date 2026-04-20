@@ -58,7 +58,7 @@ export default function ReservarPage() {
           time_start: start,
           time_end: end,
           party_size: partySize,
-          table_id: zoneId,
+          zone_id: zoneId,
           special_requests: specialRequests,
         }),
       })

@@ -72,6 +72,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Error al crear cliente' }, { status: 500 })
   }
 
+  // Find an available table in the requested zone
+  let assignedTableId: string | null = table_id || null
+
+  if (!assignedTableId) {
+    const zone = body.zone || body.zone_id
+    if (zone) {
+      // Get tables in the zone with enough capacity
+      const { data: zoneTables } = await sb
+        .from('tables')
+        .select('id, capacity')
+        .eq('restaurant_id', RESTAURANT_ID)
+        .eq('zone_id', zone)
+        .eq('is_active', true)
+        .gte('capacity', party_size)
+        .order('capacity', { ascending: true })
+        .limit(1)
+
+      if (zoneTables && zoneTables.length > 0) {
+        assignedTableId = zoneTables[0].id
+      }
+    }
+  }
+
   const { data: reservation, error } = await sb
     .from('reservations')
     .insert({
@@ -79,7 +102,7 @@ export async function POST(request: NextRequest) {
       time_start,
       time_end,
       party_size,
-      table_id: table_id || null,
+      table_id: assignedTableId,
       customer_id: customerId,
       restaurant_id: RESTAURANT_ID,
       status: 'pending',

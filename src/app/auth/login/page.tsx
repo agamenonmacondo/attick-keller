@@ -53,9 +53,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#F5EDE0] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
-        <h1 className="font-['Playfair_Display'] text-3xl font-bold text-[#3E2723] text-center mb-8">
+        <h1 className="font-['Playfair_Display'] text-3xl font-bold text-[#3E2723] text-center mb-2">
           {resetMode ? 'Recuperar Contrasena' : 'Iniciar Sesion'}
         </h1>
+        <p className="text-center mb-6">
+          <Link href="/" className="text-sm text-[#8D6E63] hover:text-[#6B2737] transition-colors">
+            &larr; Volver al inicio
+          </Link>
+        </p>
 
         {error && (
           <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>

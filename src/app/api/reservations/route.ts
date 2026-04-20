@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const RESTAURANT_ID = 'a0000000-0000-0000-0000-000000000001'
+const ADMIN_EMAILS = ['agamenonmacondo@gmail.com', 'rayo.abb@gmail.com']
 
 function getServiceClient() {
   return createClient(
@@ -10,13 +11,8 @@ function getServiceClient() {
   )
 }
 
-async function getAuthUserId(request: NextRequest) {
+async function getAuthUser(request: NextRequest) {
   const sb = getServiceClient()
-  const authHeader = request.headers.get('authorization')
-  if (authHeader) {
-    const { data } = await sb.auth.getUser(authHeader.replace('Bearer ', ''))
-    if (data.user) return data.user.id
-  }
   const { createServerClient } = await import('@supabase/ssr')
   const cookieStore = request.cookies
   const serverSb = createServerClient(
@@ -30,13 +26,17 @@ async function getAuthUserId(request: NextRequest) {
     }
   )
   const { data: { user } } = await serverSb.auth.getUser()
-  return user?.id ?? null
+  return user
+}
+
+function isAdmin(user: { email?: string } | null): boolean {
+  if (!user?.email) return false
+  return ADMIN_EMAILS.includes(user.email.toLowerCase())
 }
 
 async function sendStatusEmail(sb: ReturnType<typeof getServiceClient>, reservationId: string, status: string) {
   const { sendReservationEmail } = await import('@/lib/email/send')
 
-  // Get reservation with customer info
   const { data: reservation } = await sb
     .from('reservations')
     .select('*, customers(email, full_name)')
@@ -45,20 +45,11 @@ async function sendStatusEmail(sb: ReturnType<typeof getServiceClient>, reservat
 
   if (!reservation || !reservation.customers?.email) return
 
-  // Get zone name from table
   let zoneName = '—'
   if (reservation.table_id) {
-    const { data: table } = await sb
-      .from('tables')
-      .select('zone_id')
-      .eq('id', reservation.table_id)
-      .single()
+    const { data: table } = await sb.from('tables').select('zone_id').eq('id', reservation.table_id).single()
     if (table?.zone_id) {
-      const { data: zone } = await sb
-        .from('table_zones')
-        .select('name')
-        .eq('id', table.zone_id)
-        .single()
+      const { data: zone } = await sb.from('table_zones').select('name').eq('id', table.zone_id).single()
       if (zone?.name) zoneName = zone.name
     }
   }
@@ -84,40 +75,34 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const { date, time_start, time_end, party_size, special_requests } = body
 
-  const userId = await getAuthUserId(request)
-  if (!userId) {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-  }
+  const user = await getAuthUser(request)
+  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
   // Get or create customer
   const { data: existing } = await sb
     .from('customers')
-    .select('id, email, full_name')
-    .eq('auth_user_id', userId)
+    .select('id')
+    .eq('auth_user_id', user.id)
     .eq('restaurant_id', RESTAURANT_ID)
     .single()
 
   let customerId = existing?.id
 
   if (!customerId) {
-    // Get user metadata for customer record
-    const { data: { user: authUser } } = await sb.auth.getUser(userId)
     const { data: newCustomer } = await sb
       .from('customers')
       .insert({
-        auth_user_id: userId,
+        auth_user_id: user.id,
         restaurant_id: RESTAURANT_ID,
-        email: authUser?.email,
-        full_name: authUser?.user_metadata?.full_name || authUser?.user_metadata?.name,
+        email: user.email,
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name,
       })
       .select('id')
       .single()
     customerId = newCustomer?.id
   }
 
-  if (!customerId) {
-    return NextResponse.json({ error: 'Error al crear cliente' }, { status: 500 })
-  }
+  if (!customerId) return NextResponse.json({ error: 'Error al crear cliente' }, { status: 500 })
 
   // ALWAYS resolve table from zone_id
   const zone = body.zone || body.zone_id
@@ -133,19 +118,13 @@ export async function POST(request: NextRequest) {
       .gte('capacity', party_size)
       .order('capacity', { ascending: true })
       .limit(1)
-
-    if (zoneTables && zoneTables.length > 0) {
-      assignedTableId = zoneTables[0].id
-    }
+    if (zoneTables && zoneTables.length > 0) assignedTableId = zoneTables[0].id
   }
 
   const { data: reservation, error } = await sb
     .from('reservations')
     .insert({
-      date,
-      time_start,
-      time_end,
-      party_size,
+      date, time_start, time_end, party_size,
       table_id: assignedTableId,
       customer_id: customerId,
       restaurant_id: RESTAURANT_ID,
@@ -155,58 +134,119 @@ export async function POST(request: NextRequest) {
     .select()
     .single()
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Send pending email
   sendStatusEmail(sb, reservation.id, 'pending').catch(e => console.error('Email error:', e))
-
   return NextResponse.json({ reservation })
 }
 
-// PATCH - Update reservation status (admin or owner can cancel)
+// PUT - Modify reservation (date, time, party_size, special_requests)
+export async function PUT(request: NextRequest) {
+  const sb = getServiceClient()
+  const body = await request.json()
+  const { reservation_id, date, time_start, time_end, party_size, special_requests, zone_id } = body
+
+  const user = await getAuthUser(request)
+  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+  // Get reservation
+  const { data: reservation } = await sb
+    .from('reservations')
+    .select('id, customer_id, status, date, time_start, time_end, party_size, special_requests, table_id')
+    .eq('id', reservation_id)
+    .single()
+
+  if (!reservation) return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
+
+  // Check ownership or admin
+  const { data: customer } = await sb
+    .from('customers')
+    .select('id')
+    .eq('auth_user_id', user.id)
+    .eq('restaurant_id', RESTAURANT_ID)
+    .single()
+
+  const isOwner = customer?.id === reservation.customer_id
+  const admin = isAdmin(user)
+
+  if (!isOwner && !admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+
+  // Only active reservations can be modified
+  if (reservation.status === 'cancelled' || reservation.status === 'completed') {
+    return NextResponse.json({ error: 'No se puede modificar una reserva cancelada o completada' }, { status: 400 })
+  }
+
+  // Build update object
+  const updateData: Record<string, any> = {}
+  if (date) updateData.date = date
+  if (time_start) updateData.time_start = time_start
+  if (time_end) updateData.time_end = time_end
+  if (party_size) updateData.party_size = party_size
+  if (special_requests !== undefined) updateData.special_requests = special_requests || null
+
+  // If zone changed, reassign table
+  if (zone_id) {
+    const effectiveParty = party_size || reservation.party_size
+    const { data: zoneTables } = await sb
+      .from('tables')
+      .select('id, capacity')
+      .eq('restaurant_id', RESTAURANT_ID)
+      .eq('zone_id', zone_id)
+      .eq('is_active', true)
+      .gte('capacity', effectiveParty)
+      .order('capacity', { ascending: true })
+      .limit(1)
+    if (zoneTables && zoneTables.length > 0) {
+      updateData.table_id = zoneTables[0].id
+    }
+  }
+
+  const { data, error } = await sb
+    .from('reservations')
+    .update(updateData)
+    .eq('id', reservation_id)
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Send update email (re-use confirmed status to notify of changes)
+  sendStatusEmail(sb, reservation_id, reservation.status).catch(e => console.error('Email error:', e))
+
+  return NextResponse.json({ reservation: data })
+}
+
+// PATCH - Update reservation status
 export async function PATCH(request: NextRequest) {
   const sb = getServiceClient()
   const body = await request.json()
   const { reservation_id, status } = body
 
-  const userId = await getAuthUserId(request)
-  if (!userId) {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-  }
+  const user = await getAuthUser(request)
+  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
-  // Get the reservation to check ownership
   const { data: reservation } = await sb
     .from('reservations')
-    .select('id, customer_id, status')
+    .select('id, customer_id, status, date, time_start, time_end, party_size, special_requests, table_id')
     .eq('id', reservation_id)
     .single()
 
-  if (!reservation) {
-    return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
-  }
+  if (!reservation) return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
 
-  // Check if user is admin or owner
   const { data: customer } = await sb
     .from('customers')
     .select('id')
-    .eq('auth_user_id', userId)
+    .eq('auth_user_id', user.id)
     .eq('restaurant_id', RESTAURANT_ID)
     .single()
 
   const isOwner = customer?.id === reservation.customer_id
+  const admin = isAdmin(user)
 
-  // Get admin role
-  const { data: { user: authUser } } = await sb.auth.getUser(userId)
-  const isAdmin = authUser?.app_metadata?.role === 'super_admin' || authUser?.user_metadata?.role === 'super_admin'
+  if (!isOwner && !admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
-  if (!isOwner && !isAdmin) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
-  }
-
-  // Owners can only cancel their own reservations
-  if (isOwner && !isAdmin && status !== 'cancelled') {
+  // Owners can only cancel; admins can change any status
+  if (isOwner && !admin && status !== 'cancelled') {
     return NextResponse.json({ error: 'Solo puedes cancelar tu reserva' }, { status: 403 })
   }
 
@@ -217,48 +257,39 @@ export async function PATCH(request: NextRequest) {
     .select()
     .single()
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Send email for status change
   sendStatusEmail(sb, reservation_id, status).catch(e => console.error('Email error:', e))
-
   return NextResponse.json({ reservation: data })
 }
 
-// GET - List reservations (user sees own, admin sees all)
+// GET - List reservations (admin sees all, user sees own)
 export async function GET(request: NextRequest) {
   const sb = getServiceClient()
-  const userId = await getAuthUserId(request)
-  if (!userId) {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-  }
+  const user = await getAuthUser(request)
+  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
-  const { data: { user: authUser } } = await sb.auth.getUser(userId)
-  const isAdmin = authUser?.app_metadata?.role === 'super_admin' || authUser?.user_metadata?.role === 'super_admin'
+  const admin = isAdmin(user)
 
-  if (isAdmin) {
+  if (admin) {
     const { data, error } = await sb
       .from('reservations')
-      .select('*')
+      .select('*, customers(email, full_name)')
       .eq('restaurant_id', RESTAURANT_ID)
       .order('date', { ascending: false })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ reservations: data })
+    return NextResponse.json({ reservations: data, isAdmin: true })
   }
 
-  // Regular user: get their customer id first
+  // Regular user
   const { data: customer } = await sb
     .from('customers')
     .select('id')
-    .eq('auth_user_id', userId)
+    .eq('auth_user_id', user.id)
     .eq('restaurant_id', RESTAURANT_ID)
     .single()
 
-  if (!customer) {
-    return NextResponse.json({ reservations: [] })
-  }
+  if (!customer) return NextResponse.json({ reservations: [], isAdmin: false })
 
   const { data, error } = await sb
     .from('reservations')
@@ -267,5 +298,5 @@ export async function GET(request: NextRequest) {
     .order('date', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ reservations: data })
+  return NextResponse.json({ reservations: data, isAdmin: false })
 }

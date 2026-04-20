@@ -11,7 +11,7 @@ export async function PATCH(
   const { id } = await params
   const sb = getServiceClient()
   const body = await request.json()
-  const { status, date, time_start, time_end, party_size, special_requests, zone_id } = body
+  const { status, date, time_start, time_end, party_size, special_requests, zone_id, table_id } = body
 
   const { data: reservation } = await sb
     .from('reservations')
@@ -28,6 +28,7 @@ export async function PATCH(
   if (time_end) updateData.time_end = time_end
   if (party_size) updateData.party_size = party_size
   if (special_requests !== undefined) updateData.special_requests = special_requests || null
+  if (table_id !== undefined) updateData.table_id = table_id || null
 
   if (zone_id) {
     const effectiveParty = (party_size as number) || reservation.party_size

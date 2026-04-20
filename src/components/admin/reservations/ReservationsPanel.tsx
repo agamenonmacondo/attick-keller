@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { Plus } from '@phosphor-icons/react'
 import { useAdminDashboard } from '@/lib/hooks/useAdminDashboard'
 import { useAdminReservations } from '@/lib/hooks/useAdminReservations'
+import { useDatesWithReservations } from '@/lib/hooks/useDatesWithReservations'
 import { DateNavigator } from './DateNavigator'
 import { DayStatsRow } from './DayStatsRow'
 import { StatusFilter } from './StatusFilter'
 import { ReservationTimeline } from './ReservationTimeline'
 import { ReservationDetail } from './ReservationDetail'
+import { ReservationForm } from './ReservationForm'
 import { ConfirmDialog } from '../shared/ConfirmDialog'
 import { Spinner } from '@phosphor-icons/react'
 
@@ -19,6 +22,7 @@ interface ReservationsPanelProps {
 export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPanelProps) {
   const [filter, setFilter] = useState('all')
   const [detailId, setDetailId] = useState<string | null>(null)
+  const [showNewForm, setShowNewForm] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{
     id: string
     status: string
@@ -35,6 +39,7 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
     loading: resLoading,
     refetch: resRefetch,
   } = useAdminReservations(selectedDate, filter)
+  const { dates: datesWithReservations } = useDatesWithReservations(selectedDate)
 
   const handleStatusChange = useCallback(
     async (id: string, status: string) => {
@@ -60,6 +65,33 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
     [dashRefetch, resRefetch],
   )
 
+  const handleEdit = useCallback(
+    async (id: string, updates: Record<string, unknown>) => {
+      try {
+        const res = await fetch(`/api/admin/reservations/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        })
+        if (res.ok) {
+          dashRefetch()
+          resRefetch()
+        } else {
+          const d = await res.json()
+          alert(d.error || 'Error al guardar')
+        }
+      } catch {
+        alert('Error de conexion')
+      }
+    },
+    [dashRefetch, resRefetch],
+  )
+
+  const handleCreated = useCallback(() => {
+    dashRefetch()
+    resRefetch()
+  }, [dashRefetch, resRefetch])
+
   const loading = dashLoading && !dashData
 
   if (loading) {
@@ -75,12 +107,21 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
     ? dayReservations.find((r) => r.id === detailId) ?? null
     : null
 
-  const datesWithReservations = dashData?.reservations
-    ? [...new Set(dashData.reservations.map((r) => r.date as string))]
-    : []
-
   return (
     <>
+      {/* New Reservation Button */}
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowNewForm(true)}
+          className="flex items-center gap-1.5 rounded-lg bg-[#6B2737] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#6B2737]/90 active:scale-[0.97]"
+          style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+        >
+          <Plus size={16} weight="bold" />
+          Nueva Reserva
+        </button>
+      </div>
+
       <DateNavigator
         selectedDate={selectedDate}
         onDateChange={onDateChange}
@@ -120,6 +161,7 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
                 handleStatusChange(id, status)
               }
             }}
+            onEdit={handleEdit}
             onClose={() => setDetailId(null)}
           />
         </div>
@@ -138,6 +180,14 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
         }}
         onCancel={() => setConfirmAction(null)}
       />
+
+      {showNewForm && (
+        <ReservationForm
+          selectedDate={selectedDate}
+          onClose={() => setShowNewForm(false)}
+          onCreated={handleCreated}
+        />
+      )}
     </>
   )
 }

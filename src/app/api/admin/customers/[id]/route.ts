@@ -41,9 +41,13 @@ export async function PATCH(
   const body = await request.json().catch(() => ({}))
   const sb = getServiceClient()
 
-  // Only allow updating notes for now
+  // Allow updating multiple customer fields
   const updates: Record<string, unknown> = {}
   if (typeof body.notes === 'string') updates.notes = body.notes
+  if (typeof body.full_name === 'string') updates.full_name = body.full_name
+  if (typeof body.phone === 'string' && body.phone.trim()) updates.phone = body.phone.trim()
+  if (body.email !== undefined) updates.email = body.email || null
+  if (body.preferences && typeof body.preferences === 'object') updates.preferences = body.preferences
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'Nada para actualizar' }, { status: 400 })
   }
@@ -53,7 +57,7 @@ export async function PATCH(
     .update(updates)
     .eq('id', id)
     .eq('restaurant_id', RESTAURANT_ID)
-    .select('id, notes')
+    .select('id, full_name, phone, email, notes')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

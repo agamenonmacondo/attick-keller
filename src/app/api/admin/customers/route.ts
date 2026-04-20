@@ -1,6 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 
+export async function POST(request: NextRequest) {
+  const admin = await getAdminUser(request)
+  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+
+  const sb = getServiceClient()
+  const body = await request.json()
+  const { full_name, phone, email } = body
+
+  if (!phone || !phone.trim()) {
+    return NextResponse.json({ error: 'Telefono requerido' }, { status: 400 })
+  }
+
+  // Check for existing customer with same phone
+  const { data: existing } = await sb
+    .from('customers')
+    .select('id, full_name, phone, email')
+    .eq('restaurant_id', RESTAURANT_ID)
+    .eq('phone', phone.trim())
+    .single()
+
+  if (existing) {
+    return NextResponse.json({ customer: existing }, { status: 200 })
+  }
+
+  // Create new customer
+  const { data, error } = await sb
+    .from('customers')
+    .insert({
+      restaurant_id: RESTAURANT_ID,
+      phone: phone.trim(),
+      email: email || null,
+      full_name: full_name || null,
+    })
+    .select('id, full_name, phone, email')
+    .single()
+
+  if (error) {
+    // Handle unique constraint violation
+    if (error.code === '23505') {
+      return NextResponse.json({ error: 'Ya existe un cliente con este telefono' }, { status: 409 })
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ customer: data }, { status: 201 })
+}
+
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })

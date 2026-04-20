@@ -3,16 +3,14 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
 import { formatTime } from '@/lib/utils/formatDate'
+import { SERVICE_HOURS } from '@/lib/utils/serviceHours'
 import { StatusBadge, getStatusConfig } from '../shared/StatusBadge'
 import { Check, X } from '@phosphor-icons/react'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 
 const EASE_OUT: [number, number, number, number] = [0.23, 1, 0.32, 1]
 
-const HOURS = [
-  '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-  '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30',
-]
+const HOURS = SERVICE_HOURS
 
 interface ReservationItem {
   id: string

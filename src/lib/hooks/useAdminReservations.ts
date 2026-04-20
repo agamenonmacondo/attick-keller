@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { supabase } from '@/lib/supabase/client'
+import { RESTAURANT_ID } from '@/lib/utils/constants'
 
 interface ReservationItem {
   id: string; date: string; time_start: string; time_end: string; party_size: number
@@ -15,7 +17,7 @@ export function useAdminReservations(date: string, statusFilter: string) {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const fetchData = useCallback(async () => {
     try {
@@ -27,7 +29,34 @@ export function useAdminReservations(date: string, statusFilter: string) {
     } catch { setError('Error de conexion') } finally { setLoading(false) }
   }, [date, statusFilter])
 
-  useEffect(() => { setLoading(true); fetchData(); intervalRef.current = setInterval(fetchData, 30000); return () => { if (intervalRef.current) clearInterval(intervalRef.current) } }, [fetchData])
+  // Initial fetch + 5-minute fallback polling
+  useEffect(() => {
+    setLoading(true)
+    fetchData()
+    const interval = setInterval(fetchData, 300000) // 5-minute fallback
+    return () => clearInterval(interval)
+  }, [fetchData])
+
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-reservations')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reservations', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
+        () => {
+          if (debounceRef.current) clearTimeout(debounceRef.current)
+          debounceRef.current = setTimeout(() => fetchData(), 300)
+        },
+      )
+      .subscribe()
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      supabase.removeChannel(channel)
+    }
+  }, [fetchData])
+
   const refetch = useCallback(() => { setLoading(true); fetchData() }, [fetchData])
   return { reservations, total, loading, error, refetch }
 }

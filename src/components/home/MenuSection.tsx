@@ -145,7 +145,7 @@ export default function MenuSection() {
                     'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ak-dorado)]',
                     isActive
                       ? 'bg-[var(--ak-borgona)] text-[var(--ak-cal)] shadow-lg shadow-[#6B2737]/20 ring-1 ring-[var(--ak-borgona)]'
-                      : 'bg-[#EFEBE9] text-[var(--ak-madera)] border border-[#8D6E63]/15 hover:border-[var(--ak-borgona)]/30 hover:bg-[#E8DED0] active:scale-[0.97]'
+                      : 'bg-white/60 text-[var(--ak-madera)] border border-[#8D6E63]/30 shadow-sm hover:border-[var(--ak-borgona)]/40 hover:bg-white/80 hover:shadow-md active:scale-[0.97]'
                   )}
                 >
                   {/* Name */}
@@ -167,7 +167,7 @@ export default function MenuSection() {
                   {/* Gold accent bottom */}
                   <div className={cn(
                     'absolute bottom-0 left-4 right-4 h-0.5 rounded-full transition-all duration-300',
-                    isActive ? 'bg-[var(--ak-dorado)]' : 'bg-transparent group-hover:bg-[var(--ak-dorado)]/30'
+                    isActive ? 'bg-[var(--ak-dorado)]' : 'bg-transparent group-hover:bg-[var(--ak-dorado)]/50'
                   )} />
                 </motion.button>
               )

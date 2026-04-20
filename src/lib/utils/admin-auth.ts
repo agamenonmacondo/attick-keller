@@ -1,8 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
 import { type NextRequest } from 'next/server'
-
-const RESTAURANT_ID = 'a0000000-0000-0000-0000-000000000001'
+import { RESTAURANT_ID } from '@/lib/utils/constants'
 
 function getServiceClient() {
   return createClient(

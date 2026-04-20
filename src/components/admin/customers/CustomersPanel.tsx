@@ -3,41 +3,25 @@
 import { useState, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Spinner, MagnifyingGlass, User } from '@phosphor-icons/react'
+import { useCustomers } from '@/lib/hooks/useCustomers'
 import { useCustomerDetail } from '@/lib/hooks/useCustomerDetail'
 import { AnimatedCard } from '../shared/AnimatedCard'
 import { TierBadge } from '../shared/TierBadge'
 import { CustomerDetail } from './CustomerDetail'
-import { CustomerNotes } from './CustomerNotes'
-
-interface CustomerRow {
-  id: string
-  full_name: string | null
-  phone: string | null
-  email: string | null
-  loyalty_tier: string
-  total_visits: number
-  last_visit_date: string | null
-  [key: string]: unknown
-}
 
 export function CustomersPanel() {
   const [search, setSearch] = useState('')
-  const [customers, setCustomers] = useState<CustomerRow[]>([])
-  const [loading, setLoading] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const { customers, loading, search: doSearch, refetch: refetchCustomers } = useCustomers()
   const { data: detail, loading: detailLoading, fetchCustomer, clear: clearDetail } = useCustomerDetail()
 
-  const doSearch = useCallback(async () => {
-    if (!search.trim()) return
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({ q: search.trim() })
-      const res = await fetch(`/api/admin/customers?${params}`)
-      if (!res.ok) { setCustomers([]); return }
-      const d = await res.json()
-      setCustomers(d.customers || [])
-    } catch { setCustomers([]) } finally { setLoading(false) }
-  }, [search])
+  const handleSearch = useCallback(() => {
+    if (search.trim()) {
+      doSearch(search.trim())
+    } else {
+      refetchCustomers()
+    }
+  }, [search, doSearch, refetchCustomers])
 
   const selectCustomer = useCallback((id: string) => {
     setSelectedId(id)
@@ -45,8 +29,8 @@ export function CustomersPanel() {
   }, [fetchCustomer])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') doSearch()
-  }, [doSearch])
+    if (e.key === 'Enter') handleSearch()
+  }, [handleSearch])
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -67,7 +51,7 @@ export function CustomersPanel() {
             </div>
             <button
               type="button"
-              onClick={doSearch}
+              onClick={handleSearch}
               disabled={loading}
               className="rounded-lg bg-[#6B2737] px-4 py-2 text-sm font-medium text-white hover:bg-[#6B2737]/90 active:scale-[0.97] disabled:opacity-50"
               style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
@@ -78,12 +62,12 @@ export function CustomersPanel() {
         </AnimatedCard>
 
         {/* Customer list */}
-        {loading && (
+        {loading && customers.length === 0 && (
           <div className="flex items-center justify-center py-8">
             <Spinner size={24} className="animate-spin text-[#8D6E63]" />
           </div>
         )}
-        {!loading && customers.length === 0 && search.trim() && (
+        {!loading && customers.length === 0 && (
           <p className="text-center text-sm text-[#8D6E63] py-8">Sin resultados</p>
         )}
         <AnimatePresence>
@@ -132,7 +116,7 @@ export function CustomersPanel() {
           </div>
         )}
         {detail && (
-          <CustomerDetail data={detail} onClose={() => { setSelectedId(null); clearDetail() }} />
+          <CustomerDetail data={detail} onClose={() => { setSelectedId(null); clearDetail() }} onRefresh={refetchCustomers} />
         )}
         {!detail && !detailLoading && (
           <div className="flex flex-col items-center justify-center rounded-xl border border-[#D7CCC8] bg-white/30 py-16 text-center">

@@ -51,7 +51,7 @@ export default function PerfilPage() {
   }, [user])
 
   const handleCancel = async (id: string) => {
-    if (!confirm('¿Seguro que quieres cancelar esta reserva?')) return
+    if (!confirm('¿Seguro que quieres cancelar esta reserva? Se eliminará del sistema.')) return
     setCancelling(id)
     try {
       const res = await fetch('/api/reservations', {
@@ -60,7 +60,8 @@ export default function PerfilPage() {
         body: JSON.stringify({ reservation_id: id, status: 'cancelled' }),
       })
       if (res.ok) {
-        await fetchReservations()
+        // Remove from local state immediately
+        setReservations(prev => prev.filter(r => r.id !== id))
       } else {
         const data = await res.json()
         alert(data.error || 'Error al cancelar')
@@ -245,18 +246,18 @@ export default function PerfilPage() {
                           {canModify(r.status) && (
                             <>
                               <button onClick={() => startEdit(r)} className="text-xs text-[#6B2737] hover:text-[#8B3747] font-medium">
-                                ✏️ Modificar
+                                Modificar
                               </button>
                               <button onClick={() => handleCancel(r.id)} disabled={cancelling === r.id}
                                 className="text-xs text-red-600 hover:text-red-800 font-medium disabled:opacity-50">
-                                {cancelling === r.id ? 'Cancelando...' : '❌ Cancelar'}
+                                {cancelling === r.id ? 'Eliminando...' : 'Cancelar'}
                               </button>
                             </>
                           )}
                           {isAdminUser && r.status === 'pending' && (
                             <button onClick={() => handleConfirm(r.id)}
                               className="text-xs text-green-700 hover:text-green-900 font-medium">
-                              ✅ Confirmar
+                              Confirmar
                             </button>
                           )}
                         </div>

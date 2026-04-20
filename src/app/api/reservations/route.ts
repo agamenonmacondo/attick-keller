@@ -240,6 +240,7 @@ export async function PATCH(request: NextRequest) {
     .eq('restaurant_id', RESTAURANT_ID)
     .single()
 
+  // Cancel = DELETE from system (no noise in dashboards)
   const isOwner = customer?.id === reservation.customer_id
   const admin = isAdmin(user)
 
@@ -250,6 +251,18 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Solo puedes cancelar tu reserva' }, { status: 403 })
   }
 
+  // If cancelling, delete from DB entirely
+  if (status === 'cancelled') {
+    const { error: delError } = await sb
+      .from('reservations')
+      .delete()
+      .eq('id', reservation_id)
+
+    if (delError) return NextResponse.json({ error: delError.message }, { status: 500 })
+    return NextResponse.json({ success: true, deleted: true })
+  }
+
+  // Other status changes (confirmed, completed)
   const { data, error } = await sb
     .from('reservations')
     .update({ status })
@@ -281,7 +294,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ reservations: data, isAdmin: true })
   }
 
-  // Regular user
+  // Regular user: only active reservations (no cancelled/deleted)
   const { data: customer } = await sb
     .from('customers')
     .select('id')
@@ -295,6 +308,7 @@ export async function GET(request: NextRequest) {
     .from('reservations')
     .select('*')
     .eq('customer_id', customer.id)
+    .in('status', ['pending', 'confirmed', 'completed'])
     .order('date', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

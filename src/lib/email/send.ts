@@ -172,3 +172,105 @@ export async function sendReservationEmail(data: EmailData, status: string): Pro
     return { success: false, error: err.message }
   }
 }
+
+// --- Auth emails ---
+
+const AUTH_FROM = 'Attick & Keller <ventas@ccs724.com>'
+
+export async function sendWelcomeEmail(to: string, name: string): Promise<{ success: boolean; error?: string }> {
+  const apiKey = RESEND_API_KEY()
+  if (!apiKey) return { success: false, error: 'No API key' }
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#F5EDE0;font-family:'DM Sans',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">
+    <tr>
+      <td style="background:#3E2723;padding:32px 40px;text-align:center;">
+        <h1 style="color:#C9A94E;font-family:'Playfair Display',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>
+        <p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogot\u00e1</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 40px;text-align:center;background:#E8F5E9;">
+        <h2 style="color:#2E7D32;font-size:20px;margin:0;">Cuenta creada exitosamente</h2>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:32px 40px;">
+        <p style="color:#3E2723;font-size:16px;margin:0 0 16px 0;">Hola ${name},</p>
+        <p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Tu cuenta ha sido creada exitosamente. Ya puedes hacer reservas en Attick &amp; Keller.</p>
+        <div style="text-align:center;">
+          <a href="https://web-rosy-nine-64.vercel.app/reservar" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Hacer una Reserva</a>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 40px;background:#3E2723;text-align:center;">
+        <p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogot\u00e1</p>
+        <p style="color:#8D6E63;font-size:12px;margin:0;">\u260e +57 310 577 2708 &nbsp;|&nbsp; \u{1F4F7} @attic_keller</p>
+      </td>
+    </tr>
+  </table>
+</body></html>`
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: AUTH_FROM, to, subject: 'Bienvenido a Attick & Keller', html }),
+    })
+    return res.ok ? { success: true } : { success: false, error: await res.text() }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<{ success: boolean; error?: string }> {
+  const apiKey = RESEND_API_KEY()
+  if (!apiKey) return { success: false, error: 'No API key' }
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#F5EDE0;font-family:'DM Sans',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">
+    <tr>
+      <td style="background:#3E2723;padding:32px 40px;text-align:center;">
+        <h1 style="color:#C9A94E;font-family:'Playfair Display',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>
+        <p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogot\u00e1</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 40px;text-align:center;background:#FFF8E1;">
+        <h2 style="color:#F57F17;font-size:20px;margin:0;">Recuperar contrase\u00f1a</h2>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:32px 40px;">
+        <p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Recibimos una solicitud para restablecer tu contrase\u00f1a. Haz clic en el bot\u00f3n para crear una nueva:</p>
+        <div style="text-align:center;">
+          <a href="${resetUrl}" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Restablecer Contrase\u00f1a</a>
+        </div>
+        <p style="color:#8D6E63;font-size:13px;margin:24px 0 0 0;text-align:center;">Este enlace expira en 24 horas. Si no solicitaste este cambio, ignora este correo.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 40px;background:#3E2723;text-align:center;">
+        <p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogot\u00e1</p>
+        <p style="color:#8D6E63;font-size:12px;margin:0;">\u260e +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>
+      </td>
+    </tr>
+  </table>
+</body></html>`
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: AUTH_FROM, to, subject: 'Restablece tu contrasena - Attick & Keller', html }),
+    })
+    return res.ok ? { success: true } : { success: false, error: await res.text() }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}

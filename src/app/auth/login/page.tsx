@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function LoginPage() {
-  const { signInWithEmail, signInWithGoogle, user } = useAuth()
+  const { signInWithEmail, signInWithGoogle, user, isAdmin } = useAuth()
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false)
 
   if (user) {
-    router.push('/perfil')
+    router.replace(isAdmin ? '/admin' : '/perfil')
     return null
   }
 
@@ -46,7 +46,19 @@ export default function LoginPage() {
 
     const { error: err } = await signInWithEmail(email, password)
     if (err) setError(err)
-    else router.push('/perfil')
+    else {
+      try {
+        const res = await fetch('/api/auth/role')
+        if (res.ok) {
+          const { role } = await res.json()
+          router.push(role === 'store_admin' || role === 'super_admin' ? '/admin' : '/perfil')
+        } else {
+          router.push('/perfil')
+        }
+      } catch {
+        router.push('/perfil')
+      }
+    }
     setLoading(false)
   }
 

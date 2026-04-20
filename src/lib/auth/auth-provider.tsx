@@ -1,35 +1,72 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import type { User } from '@supabase/supabase-js'
+import { createContext, useContext } from 'react'
 
 interface AuthContextType {
   user: User | null
   loading: boolean
+  isAdmin: boolean
+  adminRole: string | null
+  roleLoading: boolean
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>
   signUpWithEmail: (email: string, password: string, fullName: string, phone: string) => Promise<{ error: string | null }>
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
 }
 
-import { createContext, useContext } from 'react'
-
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [adminRole, setAdminRole] = useState<string | null>(null)
+  const [roleLoading, setRoleLoading] = useState(true)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
+  const fetchRole = useCallback(async () => {
+    setRoleLoading(true)
+    try {
+      const res = await fetch('/api/auth/role')
+      if (res.ok) {
+        const data = await res.json()
+        const admin = data.role === 'store_admin' || data.role === 'super_admin'
+        setIsAdmin(admin)
+        setAdminRole(data.role)
+      } else {
+        setIsAdmin(false)
+        setAdminRole(null)
+      }
+    } catch {
+      setIsAdmin(false)
+      setAdminRole(null)
+    } finally {
+      setRoleLoading(false)
+    }
+  }, [])
+
+  const clearRole = useCallback(() => {
+    setIsAdmin(false)
+    setAdminRole(null)
+    setRoleLoading(false)
+  }, [])
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
+      if (session?.user) {
+        fetchRole()
+      } else {
+        clearRole()
+      }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -37,10 +74,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (window.location.hash.includes('access_token')) {
         window.history.replaceState(null, '', window.location.pathname)
       }
+      if (session?.user) {
+        fetchRole()
+      } else {
+        clearRole()
+      }
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [supabase, fetchRole, clearRole])
 
   const signInWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -103,10 +145,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
+    clearRole()
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithEmail, signUpWithEmail, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, adminRole, roleLoading, signInWithEmail, signUpWithEmail, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   )

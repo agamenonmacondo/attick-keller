@@ -10,14 +10,16 @@ export async function GET() {
   const [categoriesResult, itemsResult] = await Promise.all([
     sb
       .from('menu_categories')
-      .select('id, name, sort_order')
+      .select('id, name, description, icon, sort_order')
       .eq('restaurant_id', 'a0000000-0000-0000-0000-000000000001')
+      .eq('is_active', true)
       .order('sort_order'),
     sb
       .from('menu_items')
-      .select('id, name, description, price, category_id')
+      .select('id, name, description, price, category_id, image_url, is_featured, sort_order, is_available')
       .eq('restaurant_id', 'a0000000-0000-0000-0000-000000000001')
-      .order('name'),
+      .eq('is_available', true)
+      .order('sort_order'),
   ])
 
   if (categoriesResult.error) {

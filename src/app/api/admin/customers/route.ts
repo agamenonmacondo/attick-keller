@@ -1,0 +1,45 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+
+export async function GET(request: NextRequest) {
+  const admin = await getAdminUser(request)
+  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+
+  const { searchParams } = new URL(request.url)
+  const q = searchParams.get('q') || ''
+
+  const sb = getServiceClient()
+
+  // Fetch customers with their stats via join
+  let query = sb
+    .from('customers')
+    .select('id, full_name, phone, email, customer_stats(loyalty_tier, total_visits, last_visit_date)')
+    .eq('restaurant_id', RESTAURANT_ID)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (q) {
+    query = query.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%`)
+  }
+
+  const { data, error } = await query
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Flatten the nested stats into the customer object
+  const customers = (data || []).map((c: Record<string, unknown>) => {
+    const stats = c.customer_stats as Record<string, unknown>[] | null
+    const s = stats && stats.length > 0 ? stats[0] : {}
+    return {
+      id: c.id,
+      full_name: c.full_name,
+      phone: c.phone,
+      email: c.email,
+      loyalty_tier: s.loyalty_tier || 'none',
+      total_visits: s.total_visits || 0,
+      last_visit_date: s.last_visit_date || null,
+    }
+  })
+
+  return NextResponse.json({ customers })
+}

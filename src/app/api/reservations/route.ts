@@ -72,26 +72,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Error al crear cliente' }, { status: 500 })
   }
 
-  // Find an available table in the requested zone
-  let assignedTableId: string | null = table_id || null
+  // ALWAYS resolve table from zone_id - never trust table_id from client
+  const zone = body.zone || body.zone_id
+  let assignedTableId: string | null = null
 
-  if (!assignedTableId) {
-    const zone = body.zone || body.zone_id
-    if (zone) {
-      // Get tables in the zone with enough capacity
-      const { data: zoneTables } = await sb
-        .from('tables')
-        .select('id, capacity')
-        .eq('restaurant_id', RESTAURANT_ID)
-        .eq('zone_id', zone)
-        .eq('is_active', true)
-        .gte('capacity', party_size)
-        .order('capacity', { ascending: true })
-        .limit(1)
+  if (zone) {
+    const { data: zoneTables } = await sb
+      .from('tables')
+      .select('id, capacity')
+      .eq('restaurant_id', RESTAURANT_ID)
+      .eq('zone_id', zone)
+      .eq('is_active', true)
+      .gte('capacity', party_size)
+      .order('capacity', { ascending: true })
+      .limit(1)
 
-      if (zoneTables && zoneTables.length > 0) {
-        assignedTableId = zoneTables[0].id
-      }
+    if (zoneTables && zoneTables.length > 0) {
+      assignedTableId = zoneTables[0].id
     }
   }
 

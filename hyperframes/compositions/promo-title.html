@@ -1,0 +1,56 @@
+<div data-composition-id="promo-title" data-width="1920" data-height="1080">
+
+  <!-- Background texture -->
+  <div style="position:absolute;inset:0;background-color:#F5EDE0;"></div>
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 70% 40%, rgba(107,39,55,0.06) 0%, transparent 60%);"></div>
+
+  <!-- Decorative line -->
+  <div class="deco-line" style="position:absolute;top:180px;left:160px;width:120px;height:3px;background-color:#6B2737;border-radius:2px;"></div>
+
+  <!-- Main content -->
+  <div style="width:100%;height:100%;padding:160px 160px;display:flex;flex-direction:column;justify-content:center;gap:20px;box-sizing:border-box;">
+
+    <!-- Pre-title -->
+    <p class="pre-title" style="font-family:'DM Sans',sans-serif;font-size:18px;font-weight:500;letter-spacing:4px;text-transform:uppercase;color:#8D6E63;margin:0;">Mediterranean Wine &amp; Beer</p>
+
+    <!-- Main title -->
+    <h1 class="main-title" style="font-family:'Playfair Display',serif;font-size:130px;font-weight:700;color:#3E2723;line-height:0.95;margin:0;">Attick<br>&amp; Keller</h1>
+
+    <!-- Subtitle -->
+    <p class="subtitle" style="font-family:'DM Sans',sans-serif;font-size:28px;font-weight:400;color:#6B2737;max-width:560px;line-height:1.4;margin:0;padding-top:12px;">Donde el vino del Mediterráneo se encuentra con la cerveza artesanal en el corazón de Bogotá</p>
+
+    <!-- Decorative divider -->
+    <div class="divider" style="width:80px;height:2px;background-color:#D4922A;margin-top:16px;border-radius:1px;"></div>
+
+    <!-- Location -->
+    <p class="location" style="font-family:'Caveat',cursive;font-size:24px;color:#5C7A4D;margin:0;">Bogotá, Colombia</p>
+  </div>
+
+  <style>
+    [data-composition-id="promo-title"] {
+      overflow: hidden;
+    }
+    .pre-title, .main-title, .subtitle, .divider, .location, .deco-line {
+      will-change: transform, opacity;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // Entrance animations — staggered spring feel
+    tl.from(".deco-line", { width: 0, opacity: 0, duration: 0.6, ease: "power3.out" }, 0.2);
+    tl.from(".pre-title", { y: 30, opacity: 0, duration: 0.5, ease: "power2.out" }, 0.4);
+    tl.from(".main-title", { y: 60, opacity: 0, duration: 0.8, ease: "power3.out" }, 0.6);
+    tl.from(".subtitle", { y: 40, opacity: 0, duration: 0.6, ease: "power2.out" }, 1.0);
+    tl.from(".divider", { width: 0, opacity: 0, duration: 0.5, ease: "power3.out" }, 1.3);
+    tl.from(".location", { y: 20, opacity: 0, duration: 0.5, ease: "power2.out" }, 1.5);
+
+    // Ambient motion — gentle float on title
+    tl.to(".main-title", { y: -4, duration: 3, ease: "sine.inOut", yoyo: true, repeat: 1 }, 2);
+
+    window.__timelines["promo-title"] = tl;
+  </script>
+</div>

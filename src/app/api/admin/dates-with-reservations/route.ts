@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const sb = getServiceClient()
   const url = new URL(request.url)
   const center = url.searchParams.get('center') || new Date().toISOString().split('T')[0]
-  const range = Math.min(parseInt(url.searchParams.get('range') || '7', 10), 30)
+  const range = Math.min(parseInt(url.searchParams.get('range') || '45', 10), 90)
 
   const centerDate = new Date(center + 'T00:00:00')
   const from = new Date(centerDate)
@@ -28,6 +28,12 @@ export async function GET(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const dates = [...new Set((data || []).map(r => r.date))]
-  return NextResponse.json({ dates })
+  // Count reservations per date
+  const days: Record<string, number> = {}
+  for (const r of (data || [])) {
+    days[r.date] = (days[r.date] || 0) + 1
+  }
+
+  const dates = Object.keys(days)
+  return NextResponse.json({ dates, days })
 }

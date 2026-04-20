@@ -50,11 +50,17 @@ export async function GET(request: NextRequest) {
   todayStats.cancelled = cancelledRes.count || 0
   todayStats.no_show = noShowRes.count || 0
 
-  const occupiedTableIds = new Set(
-    reservations
-      .filter(r => r.table_id && ['confirmed', 'pre_paid', 'seated'].includes(r.status))
-      .map(r => r.table_id)
-  )
+  // Build a map of table_id → party_size from occupied reservations
+  const occupiedTablePartySize = new Map<string, number>()
+  for (const r of reservations) {
+    if (r.table_id && ['confirmed', 'pre_paid', 'seated'].includes(r.status)) {
+      occupiedTablePartySize.set(r.table_id, r.party_size)
+    }
+  }
+
+  const occupiedTableIds = new Set(occupiedTablePartySize.keys())
+
+  const totalCapacity = allTables.reduce((s, t) => s + t.capacity, 0)
 
   const zoneMap = new Map<string, { zone_id: string; zone_name: string; total_tables: number; occupied_tables: number; capacity: number; occupied_capacity: number }>()
   for (const table of allTables) {
@@ -70,22 +76,26 @@ export async function GET(request: NextRequest) {
     z.capacity += table.capacity
     if (occupiedTableIds.has(table.id)) {
       z.occupied_tables++
-      z.occupied_capacity += table.capacity
+      // Use actual party_size instead of table max capacity
+      z.occupied_capacity += occupiedTablePartySize.get(table.id) || 0
     }
   }
 
-  const totalCapacity = allTables.reduce((s, t) => s + t.capacity, 0)
-  const occupiedCapacity = [...zoneMap.values()].reduce((s, z) => s + z.occupied_capacity, 0)
+  const totalOccupiedCapacity = [...zoneMap.values()].reduce((s, z) => s + z.occupied_capacity, 0)
+
+  const occupiedTables = occupiedTableIds.size
+  const totalTables = allTables.length
 
   return NextResponse.json({
     reservations,
     todayStats,
     occupancy: {
       totalCapacity,
-      occupiedCapacity,
-      utilizationPercent: totalCapacity > 0 ? Math.round((occupiedCapacity / totalCapacity) * 100) : 0,
-      totalTables: allTables.length,
-      occupiedTables: occupiedTableIds.size,
+      occupiedCapacity: totalOccupiedCapacity,
+      utilizationPercent: totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0,
+      capacityPercent: totalCapacity > 0 ? Math.round((totalOccupiedCapacity / totalCapacity) * 100) : 0,
+      totalTables,
+      occupiedTables,
       byZone: Array.from(zoneMap.values()),
     },
   })

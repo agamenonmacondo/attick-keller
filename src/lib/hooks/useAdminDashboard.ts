@@ -7,7 +7,7 @@ import { RESTAURANT_ID } from '@/lib/utils/constants'
 interface DashboardData {
   reservations: Array<Record<string, unknown>>
   todayStats: { total: number; pending: number; confirmed: number; seated: number; pre_paid: number; completed: number; cancelled: number; no_show: number; totalGuests: number; seatedGuests: number }
-  occupancy: { totalCapacity: number; occupiedCapacity: number; utilizationPercent: number; totalTables: number; occupiedTables: number; byZone: Array<Record<string, unknown>> }
+  occupancy: { totalCapacity: number; occupiedCapacity: number; utilizationPercent: number; capacityPercent: number; totalTables: number; occupiedTables: number; byZone: Array<Record<string, unknown>> }
 }
 
 export function useAdminDashboard(date: string) {

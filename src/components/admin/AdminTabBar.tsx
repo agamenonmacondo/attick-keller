@@ -1,15 +1,16 @@
 'use client'
 
 import { cn } from '@/lib/utils/cn'
-import { CalendarDots, Table, ChartBar, Users } from '@phosphor-icons/react'
+import { CalendarDots, Table, ChartBar, Users, ForkKnife } from '@phosphor-icons/react'
 
-export type AdminTab = 'reservas' | 'ocupacion' | 'metricas' | 'clientes'
+export type AdminTab = 'reservas' | 'ocupacion' | 'metricas' | 'clientes' | 'menu'
 
 const TABS: { key: AdminTab; label: string; icon: React.ReactNode }[] = [
   { key: 'reservas', label: 'Reservas', icon: <CalendarDots size={18} weight="regular" /> },
   { key: 'ocupacion', label: 'Ocupacion', icon: <Table size={18} weight="regular" /> },
   { key: 'metricas', label: 'Metricas', icon: <ChartBar size={18} weight="regular" /> },
   { key: 'clientes', label: 'Clientes', icon: <Users size={18} weight="regular" /> },
+  { key: 'menu', label: 'Menu', icon: <ForkKnife size={18} weight="regular" /> },
 ]
 
 interface AdminTabBarProps {

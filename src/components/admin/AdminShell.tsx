@@ -9,6 +9,7 @@ import { ReservationsPanel } from './reservations/ReservationsPanel'
 import { OccupancyPanel } from './occupancy/OccupancyPanel'
 import { MetricsPanel } from './metrics/MetricsPanel'
 import { CustomersPanel } from './customers/CustomersPanel'
+import { MenuPanel } from './menu/MenuPanel'
 import { Spinner } from '@phosphor-icons/react'
 
 export function AdminShell() {
@@ -51,6 +52,7 @@ export function AdminShell() {
         )}
         {activeTab === 'metricas' && <MetricsPanel />}
         {activeTab === 'clientes' && <CustomersPanel />}
+        {activeTab === 'menu' && <MenuPanel />}
       </main>
     </div>
   )

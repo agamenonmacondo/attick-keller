@@ -5,7 +5,7 @@ import { Plus } from '@phosphor-icons/react'
 import { useAdminDashboard } from '@/lib/hooks/useAdminDashboard'
 import { useAdminReservations } from '@/lib/hooks/useAdminReservations'
 import { useDatesWithReservations } from '@/lib/hooks/useDatesWithReservations'
-import { DateNavigator } from './DateNavigator'
+import { ReservationCalendar } from './ReservationCalendar'
 import { DayStatsRow } from './DayStatsRow'
 import { StatusFilter } from './StatusFilter'
 import { ReservationTimeline } from './ReservationTimeline'
@@ -39,7 +39,7 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
     loading: resLoading,
     refetch: resRefetch,
   } = useAdminReservations(selectedDate, filter)
-  const { dates: datesWithReservations } = useDatesWithReservations(selectedDate)
+  const { dates: datesWithReservations, days: reservationDays } = useDatesWithReservations(selectedDate)
 
   const handleStatusChange = useCallback(
     async (id: string, status: string) => {
@@ -122,10 +122,10 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
         </button>
       </div>
 
-      <DateNavigator
+      <ReservationCalendar
         selectedDate={selectedDate}
         onDateChange={onDateChange}
-        datesWithReservations={datesWithReservations}
+        days={reservationDays}
       />
 
       {dashData && <DayStatsRow stats={dashData.todayStats} />}

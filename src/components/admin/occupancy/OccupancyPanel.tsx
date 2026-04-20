@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react'
 import { useAdminOccupancy } from '@/lib/hooks/useAdminOccupancy'
 import { useAdminDashboard } from '@/lib/hooks/useAdminDashboard'
 import { useDatesWithReservations } from '@/lib/hooks/useDatesWithReservations'
-import { DateNavigator } from '../reservations/DateNavigator'
+import { ReservationCalendar } from '../reservations/ReservationCalendar'
 import { OccupancyGauge } from './OccupancyGauge'
 import { ZoneBreakdown } from './ZoneBreakdown'
 import { TableMap } from './TableMap'
@@ -26,7 +26,7 @@ interface OccupancyPanelProps {
 export function OccupancyPanel({ selectedDate, onDateChange }: OccupancyPanelProps) {
   const { data: dashData, loading: dashLoading, refetch: dashRefetch } = useAdminDashboard(selectedDate)
   const { data: occData, refetch: occRefetch } = useAdminOccupancy(selectedDate)
-  const { dates: datesWithReservations } = useDatesWithReservations(selectedDate)
+  const { dates: datesWithReservations, days: reservationDays } = useDatesWithReservations(selectedDate)
 
   // Derive unassigned reservations from dashboard data
   const unassignedReservations: UnassignedReservation[] = useMemo(() => {
@@ -91,14 +91,21 @@ export function OccupancyPanel({ selectedDate, onDateChange }: OccupancyPanelPro
     return <div className="py-16 flex items-center justify-center"><Spinner size={32} className="animate-spin text-[#8D6E63]" /></div>
   }
 
-  const occupancy = dashData?.occupancy || { totalCapacity: 0, occupiedCapacity: 0, utilizationPercent: 0, totalTables: 0, occupiedTables: 0, byZone: [] }
+  const occupancy = dashData?.occupancy || { totalCapacity: 0, occupiedCapacity: 0, utilizationPercent: 0, capacityPercent: 0, totalTables: 0, occupiedTables: 0, byZone: [] as Array<Record<string, unknown>> }
 
   return (
     <>
-      <DateNavigator selectedDate={selectedDate} onDateChange={onDateChange} datesWithReservations={datesWithReservations} />
+      <ReservationCalendar selectedDate={selectedDate} onDateChange={onDateChange} days={reservationDays} />
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="md:col-span-1">
-          <OccupancyGauge percent={occupancy.utilizationPercent} occupied={occupancy.occupiedTables} total={occupancy.totalTables} />
+          <OccupancyGauge
+            percent={occupancy.utilizationPercent}
+            capacityPercent={occupancy.capacityPercent}
+            occupied={occupancy.occupiedTables}
+            total={occupancy.totalTables}
+            guestsSeated={occupancy.occupiedCapacity}
+            totalCapacity={occupancy.totalCapacity}
+          />
         </div>
         <div className="md:col-span-3">
           <ZoneBreakdown zones={occupancy.byZone as Array<Record<string, unknown>>} />

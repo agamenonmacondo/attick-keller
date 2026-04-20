@@ -5,8 +5,11 @@ import { AnimatedCard } from '../shared/AnimatedCard'
 
 interface OccupancyGaugeProps {
   percent: number
+  capacityPercent: number
   occupied: number
   total: number
+  guestsSeated: number
+  totalCapacity: number
 }
 
 const RADIUS = 60
@@ -14,7 +17,7 @@ const STROKE = 10
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 const ARC_LENGTH = CIRCUMFERENCE * 0.75
 
-export function OccupancyGauge({ percent, occupied, total }: OccupancyGaugeProps) {
+export function OccupancyGauge({ percent, capacityPercent, occupied, total, guestsSeated, totalCapacity }: OccupancyGaugeProps) {
   const circleRef = useRef<SVGCircleElement>(null)
 
   useEffect(() => {
@@ -40,6 +43,7 @@ export function OccupancyGauge({ percent, occupied, total }: OccupancyGaugeProps
           </div>
         </div>
         <p className="text-xs text-[#8D6E63] mt-2">{occupied} de {total} mesas ocupadas</p>
+        <p className="text-[10px] text-[#BCAAA4] mt-0.5">{guestsSeated}/{totalCapacity} asientos · {capacityPercent}% capacidad</p>
       </div>
     </AnimatedCard>
   )

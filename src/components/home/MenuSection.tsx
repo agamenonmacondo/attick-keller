@@ -58,7 +58,6 @@ export default function MenuSection() {
     setActive(prev => prev === id ? null : id)
   }
 
-  // Scroll to items panel after opening
   useEffect(() => {
     if (active && panelRef.current) {
       const timer = setTimeout(() => {
@@ -70,16 +69,16 @@ export default function MenuSection() {
 
   if (loading) {
     return (
-      <section className="py-20 px-6 bg-[var(--ak-cal)]">
+      <section className="py-20 px-6 bg-ak-cal">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10 space-y-3">
-            <div className="h-7 w-20 mx-auto rounded bg-[#D7CCC8]/60 animate-pulse" />
-            <div className="h-12 w-36 mx-auto rounded bg-[#D7CCC8]/60 animate-pulse" />
-            <div className="h-px w-24 mx-auto bg-[var(--ak-dorado)]/30" />
+            <div className="h-7 w-20 mx-auto rounded bg-ak-dorado/20 animate-pulse" />
+            <div className="h-12 w-36 mx-auto rounded bg-ak-madera/10 animate-pulse" />
+            <div className="h-px w-24 mx-auto bg-ak-dorado/30" />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[...Array(7)].map((_, i) => (
-              <div key={i} className="h-28 rounded-xl bg-[#D7CCC8]/40 animate-pulse" />
+              <div key={i} className="h-28 rounded-xl bg-ak-madera/5 animate-pulse" />
             ))}
           </div>
         </div>
@@ -92,9 +91,9 @@ export default function MenuSection() {
 
   return (
     <>
-      <div className="h-16 bg-gradient-to-b from-[#3E2723] via-[#4E342E] to-[var(--ak-cal)]" />
+      <div className="h-16 bg-gradient-to-b from-ak-madera via-ak-madera/80 to-ak-cal" />
 
-      <section ref={sectionRef} id="menu" className="bg-[var(--ak-cal)] py-12 md:py-16">
+      <section ref={sectionRef} id="menu" className="bg-ak-cal py-12 md:py-16">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
           {/* Header */}
           <div className="text-center mb-8 md:mb-12">
@@ -102,7 +101,7 @@ export default function MenuSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ ...spring }}
-              className="font-['Caveat'] text-[var(--ak-ambar)] text-xl md:text-2xl mb-1"
+              className="font-accent text-ak-ambar text-xl md:text-2xl mb-1"
             >
               Nuestro
             </motion.p>
@@ -110,7 +109,7 @@ export default function MenuSection() {
               initial={{ opacity: 0, y: 40 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ ...spring, delay: 0.1 }}
-              className="font-['Playfair_Display'] text-4xl md:text-5xl font-bold text-[var(--ak-madera)] tracking-tight leading-none mb-3"
+              className="font-display text-4xl md:text-5xl font-bold text-ak-madera tracking-tight leading-none mb-3"
             >
               Menú
             </motion.h2>
@@ -118,7 +117,7 @@ export default function MenuSection() {
               initial={{ scaleX: 0 }}
               animate={isInView ? { scaleX: 1 } : {}}
               transition={{ duration: 0.8, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
-              className="h-px w-24 mx-auto bg-gradient-to-r from-transparent via-[var(--ak-dorado)] to-transparent"
+              className="h-px w-24 mx-auto bg-gradient-to-r from-transparent via-ak-dorado to-transparent"
             />
           </div>
 
@@ -138,28 +137,28 @@ export default function MenuSection() {
                   key={cat.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={isInView ? { opacity: 1, scale: 1 } : {}}
-                  transition={{ ...spring, delay: 0.3 + i * 0.05 }}
+                  transition={{ ...spring, delay: 0.3 + i * 0.06 }}
                   onClick={() => handleCategoryClick(cat.id)}
                   className={cn(
-                    'group relative rounded-xl px-5 py-6 md:py-8 text-left transition-all duration-300',
-                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ak-dorado)]',
+                    'group relative rounded-xl px-5 py-5 md:py-6 text-left transition-all duration-300 cursor-pointer',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-ak-dorado',
                     isActive
-                      ? 'bg-[var(--ak-borgona)] text-[var(--ak-cal)] shadow-lg shadow-[#6B2737]/20 ring-1 ring-[var(--ak-borgona)]'
-                      : 'bg-white/60 text-[var(--ak-madera)] border border-[#8D6E63]/30 shadow-sm hover:border-[var(--ak-borgona)]/40 hover:bg-white/80 hover:shadow-md active:scale-[0.97]'
+                      ? 'bg-ak-borgona shadow-lg shadow-ak-borgona/25 ring-1 ring-ak-borgona'
+                      : 'bg-white border border-ak-madera/10 shadow-sm hover:border-ak-borgona/30 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97]'
                   )}
                 >
                   {/* Name */}
                   <span className={cn(
-                    'font-["Playfair_Display"] font-bold text-lg md:text-xl leading-tight block transition-colors duration-300',
-                    isActive ? 'text-[var(--ak-cal)]' : 'text-[var(--ak-madera)] group-hover:text-[var(--ak-borgona)]'
+                    'font-display font-bold text-lg md:text-xl leading-tight block transition-colors duration-300',
+                    isActive ? 'text-ak-cal' : 'text-ak-madera group-hover:text-ak-borgona'
                   )}>
                     {cat.name}
                   </span>
 
-                  {/* Count & hint */}
+                  {/* Count */}
                   <span className={cn(
-                    'block mt-1.5 text-xs tracking-widest uppercase font-["DM_Sans"] transition-colors duration-300',
-                    isActive ? 'text-[var(--ak-dorado)]' : 'text-[#8D6E63]/50 group-hover:text-[#8D6E63]/80'
+                    'block mt-1 text-xs tracking-widest uppercase font-body transition-colors duration-300',
+                    isActive ? 'text-ak-dorado' : 'text-ak-madera/40 group-hover:text-ak-madera/70'
                   )}>
                     {count} {count === 1 ? 'plato' : 'platos'}
                   </span>
@@ -167,7 +166,7 @@ export default function MenuSection() {
                   {/* Gold accent bottom */}
                   <div className={cn(
                     'absolute bottom-0 left-4 right-4 h-0.5 rounded-full transition-all duration-300',
-                    isActive ? 'bg-[var(--ak-dorado)]' : 'bg-transparent group-hover:bg-[var(--ak-dorado)]/50'
+                    isActive ? 'bg-ak-dorado' : 'scale-x-0 group-hover:scale-x-100 bg-ak-dorado/60'
                   )} />
                 </motion.button>
               )
@@ -180,10 +179,10 @@ export default function MenuSection() {
               <motion.div
                 key={active}
                 ref={panelRef}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ ...spring }}
                 className="mt-8 md:mt-10"
               >
                 {/* Category label */}
@@ -193,11 +192,11 @@ export default function MenuSection() {
                   transition={{ ...spring }}
                   className="flex items-center gap-4 mb-6"
                 >
-                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[var(--ak-dorado)]/40 to-transparent" />
-                  <h3 className="font-['Playfair_Display'] text-xl md:text-2xl font-bold text-[var(--ak-madera)]">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-ak-dorado/40 to-transparent" />
+                  <h3 className="font-display text-xl md:text-2xl font-bold text-ak-madera">
                     {activeCategory.name}
                   </h3>
-                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[var(--ak-dorado)]/40 to-transparent" />
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-ak-dorado/40 to-transparent" />
                 </motion.div>
 
                 {/* Items */}
@@ -208,18 +207,18 @@ export default function MenuSection() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ ...spring, delay: 0.05 + i * 0.03 }}
-                      className="group py-3.5 border-b border-[#8D6E63]/10 hover:border-[var(--ak-dorado)]/30 transition-colors duration-300"
+                      className="group py-3.5 border-b border-ak-madera/8 hover:border-ak-dorado/30 transition-colors duration-300"
                     >
                       <div className="flex items-baseline justify-between gap-3">
-                        <h4 className="font-['Playfair_Display'] text-[var(--ak-madera)] text-base md:text-[17px] font-semibold group-hover:text-[var(--ak-borgona)] transition-colors duration-300">
+                        <h4 className="font-display text-ak-madera text-base md:text-[17px] font-semibold group-hover:text-ak-borgona transition-colors duration-300">
                           {item.name}
                         </h4>
-                        <span className="font-['DM_Sans'] text-[var(--ak-borgona)] font-bold text-sm md:text-base whitespace-nowrap shrink-0">
+                        <span className="font-body text-ak-borgona font-bold text-sm md:text-base whitespace-nowrap shrink-0">
                           {formatPrice(item.price)}
                         </span>
                       </div>
                       {item.description && (
-                        <p className="text-[#8D6E63]/70 text-sm mt-1 font-['DM_Sans'] italic leading-relaxed">
+                        <p className="text-ak-madera/55 text-sm mt-1 font-body italic leading-relaxed">
                           {item.description}
                         </p>
                       )}
@@ -236,7 +235,7 @@ export default function MenuSection() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="text-center text-[#8D6E63]/40 py-6 font-['Caveat'] text-lg"
+              className="text-center text-ak-madera/30 py-6 font-accent text-lg"
             >
               Toca una categoría para ver los platos
             </motion.p>

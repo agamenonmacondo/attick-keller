@@ -1,0 +1,30 @@
+{
+  "name": "attick-keller-promo",
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "duration": 18,
+  "compositions": [
+    {
+      "id": "promo-title",
+      "src": "compositions/promo-title.html",
+      "start": 0,
+      "duration": 6,
+      "track": 1
+    },
+    {
+      "id": "menu-showcase",
+      "src": "compositions/menu-showcase.html",
+      "start": 5.4,
+      "duration": 6,
+      "track": 2
+    },
+    {
+      "id": "reservation-cta",
+      "src": "compositions/reservation-cta.html",
+      "start": 11.4,
+      "duration": 6,
+      "track": 3
+    }
+  ]
+}

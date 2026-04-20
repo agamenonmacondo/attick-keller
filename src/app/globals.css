@@ -1,12 +1,20 @@
 @import "tailwindcss";
 
-:root {
-  --ak-madera: #3E2723;
-  --ak-borgona: #6B2737;
-  --ak-cal: #F5EDE0;
-  --ak-oliva: #5C7A4D;
-  --ak-ambar: #D4922A;
-  --ak-dorado: #C9A94E;
+@theme inline {
+  /* Colors — Rústico Editorial Moderno */
+  --color-ak-madera: #3E2723;
+  --color-ak-borgona: #6B2737;
+  --color-ak-cal: #F5EDE0;
+  --color-ak-oliva: #5C7A4D;
+  --color-ak-ambar: #D4922A;
+  --color-ak-dorado: #C9A94E;
+  --color-ak-carbon: #1E1E1E;
+  --color-ak-ladrillo: #A0522D;
+
+  /* Fonts */
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-accent: 'Caveat', cursive;
 }
 
 @keyframes float-orb-1 {
@@ -48,6 +56,6 @@
 .animate-fade-up { animation: fade-up 0.8s ease-out forwards; }
 
 body {
-  background-color: var(--ak-cal);
-  color: #1E1E1E;
+  background-color: var(--color-ak-cal);
+  color: var(--color-ak-carbon);
 }

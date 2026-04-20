@@ -64,16 +64,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // No session = email confirmation required. Auto-confirm via API.
     try {
-      await fetch('/api/auth', {
+      const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, name: fullName }),
       })
-      // Now try to sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-      if (!signInError) return { error: null }
+      if (res.ok) {
+        // Auto-confirm succeeded, try login
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        if (!signInError) return { error: null }
+      }
+      // Retry after short delay (user might not be in listUsers yet)
+      await new Promise(r => setTimeout(r, 2000))
+      const res2 = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name: fullName }),
+      })
+      if (res2.ok) {
+        const { error: signInError2 } = await supabase.auth.signInWithPassword({ email, password })
+        if (!signInError2) return { error: null }
+      }
     } catch {
-      // Auto-confirm failed, user needs to check email
+      // Auto-confirm failed
     }
 
     return { error: null }

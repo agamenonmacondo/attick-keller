@@ -19,8 +19,27 @@ export async function POST(request: NextRequest) {
 
   const existingUser = users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
 
-  if (existingUser && !existingUser.email_confirmed_at) {
-    await sb.auth.admin.updateUserById(existingUser.id, { email_confirm: true })
+  if (existingUser) {
+    // Auto-confirm if not confirmed
+    if (!existingUser.email_confirmed_at) {
+      await sb.auth.admin.updateUserById(existingUser.id, { email_confirm: true })
+    }
+
+    // Create customer record if missing
+    const { data: existingCustomer } = await sb
+      .from('customers')
+      .select('id')
+      .eq('auth_user_id', existingUser.id)
+      .single()
+
+    if (!existingCustomer) {
+      await sb.from('customers').insert({
+        auth_user_id: existingUser.id,
+        email: existingUser.email,
+        full_name: name || existingUser.user_metadata?.full_name || existingUser.email?.split('@')[0],
+        restaurant_id: 'a0000000-0000-0000-0000-000000000001',
+      })
+    }
   }
 
   // Send welcome email

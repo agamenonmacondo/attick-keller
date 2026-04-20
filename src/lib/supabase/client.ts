@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables')
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
@@ -12,8 +16,7 @@ export const auth = {
     const { data, error } = await supabase.auth.signInWithOtp({
       phone,
       options: {
-        channel: 'sms',
-        data: { channel }
+        channel,
       }
     })
     return { data, error }
@@ -50,11 +53,11 @@ export const auth = {
 
   // Google OAuth
   async signInWithGoogle() {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://web-rosy-nine-64.vercel.app'
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: origin
+        redirectTo: origin ? `${origin}/auth/callback` : undefined,
       }
     })
     return { data, error }
@@ -62,11 +65,11 @@ export const auth = {
 
   // Facebook OAuth
   async signInWithFacebook() {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://web-rosy-nine-64.vercel.app'
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
       options: {
-        redirectTo: origin
+        redirectTo: origin ? `${origin}/auth/callback` : undefined,
       }
     })
     return { data, error }
@@ -91,7 +94,7 @@ export const auth = {
   },
 
   // Listen to auth changes
-  onAuthStateChange(callback: (event: string, session: any) => void) {
+  onAuthStateChange(callback: (event: string, session: unknown) => void) {
     return supabase.auth.onAuthStateChange(callback)
   }
 }
@@ -112,7 +115,7 @@ export const reservations = {
       .from('reservations')
       .select('*')
       .eq('customer_id', customerId)
-      .order('reservation_date', { ascending: false })
+      .order('date', { ascending: false })
     return { data, error }
   }
 }

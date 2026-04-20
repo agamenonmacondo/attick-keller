@@ -70,8 +70,10 @@ const slideVariants = {
 export default function ReservationForm() {
   const [step, setStep] = useState(0);
   const [zones, setZones] = useState<{id: string; name: string}[]>([]);
+  const [zonesLoading, setZonesLoading] = useState(true);
   const [direction, setDirection] = useState(1);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -92,7 +94,7 @@ export default function ReservationForm() {
   // Require auth to reserve
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/auth/login');
+      router.push('/auth/login?redirect=/reservar');
     }
   }, [user, loading, router]);
 
@@ -110,9 +112,17 @@ export default function ReservationForm() {
 
   // Load zones from API
   useEffect(() => {
-    fetch('/api/zones').then(r => r.json()).then(data => {
+    setZonesLoading(true)
+    fetch('/api/zones').then(r => {
+      if (!r.ok) throw new Error('Failed to load zones');
+      return r.json();
+    }).then(data => {
       if (Array.isArray(data)) setZones(data);
-    }).catch(() => {});
+    }).catch(() => {
+      setSubmitError('No se pudieron cargar las zonas. Intenta recargar la página.');
+    }).finally(() => {
+      setZonesLoading(false)
+    });
   }, []);
 
   // Show loading while checking auth
@@ -155,13 +165,13 @@ export default function ReservationForm() {
   const submitReservation = async () => {
     const d = form.getValues();
     setSubmitting(true);
+    setSubmitError(null);
 
     try {
       const r = await fetch('/api/reservations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user!.id,
           name: d.name,
           phone: d.phone,
           email: d.email,
@@ -178,10 +188,10 @@ export default function ReservationForm() {
       if (result.success) {
         setSubmitted(true);
       } else {
-        console.error('Reservation failed:', result.error);
+        setSubmitError(result.error || 'Error al crear la reserva. Intenta de nuevo.');
       }
-    } catch (err) {
-      console.error('Reservation error:', err);
+    } catch {
+      setSubmitError('Error de conexión. Intenta de nuevo.');
     } finally {
       setSubmitting(false);
     }
@@ -252,6 +262,7 @@ export default function ReservationForm() {
                 <input
                   type="date"
                   {...form.register("date")}
+                  min={new Date().toISOString().split('T')[0]}
                   className="w-full rounded-lg border border-ak-charcoal/10 bg-white px-4 py-3 text-ak-charcoal outline-none transition-colors focus:border-ak-wine"
                 />
                 {form.formState.errors.date && (
@@ -350,23 +361,32 @@ export default function ReservationForm() {
                 <label className="mb-3 block text-sm font-medium text-ak-charcoal">
                   Zona
                 </label>
-                <div className="flex gap-3">
-                  {zones.map((z) => (
-                    <button
-                      key={z.id}
-                      type="button"
-                      onClick={() => form.setValue("zone", z.id)}
-                      className={cn(
-                        "button-press flex-1 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
-                        form.watch("zone") === z.id
-                          ? "bg-ak-wine text-ak-cream"
-                          : "bg-ak-cream-light text-ak-charcoal/70 hover:bg-ak-wine/10"
-                      )}
-                    >
-                      {z.name}
-                    </button>
-                  ))}
-                </div>
+                {zonesLoading ? (
+                  <div className="flex items-center gap-2 text-ak-charcoal/40">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-ak-wine border-t-transparent" />
+                    <span className="text-sm">Cargando zonas...</span>
+                  </div>
+                ) : zones.length === 0 ? (
+                  <p className="text-sm text-red-600">No se pudieron cargar las zonas.</p>
+                ) : (
+                  <div className="flex gap-3">
+                    {zones.map((z) => (
+                      <button
+                        key={z.id}
+                        type="button"
+                        onClick={() => form.setValue("zone", z.id)}
+                        className={cn(
+                          "button-press flex-1 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
+                          form.watch("zone") === z.id
+                            ? "bg-ak-wine text-ak-cream"
+                            : "bg-ak-cream-light text-ak-charcoal/70 hover:bg-ak-wine/10"
+                        )}
+                      >
+                        {z.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {form.formState.errors.zone && (
                   <p className="mt-2 text-sm text-red-600">
                     {form.formState.errors.zone.message}
@@ -529,6 +549,12 @@ export default function ReservationForm() {
               <p className="text-center text-sm text-ak-charcoal/60">
                 Al confirmar, guardaremos tu reserva y te redirigiremos a WhatsApp.
               </p>
+
+              {submitError && (
+                <p className="text-center text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2">
+                  {submitError}
+                </p>
+              )}
 
               {submitted ? (
                 <div className="flex flex-col items-center gap-3 py-4">

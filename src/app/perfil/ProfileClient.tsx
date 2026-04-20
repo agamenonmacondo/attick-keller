@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/lib/auth/auth-provider'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { User, Calendar, Clock, MapPin, SignOut, ArrowRight } from '@phosphor-icons/react'
 
@@ -10,10 +10,11 @@ interface Reservation {
   id: string
   date: string
   time_start: string
+  time_end: string
   party_size: number
   status: string
   special_requests: string | null
-  table_zones?: { name: string }[] | null
+  tables?: { name: string }[] | null
 }
 
 export default function ProfileClient() {
@@ -21,6 +22,7 @@ export default function ProfileClient() {
   const router = useRouter()
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loadingReservations, setLoadingReservations] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -28,15 +30,7 @@ export default function ProfileClient() {
     }
   }, [user, loading, router])
 
-  const [isAdmin, setIsAdmin] = useState(false)
-
-  useEffect(() => {
-    if (!user) return
-    fetchReservations()
-    checkAdmin()
-  }, [user])
-
-  const checkAdmin = async () => {
+  const checkAdmin = useCallback(async () => {
     if (!user) return
     const { data } = await supabase
       .from('user_roles')
@@ -47,43 +41,44 @@ export default function ProfileClient() {
     if (data && (data.role === 'super_admin' || data.role === 'store_admin')) {
       setIsAdmin(true)
     }
-  }
+  }, [user])
 
-  const ensureCustomer = async (): Promise<string | null> => {
-    if (!user) return null
-    
+  const fetchReservations = useCallback(async () => {
+    if (!user) return
+    setLoadingReservations(true)
+
     // Try to find existing customer
     const { data: existing } = await supabase
       .from('customers')
       .select('id')
       .eq('auth_user_id', user.id)
       .single()
-    
-    if (existing) return existing.id
-    
-    // Customer will be created by API on first reservation
-    return null
-  }
 
-  const fetchReservations = async () => {
-    if (!user) return
-    setLoadingReservations(true)
-    
-    const customerId = await ensureCustomer()
-    if (!customerId) {
+    if (!existing) {
+      // No customer record yet - user signed up but hasn't made a reservation
+      setReservations([])
       setLoadingReservations(false)
       return
     }
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('reservations')
-      .select('id, date, time_start, party_size, status, special_requests, table_zones(name)')
-      .eq('customer_id', customerId)
+      .select('id, date, time_start, time_end, party_size, status, special_requests, notes, tables(name)')
+      .eq('customer_id', existing.id)
       .order('date', { ascending: false })
 
+    if (error) {
+      console.error('Failed to fetch reservations:', error.message)
+    }
     setReservations(data || [])
     setLoadingReservations(false)
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return
+    fetchReservations()
+    checkAdmin()
+  }, [user, fetchReservations, checkAdmin])
 
   const handleSignOut = async () => {
     await signOut()
@@ -168,7 +163,7 @@ export default function ProfileClient() {
         {/* Reservations */}
         <div className="mb-6">
           <h2 className="font-['Playfair_Display'] text-xl font-bold text-[#3E2723] mb-4">Mis Reservas</h2>
-          
+
           {loadingReservations ? (
             <div className="animate-pulse space-y-3">
               {[1, 2].map(i => (
@@ -204,15 +199,15 @@ export default function ProfileClient() {
                   <div className="flex items-center gap-4 text-sm text-[#3E2723]/60 font-['DM_Sans']">
                     <span className="flex items-center gap-1">
                       <Clock size={14} />
-                      {res.time_start?.slice(0, 5)}
+                      {res.time_start?.slice(0, 5)} - {res.time_end?.slice(0, 5)}
                     </span>
                     <span>{res.party_size} personas</span>
-                    {res.table_zones?.[0]?.name && (
+                    {(res.tables?.[0]?.name) ? (
                       <span className="flex items-center gap-1">
                         <MapPin size={14} />
-                        {res.table_zones[0].name}
+                        {res.tables[0].name}
                       </span>
-                    )}
+                    ) : null}
                   </div>
                   {res.special_requests && (
                     <p className="text-xs text-[#3E2723]/40 mt-2 font-['DM_Sans'] italic">

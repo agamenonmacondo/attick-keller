@@ -2,9 +2,9 @@
 
 import { useAuth } from '@/lib/auth/auth-provider'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { Calendar, Users, Clock, SignOut, CheckCircle, XCircle, Warning } from '@phosphor-icons/react'
+import { Calendar, Users, Clock, SignOut, CheckCircle, XCircle, Warning, MapPin } from '@phosphor-icons/react'
 
 interface Reservation {
   id: string
@@ -14,6 +14,9 @@ interface Reservation {
   party_size: number
   status: string
   special_requests: string | null
+  notes: string | null
+  table_id: string | null
+  tables?: { name: string }[] | null
   customers?: { full_name: string; phone: string; email: string }[] | null
 }
 
@@ -25,6 +28,7 @@ export default function AdminClient() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [filter, setFilter] = useState<string>('all')
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -32,18 +36,20 @@ export default function AdminClient() {
     }
   }, [user, loading, router])
 
-  useEffect(() => {
+  const checkAdmin = useCallback(async () => {
     if (!user) return
-    checkAdmin()
-  }, [user])
-
-  const checkAdmin = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('auth_user_id', user!.id)
+      .eq('auth_user_id', user.id)
       .eq('is_active', true)
       .single()
+
+    if (error) {
+      setIsAdmin(false)
+      setCheckingRole(false)
+      return
+    }
 
     if (data && (data.role === 'super_admin' || data.role === 'store_admin')) {
       setIsAdmin(true)
@@ -52,22 +58,29 @@ export default function AdminClient() {
       setIsAdmin(false)
     }
     setCheckingRole(false)
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return
+    checkAdmin()
+  }, [user, checkAdmin])
 
   const fetchReservations = async () => {
     setLoadingData(true)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('reservations')
-      .select('id, date, time_start, time_end, party_size, status, special_requests, customers(full_name, phone, email)')
+      .select('id, date, time_start, time_end, party_size, status, special_requests, notes, table_id, tables(name), customers(full_name, phone, email)')
       .order('date', { ascending: false })
 
+    if (error) {
+      console.error('Failed to fetch reservations:', error.message)
+    }
     setReservations(data || [])
     setLoadingData(false)
   }
 
   const updateStatus = async (id: string, newStatus: string) => {
-    const SRK = process.env.NEXT_PUBLIC_SUPABASE_URL // we need server action
-    // Use API route
+    setUpdatingId(id)
     const r = await fetch('/api/reservations', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -76,7 +89,16 @@ export default function AdminClient() {
 
     if (r.ok) {
       setReservations(prev => prev.map(res => res.id === id ? { ...res, status: newStatus } : res))
+    } else {
+      const err = await r.json().catch(() => ({ error: 'Update failed' }))
+      alert(err.error || 'Error al actualizar el estado')
     }
+    setUpdatingId(null)
+  }
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/')
   }
 
   if (loading || checkingRole) {
@@ -133,7 +155,7 @@ export default function AdminClient() {
             <h1 className="font-['Playfair_Display'] text-3xl font-bold text-[#3E2723]">Admin Panel</h1>
             <p className="text-[#3E2723]/60 font-['DM_Sans']">Attick & Keller</p>
           </div>
-          <button onClick={signOut} className="flex items-center gap-2 text-[#3E2723]/60 hover:text-[#3E2723]">
+          <button onClick={handleSignOut} className="flex items-center gap-2 text-[#3E2723]/60 hover:text-[#3E2723]">
             <SignOut size={18} /> Salir
           </button>
         </div>
@@ -198,6 +220,9 @@ export default function AdminClient() {
                 <div className="flex flex-wrap gap-4 text-sm text-[#3E2723]/60 font-['DM_Sans'] mb-3">
                   <span className="flex items-center gap-1"><Clock size={14} /> {res.time_start?.slice(0,5)} - {res.time_end?.slice(0,5)}</span>
                   <span className="flex items-center gap-1"><Users size={14} /> {res.party_size} personas</span>
+                  {res.tables?.[0]?.name ? (
+                    <span className="flex items-center gap-1"><MapPin size={14} /> {res.tables[0].name}</span>
+                  ) : null}
                 </div>
 
                 {res.customers && res.customers[0] && (
@@ -205,8 +230,12 @@ export default function AdminClient() {
                     <span className="font-semibold">{res.customers[0].full_name}</span>
                     {' · '}
                     <span>{res.customers[0].phone}</span>
-                    {' · '}
-                    <span>{res.customers[0].email}</span>
+                    {res.customers[0].email && (
+                      <>
+                        {' · '}
+                        <span>{res.customers[0].email}</span>
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -219,15 +248,35 @@ export default function AdminClient() {
                   <div className="flex gap-2 mt-2">
                     <button
                       onClick={() => updateStatus(res.id, 'confirmed')}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#5C7A4D]/10 text-[#5C7A4D] text-sm font-semibold font-['DM_Sans'] hover:bg-[#5C7A4D]/20 transition-colors"
+                      disabled={updatingId === res.id}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#5C7A4D]/10 text-[#5C7A4D] text-sm font-semibold font-['DM_Sans'] hover:bg-[#5C7A4D]/20 transition-colors disabled:opacity-50"
                     >
-                      <CheckCircle size={14} /> Confirmar
+                      {updatingId === res.id ? <div className="h-3 w-3 animate-spin rounded-full border border-[#5C7A4D] border-t-transparent" /> : <CheckCircle size={14} />}
+                      Confirmar
                     </button>
                     <button
                       onClick={() => updateStatus(res.id, 'cancelled')}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-100 text-red-700 text-sm font-semibold font-['DM_Sans'] hover:bg-red-200 transition-colors"
+                      disabled={updatingId === res.id}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-100 text-red-700 text-sm font-semibold font-['DM_Sans'] hover:bg-red-200 transition-colors disabled:opacity-50"
                     >
                       <XCircle size={14} /> Cancelar
+                    </button>
+                  </div>
+                )}
+
+                {res.status === 'confirmed' && (
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => updateStatus(res.id, 'completed')}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#3E2723]/10 text-[#3E2723] text-sm font-semibold font-['DM_Sans'] hover:bg-[#3E2723]/20 transition-colors"
+                    >
+                      <CheckCircle size={14} /> Marcar completada
+                    </button>
+                    <button
+                      onClick={() => updateStatus(res.id, 'no_show')}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-sm font-semibold font-['DM_Sans'] hover:bg-gray-200 transition-colors"
+                    >
+                      <XCircle size={14} /> No asistió
                     </button>
                   </div>
                 )}

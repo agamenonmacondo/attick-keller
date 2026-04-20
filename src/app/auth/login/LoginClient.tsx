@@ -1,14 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth/auth-provider'
 import { Phone, Envelope, ArrowLeft, Check } from '@phosphor-icons/react'
 
 type Step = 'method' | 'phone-input' | 'phone-verify' | 'email-input' | 'success'
 type EmailMode = 'login' | 'signUp'
 
+function RedirectAfterLogin({ fallback }: { fallback: string }) {
+  const router = useRouter()
+  useEffect(() => {
+    const timer = setTimeout(() => router.push(fallback), 1500)
+    return () => clearTimeout(timer)
+  }, [router, fallback])
+  return null
+}
+
 export default function LoginClient() {
   const { signInWithPhone, verifyOTP, signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithFacebook } = useAuth()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [step, setStep] = useState<Step>('method')
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
@@ -70,7 +82,7 @@ export default function LoginClient() {
             Attick &amp; Keller
           </h1>
           <p className="mt-2 text-sm tracking-widest uppercase" style={{ color: amber }}>
-            Wine and Beer Playground
+            Bogotá
           </p>
         </div>
 
@@ -96,30 +108,13 @@ export default function LoginClient() {
             </button>
 
             <button
-              onClick={() => {
-                setEmailMode('login');
-                setStep('email-input');
-              }}
+              onClick={() => setStep('phone-input')}
               className="w-full flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
-              style={{ borderColor: charcoal, color: charcoal }}
-            >
-              <Envelope size={24} />
+              style={{ borderColor: '#25D366', color: '#25D366' }}
+                       >
+              <Phone size={24} weight="fill" />
               <div className="text-left">
-                <div className="font-medium">Iniciar sesión con correo</div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => {
-                setEmailMode('signUp');
-                setStep('email-input');
-              }}
-              className="w-full flex items-center gap-3 px-6 py-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
-              style={{ borderColor: wine, color: wine }}
-            >
-              <Envelope size={24} />
-              <div className="text-left">
-                <div className="font-medium">Crear cuenta con correo</div>
+                <div className="font-medium">Ingresar con WhatsApp</div>
               </div>
             </button>
           </div>
@@ -285,6 +280,11 @@ export default function LoginClient() {
             <h2 className="text-xl font-medium" style={{ color: charcoal }}>¡Bienvenido!</h2>
             <p className="text-sm" style={{ color: '#8B5E3C' }}>Redirigiendo...</p>
           </div>
+        )}
+
+        {/* Auto-redirect after successful login */}
+        {step === 'success' && (
+          <RedirectAfterLogin fallback={searchParams.get('redirect') || '/perfil'} />
         )}
 
         <div className="mt-8 text-center text-xs" style={{ color: '#8B5E3C' }}>

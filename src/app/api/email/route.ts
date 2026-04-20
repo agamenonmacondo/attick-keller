@@ -72,6 +72,17 @@ export async function POST(request: NextRequest) {
 function buildEmail(type: string, data: Record<string, any>): string {
   const { name, date, time, party_size, zone, special_requests } = data
   const dateFormatted = date ? new Date(date + 'T00:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' }) : ''
+
+  // HTML-escape user-provided values to prevent XSS in email
+  const esc = (s: string | undefined | null) => {
+    if (!s) return ''
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  }
+  const safeName = esc(name)
+  const safeZone = esc(zone)
+  const safeRequests = esc(special_requests)
+  const safeTime = esc(time)
+  const safePartySize = esc(String(party_size))
   
   const colors = {
     bg: '#F5EDE0',
@@ -121,7 +132,7 @@ function buildEmail(type: string, data: Record<string, any>): string {
     <tr><td style="background:${colors.card};border-radius:16px;padding:32px;border:2px solid ${colors.text}0D">
       <h2 style="font-family:'Playfair Display',serif;color:${info.color};font-size:20px;margin:0 0 8px">${info.title}</h2>
       <p style="color:${colors.muted};font-size:14px;margin:0 0 24px;line-height:1.6">${info.message}</p>
-      ${name ? `<p style="color:${colors.text};font-size:16px;font-weight:600;margin:0 0 16px">Hola, ${name}</p>` : ''}
+      ${safeName ? `<p style="color:${colors.text};font-size:16px;font-weight:600;margin:0 0 16px">Hola, ${safeName}</p>` : ''}
       <table width="100%" cellpadding="0" cellspacing="0" style="background:${colors.bg};border-radius:12px;overflow:hidden">
         <tr><td style="padding:16px;border-bottom:1px solid ${colors.text}0A">
           <span style="color:${colors.muted};font-size:12px;text-transform:uppercase;letter-spacing:0.05em">Fecha</span><br>
@@ -129,19 +140,19 @@ function buildEmail(type: string, data: Record<string, any>): string {
         </td></tr>
         <tr><td style="padding:16px;border-bottom:1px solid ${colors.text}0A">
           <span style="color:${colors.muted};font-size:12px;text-transform:uppercase;letter-spacing:0.05em">Hora</span><br>
-          <span style="color:${colors.text};font-size:15px;font-weight:600">${time || '—'}</span>
+          <span style="color:${colors.text};font-size:15px;font-weight:600">${safeTime || '—'}</span>
         </td></tr>
         <tr><td style="padding:16px;border-bottom:1px solid ${colors.text}0A">
           <span style="color:${colors.muted};font-size:12px;text-transform:uppercase;letter-spacing:0.05em">Personas</span><br>
-          <span style="color:${colors.text};font-size:15px;font-weight:600">${party_size || '—'}</span>
+          <span style="color:${colors.text};font-size:15px;font-weight:600">${safePartySize || '—'}</span>
         </td></tr>
-        ${zone ? `<tr><td style="padding:16px;border-bottom:1px solid ${colors.text}0A">
+        ${safeZone ? `<tr><td style="padding:16px;border-bottom:1px solid ${colors.text}0A">
           <span style="color:${colors.muted};font-size:12px;text-transform:uppercase;letter-spacing:0.05em">Zona</span><br>
-          <span style="color:${colors.text};font-size:15px;font-weight:600">${zone}</span>
+          <span style="color:${colors.text};font-size:15px;font-weight:600">${safeZone}</span>
         </td></tr>` : ''}
-        ${special_requests ? `<tr><td style="padding:16px">
+        ${safeRequests ? `<tr><td style="padding:16px">
           <span style="color:${colors.muted};font-size:12px;text-transform:uppercase;letter-spacing:0.05em">Solicitudes especiales</span><br>
-          <span style="color:${colors.text};font-size:15px;font-style:italic">${special_requests}</span>
+          <span style="color:${colors.text};font-size:15px;font-style:italic">${safeRequests}</span>
         </td></tr>` : ''}
       </table>
     </td></tr>

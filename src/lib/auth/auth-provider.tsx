@@ -10,6 +10,7 @@ interface AuthContextType {
   signInWithPhone: (phone: string) => Promise<{ error: string | null }>
   verifyOTP: (phone: string, token: string) => Promise<{ error: string | null }>
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>
+  signUpWithEmail: (email: string, password: string, fullName: string, telephone: string) => Promise<{ error: string | null }>
   signInWithGoogle: () => Promise<void>
   signInWithFacebook: () => Promise<void>
   signOut: () => Promise<void>
@@ -47,18 +48,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signInWithPhone = async (phone: string) => {
-    const { error } = await auth.sendOTP(phone)
-    return { error: error?.message ?? null }
+    try {
+      const { error } = await auth.sendOTP(phone)
+      return { error: error?.message ?? null }
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'An unknown error occurred' }
+    }
   }
 
   const verifyOTP = async (phone: string, token: string) => {
-    const { error } = await auth.verifyOTP(phone, token)
-    return { error: error?.message ?? null }
+    try {
+      const { error } = await auth.verifyOTP(phone, token)
+      return { error: error?.message ?? null }
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'An unknown error occurred' }
+    }
   }
 
   const signInWithEmail = async (email: string, password: string) => {
-    const { error } = await auth.signInWithEmail(email, password)
-    return { error: error?.message ?? null }
+    try {
+      const { error } = await auth.signInWithEmail(email, password)
+      return { error: error?.message ?? null }
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'An unknown error occurred' }
+    }
+  }
+
+  const signUpWithEmail = async (email: string, password: string, fullName: string, telephone: string) => {
+    const { data, error } = await auth.signUpWithEmail(email, password, fullName)
+    if (error) return { error: error?.message ?? 'An unknown error occurred' }
+
+    const user = data?.user
+    if (!user) return { error: 'User not found after sign up' }
+
+    // Create customer profile in the customers table
+    const restaurantId = process.env.NEXT_PUBLIC_RESTAURANT_ID || 'a0000000-0000-0000-0000-000000000001'
+    const { error: customerError } = await supabase
+      .from('customers')
+      .insert({
+        restaurant_id: restaurantId,
+        auth_user_id: user.id,
+        full_name: fullName,
+        phone: telephone,
+        email,
+      })
+
+    if (customerError) return { error: customerError.message ?? 'An unknown error occurred' }
+
+    return { error: null }
   }
 
   const signInWithGoogle = async () => {
@@ -80,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signInWithPhone,
       verifyOTP,
       signInWithEmail,
+      signUpWithEmail,
       signInWithGoogle,
       signInWithFacebook,
       signOut

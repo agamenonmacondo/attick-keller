@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import type { User } from '@supabase/supabase-js'
 
@@ -12,6 +12,8 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
 }
+
+import { createContext, useContext } from 'react'
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
 
@@ -25,16 +27,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      // Clean up URL hash after OAuth redirect
       if (window.location.hash.includes('access_token')) {
         window.history.replaceState(null, '', window.location.pathname)
       }
@@ -49,14 +48,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUpWithEmail = async (email: string, password: string, fullName: string, phone: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName, phone },
+        emailRedirectTo: window.location.origin + '/auth/callback',
       },
     })
-    return { error: error?.message ?? null }
+
+    if (error) return { error: error.message }
+
+    // Auto-confirm: if user comes back without email confirmation,
+    // try to sign them in directly (Supabase auto-confirms if disable email confirm is set)
+    if (data.user && !data.session) {
+      // User was created but needs email confirmation
+      // We'll return a success message indicating they should check their email
+      // But also try to sign in directly in case auto-confirm is on
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (!signInError) {
+        // Auto sign-in worked, redirect will happen via onAuthStateChange
+        return { error: null }
+      }
+      // If sign-in failed, they need to confirm email
+      return { error: null } // Return success anyway, show message in UI
+    }
+
+    return { error: null }
   }
 
   const signInWithGoogle = async () => {
@@ -80,4 +98,3 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useAuth = () => useContext(AuthContext)
-export { supabase } from '../supabase/client'

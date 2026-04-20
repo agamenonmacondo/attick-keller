@@ -1,48 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-function getServiceClient() {
-  return createClient(
+// POST /api/auth/signup - Auto-confirm user after Supabase signup
+export async function POST(request: NextRequest) {
+  const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-}
 
-// POST - Send welcome email after signup
-export async function POST(request: NextRequest) {
-  const sb = getServiceClient()
   const { email, name } = await request.json()
 
-  const { sendWelcomeEmail } = await import('@/lib/email/send')
-  const result = await sendWelcomeEmail(email, name)
+  if (!email) {
+    return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
+  }
 
-  return NextResponse.json(result)
+  // Auto-confirm the user if they exist but aren't confirmed
+  const { data: { users } } = await sb.auth.admin.listUsers()
+
+  const existingUser = users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
+
+  if (existingUser && !existingUser.email_confirmed_at) {
+    await sb.auth.admin.updateUserById(existingUser.id, { email_confirm: true })
+  }
+
+  // Send welcome email
+  const { sendWelcomeEmail } = await import('@/lib/email/send')
+  await sendWelcomeEmail(email, name || 'Cliente')
+
+  return NextResponse.json({ success: true })
 }
 
-// PUT - Send password reset email
+// PUT /api/auth - Password reset
 export async function PUT(request: NextRequest) {
-  const sb = getServiceClient()
+  const sb = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   const { email } = await request.json()
 
   if (!email) {
     return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
   }
 
-  // Find user by email
-  const { data: customers } = await sb
-    .from('customers')
-    .select('email, full_name')
-    .eq('email', email)
-    .limit(1)
-
-  // Generate password reset link via Supabase
   const { data, error } = await sb.auth.admin.generateLink({
     type: 'recovery',
     email,
   })
 
   if (error || !data?.properties?.action_link) {
-    // Don't reveal if email exists for security
     return NextResponse.json({ success: true, message: 'Si el correo existe, recibiras un enlace' })
   }
 

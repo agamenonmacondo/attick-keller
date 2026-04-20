@@ -23,7 +23,13 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Protect /admin routes — redirect unauthenticated users to login
+  if (request.nextUrl.pathname.startsWith('/admin') && !user) {
+    return NextResponse.redirect(new URL('/auth/login', request.url))
+  }
+
   return response
 }
 

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function SignupPage() {
-  const { signUpWithEmail, signInWithGoogle, user } = useAuth()
+  const { signUpWithEmail, signInWithGoogle, user, isAdmin } = useAuth()
   const router = useRouter()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -17,7 +17,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
 
   if (user) {
-    router.push('/perfil')
+    router.replace(isAdmin ? '/admin' : '/perfil')
     return null
   }
 
@@ -47,7 +47,18 @@ export default function SignupPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, name }),
       }).catch(() => {})
-      router.push('/perfil')
+      // Role-based redirect
+      try {
+        const res = await fetch('/api/auth/role')
+        if (res.ok) {
+          const { role } = await res.json()
+          router.push(role === 'store_admin' || role === 'super_admin' ? '/admin' : '/perfil')
+        } else {
+          router.push('/perfil')
+        }
+      } catch {
+        router.push('/perfil')
+      }
     }
   }
 

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAdminUser, getServiceClient as getAdminServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 
-const RESTAURANT_ID = 'a0000000-0000-0000-0000-000000000001'
-const ADMIN_EMAILS = ['agamenonmacondo@gmail.com', 'rayo.abb@gmail.com']
+const RESTAURANT_ID_LOCAL = 'a0000000-0000-0000-0000-000000000001'
 
 function getServiceClient() {
   return createClient(
@@ -27,11 +27,6 @@ async function getAuthUser(request: NextRequest) {
   )
   const { data: { user } } = await serverSb.auth.getUser()
   return user
-}
-
-function isAdmin(user: { email?: string } | null): boolean {
-  if (!user?.email) return false
-  return ADMIN_EMAILS.includes(user.email.toLowerCase())
 }
 
 async function sendStatusEmail(sb: ReturnType<typeof getServiceClient>, reservationId: string, status: string) {
@@ -168,7 +163,7 @@ export async function PUT(request: NextRequest) {
     .single()
 
   const isOwner = customer?.id === reservation.customer_id
-  const admin = isAdmin(user)
+  const admin = await getAdminUser(request)
 
   if (!isOwner && !admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
@@ -243,7 +238,7 @@ export async function PATCH(request: NextRequest) {
 
   // Cancel = DELETE from system (no noise in dashboards)
   const isOwner = customer?.id === reservation.customer_id
-  const admin = isAdmin(user)
+  const admin = await getAdminUser(request)
 
   if (!isOwner && !admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
@@ -287,7 +282,7 @@ export async function GET(request: NextRequest) {
   const user = await getAuthUser(request)
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
-  const admin = isAdmin(user)
+  const admin = await getAdminUser(request)
 
   if (admin) {
     const { data, error } = await sb

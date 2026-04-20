@@ -45,7 +45,7 @@ function CategoryBlock({
         initial={{ opacity: 0, y: 24 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
         transition={{ ...spring }}
-        className="mb-6 md:mb-8"
+        className="mb-4 md:mb-6"
       >
         <div className="flex items-end gap-4">
           <h3 className="font-['Playfair_Display'] text-2xl md:text-3xl lg:text-4xl font-bold text-[var(--ak-madera)] leading-none">
@@ -93,7 +93,7 @@ function CategoryBlock({
           initial={{ scaleX: 0 }}
           animate={isInView ? { scaleX: 1 } : {}}
           transition={{ duration: 0.6, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
-          className="flex items-center gap-3 my-10 md:my-14"
+          className="flex items-center gap-3 my-8 md:my-10"
         >
           <div className="h-px flex-1 bg-[var(--ak-dorado)]/20" />
           <div className="w-1.5 h-1.5 rounded-full bg-[var(--ak-dorado)]/40" />
@@ -162,17 +162,17 @@ export default function MenuSection() {
 
   return (
     <>
-      <div className="h-24 bg-gradient-to-b from-[#3E2723] via-[#4E342E] to-[var(--ak-cal)]" />
+      <div className="h-16 bg-gradient-to-b from-[#3E2723] via-[#4E342E] to-[var(--ak-cal)]" />
 
-      <section ref={sectionRef} id="menu" className="bg-[var(--ak-cal)] py-20 md:py-28">
+      <section ref={sectionRef} id="menu" className="bg-[var(--ak-cal)] py-12 md:py-16">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
           {/* Header */}
-          <div className="text-center mb-14 md:mb-20">
+          <div className="text-center mb-8 md:mb-12">
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ ...spring }}
-              className="font-['Caveat'] text-[var(--ak-ambar)] text-xl md:text-2xl mb-2"
+              className="font-['Caveat'] text-[var(--ak-ambar)] text-xl md:text-2xl mb-1"
             >
               Nuestro
             </motion.p>
@@ -180,7 +180,7 @@ export default function MenuSection() {
               initial={{ opacity: 0, y: 40 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ ...spring, delay: 0.1 }}
-              className="font-['Playfair_Display'] text-5xl md:text-6xl font-bold text-[var(--ak-madera)] tracking-tight leading-none mb-4"
+              className="font-['Playfair_Display'] text-4xl md:text-5xl font-bold text-[var(--ak-madera)] tracking-tight leading-none mb-3"
             >
               Menú
             </motion.h2>

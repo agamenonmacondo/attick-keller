@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
+import { useAuth } from '@/lib/auth/auth-provider'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -37,31 +38,11 @@ export default function Navbar() {
 }
 
 function ProfileLink() {
-  const [loggedIn, setLoggedIn] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const { user, loading, isAdmin } = useAuth()
 
-  useEffect(() => {
-    fetch('/api/auth-status', { method: 'GET' }).then(() => {
-      // We'll use client-side check instead
-    })
-    // Simple client-side check
-    const check = async () => {
-      const { createBrowserClient } = await import('@supabase/ssr')
-      const sb = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
-      const { data: { session } } = await sb.auth.getSession()
-      setLoggedIn(!!session)
-      if (session?.user) {
-        const role = session.user.app_metadata?.role || session.user.user_metadata?.role
-        setIsAdmin(role === 'super_admin')
-      }
-    }
-    check()
-  }, [])
+  if (loading) return null
 
-  if (loggedIn) {
+  if (user) {
     return (
       <Link
         href={isAdmin ? '/admin' : '/perfil'}

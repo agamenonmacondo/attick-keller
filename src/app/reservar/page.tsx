@@ -31,10 +31,7 @@ export default function ReservarPage() {
   }, [])
 
   if (authLoading) return <div className="min-h-screen bg-[#F5EDE0] flex items-center justify-center">Cargando...</div>
-  if (!user) {
-    router.push('/auth/login')
-    return null
-  }
+  if (!user) return <div className="min-h-screen bg-[#F5EDE0] flex items-center justify-center">Cargando...</div>
 
   const timeSlots = [
     '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',

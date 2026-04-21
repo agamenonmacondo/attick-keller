@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth/auth-provider'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
 import { ComputerTower, CalendarBlank, User, ArrowRight } from '@phosphor-icons/react'
@@ -47,8 +46,7 @@ const itemVariants = {
 }
 
 export default function PerfilPage() {
-  const { user, loading: authLoading, roleLoading, isHost, isAdmin, signOut } = useAuth()
-  const router = useRouter()
+  const { user, loading: authLoading, roleLoading, isHost, signOut } = useAuth()
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [isAdminUser, setIsAdminUser] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -145,7 +143,7 @@ export default function PerfilPage() {
   }
 
   if (authLoading || roleLoading) return <div className="min-h-screen bg-[#F5EDE0] flex items-center justify-center">Cargando...</div>
-  if (!user) { router.push('/auth/login'); return null }
+  if (!user) return <div className="min-h-screen bg-[#F5EDE0] flex items-center justify-center">Cargando...</div>
 
   const statusBadge: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800',

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function LoginPage() {
-  const { signInWithEmail, signInWithGoogle, user, isAdmin } = useAuth()
+  const { signInWithEmail, signInWithGoogle, user, isAdmin, roleLoading } = useAuth()
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [resetMode, setResetMode] = useState(false)
   const [resetSent, setResetSent] = useState(false)
 
-  if (user) {
+  if (user && !roleLoading) {
     router.replace(isAdmin ? '/admin' : '/perfil')
     return null
   }

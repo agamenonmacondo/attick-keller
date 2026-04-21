@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/lib/auth/auth-provider'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { SignOut } from '@phosphor-icons/react'
 
 export function AdminHeader() {
@@ -19,6 +20,12 @@ export function AdminHeader() {
         <div className="flex items-center gap-3">
           <h1 className="font-['Playfair_Display'] text-xl font-bold text-[#C9A94E]">Attick & Keller</h1>
           <span className="text-[10px] text-[#D7CCC8] bg-[#5D4037] px-2 py-0.5 rounded font-medium uppercase tracking-wider">Admin</span>
+          <Link
+            href="/host"
+            className="hidden sm:inline text-xs text-[#8D6E63] hover:text-[#D7CCC8] transition-colors duration-200"
+          >
+            Piso
+          </Link>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-[#8D6E63] hidden sm:inline">{user?.email}</span>

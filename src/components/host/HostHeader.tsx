@@ -1,11 +1,12 @@
 'use client'
 
 import { useAuth } from '@/lib/auth/auth-provider'
+import Link from 'next/link'
 import { SignOut, Clock } from '@phosphor-icons/react'
 import { useState, useEffect } from 'react'
 
 export function HostHeader() {
-  const { signOut } = useAuth()
+  const { signOut, isAdmin } = useAuth()
   const [time, setTime] = useState(new Date())
 
   useEffect(() => {
@@ -23,6 +24,14 @@ export function HostHeader() {
           <span className="hidden sm:inline-block px-2.5 py-1 text-xs font-medium bg-[#5C7A4D]/30 text-[#8FBF6A] rounded-full border border-[#5C7A4D]/40">
             Host
           </span>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="hidden sm:inline text-xs text-[#8D6E63] hover:text-white transition-colors duration-200"
+            >
+              Panel
+            </Link>
+          )}
         </div>
         <div className="flex items-center gap-4 md:gap-6">
           <div className="flex items-center gap-2 text-[#D7CCC8]">

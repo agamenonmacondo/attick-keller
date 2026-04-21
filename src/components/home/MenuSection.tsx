@@ -23,7 +23,9 @@ interface MenuCategory {
   sort_order: number
 }
 
-const spring = { type: 'spring' as const, stiffness: 100, damping: 20 }
+const EASE_OUT = [0.23, 1, 0.32, 1] as const
+const EASE_IN_OUT = [0.77, 0, 0.175, 1] as const
+
 const viewOptions = { once: true, amount: 0.15 as const }
 
 function formatPrice(price: number) {
@@ -50,7 +52,6 @@ export default function MenuSection() {
         const itms = data.items || []
         setCategories(cats)
         setItems(itms)
-        // Auto-select first category if data exists
         if (cats.length > 0) {
           setActive(cats[0].id)
         }
@@ -72,7 +73,6 @@ export default function MenuSection() {
     }
   }, [active])
 
-  // Scroll active tab into view
   useEffect(() => {
     if (active && tabsRef.current) {
       const activeBtn = tabsRef.current.querySelector(`[data-cat-id="${active}"]`) as HTMLElement
@@ -113,7 +113,7 @@ export default function MenuSection() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={viewOptions}
-            transition={spring}
+            transition={{ duration: 0.5, ease: EASE_OUT }}
             className="text-xl md:text-2xl mb-2"
             style={{ fontFamily: 'Caveat, cursive', color: '#D4922A' }}
           >
@@ -123,7 +123,7 @@ export default function MenuSection() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={viewOptions}
-            transition={{ ...spring, delay: 0.1 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: EASE_OUT }}
             className="text-4xl md:text-5xl font-bold tracking-tight leading-none mb-4"
             style={{ fontFamily: "'Playfair Display', serif", color: '#3E2723' }}
           >
@@ -133,7 +133,7 @@ export default function MenuSection() {
             initial={{ scaleX: 0 }}
             whileInView={{ scaleX: 1 }}
             viewport={viewOptions}
-            transition={{ duration: 0.8, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
+            transition={{ duration: 0.8, delay: 0.3, ease: EASE_IN_OUT }}
             className="h-px w-24 mx-auto mb-6"
             style={{ background: 'linear-gradient(to right, transparent, #C9A94E, transparent)' }}
           />
@@ -157,20 +157,20 @@ export default function MenuSection() {
           {/* Header */}
           <div className="text-center mb-10 md:mb-14">
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, transform: 'translateY(20px)' }}
+              whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
               viewport={viewOptions}
-              transition={spring}
+              transition={{ duration: 0.5, ease: EASE_OUT }}
               className="text-xl md:text-2xl mb-1"
               style={{ fontFamily: 'Caveat, cursive', color: '#D4922A' }}
             >
               Descubre
             </motion.p>
             <motion.h2
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, transform: 'translateY(40px)' }}
+              whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
               viewport={viewOptions}
-              transition={{ ...spring, delay: 0.1 }}
+              transition={{ duration: 0.6, delay: 0.1, ease: EASE_OUT }}
               className="text-4xl md:text-5xl font-bold tracking-tight leading-none mb-3"
               style={{ fontFamily: "'Playfair Display', serif", color: '#3E2723' }}
             >
@@ -180,18 +180,18 @@ export default function MenuSection() {
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
               viewport={viewOptions}
-              transition={{ duration: 0.8, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
+              transition={{ duration: 0.8, delay: 0.3, ease: EASE_IN_OUT }}
               className="h-px w-24 mx-auto"
-              style={{ background: 'linear-gradient(to right, transparent, #C9A94E, transparent)' }}
+              style={{ background: 'linear-gradient(to right, transparent, #C9A94E, transparent)', transformOrigin: 'center' }}
             />
           </div>
 
-          {/* Category tabs — horizontal scrollable */}
+          {/* Category tabs */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, transform: 'translateY(10px)' }}
+            whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
             viewport={viewOptions}
-            transition={{ ...spring, delay: 0.2 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: EASE_OUT }}
             className="relative mb-10 md:mb-14"
           >
             <div
@@ -206,42 +206,34 @@ export default function MenuSection() {
                     key={cat.id}
                     data-cat-id={cat.id}
                     onClick={() => handleCategoryClick(cat.id)}
-                    className="relative shrink-0 px-5 py-2.5 rounded-full text-sm md:text-base font-medium transition-all duration-300 cursor-pointer focus:outline-none"
+                    className={cn(
+                      'relative shrink-0 px-5 py-2.5 rounded-full text-sm md:text-base font-medium cursor-pointer focus:outline-none select-none',
+                      'transition-transform duration-150 ease-out',
+                      'active:scale-[0.97]'
+                    )}
                     style={{
                       fontFamily: "'DM Sans', sans-serif",
-                      backgroundColor: isActive ? '#6B2737' : 'transparent',
                       color: isActive ? '#F5EDE0' : '#3E2723',
-                      border: isActive ? '1.5px solid #6B2737' : '1.5px solid rgba(62,39,35,0.2)',
                       letterSpacing: '0.02em',
                     }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.borderColor = 'rgba(107,39,55,0.5)'
-                        e.currentTarget.style.backgroundColor = 'rgba(107,39,55,0.06)'
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.borderColor = 'rgba(62,39,35,0.2)'
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                      }
-                    }}
                   >
-                    {cat.name}
                     {isActive && (
                       <motion.div
-                        layoutId="activeTab"
+                        layoutId="activeTabBg"
                         className="absolute inset-0 rounded-full"
-                        style={{ border: '1.5px solid #6B2737' }}
-                        transition={spring}
+                        style={{ backgroundColor: '#6B2737' }}
+                        transition={{ type: 'spring', duration: 0.45, bounce: 0.18 }}
                       />
                     )}
+                    <span className="relative z-10">{cat.name}</span>
                   </button>
                 )
               })}
             </div>
-            {/* Fade edges */}
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-12" style={{ background: 'linear-gradient(to right, transparent, #F5EDE0)' }} />
+            <div
+              className="pointer-events-none absolute inset-y-0 right-0 w-12"
+              style={{ background: 'linear-gradient(to right, transparent, #F5EDE0)' }}
+            />
           </motion.div>
 
           {/* Products panel */}
@@ -250,16 +242,15 @@ export default function MenuSection() {
               <motion.div
                 key={active}
                 ref={panelRef}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ ...spring }}
+                initial={{ opacity: 0, transform: 'translateY(16px)' }}
+                animate={{ opacity: 1, transform: 'translateY(0px)' }}
+                exit={{ opacity: 0, transform: 'translateY(-6px)' }}
+                transition={{ duration: 0.25, ease: EASE_OUT }}
               >
-                {/* Category title */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 }}
+                  transition={{ duration: 0.3, delay: 0.08, ease: EASE_OUT }}
                   className="flex items-center gap-4 mb-8"
                 >
                   <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, transparent, rgba(201,169,78,0.5), transparent)' }} />
@@ -276,6 +267,7 @@ export default function MenuSection() {
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3, ease: EASE_OUT }}
                     className="text-center py-8 text-base italic"
                     style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.4)' }}
                   >
@@ -286,23 +278,29 @@ export default function MenuSection() {
                     {activeItems.map((item, i) => (
                       <motion.div
                         key={item.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ ...spring, delay: 0.04 + i * 0.03 }}
-                        className="group py-4 md:py-5"
+                        initial={{ opacity: 0, transform: 'translateY(10px) scale(0.98)' }}
+                        animate={{ opacity: 1, transform: 'translateY(0px) scale(1)' }}
+                        transition={{
+                          duration: 0.35,
+                          delay: Math.min(i * 0.06, 0.4),
+                          ease: EASE_OUT,
+                        }}
+                        className="group dish-row py-4 md:py-5 cursor-default"
                         style={{ borderBottom: '1px solid rgba(62,39,35,0.08)' }}
                       >
                         <div className="flex items-baseline justify-between gap-4">
                           <h4
-                            className="text-lg md:text-xl font-semibold"
+                            className="text-lg md:text-xl font-semibold transition-colors duration-200 ease-out"
                             style={{ fontFamily: "'Playfair Display', serif", color: '#3E2723' }}
                           >
                             {item.name}
                           </h4>
-                          {/* Dotted line */}
-                          <div className="flex-1 border-b border-dashed mx-2 hidden md:block" style={{ borderColor: 'rgba(62,39,35,0.15)', transform: 'translateY(-4px)' }} />
+                          <div
+                            className="flex-1 border-b border-dashed mx-2 hidden md:block transition-opacity duration-200 ease-out opacity-40 group-hover:opacity-70"
+                            style={{ borderColor: 'rgba(62,39,35,0.25)', transform: 'translateY(-4px)' }}
+                          />
                           <span
-                            className="font-bold text-base md:text-lg whitespace-nowrap shrink-0"
+                            className="font-bold text-base md:text-lg whitespace-nowrap shrink-0 transition-colors duration-200 ease-out"
                             style={{ fontFamily: "'DM Sans', sans-serif", color: '#6B2737' }}
                           >
                             {formatPrice(item.price)}
@@ -310,7 +308,7 @@ export default function MenuSection() {
                         </div>
                         {item.description && (
                           <p
-                            className="text-sm mt-1.5 leading-relaxed max-w-2xl"
+                            className="text-sm mt-1.5 leading-relaxed max-w-2xl transition-colors duration-200 ease-out"
                             style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.55)' }}
                           >
                             {item.description}
@@ -330,7 +328,19 @@ export default function MenuSection() {
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }
+        @media (hover: hover) and (pointer: fine) {
+          .dish-row:hover h4 {
+            color: #6B2737 !important;
+          }
+          .dish-row:hover .group-hover\:opacity-70 {
+            opacity: 0.7 !important;
+          }
+        }
       `}</style>
     </>
   )
+}
+
+function cn(...classes: (string | false | undefined)[]) {
+  return classes.filter(Boolean).join(' ')
 }

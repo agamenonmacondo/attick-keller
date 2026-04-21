@@ -100,7 +100,10 @@ export async function POST(request: NextRequest) {
 
   // 3. Create new customer if not found
   if (!customerId) {
-    const phoneValue = user.user_metadata?.phone || null
+    // phone is NOT NULL and UNIQUE per restaurant.
+    // If the user has no phone, use their auth UUID as a unique placeholder
+    // so we never violate NOT NULL or UNIQUE constraints.
+    const phoneValue = user.user_metadata?.phone || `pending_${user.id}`
     const { data: newCustomer, error: customerError } = await sb
       .from('customers')
       .insert({

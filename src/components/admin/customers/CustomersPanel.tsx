@@ -94,9 +94,12 @@ export function CustomersPanel() {
                   <p className="truncate text-sm font-medium text-[#3E2723]">
                     {c.full_name || 'Sin nombre'}
                   </p>
-                  <p className="truncate text-xs text-[#8D6E63]">
-                    {c.phone || c.email || '\u2014'}
-                  </p>
+                  <div className="flex items-center gap-1.5 text-xs text-[#8D6E63]">
+                    {c.phone && <span className="truncate">{c.phone}</span>}
+                    {c.phone && c.email && <span className="text-[#D7CCC8]">·</span>}
+                    {c.email && <span className="truncate">{c.email}</span>}
+                    {!c.phone && !c.email && <span>\u2014</span>}
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <TierBadge tier={c.loyalty_tier} />

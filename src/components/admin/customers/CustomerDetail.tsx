@@ -186,7 +186,23 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
               </div>
             </div>
           ) : (
-            <ContactActions phone={customer.phone} email={customer.email} name={customer.full_name} />
+            <div className="space-y-2">
+              <div className="flex flex-col gap-1.5">
+                {customer.phone && (
+                  <div className="flex items-center gap-2 text-sm text-[#3E2723]">
+                    <Phone size={14} className="text-[#8D6E63] shrink-0" />
+                    <span className="font-medium">{customer.phone}</span>
+                  </div>
+                )}
+                {customer.email && (
+                  <div className="flex items-center gap-2 text-sm text-[#3E2723]">
+                    <EnvelopeSimple size={14} className="text-[#8D6E63] shrink-0" />
+                    <span className="font-medium truncate">{customer.email}</span>
+                  </div>
+                )}
+              </div>
+              <ContactActions phone={customer.phone} email={customer.email} name={customer.full_name} />
+            </div>
           )}
         </div>
 

@@ -13,9 +13,28 @@ import { CustomerDetail } from './CustomerDetail'
 
 type Tab = 'search' | 'date'
 
-const PRESETS = [
-  { label: 'Ultimos 7 dias', days: 6 },
-  { label: 'Ultimos 30 dias', days: 29 },
+interface Preset {
+  label: string
+  getRange: () => { from: string; to: string }
+}
+
+const PRESETS: Preset[] = [
+  { label: 'Hoy', getRange: () => {
+    const today = getLocalDate()
+    return { from: today, to: today }
+  }},
+  { label: 'Ayer', getRange: () => {
+    const yesterday = addDays(getLocalDate(), -1)
+    return { from: yesterday, to: yesterday }
+  }},
+  { label: 'Ultimos 7 dias', getRange: () => {
+    const today = getLocalDate()
+    return { from: addDays(today, -6), to: today }
+  }},
+  { label: 'Ultimos 30 dias', getRange: () => {
+    const today = getLocalDate()
+    return { from: addDays(today, -29), to: today }
+  }},
 ]
 
 function getMonthBounds(offsetMonths = 0) {
@@ -57,12 +76,11 @@ export function CustomersPanel() {
     fetchCustomer(id)
   }, [fetchCustomer])
 
-  const applyPreset = useCallback((days: number) => {
-    const today = getLocalDate()
-    const start = addDays(today, -days)
-    setFrom(start)
-    setTo(today)
-    fetchCustomers({ from: start, to: today, dateField })
+  const applyPreset = useCallback((preset: Preset) => {
+    const { from: f, to: t } = preset.getRange()
+    setFrom(f)
+    setTo(t)
+    fetchCustomers({ from: f, to: t, dateField })
   }, [dateField, fetchCustomers])
 
   const applyMonthPreset = useCallback((offset: number) => {
@@ -194,7 +212,7 @@ export function CustomersPanel() {
                 <button
                   key={p.label}
                   type="button"
-                  onClick={() => applyPreset(p.days)}
+                  onClick={() => applyPreset(p)}
                   className="rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-1.5 text-xs font-medium text-[#3E2723] hover:bg-[#D7CCC8]/50 active:scale-[0.97]"
                   style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                 >

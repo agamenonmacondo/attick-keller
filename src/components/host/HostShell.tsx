@@ -248,7 +248,7 @@ export function HostShell() {
       {/* Walk-in button */}
       <button
         onClick={() => setShowWalkIn(true)}
-        className="fixed bottom-6 right-6 lg:hidden z-40 w-14 h-14 rounded-full bg-[#6B2737] text-white shadow-lg flex items-center justify-center hover:bg-[#5C2230] active:scale-95 transition-transform"
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-[#6B2737] text-white shadow-lg flex items-center justify-center hover:bg-[#5C2230] active:scale-[0.97]"
         style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         title="Walk-in"
       >

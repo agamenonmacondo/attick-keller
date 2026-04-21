@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
 import { StatusBadge } from '../admin/shared/StatusBadge'
 import { EmptyState } from '../admin/shared/EmptyState'
@@ -180,7 +180,7 @@ function HostTableCard({
   onAssign: (reservationId: string, tableId: string) => Promise<void>
   onUnassign: (reservationId: string) => Promise<void>
   onClick: () => void
-  variants?: object
+  variants?: Variants
 }) {
   const prefersReduced = usePrefersReducedMotion()
 

@@ -74,16 +74,33 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
   // Get or create customer
-  const { data: existing } = await sb
+  let customerId: string | null = null
+
+  // 1. Try by auth_user_id
+  const { data: byAuth } = await sb
     .from('customers')
     .select('id')
     .eq('auth_user_id', user.id)
     .eq('restaurant_id', RESTAURANT_ID)
-    .single()
+    .maybeSingle()
 
-  let customerId = existing?.id
+  customerId = byAuth?.id ?? null
 
+  // 2. Try by email (if auth_user_id didn't match)
+  if (!customerId && user.email) {
+    const { data: byEmail } = await sb
+      .from('customers')
+      .select('id')
+      .eq('email', user.email)
+      .eq('restaurant_id', RESTAURANT_ID)
+      .maybeSingle()
+
+    customerId = byEmail?.id ?? null
+  }
+
+  // 3. Create new customer if not found
   if (!customerId) {
+    const phoneValue = user.user_metadata?.phone || null
     const { data: newCustomer, error: customerError } = await sb
       .from('customers')
       .insert({
@@ -91,17 +108,39 @@ export async function POST(request: NextRequest) {
         restaurant_id: RESTAURANT_ID,
         email: user.email,
         full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '',
-        phone: user.user_metadata?.phone || '',
+        phone: phoneValue,
       })
       .select('id')
       .single()
 
     if (customerError) {
-      console.error('Customer insert error:', customerError)
-      return NextResponse.json({ error: customerError.message || 'Error al crear cliente' }, { status: 500 })
-    }
+      // If duplicate key on phone, try to fetch existing by email one more time
+      if (customerError.message?.includes('duplicate key') && user.email) {
+        const { data: fallback } = await sb
+          .from('customers')
+          .select('id')
+          .eq('email', user.email)
+          .eq('restaurant_id', RESTAURANT_ID)
+          .maybeSingle()
 
-    customerId = newCustomer?.id
+        if (fallback?.id) {
+          // Update auth_user_id on the existing row so future lookups work
+          await sb
+            .from('customers')
+            .update({ auth_user_id: user.id })
+            .eq('id', fallback.id)
+
+          customerId = fallback.id
+        }
+      }
+
+      if (!customerId) {
+        console.error('Customer insert error:', customerError)
+        return NextResponse.json({ error: customerError.message || 'Error al crear cliente' }, { status: 500 })
+      }
+    } else {
+      customerId = newCustomer?.id ?? null
+    }
   }
 
   if (!customerId) return NextResponse.json({ error: 'Error al crear cliente' }, { status: 500 })

@@ -153,6 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
     setUser(null)
     clearRole()
+    window.location.href = '/'
   }
 
   return (

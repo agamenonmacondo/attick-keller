@@ -231,8 +231,17 @@ export default function PerfilPage() {
           <AnimatedCard delay={0} hover className="bg-white rounded-2xl border border-[#D7CCC8]/60 p-6 md:p-8 mb-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-[#3E2723] flex items-center justify-center shrink-0 shadow-sm">
-                  <User size={28} weight="fill" className="text-[#C9A94E]" />
+                <div className="w-14 h-14 rounded-2xl bg-[#3E2723] flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+                  {(user.user_metadata?.avatar_url || user.user_metadata?.picture) ? (
+                    <img
+                      src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <User size={28} weight="fill" className="text-[#C9A94E]" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <h1 className="font-['Playfair_Display'] text-2xl md:text-3xl font-bold text-[#3E2723] leading-tight">

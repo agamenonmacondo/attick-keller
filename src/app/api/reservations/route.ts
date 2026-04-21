@@ -84,17 +84,23 @@ export async function POST(request: NextRequest) {
   let customerId = existing?.id
 
   if (!customerId) {
-    const { data: newCustomer } = await sb
+    const { data: newCustomer, error: customerError } = await sb
       .from('customers')
       .insert({
         auth_user_id: user.id,
         restaurant_id: RESTAURANT_ID,
         email: user.email,
-        full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0],
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '',
         phone: user.user_metadata?.phone || '',
       })
       .select('id')
       .single()
+
+    if (customerError) {
+      console.error('Customer insert error:', customerError)
+      return NextResponse.json({ error: customerError.message || 'Error al crear cliente' }, { status: 500 })
+    }
+
     customerId = newCustomer?.id
   }
 

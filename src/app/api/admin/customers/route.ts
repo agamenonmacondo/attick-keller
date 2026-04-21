@@ -54,19 +54,30 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const q = searchParams.get('q') || ''
+  const from = searchParams.get('from') || ''
+  const to = searchParams.get('to') || ''
+  const dateField = searchParams.get('dateField') || 'created_at'
 
   const sb = getServiceClient()
 
   // Fetch customers with their stats via join
   let query = sb
     .from('customers')
-    .select('id, full_name, phone, email, customer_stats(loyalty_tier, total_visits, last_visit_date)')
+    .select('id, full_name, phone, email, created_at, customer_stats(loyalty_tier, total_visits, last_visit_date)')
     .eq('restaurant_id', RESTAURANT_ID)
     .order('created_at', { ascending: false })
     .limit(50)
 
   if (q) {
     query = query.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%`)
+  }
+
+  if (from && to) {
+    if (dateField === 'last_visit_date') {
+      query = query.gte('customer_stats.last_visit_date', from).lte('customer_stats.last_visit_date', to)
+    } else {
+      query = query.gte('created_at', from).lte('created_at', to)
+    }
   }
 
   const { data, error } = await query

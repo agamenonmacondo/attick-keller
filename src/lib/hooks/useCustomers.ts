@@ -12,21 +12,34 @@ interface CustomerRow {
   loyalty_tier: string
   total_visits: number
   last_visit_date: string | null
+  created_at?: string | null
   [key: string]: unknown
+}
+
+interface FetchOptions {
+  q?: string
+  from?: string
+  to?: string
+  dateField?: string
 }
 
 export function useCustomers() {
   const [customers, setCustomers] = useState<CustomerRow[]>([])
   const [loading, setLoading] = useState(true)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const currentQueryRef = useRef<string | undefined>(undefined)
+  const currentFiltersRef = useRef<FetchOptions>({})
 
-  const fetchCustomers = useCallback(async (q?: string) => {
+  const fetchCustomers = useCallback(async (opts: FetchOptions = {}) => {
     setLoading(true)
-    currentQueryRef.current = q
+    currentFiltersRef.current = opts
     try {
-      const params = q ? `?q=${encodeURIComponent(q)}` : ''
-      const res = await fetch(`/api/admin/customers${params}`)
+      const params = new URLSearchParams()
+      if (opts.q) params.set('q', opts.q)
+      if (opts.from) params.set('from', opts.from)
+      if (opts.to) params.set('to', opts.to)
+      if (opts.dateField) params.set('dateField', opts.dateField)
+      const query = params.toString()
+      const res = await fetch(`/api/admin/customers${query ? `?${query}` : ''}`)
       if (res.ok) {
         const d = await res.json()
         setCustomers(d.customers || [])
@@ -41,11 +54,11 @@ export function useCustomers() {
   }, [])
 
   const search = useCallback((q: string) => {
-    fetchCustomers(q)
+    fetchCustomers({ q })
   }, [fetchCustomers])
 
   const refetch = useCallback(() => {
-    fetchCustomers(currentQueryRef.current)
+    fetchCustomers(currentFiltersRef.current)
   }, [fetchCustomers])
 
   // Auto-load recent customers on mount
@@ -73,5 +86,5 @@ export function useCustomers() {
     }
   }, [refetch])
 
-  return { customers, loading, search, refetch }
+  return { customers, loading, search, refetch, fetchCustomers }
 }

@@ -17,8 +17,6 @@ import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 
 const SPRING = { stiffness: 100, damping: 20, mass: 1 }
 
-const EASE_OUT: [number, number, number, number] = [0.23, 1, 0.32, 1]
-
 const containerVariants = {
   hidden: {},
   visible: {

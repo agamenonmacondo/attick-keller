@@ -63,7 +63,8 @@ export function useCustomers() {
 
   // Auto-load recent customers on mount
   useEffect(() => {
-    fetchCustomers()
+    const id = setTimeout(() => fetchCustomers(), 0)
+    return () => clearTimeout(id)
   }, [fetchCustomers])
 
   // Realtime subscription for customer changes

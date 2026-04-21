@@ -73,6 +73,8 @@ export async function POST(request: NextRequest) {
   const user = await getAuthUser(request)
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
+  const providedPhone = body.customer_phone || user.user_metadata?.phone || null
+
   // Get or create customer
   let customerId: string | null = null
 
@@ -98,12 +100,25 @@ export async function POST(request: NextRequest) {
     customerId = byEmail?.id ?? null
   }
 
+  // 2b. If found and user provided a real phone, update the placeholder
+  if (customerId && providedPhone) {
+    const { data: existingCustomer } = await sb
+      .from('customers')
+      .select('phone')
+      .eq('id', customerId)
+      .single()
+
+    if (existingCustomer?.phone?.startsWith('pending_')) {
+      await sb
+        .from('customers')
+        .update({ phone: providedPhone })
+        .eq('id', customerId)
+    }
+  }
+
   // 3. Create new customer if not found
   if (!customerId) {
-    // phone is NOT NULL and UNIQUE per restaurant.
-    // If the user has no phone, use their auth UUID as a unique placeholder
-    // so we never violate NOT NULL or UNIQUE constraints.
-    const phoneValue = user.user_metadata?.phone || `pending_${user.id}`
+    const phoneValue = providedPhone || `pending_${user.id}`
     const { data: newCustomer, error: customerError } = await sb
       .from('customers')
       .insert({
@@ -117,7 +132,6 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (customerError) {
-      // If duplicate key on phone, try to fetch existing by email one more time
       if (customerError.message?.includes('duplicate key') && user.email) {
         const { data: fallback } = await sb
           .from('customers')
@@ -127,7 +141,6 @@ export async function POST(request: NextRequest) {
           .maybeSingle()
 
         if (fallback?.id) {
-          // Update auth_user_id on the existing row so future lookups work
           await sb
             .from('customers')
             .update({ auth_user_id: user.id })

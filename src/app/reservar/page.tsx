@@ -20,6 +20,7 @@ export default function ReservarPage() {
   const [zoneId, setZoneId] = useState('')
   const [zones, setZones] = useState<Zone[]>([])
   const [specialRequests, setSpecialRequests] = useState('')
+  const [phone, setPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -57,6 +58,7 @@ export default function ReservarPage() {
           party_size: partySize,
           zone_id: zoneId,
           special_requests: specialRequests,
+          customer_phone: phone || undefined,
         }),
       })
       if (!res.ok) {
@@ -121,7 +123,7 @@ export default function ReservarPage() {
                 onChange={e => setPartySize(Number(e.target.value))}
                 className="w-full px-4 py-3 rounded-lg border border-[#D7CCC8] focus:border-[#6B2737] outline-none"
               >
-                {[1,2,3,4,5,6,7,8].map(n => (
+                {Array.from({ length: 50 }, (_, i) => i + 1).map(n => (
                   <option key={n} value={n}>{n} {n === 1 ? 'persona' : 'personas'}</option>
                 ))}
               </select>
@@ -205,6 +207,16 @@ export default function ReservarPage() {
               <p><span className="font-medium">Hora:</span> {timeSlot}</p>
               <p><span className="font-medium">Personas:</span> {partySize}</p>
               <p><span className="font-medium">Zona:</span> {zones.find(z => z.id === zoneId)?.name}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#3E2723] mb-1">Telefono de contacto</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg border border-[#D7CCC8] focus:border-[#6B2737] outline-none"
+                placeholder="+57 300 123 4567"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-[#3E2723] mb-1">Peticiones especiales (opcional)</label>

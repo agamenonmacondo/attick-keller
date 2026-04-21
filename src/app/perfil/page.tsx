@@ -386,7 +386,7 @@ export default function PerfilPage() {
                                 onChange={e => setEditData({ ...editData, party_size: Number(e.target.value) })}
                                 className="w-full px-3 py-2 rounded-lg border border-[#D7CCC8] text-sm bg-[#F5EDE0]/50 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#6B2737]/20"
                               >
-                                {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n}</option>)}
+                                {Array.from({ length: 50 }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n}</option>)}
                               </select>
                             </div>
                             <div>

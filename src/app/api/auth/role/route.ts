@@ -15,7 +15,7 @@ export async function GET() {
     .eq('auth_user_id', user.id)
     .eq('restaurant_id', RESTAURANT_ID)
     .eq('is_active', true)
-    .in('role', ['store_admin', 'super_admin'])
+    .in('role', ['store_admin', 'super_admin', 'host'])
     .single()
 
   return NextResponse.json({ role: roleData?.role ?? null })

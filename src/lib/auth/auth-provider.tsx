@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null
   loading: boolean
   isAdmin: boolean
+  isHost: boolean
   adminRole: string | null
   roleLoading: boolean
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>
@@ -23,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isHost, setIsHost] = useState(false)
   const [adminRole, setAdminRole] = useState<string | null>(null)
   const [roleLoading, setRoleLoading] = useState(true)
 
@@ -38,14 +40,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data = await res.json()
         const admin = data.role === 'store_admin' || data.role === 'super_admin'
+        const host = data.role === 'host'
         setIsAdmin(admin)
+        setIsHost(host)
         setAdminRole(data.role)
       } else {
         setIsAdmin(false)
+        setIsHost(false)
         setAdminRole(null)
       }
     } catch {
       setIsAdmin(false)
+      setIsHost(false)
       setAdminRole(null)
     } finally {
       setRoleLoading(false)
@@ -54,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const clearRole = useCallback(() => {
     setIsAdmin(false)
+    setIsHost(false)
     setAdminRole(null)
     setRoleLoading(false)
   }, [])
@@ -149,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, adminRole, roleLoading, signInWithEmail, signUpWithEmail, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, isHost, adminRole, roleLoading, signInWithEmail, signUpWithEmail, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   )

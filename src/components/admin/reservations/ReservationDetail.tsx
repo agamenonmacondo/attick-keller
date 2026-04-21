@@ -44,17 +44,20 @@ interface ReservationDetailProps {
 
 const ACTION_MAP: Record<
   string,
-  Array<{ status: string; label: string; variant: 'primary' | 'danger' }>
+  Array<{ status: string; label: string; variant: 'primary' | 'danger' | 'warning' }>
 > = {
   pending: [
     { status: 'confirmed', label: 'Confirmar', variant: 'primary' },
+    { status: 'no_show', label: 'No asistio', variant: 'warning' },
     { status: 'cancelled', label: 'Cancelar', variant: 'danger' },
   ],
   pre_paid: [
     { status: 'confirmed', label: 'Confirmar', variant: 'primary' },
+    { status: 'no_show', label: 'No asistio', variant: 'warning' },
   ],
   confirmed: [
     { status: 'seated', label: 'Sentar', variant: 'primary' },
+    { status: 'no_show', label: 'No asistio', variant: 'warning' },
   ],
   seated: [
     { status: 'completed', label: 'Completar', variant: 'primary' },
@@ -377,6 +380,8 @@ export function ReservationDetail({
                     'w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white active:scale-[0.97]',
                     action.variant === 'danger'
                       ? 'bg-red-600 hover:bg-red-700'
+                      : action.variant === 'warning'
+                      ? 'bg-[#D4922A] hover:bg-[#D4922A]/90'
                       : 'bg-[#6B2737] hover:bg-[#6B2737]/90',
                   )}
                   style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}

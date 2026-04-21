@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { getStaffUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+
+const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  pending: ['confirmed', 'cancelled', 'no_show'],
+  pre_paid: ['confirmed', 'no_show'],
+  confirmed: ['seated', 'no_show', 'cancelled'],
+  seated: ['completed'],
+  // completed, cancelled, no_show are terminal states
+}
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = await getAdminUser(request)
-  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  const staff = await getStaffUser(request)
+  if (!staff) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const { id } = await params
   const sb = getServiceClient()
@@ -22,19 +30,38 @@ export async function PATCH(
   if (!reservation) return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
 
   const updateData: Record<string, unknown> = {}
-  if (status && status !== reservation.status) updateData.status = status
-  if (date) updateData.date = date
-  if (time_start) updateData.time_start = time_start
-  if (time_end) updateData.time_end = time_end
-  if (party_size) updateData.party_size = party_size
-  if (special_requests !== undefined) updateData.special_requests = special_requests || null
-  if (table_id !== undefined) updateData.table_id = table_id || null
 
-  if (zone_id) {
-    const effectiveParty = (party_size as number) || reservation.party_size
-    const { data: zoneTables } = await sb
-      .from('tables').select('id, capacity').eq('restaurant_id', RESTAURANT_ID).eq('zone_id', zone_id).eq('is_active', true).gte('capacity', effectiveParty).order('capacity', { ascending: true }).limit(1)
-    if (zoneTables && zoneTables.length > 0) updateData.table_id = zoneTables[0].id
+  // Status transition with validation
+  if (status && status !== reservation.status) {
+    const allowed = ALLOWED_TRANSITIONS[reservation.status as string]
+    if (!allowed || !allowed.includes(status)) {
+      return NextResponse.json({ error: `Transicion no permitida: ${reservation.status} → ${status}` }, { status: 400 })
+    }
+    updateData.status = status
+  }
+
+  // Host role restrictions: can only update status and table_id
+  const isHost = staff.role === 'host'
+  if (isHost) {
+    // Host can only change status and table_id
+    if (table_id !== undefined) {
+      updateData.table_id = table_id || null
+    }
+  } else {
+    // Admin/store_admin can update all fields
+    if (date) updateData.date = date
+    if (time_start) updateData.time_start = time_start
+    if (time_end) updateData.time_end = time_end
+    if (party_size) updateData.party_size = party_size
+    if (special_requests !== undefined) updateData.special_requests = special_requests || null
+    if (table_id !== undefined) updateData.table_id = table_id || null
+
+    if (zone_id) {
+      const effectiveParty = (party_size as number) || reservation.party_size
+      const { data: zoneTables } = await sb
+        .from('tables').select('id, capacity').eq('restaurant_id', RESTAURANT_ID).eq('zone_id', zone_id).eq('is_active', true).gte('capacity', effectiveParty).order('capacity', { ascending: true }).limit(1)
+      if (zoneTables && zoneTables.length > 0) updateData.table_id = zoneTables[0].id
+    }
   }
 
   if (Object.keys(updateData).length === 0) return NextResponse.json({ error: 'Sin cambios' }, { status: 400 })

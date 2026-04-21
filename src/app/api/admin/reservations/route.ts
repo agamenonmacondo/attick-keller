@@ -1,16 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { getStaffUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 
 export async function POST(request: NextRequest) {
-  const admin = await getAdminUser(request)
-  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  const staff = await getStaffUser(request)
+  if (!staff) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()
   const body = await request.json()
-  const { date, time_start, time_end, party_size, special_requests, customer_id, zone_id, source } = body
+  const { date, time_start, time_end, party_size, special_requests, customer_id, customer_name, customer_phone, zone_id, source } = body
 
-  if (!date || !time_start || !time_end || !party_size || !customer_id) {
-    return NextResponse.json({ error: 'Campos requeridos: fecha, hora inicio, hora fin, numero de invitados, cliente' }, { status: 400 })
+  if (!date || !time_start || !time_end || !party_size) {
+    return NextResponse.json({ error: 'Campos requeridos: fecha, hora inicio, hora fin, numero de invitados' }, { status: 400 })
+  }
+
+  if (!customer_id && !customer_name) {
+    return NextResponse.json({ error: 'Se requiere customer_id o customer_name' }, { status: 400 })
+  }
+
+  // Resolve or create customer for walk-ins
+  let resolvedCustomerId = customer_id
+  if (!resolvedCustomerId && customer_name) {
+    // Check if customer exists by phone (if provided)
+    if (customer_phone) {
+      const { data: existing } = await sb
+        .from('customers')
+        .select('id')
+        .eq('restaurant_id', RESTAURANT_ID)
+        .eq('phone', customer_phone)
+        .limit(1)
+      if (existing && existing.length > 0) {
+        resolvedCustomerId = existing[0].id
+      }
+    }
+    // Create new customer if not found
+    if (!resolvedCustomerId) {
+      const { data: newCustomer, error: custError } = await sb
+        .from('customers')
+        .insert({
+          restaurant_id: RESTAURANT_ID,
+          full_name: customer_name,
+          phone: customer_phone || null,
+          email: null,
+        })
+        .select('id')
+        .single()
+      if (custError || !newCustomer) {
+        return NextResponse.json({ error: 'Error creando cliente' }, { status: 500 })
+      }
+      resolvedCustomerId = newCustomer.id
+    }
   }
 
   // Resolve table from zone if provided
@@ -32,7 +70,7 @@ export async function POST(request: NextRequest) {
     .from('reservations')
     .insert({
       restaurant_id: RESTAURANT_ID,
-      customer_id,
+      customer_id: resolvedCustomerId,
       date,
       time_start,
       time_end,
@@ -81,8 +119,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const admin = await getAdminUser(request)
-  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  const staff = await getStaffUser(request)
+  if (!staff) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()
   const url = new URL(request.url)

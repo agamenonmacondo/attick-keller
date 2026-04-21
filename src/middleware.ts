@@ -30,6 +30,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
+  // Protect /host routes — redirect unauthenticated users to login
+  if (request.nextUrl.pathname.startsWith('/host') && !user) {
+    return NextResponse.redirect(new URL('/auth/login', request.url))
+  }
+
   return response
 }
 

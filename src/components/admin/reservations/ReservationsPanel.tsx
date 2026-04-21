@@ -157,6 +157,8 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
             onStatusChange={(id, status) => {
               if (status === 'cancelled') {
                 setConfirmAction({ id, status, label: 'Cancelar Reserva' })
+              } else if (status === 'no_show') {
+                setConfirmAction({ id, status, label: 'Marcar como No Asistio' })
               } else {
                 handleStatusChange(id, status)
               }

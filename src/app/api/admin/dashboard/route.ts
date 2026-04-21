@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { getStaffUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 
 export async function GET(request: NextRequest) {
-  const admin = await getAdminUser(request)
-  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  const staff = await getStaffUser(request)
+  if (!staff) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()
   const url = new URL(request.url)

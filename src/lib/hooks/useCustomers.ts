@@ -1,8 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { supabase } from '@/lib/supabase/client'
-import { RESTAURANT_ID } from '@/lib/utils/constants'
+import { useState, useCallback } from 'react'
 
 interface CustomerRow {
   id: string
@@ -11,40 +9,65 @@ interface CustomerRow {
   email: string | null
   loyalty_tier: string
   total_visits: number
+  total_spent: number
   last_visit_date: string | null
-  created_at?: string | null
+  created_at: string | null
+  is_recurring: boolean
+  tag_ids: string[]
   [key: string]: unknown
 }
 
 interface FetchOptions {
+  page?: number
+  limit?: number
+  sort?: string
+  order?: string
   q?: string
-  from?: string
-  to?: string
-  dateField?: string
+  tag_ids?: string
+  has_email?: string
+  min_visits?: number
+  last_visit_days?: number
+}
+
+interface CustomersResponse {
+  customers: CustomerRow[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
 }
 
 export function useCustomers() {
   const [customers, setCustomers] = useState<CustomerRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const currentFiltersRef = useRef<FetchOptions>({})
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [currentFilters, setCurrentFilters] = useState<FetchOptions>({})
 
   const fetchCustomers = useCallback(async (opts: FetchOptions = {}) => {
     setLoading(true)
-    currentFiltersRef.current = opts
+    setCurrentFilters(opts)
     try {
       const params = new URLSearchParams()
+      if (opts.page) params.set('page', String(opts.page))
+      if (opts.limit) params.set('limit', String(opts.limit))
+      if (opts.sort) params.set('sort', opts.sort)
+      if (opts.order) params.set('order', opts.order)
       if (opts.q) params.set('q', opts.q)
-      if (opts.from) params.set('from', opts.from)
-      if (opts.to) params.set('to', opts.to)
-      if (opts.dateField) params.set('dateField', opts.dateField)
+      if (opts.tag_ids) params.set('tag_ids', opts.tag_ids)
+      if (opts.has_email) params.set('has_email', opts.has_email)
+      if (opts.min_visits) params.set('min_visits', String(opts.min_visits))
+      if (opts.last_visit_days) params.set('last_visit_days', String(opts.last_visit_days))
+
       const query = params.toString()
-      const res = await fetch(`/api/admin/customers${query ? `?${query}` : ''}`)
+      const res = await fetch('/api/admin/customers' + (query ? '?' + query : ''))
       if (res.ok) {
-        const d = await res.json()
+        const d: CustomersResponse = await res.json()
         setCustomers(d.customers || [])
-      } else {
-        setCustomers([])
+        setTotal(d.total)
+        setTotalPages(d.totalPages)
+        setCurrentPage(d.page)
       }
     } catch {
       setCustomers([])
@@ -53,39 +76,16 @@ export function useCustomers() {
     }
   }, [])
 
-  const search = useCallback((q: string) => {
-    fetchCustomers({ q })
+  const goToPage = useCallback((page: number) => {
+    fetchCustomers({ ...currentFilters, page })
+  }, [currentFilters, fetchCustomers])
+
+  const applyFilters = useCallback((filters: FetchOptions) => {
+    fetchCustomers({ ...filters, page: 1 })
   }, [fetchCustomers])
 
-  const refetch = useCallback(() => {
-    fetchCustomers(currentFiltersRef.current)
-  }, [fetchCustomers])
-
-  // Auto-load recent customers on mount
-  useEffect(() => {
-    const id = setTimeout(() => fetchCustomers(), 0)
-    return () => clearTimeout(id)
-  }, [fetchCustomers])
-
-  // Realtime subscription for customer changes
-  useEffect(() => {
-    const channel = supabase
-      .channel('admin-customers')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'customers', filter: `restaurant_id=eq.${RESTAURANT_ID}` },
-        () => {
-          if (debounceRef.current) clearTimeout(debounceRef.current)
-          debounceRef.current = setTimeout(() => refetch(), 300)
-        },
-      )
-      .subscribe()
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-      supabase.removeChannel(channel)
-    }
-  }, [refetch])
-
-  return { customers, loading, search, refetch, fetchCustomers }
+  return {
+    customers, total, totalPages, currentPage, loading,
+    fetchCustomers, applyFilters, goToPage,
+  }
 }

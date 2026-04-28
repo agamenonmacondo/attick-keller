@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Telefono requerido' }, { status: 400 })
   }
 
-  // Check for existing customer with same phone
   const { data: existing } = await sb
     .from('customers')
     .select('id, full_name, phone, email')
@@ -25,7 +24,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ customer: existing }, { status: 200 })
   }
 
-  // Create new customer
   const { data, error } = await sb
     .from('customers')
     .insert({
@@ -38,7 +36,6 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) {
-    // Handle unique constraint violation
     if (error.code === '23505') {
       return NextResponse.json({ error: 'Ya existe un cliente con este telefono' }, { status: 409 })
     }
@@ -53,51 +50,101 @@ export async function GET(request: NextRequest) {
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const { searchParams } = new URL(request.url)
-  const q = searchParams.get('q') || ''
-  const from = searchParams.get('from') || ''
-  const to = searchParams.get('to') || ''
-  const dateField = searchParams.get('dateField') || 'created_at'
-
   const sb = getServiceClient()
 
-  // Fetch customers with their stats via join
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+  const limit = Math.min(Math.max(1, parseInt(searchParams.get('limit') || '25')), 100)
+  const offset = (page - 1) * limit
+  const sort = searchParams.get('sort') || 'created_at'
+  const orderDir = searchParams.get('order') === 'asc' ? true : false
+  const q = searchParams.get('q') || ''
+  const tagIds = searchParams.get('tag_ids') || ''
+  const hasEmail = searchParams.get('has_email') || ''
+  const minVisits = parseInt(searchParams.get('min_visits') || '0')
+  const lastVisitDays = parseInt(searchParams.get('last_visit_days') || '0')
+
+  const sortMap: Record<string, string> = {
+    created_at: 'customers.created_at',
+    full_name: 'customers.full_name',
+    total_visits: 'customer_stats.total_visits',
+    last_visit_date: 'customer_stats.last_visit_date',
+    loyalty_tier: 'customer_stats.loyalty_tier',
+  }
+  const sortColumn = sortMap[sort] || 'customers.created_at'
+
   let query = sb
     .from('customers')
-    .select('id, full_name, phone, email, created_at, customer_stats(loyalty_tier, total_visits, last_visit_date)')
-    .eq('restaurant_id', RESTAURANT_ID)
-    .order('created_at', { ascending: false })
-    .limit(50)
+    .select(`
+      id, full_name, phone, email, created_at,
+      customer_stats!inner(total_visits, total_spent, last_visit_date, loyalty_tier, is_recurring),
+      customer_tag_links!left(tag_id)
+    `, { count: 'exact' })
+    .eq('customers.restaurant_id', RESTAURANT_ID)
+    .order(sortColumn, { ascending: orderDir })
+    .range(offset, offset + limit - 1)
 
   if (q) {
-    query = query.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%`)
+    query = query.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`)
   }
 
-  if (from && to) {
-    if (dateField === 'last_visit_date') {
-      query = query.gte('customer_stats.last_visit_date', from).lte('customer_stats.last_visit_date', to)
-    } else {
-      query = query.gte('created_at', from).lte('created_at', to)
+  if (tagIds) {
+    const ids = tagIds.split(',').filter(Boolean)
+    if (ids.length > 0) {
+      query = query.in('customer_tag_links.tag_id', ids)
     }
   }
 
-  const { data, error } = await query
+  if (hasEmail === 'true') {
+    query = query.not('email', 'is', null).neq('email', '')
+  } else if (hasEmail === 'false') {
+    query = query.or('email.is.null,email.eq.')
+  }
+
+  if (minVisits > 0) {
+    query = query.gte('customer_stats.total_visits', minVisits)
+  }
+
+  if (lastVisitDays > 0) {
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - lastVisitDays)
+    query = query.gte('customer_stats.last_visit_date', cutoff.toISOString().split('T')[0])
+  }
+
+  const { data, count, error } = await query
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Flatten the nested stats into the customer object
-  const customers = (data || []).map((c: Record<string, unknown>) => {
-    const stats = c.customer_stats as Record<string, unknown>[] | null
-    const s = stats && stats.length > 0 ? stats[0] : {}
-    return {
-      id: c.id,
-      full_name: c.full_name,
-      phone: c.phone,
-      email: c.email,
-      loyalty_tier: s.loyalty_tier || 'none',
-      total_visits: s.total_visits || 0,
-      last_visit_date: s.last_visit_date || null,
-    }
-  })
+  const seen = new Set<string>()
+  const customers = (data || [])
+    .filter((c: Record<string, unknown>) => {
+      if (seen.has(c.id as string)) return false
+      seen.add(c.id as string)
+      return true
+    })
+    .map((c: Record<string, unknown>) => {
+      const statsArr = c.customer_stats as Record<string, unknown>[]
+      const s = Array.isArray(statsArr) && statsArr.length > 0 ? statsArr[0] : {}
+      const tagLinks = c.customer_tag_links as Array<{ tag_id: string }> | null
+      return {
+        id: c.id,
+        full_name: c.full_name,
+        phone: c.phone,
+        email: c.email,
+        created_at: c.created_at,
+        total_visits: (s.total_visits as number) || 0,
+        total_spent: (s.total_spent as number) || 0,
+        last_visit_date: s.last_visit_date || null,
+        loyalty_tier: s.loyalty_tier || 'none',
+        is_recurring: s.is_recurring || false,
+        tag_ids: tagLinks ? tagLinks.map((tl: { tag_id: string }) => tl.tag_id) : [],
+      }
+    })
 
-  return NextResponse.json({ customers })
+  return NextResponse.json({
+    customers,
+    total: count || 0,
+    page,
+    limit,
+    totalPages: Math.ceil((count || 0) / limit),
+  })
 }

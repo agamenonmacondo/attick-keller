@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { X, Phone, EnvelopeSimple, Calendar, CurrencyDollar, Star, Warning, PencilSimple, FloppyDisk, ArrowLeft } from '@phosphor-icons/react'
+import { X, Phone, EnvelopeSimple, Calendar, CurrencyDollar, Star, Warning, PencilSimple, FloppyDisk, ArrowLeft, Tag } from '@phosphor-icons/react'
+import { useCustomerTags } from '@/lib/hooks/useCustomerTags'
 import { whatsappLink, emailLink } from '@/lib/utils/whatsapp'
 import { formatCOP } from '@/lib/utils/formatCOP'
 import { formatDate } from '@/lib/utils/formatDate'
@@ -40,13 +41,59 @@ interface CustomerDetailProps {
 
 export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps) {
   const { customer, stats, visits, reservations } = data
+  const { tags: allTags } = useCustomerTags()
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [assignedTagIds, setAssignedTagIds] = useState<Set<string>>(new Set())
   const [form, setForm] = useState({
     full_name: customer.full_name || '',
     phone: customer.phone || '',
     email: customer.email || '',
   })
+
+  // Load assigned tags
+  useEffect(() => {
+    fetch(`/api/admin/customers/${customer.id}/tags`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.tags) setAssignedTagIds(new Set(d.tags.map((t: { id: string }) => t.id)))
+      })
+      .catch(() => {})
+  }, [customer.id])
+
+  const assignedTags = useMemo(
+    () => allTags.filter(t => assignedTagIds.has(t.id)),
+    [allTags, assignedTagIds]
+  )
+
+  const unassignedTags = useMemo(
+    () => allTags.filter(t => !assignedTagIds.has(t.id)),
+    [allTags, assignedTagIds]
+  )
+
+  const handleAddTag = useCallback(async (tagId: string) => {
+    const res = await fetch(`/api/admin/customers/${customer.id}/tags`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tag_id: tagId }),
+    })
+    if (res.ok) {
+      setAssignedTagIds(prev => new Set(prev).add(tagId))
+    }
+  }, [customer.id])
+
+  const handleRemoveTag = useCallback(async (tagId: string) => {
+    const res = await fetch(`/api/admin/customers/${customer.id}/tags?tag_id=${tagId}`, {
+      method: 'DELETE',
+    })
+    if (res.ok) {
+      setAssignedTagIds(prev => {
+        const next = new Set(prev)
+        next.delete(tagId)
+        return next
+      })
+    }
+  }, [customer.id])
 
   const handleSave = useCallback(async () => {
     setSaving(true)
@@ -243,6 +290,53 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
             <VisitHistory visits={visits} />
           </div>
         )}
+
+        {/* Tags Section - NEW */}
+        <div>
+          <SectionHeading>
+            <span className="flex items-center gap-1.5"><Tag size={14} /> Etiquetas</span>
+          </SectionHeading>
+          <div className="mt-2 space-y-2">
+            <div className="flex flex-wrap gap-1.5">
+              {assignedTags.map(tag => (
+                <span
+                  key={tag.id}
+                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium text-white"
+                  style={{ backgroundColor: tag.color }}
+                >
+                  {tag.name}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag.id)}
+                    className="hover:opacity-70"
+                  >
+                    <X size={10} weight="bold" />
+                  </button>
+                </span>
+              ))}
+              {assignedTags.length === 0 && (
+                <p className="text-[10px] text-[#BCAAA4]">Sin etiquetas</p>
+              )}
+            </div>
+            {unassignedTags.length > 0 && (
+              <select
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleAddTag(e.target.value)
+                    e.target.value = ''
+                  }
+                }}
+                className="w-full rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-1.5 text-xs text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+              >
+                <option value="">+ Agregar etiqueta</option>
+                {unassignedTags.map(tag => (
+                  <option key={tag.id} value={tag.id}>{tag.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
 
         {/* Customer notes */}
         <div>

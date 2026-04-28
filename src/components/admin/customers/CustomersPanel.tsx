@@ -89,7 +89,11 @@ export function CustomersPanel() {
     }
   }, [clearSelection])
 
-  const previewCustomer = detail?.customer || customers[0] || null
+  const previewCustomer: { full_name: string | null; loyalty_tier: string } | null = detail
+    ? { full_name: detail.customer.full_name, loyalty_tier: detail.stats?.loyalty_tier || 'bronze' }
+    : customers[0]
+      ? { full_name: customers[0].full_name, loyalty_tier: customers[0].loyalty_tier }
+      : null
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] lg:grid-cols-[240px_1fr_400px] gap-6">

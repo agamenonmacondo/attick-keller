@@ -62,99 +62,66 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const sb = getServiceClient()
 
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-  const limit = Math.min(Math.max(1, parseInt(searchParams.get('limit') || '25')), 100)
-  const offset = (page - 1) * limit
-  const sort = searchParams.get('sort') || 'created_at'
-  const orderDir = searchParams.get('order') === 'asc' ? true : false
-  const q = searchParams.get('q') || ''
-  const hasEmail = searchParams.get('has_email') || ''
-  const minVisits = parseInt(searchParams.get('min_visits') || '0')
-  const lastVisitDays = parseInt(searchParams.get('last_visit_days') || '0')
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+    const limit = Math.min(Math.max(1, parseInt(searchParams.get('limit') || '25')), 100)
+    const offset = (page - 1) * limit
 
-  // Paso 1: Obtener clientes con filtro básico de búsqueda y email
-  let query = sb
-    .from('customers')
-    .select('id, full_name, phone, email, created_at', { count: 'exact' })
-    .eq('customers.restaurant_id', RESTAURANT_ID)
+    // Consulta SIMPLIFICADA sin filtros complejos
+    const { data: customersData, count, error: customersError } = await sb
+      .from('customers')
+      .select('id, full_name, phone, email, created_at', { count: 'exact' })
+      .eq('customers.restaurant_id', RESTAURANT_ID)
+      .range(offset, offset + limit - 1)
 
-  // Filtro de búsqueda por texto
-  if (q) {
-    query = query.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`)
-  }
-
-  // Filtro de email
-  if (hasEmail === 'true') {
-    query = query.not('email', 'is', null).neq('email', '')
-  } else if (hasEmail === 'false') {
-    query = query.or('email.is.null,email.eq.')
-  }
-
-  const { data: customersData, count, error: customersError } = await query
-    .order(sort, { ascending: orderDir })
-    .range(offset, offset + limit - 1)
-
-  if (customersError) {
-    console.error('Error fetching customers:', customersError)
-    return NextResponse.json({ error: customersError.message }, { status: 500 })
-  }
-
-  // Paso 2: Obtener customer_stats para los clientes obtenidos
-  const customerIds = customersData?.map(c => c.id) || []
-  let statsData: Record<string, any> = {}
-
-  if (customerIds.length > 0) {
-    const { data: stats } = await sb
-      .from('customer_stats')
-      .select('customer_id, total_visits, total_spent, last_visit_date, loyalty_tier, is_recurring')
-      .in('customer_id', customerIds)
-
-    if (stats) {
-      statsData = Object.fromEntries(stats.map(s => [s.customer_id, s]))
+    if (customersError) {
+      console.error('Error fetching customers:', customersError)
+      return NextResponse.json({ error: customersError.message }, { status: 500 })
     }
-  }
 
-  // Paso 3: Aplicar filtros de stats en memoria si es necesario
-  let filteredCustomers = customersData || []
+    console.log('Customers fetched:', customersData?.length || 0, 'count:', count)
 
-  if (minVisits > 0 || lastVisitDays > 0) {
-    filteredCustomers = filteredCustomers.filter(c => {
-      const stats = statsData[c.id]
-      if (!stats) return false
+    // Obtener customer_stats para los clientes obtenidos
+    const customerIds = customersData?.map(c => c.id) || []
+    let statsData: Record<string, any> = {}
 
-      if (minVisits > 0 && (stats.total_visits || 0) < minVisits) return false
-      if (lastVisitDays > 0) {
-        const cutoff = new Date()
-        cutoff.setDate(cutoff.getDate() - lastVisitDays)
-        const cutoffStr = cutoff.toISOString().split('T')[0]
-        if (!stats.last_visit_date || stats.last_visit_date < cutoffStr) return false
+    if (customerIds.length > 0) {
+      const { data: stats, error: statsError } = await sb
+        .from('customer_stats')
+        .select('customer_id, total_visits, total_spent, last_visit_date, loyalty_tier, is_recurring')
+        .in('customer_id', customerIds)
+
+      if (statsError) {
+        console.error('Error fetching stats:', statsError)
+      } else if (stats) {
+        statsData = Object.fromEntries(stats.map(s => [s.customer_id, s]))
+        console.log('Stats fetched for', stats.length, 'customers')
       }
-      return true
+    }
+
+    // Transformar respuesta
+    const customers = (customersData || []).map(c => ({
+      id: c.id,
+      full_name: c.full_name,
+      phone: c.phone,
+      email: c.email,
+      created_at: c.created_at,
+      total_visits: statsData[c.id]?.total_visits || 0,
+      total_spent: statsData[c.id]?.total_spent || 0,
+      last_visit_date: statsData[c.id]?.last_visit_date || null,
+      loyalty_tier: statsData[c.id]?.loyalty_tier || 'none',
+      is_recurring: statsData[c.id]?.is_recurring || false,
+      tag_ids: [] as string[],
+    }))
+
+    console.log('Returning', customers.length, 'customers')
+
+    return NextResponse.json({
+      customers,
+      total: count || 0,
+      page,
+      limit,
+      totalPages: Math.ceil((count || 0) / limit),
     })
-  }
-
-  // Paso 4: Transformar respuesta
-  const customers = filteredCustomers.map(c => ({
-    id: c.id,
-    full_name: c.full_name,
-    phone: c.phone,
-    email: c.email,
-    created_at: c.created_at,
-    total_visits: statsData[c.id]?.total_visits || 0,
-    total_spent: statsData[c.id]?.total_spent || 0,
-    last_visit_date: statsData[c.id]?.last_visit_date || null,
-    loyalty_tier: statsData[c.id]?.loyalty_tier || 'none',
-    is_recurring: statsData[c.id]?.is_recurring || false,
-    tag_ids: [] as string[],
-  }))
-
-  return NextResponse.json({
-    customers,
-    total: count || 0,
-    page,
-    limit,
-    totalPages: Math.ceil((count || 0) / limit),
-  })
   } catch (err: unknown) {
     console.error('GET /api/admin/customers error:', err)
     const msg = err instanceof Error ? err.message : 'Error desconocido'

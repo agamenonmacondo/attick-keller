@@ -214,3 +214,88 @@ export async function sendCampaignEmail(params: CampaignEmailData): Promise<{ su
     return { success: false, error: err.message }
   }
 }
+
+// ================================================================
+// Campaign Batch Emails (escalable - usa Resend Batch API)
+// ================================================================
+
+interface CampaignBatchRecipient {
+  to: string
+  customerName: string
+  loyaltyTier: string
+  tagNames: string[]
+}
+
+interface CampaignBatchResult {
+  succeeded: number
+  failed: number
+  errors: string[]
+}
+
+const BATCH_SIZE = 100 // Resend batch limit
+
+export async function sendCampaignEmailBatch(
+  recipients: CampaignBatchRecipient[],
+  subject: string,
+  bodyHtml: string
+): Promise<CampaignBatchResult> {
+  const apiKey = RESEND_API_KEY()
+  if (!apiKey) {
+    return { succeeded: 0, failed: recipients.length, errors: ['No API key'] }
+  }
+
+  const results: CampaignBatchResult = { succeeded: 0, failed: 0, errors: [] }
+
+  // Split into chunks of BATCH_SIZE
+  for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+    const chunk = recipients.slice(i, i + BATCH_SIZE)
+    const batchPayload = chunk.map(r => {
+      const html = buildCampaignHtml({
+        to: r.to,
+        customerName: r.customerName,
+        subject,
+        bodyHtml,
+        loyaltyTier: r.loyaltyTier,
+        tagNames: r.tagNames,
+      })
+      return {
+        from: CAMPAIGN_FROM,
+        to: [r.to],
+        subject,
+        html,
+      }
+    })
+
+    try {
+      const res = await fetch('https://api.resend.com/emails/batch', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(batchPayload),
+      })
+
+      if (!res.ok) {
+        const err = await res.text()
+        results.failed += chunk.length
+        results.errors.push(`Batch ${i / BATCH_SIZE + 1}: ${err}`)
+        continue
+      }
+
+      // Resend batch returns an array of { id: string } objects, one per email
+      const data = await res.json()
+      if (Array.isArray(data?.data)) {
+        results.succeeded += data.data.length
+      } else {
+        // Fallback: assume all succeeded if response is OK but shape is unexpected
+        results.succeeded += chunk.length
+      }
+    } catch (err: any) {
+      results.failed += chunk.length
+      results.errors.push(`Batch ${i / BATCH_SIZE + 1}: ${err.message}`)
+    }
+  }
+
+  return results
+}

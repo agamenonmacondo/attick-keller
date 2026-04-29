@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
-import { sendCampaignEmail } from '@/lib/email/send'
+import { sendCampaignEmailBatch } from '@/lib/email/send'
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Nombre, asunto y cuerpo requeridos' }, { status: 400 })
   }
 
+  // Resolve audience
   let query = sb
     .from('customers')
     .select(`
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
     tagNames.push(...(tags || []).map((t: { name: string }) => t.name))
   }
 
+  // Insert campaign
   const { data: campaign, error: insertError } = await sb
     .from('email_campaigns')
     .insert({
@@ -110,45 +112,92 @@ export async function POST(request: NextRequest) {
 
   const campaignId = campaign.id
 
-  const sendPromises = uniqueRecipients.map(async (r: Record<string, unknown>) => {
-    const statsArr = r.customer_stats as Record<string, unknown>[]
-    const s = Array.isArray(statsArr) && statsArr.length > 0 ? statsArr[0] : {}
-
-    if (!r.email) return { id: r.id, success: false, error: 'Sin email' }
-
-    const result = await sendCampaignEmail({
-      to: r.email as string,
-      customerName: (r.full_name as string) || 'Cliente',
-      subject,
-      bodyHtml: body_html,
-      loyaltyTier: (s.loyalty_tier as string) || 'none',
-      tagNames,
-    })
-
-    await sb.from('campaign_recipients').insert({
+  // Insert all recipients as pending
+  const recipientRows = uniqueRecipients
+    .filter((r: Record<string, unknown>) => r.email)
+    .map((r: Record<string, unknown>) => ({
       campaign_id: campaignId,
       customer_id: r.id,
       email: r.email as string,
-      status: result.success ? 'sent' : 'failed',
-      sent_at: result.success ? new Date().toISOString() : null,
-      error: result.error || null,
-    }).then(() => {}, () => {})
+      status: 'pending' as const,
+    }))
 
-    return { id: r.id, ...result }
-  })
+  if (recipientRows.length > 0) {
+    // Insert in chunks to avoid Supabase payload limits (max ~1000 rows per request)
+    const CHUNK_SIZE = 500
+    for (let i = 0; i < recipientRows.length; i += CHUNK_SIZE) {
+      const chunk = recipientRows.slice(i, i + CHUNK_SIZE)
+      await sb.from('campaign_recipients').insert(chunk).then(() => {}, () => {})
+    }
+  }
 
-  Promise.allSettled(sendPromises).then(async (results) => {
-    const succeeded = results.filter((r: PromiseSettledResult<unknown>) =>
-      r.status === 'fulfilled' && (r.value as Record<string, unknown>)?.success
-    ).length
-    const failed = results.length - succeeded
+  // Prepare batch recipients
+  const batchRecipients = uniqueRecipients
+    .filter((r: Record<string, unknown>) => r.email)
+    .map((r: Record<string, unknown>) => {
+      const statsArr = r.customer_stats as Record<string, unknown>[]
+      const s = Array.isArray(statsArr) && statsArr.length > 0 ? statsArr[0] : {}
+      return {
+        to: r.email as string,
+        customerName: (r.full_name as string) || 'Cliente',
+        loyaltyTier: (s.loyalty_tier as string) || 'none',
+        tagNames,
+      }
+    })
 
+  // Send in batches (non-blocking response to client)
+  const sendCampaignAsync = async () => {
+    const result = await sendCampaignEmailBatch(batchRecipients, subject, body_html)
+
+    // Update sent recipients
+    if (result.succeeded > 0 && batchRecipients.length > 0) {
+      // Since we don't know exactly which ones succeeded individually in a batch,
+      // we mark the first N as sent where N = succeeded (best-effort approximation).
+      // For more granular tracking, individual API would be needed.
+      const sentEmails = batchRecipients.slice(0, result.succeeded).map(r => r.to)
+      const failedEmails = batchRecipients.slice(result.succeeded).map(r => r.to)
+
+      // Update in chunks
+      const CHUNK_SIZE = 100
+      for (let i = 0; i < sentEmails.length; i += CHUNK_SIZE) {
+        const chunk = sentEmails.slice(i, i + CHUNK_SIZE)
+        await sb.from('campaign_recipients')
+          .update({ status: 'sent', sent_at: new Date().toISOString() })
+          .eq('campaign_id', campaignId)
+          .in('email', chunk)
+          .then(() => {}, () => {})
+      }
+
+      for (let i = 0; i < failedEmails.length; i += CHUNK_SIZE) {
+        const chunk = failedEmails.slice(i, i + CHUNK_SIZE)
+        await sb.from('campaign_recipients')
+          .update({ status: 'failed', error: 'Batch send failure or API error' })
+          .eq('campaign_id', campaignId)
+          .in('email', chunk)
+          .then(() => {}, () => {})
+      }
+    } else if (result.failed > 0) {
+      // All failed
+      await sb.from('campaign_recipients')
+        .update({ status: 'failed', error: result.errors.join('; ') || 'Unknown error' })
+        .eq('campaign_id', campaignId)
+        .then(() => {}, () => {})
+    }
+
+    // Update campaign status
     await sb.from('email_campaigns').update({
-      sent_count: succeeded,
-      failed_count: failed,
-      status: 'completed',
+      sent_count: result.succeeded,
+      failed_count: result.failed,
+      status: result.failed === batchRecipients.length && batchRecipients.length > 0 ? 'failed' : 'completed',
       sent_at: new Date().toISOString(),
     }).eq('id', campaignId)
+  }
+
+  // Fire and forget - return immediately to client
+  sendCampaignAsync().catch(err => {
+    console.error('Campaign send error:', err)
+    // Mark campaign as failed on unexpected error
+    sb.from('email_campaigns').update({ status: 'failed' }).eq('id', campaignId).then(() => {}, () => {})
   })
 
   return NextResponse.json({

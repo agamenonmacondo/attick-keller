@@ -32,17 +32,19 @@ interface CustomerListProps {
   onCustomerClick: (id: string) => void
   activeCustomerId: string | null
   onSelectAllFiltered?: () => void
+  selectingAll?: boolean
 }
 
 export function CustomerList({
   customers, loading, page, total, totalPages,
   selectedIds, onToggleSelect, onSelectAll, onClearSelection,
   onPageChange, onCustomerClick, activeCustomerId,
-  onSelectAllFiltered,
+  onSelectAllFiltered, selectingAll,
 }: CustomerListProps) {
   const allSelected = customers.length > 0 && customers.every(c => selectedIds.has(c.id))
   const someSelected = customers.some(c => selectedIds.has(c.id))
   const totalSelected = selectedIds.size
+  const isCrossPageSelection = totalSelected > customers.length
 
   return (
     <div className="space-y-3">
@@ -62,13 +64,13 @@ export function CustomerList({
             )}
             {allSelected ? 'Deseleccionar pagina' : 'Seleccionar pagina'}
           </button>
-          {onSelectAllFiltered && (
+          {onSelectAllFiltered && totalSelected < total && (
             <button
               type="button"
               onClick={onSelectAllFiltered}
               className="text-[#6B2737] font-medium hover:underline"
             >
-              Seleccionar todos
+              Seleccionar todos ({total})
             </button>
           )}
         </div>
@@ -81,6 +83,19 @@ export function CustomerList({
           <span className="text-[#BCAAA4]">{total} clientes</span>
         </div>
       </div>
+
+      {isCrossPageSelection && (
+        <div className="rounded-lg bg-[#6B2737]/5 border border-[#6B2737]/20 px-3 py-2 text-xs text-[#6B2737]">
+          Has seleccionado {totalSelected} clientes en total (incluyendo otras paginas).
+        </div>
+      )}
+
+      {selectingAll && (
+        <div className="rounded-lg bg-[#EFEBE9] border border-[#D7CCC8] px-3 py-2 text-xs text-[#8D6E63] flex items-center gap-2">
+          <Spinner size={14} className="animate-spin" />
+          Seleccionando todos los clientes...
+        </div>
+      )}
 
       {loading && (
         <div className="flex items-center justify-center py-12">

@@ -22,6 +22,8 @@ export function CustomersPanel() {
     q: '', tag_ids: '', has_email: '', min_visits: 0, last_visit_days: 0,
   })
 
+  const [selectingAll, setSelectingAll] = useState(false)
+
   const rightPanel = useMemo<'empty' | 'detail' | 'composer'>(() => {
     if (selectedIds.size > 0) return 'composer'
     if (activeCustomerId && detail) return 'detail'
@@ -45,6 +47,26 @@ export function CustomersPanel() {
   }, [customers])
 
   const clearSelection = useCallback(() => setSelectedIds(new Set()), [])
+
+  const handleSelectAllFiltered = useCallback(async () => {
+    setSelectingAll(true)
+    try {
+      const params = new URLSearchParams()
+      if (currentFilters.q) params.set('q', currentFilters.q)
+      if (currentFilters.tag_ids) params.set('tag_ids', currentFilters.tag_ids)
+      if (currentFilters.has_email) params.set('has_email', currentFilters.has_email)
+      if (currentFilters.min_visits) params.set('min_visits', String(currentFilters.min_visits))
+      if (currentFilters.last_visit_days) params.set('last_visit_days', String(currentFilters.last_visit_days))
+
+      const res = await fetch('/api/admin/customers/ids?' + params.toString())
+      if (res.ok) {
+        const d = await res.json()
+        setSelectedIds(new Set(d.ids || []))
+      }
+    } finally {
+      setSelectingAll(false)
+    }
+  }, [currentFilters])
 
   const handleCustomerClick = useCallback((id: string) => {
     setActiveCustomerId(id)
@@ -134,7 +156,8 @@ export function CustomersPanel() {
           onPageChange={goToPage}
           onCustomerClick={handleCustomerClick}
           activeCustomerId={activeCustomerId}
-          onSelectAllFiltered={undefined}
+          onSelectAllFiltered={handleSelectAllFiltered}
+          selectingAll={selectingAll}
         />
       </motion.div>
 

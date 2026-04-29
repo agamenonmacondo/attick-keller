@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 
 interface CustomerRow {
   id: string
@@ -82,6 +82,10 @@ export function useCustomers() {
 
   const applyFilters = useCallback((filters: FetchOptions) => {
     fetchCustomers({ ...filters, page: 1 })
+  }, [fetchCustomers])
+
+  useEffect(() => {
+    fetchCustomers({ page: 1, limit: 25 })
   }, [fetchCustomers])
 
   return {

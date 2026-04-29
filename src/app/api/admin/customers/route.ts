@@ -72,10 +72,11 @@ export async function GET(request: NextRequest) {
   }
   const sortColumn = sortMap[sort] || 'customers.created_at'
 
-  // Build query without tags first (fallback if tags table doesn't exist)
+  // Build query — LEFT JOIN customer_stats para mostrar TODOS los clientes
+  // incluso los que no tienen stats (nunca visitaron el restaurante)
   let query = sb
     .from('customers')
-    .select('id, full_name, phone, email, created_at, customer_stats!inner(total_visits, total_spent, last_visit_date, loyalty_tier, is_recurring)', { count: 'exact' })
+    .select('id, full_name, phone, email, created_at, customer_stats!left(total_visits, total_spent, last_visit_date, loyalty_tier, is_recurring)', { count: 'exact' })
     .eq('customers.restaurant_id', RESTAURANT_ID)
     .order(sortColumn, { ascending: orderDir })
     .range(offset, offset + limit - 1)

@@ -46,11 +46,12 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const admin = await getAdminUser(request)
-  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  try {
+    const admin = await getAdminUser(request)
+    if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
-  const { searchParams } = new URL(request.url)
-  const sb = getServiceClient()
+    const { searchParams } = new URL(request.url)
+    const sb = getServiceClient()
 
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
   const limit = Math.min(Math.max(1, parseInt(searchParams.get('limit') || '25')), 100)
@@ -145,4 +146,9 @@ export async function GET(request: NextRequest) {
     limit,
     totalPages: Math.ceil((count || 0) / limit),
   })
+  } catch (err: unknown) {
+    console.error('GET /api/admin/customers error:', err)
+    const msg = err instanceof Error ? err.message : 'Error desconocido'
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
 }

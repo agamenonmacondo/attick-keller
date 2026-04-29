@@ -47,8 +47,17 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Debug: verificar variables de entorno
+    const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
+    const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL
+    console.log('Env check:', { hasServiceKey, hasUrl, serviceKeyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length })
+
     const admin = await getAdminUser(request)
-    if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+    if (!admin) {
+      console.log('No admin user found')
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+    }
+    console.log('Admin user:', admin.email)
 
     const { searchParams } = new URL(request.url)
     const sb = getServiceClient()

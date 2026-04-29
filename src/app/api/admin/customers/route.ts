@@ -62,15 +62,17 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const sb = getServiceClient()
 
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-    const limit = Math.min(Math.max(1, parseInt(searchParams.get('limit') || '25')), 100)
-    const offset = (page - 1) * limit
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const validPage = isNaN(page) || page < 1 ? 1 : page
+    const limit = parseInt(searchParams.get('limit') || '25', 10)
+    const validLimit = isNaN(limit) || limit < 1 ? 25 : Math.min(limit, 100)
+    const offset = (validPage - 1) * validLimit
 
     // Consulta SIMPLIFICADA sin filtros complejos
     const { data: customersData, count, error: customersError } = await sb
       .from('customers')
       .select('id, full_name, phone, email, created_at', { count: 'exact' })
-      .eq('customers.restaurant_id', RESTAURANT_ID)
+      .eq('restaurant_id', RESTAURANT_ID)
       .range(offset, offset + limit - 1)
 
     if (customersError) {
@@ -118,9 +120,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       customers,
       total: count || 0,
-      page,
-      limit,
-      totalPages: Math.ceil((count || 0) / limit),
+      page: validPage,
+      limit: validLimit,
+      totalPages: Math.ceil((count || 0) / validLimit),
     })
   } catch (err: unknown) {
     console.error('GET /api/admin/customers error:', err)

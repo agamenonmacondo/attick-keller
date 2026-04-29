@@ -14,7 +14,12 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false })
     .limit(20)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    if (error.message && error.message.includes('does not exist')) {
+      return NextResponse.json({ campaigns: [] })
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
   return NextResponse.json({ campaigns: data || [] })
 }
 

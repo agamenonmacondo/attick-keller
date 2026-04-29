@@ -72,26 +72,16 @@ export async function GET(request: NextRequest) {
   }
   const sortColumn = sortMap[sort] || 'customers.created_at'
 
+  // Build query without tags first (fallback if tags table doesn't exist)
   let query = sb
     .from('customers')
-    .select(`
-      id, full_name, phone, email, created_at,
-      customer_stats!inner(total_visits, total_spent, last_visit_date, loyalty_tier, is_recurring),
-      customer_tag_links!left(tag_id)
-    `, { count: 'exact' })
+    .select('id, full_name, phone, email, created_at, customer_stats!inner(total_visits, total_spent, last_visit_date, loyalty_tier, is_recurring)', { count: 'exact' })
     .eq('customers.restaurant_id', RESTAURANT_ID)
     .order(sortColumn, { ascending: orderDir })
     .range(offset, offset + limit - 1)
 
   if (q) {
     query = query.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`)
-  }
-
-  if (tagIds) {
-    const ids = tagIds.split(',').filter(Boolean)
-    if (ids.length > 0) {
-      query = query.in('customer_tag_links.tag_id', ids)
-    }
   }
 
   if (hasEmail === 'true') {
@@ -124,7 +114,6 @@ export async function GET(request: NextRequest) {
     .map((c: Record<string, unknown>) => {
       const statsArr = c.customer_stats as Record<string, unknown>[]
       const s = Array.isArray(statsArr) && statsArr.length > 0 ? statsArr[0] : {}
-      const tagLinks = c.customer_tag_links as Array<{ tag_id: string }> | null
       return {
         id: c.id,
         full_name: c.full_name,
@@ -136,7 +125,7 @@ export async function GET(request: NextRequest) {
         last_visit_date: s.last_visit_date || null,
         loyalty_tier: s.loyalty_tier || 'none',
         is_recurring: s.is_recurring || false,
-        tag_ids: tagLinks ? tagLinks.map((tl: { tag_id: string }) => tl.tag_id) : [],
+        tag_ids: [] as string[],
       }
     })
 

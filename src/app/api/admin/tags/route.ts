@@ -13,7 +13,13 @@ export async function GET(request: NextRequest) {
     .order('sort_order', { ascending: true })
     .order('name', { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    // Si la tabla no existe, devolver array vacio en lugar de error 500
+    if (error.message && error.message.includes('does not exist')) {
+      return NextResponse.json({ tags: [] })
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
   return NextResponse.json({ tags: data || [] })
 }
 

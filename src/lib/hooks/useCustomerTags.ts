@@ -21,9 +21,13 @@ export function useCustomerTags() {
       if (res.ok) {
         const d = await res.json()
         setTags(d.tags || [])
+      } else {
+        // Tabla no existe o error del servidor — continuar sin tags
+        setTags([])
       }
     } catch {
       // silent
+      setTags([])
     } finally {
       setLoading(false)
     }

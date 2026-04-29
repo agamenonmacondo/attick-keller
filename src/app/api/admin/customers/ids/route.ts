@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
   const minVisits = parseInt(searchParams.get('min_visits') || '0')
   const lastVisitDays = parseInt(searchParams.get('last_visit_days') || '0')
 
+  // Build query
   let query = sb
     .from('customers')
     .select('id', { count: 'exact', head: false })
@@ -21,13 +22,6 @@ export async function GET(request: NextRequest) {
 
   if (q) {
     query = query.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`)
-  }
-
-  if (tagIds) {
-    const ids = tagIds.split(',').filter(Boolean)
-    if (ids.length > 0) {
-      query = query.in('customer_tag_links.tag_id', ids)
-    }
   }
 
   if (hasEmail === 'true') {

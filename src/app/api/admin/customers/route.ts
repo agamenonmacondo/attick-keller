@@ -74,13 +74,13 @@ export async function GET(request: NextRequest) {
 
   // Build query — LEFT JOIN customer_stats para mostrar TODOS los clientes
   // incluso los que no tienen stats (nunca visitaron el restaurante)
+  // IMPORTANTE: Primero aplicamos filtros, AL FINAL range y order
   let query = sb
     .from('customers')
     .select('id, full_name, phone, email, created_at, customer_stats!left(total_visits, total_spent, last_visit_date, loyalty_tier, is_recurring)', { count: 'exact' })
     .eq('customers.restaurant_id', RESTAURANT_ID)
-    .order(sortColumn, { ascending: orderDir })
-    .range(offset, offset + limit - 1)
 
+  // Aplicar filtros ANTES del range
   if (q) {
     query = query.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`)
   }
@@ -101,7 +101,10 @@ export async function GET(request: NextRequest) {
     query = query.gte('customer_stats.last_visit_date', cutoff.toISOString().split('T')[0])
   }
 
+  // AL FINAL: order y range
   const { data, count, error } = await query
+    .order(sortColumn, { ascending: orderDir })
+    .range(offset, offset + limit - 1)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

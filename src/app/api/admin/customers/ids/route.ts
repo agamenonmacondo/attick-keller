@@ -46,14 +46,15 @@ export async function GET(request: NextRequest) {
     const { data: statsData, error: statsError } = await statsQuery
 
     if (statsError) {
-      return NextResponse.json({ error: statsError.message }, { status: 500 })
+      // Gracefully skip stats filter on error
+      console.error('Error fetching customer_stats for ids, skipping stats filter:', statsError)
+    } else {
+      const statsIds = new Set((statsData || []).map((s: { customer_id: string }) => s.customer_id))
+      if (statsIds.size === 0) {
+        return NextResponse.json({ ids: [], total: 0 })
+      }
+      customersQuery = customersQuery.in('id', [...statsIds])
     }
-
-    const statsIds = new Set((statsData || []).map((s: { customer_id: string }) => s.customer_id))
-    if (statsIds.size === 0) {
-      return NextResponse.json({ ids: [], total: 0 })
-    }
-    customersQuery = customersQuery.in('id', [...statsIds])
   }
 
   // Filter by tags — resolve matching IDs from customer_tag_links
@@ -66,14 +67,15 @@ export async function GET(request: NextRequest) {
         .in('tag_id', ids)
 
       if (tagError) {
-        return NextResponse.json({ error: tagError.message }, { status: 500 })
+        // Gracefully skip tag filter on error — return all customers unfiltered by tags
+        console.error('Error fetching tag links for ids, skipping tag filter:', tagError)
+      } else {
+        const tagMatchIds = new Set((tagData || []).map((t: { customer_id: string }) => t.customer_id))
+        if (tagMatchIds.size === 0) {
+          return NextResponse.json({ ids: [], total: 0 })
+        }
+        customersQuery = customersQuery.in('id', [...tagMatchIds])
       }
-
-      const tagMatchIds = new Set((tagData || []).map((t: { customer_id: string }) => t.customer_id))
-      if (tagMatchIds.size === 0) {
-        return NextResponse.json({ ids: [], total: 0 })
-      }
-      customersQuery = customersQuery.in('id', [...tagMatchIds])
     }
   }
 

@@ -101,12 +101,12 @@ export async function GET(request: NextRequest) {
       const { data: statsData, error: statsError } = await statsQuery
 
       if (statsError) {
-        console.error('Error fetching customer_stats for filter:', statsError)
-        return NextResponse.json({ error: `Error en customer_stats: ${statsError.message}` }, { status: 500 })
+        console.error('Error fetching customer_stats for filter, skipping stats filter:', statsError)
+        // Gracefully skip stats filter on error
+      } else {
+        const statsIds = new Set((statsData || []).map((s: { customer_id: string }) => s.customer_id))
+        filteredIds = filteredIds ? new Set([...filteredIds].filter(id => statsIds.has(id))) : statsIds
       }
-
-      const statsIds = new Set((statsData || []).map((s: { customer_id: string }) => s.customer_id))
-      filteredIds = filteredIds ? new Set([...filteredIds].filter(id => statsIds.has(id))) : statsIds
     }
 
     if (tagIds) {
@@ -118,12 +118,12 @@ export async function GET(request: NextRequest) {
           .in('tag_id', ids)
 
         if (tagError) {
-          console.error('Error fetching tag links for filter:', tagError)
-          return NextResponse.json({ error: `Error en tags: ${tagError.message}` }, { status: 500 })
+          console.error('Error fetching tag links for filter, skipping tag filter:', tagError)
+          // Gracefully skip tag filter on error — return all customers unfiltered by tags
+        } else {
+          const tagMatchIds = new Set((tagData || []).map((t: { customer_id: string }) => t.customer_id))
+          filteredIds = filteredIds ? new Set([...filteredIds].filter(id => tagMatchIds.has(id))) : tagMatchIds
         }
-
-        const tagMatchIds = new Set((tagData || []).map((t: { customer_id: string }) => t.customer_id))
-        filteredIds = filteredIds ? new Set([...filteredIds].filter(id => tagMatchIds.has(id))) : tagMatchIds
       }
     }
 

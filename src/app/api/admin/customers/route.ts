@@ -93,9 +93,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (hasEmail === 'true') {
-      customersQuery = customersQuery.not('email', 'is', null).neq('email', '')
+      // Filter customers that have a non-empty email
+      customersQuery = customersQuery
+        .not('email', 'is', null)
+        .neq('email', '')
     } else if (hasEmail === 'false') {
-      customersQuery = customersQuery.or('email.is.null,email.eq.')
+      // Filter customers without email (null or empty string)
+      customersQuery = customersQuery
+        .or('email.is.null,email.eq.""')
     }
 
     // Step 2: If filtering by stats or tags, resolve matching customer IDs first

@@ -162,9 +162,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 3: Paginate and fetch customers
-    // Note: Must call .order() BEFORE .range() — PostgREST requires order before range
-    // Also use { referencedTable: undefined } to avoid "customers.created_at" prefix issue
-    customersQuery = customersQuery.order('created_at', { ascending: false })
+    // Sort client-side to avoid PostgREST "customers.created_at.desc" parse error
+    // (SDK adds table prefix to .order() which breaks on some Supabase versions)
     const { data: customersData, count, error: customersError } = await customersQuery
       .range(offset, offset + validLimit - 1)
 
@@ -172,6 +171,11 @@ export async function GET(request: NextRequest) {
       console.error('[customers] Error fetching customers:', customersError.message, customersError.code)
       return NextResponse.json({ error: customersError.message, code: customersError.code }, { status: 500 })
     }
+
+    // Sort by created_at descending (client-side)
+    const sortedCustomers = (customersData || []).sort((a, b) =>
+      new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    )
 
     // Step 4: Fetch stats for the page of customers (non-critical, wrap in try-catch)
     const customerIds = customersData?.map(c => c.id) || []
@@ -217,7 +221,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const customers = (customersData || []).map(c => ({
+    const customers = sortedCustomers.map(c => ({
       id: c.id,
       full_name: c.full_name,
       phone: c.phone,

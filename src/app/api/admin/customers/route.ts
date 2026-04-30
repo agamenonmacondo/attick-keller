@@ -55,6 +55,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const sb = getServiceClient()
 
+    // Log env verification to diagnose truncated keys on Vercel
+    const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    console.log('[customers] ENV check - SUPABASE_URL length:', sbUrl.length, 'SERVICE_ROLE_KEY length:', sbKey.length, 'key ends with:', sbKey.slice(-10))
+
     const page = parseInt(searchParams.get('page') || '1', 10)
     const validPage = isNaN(page) || page < 1 ? 1 : page
     const limit = parseInt(searchParams.get('limit') || '25', 10)
@@ -87,42 +92,48 @@ export async function GET(request: NextRequest) {
     let filteredIds: Set<string> | null = null
 
     if (minVisits > 0 || lastVisitDays > 0) {
-      let statsQuery = sb
-        .from('customer_stats')
-        .select('customer_id')
-        .gte('total_visits', minVisits)
+      try {
+        let statsQuery = sb
+          .from('customer_stats')
+          .select('customer_id')
+          .gte('total_visits', minVisits)
 
-      if (lastVisitDays > 0) {
-        const cutoff = new Date()
-        cutoff.setDate(cutoff.getDate() - lastVisitDays)
-        statsQuery = statsQuery.gte('last_visit_date', cutoff.toISOString().split('T')[0])
-      }
+        if (lastVisitDays > 0) {
+          const cutoff = new Date()
+          cutoff.setDate(cutoff.getDate() - lastVisitDays)
+          statsQuery = statsQuery.gte('last_visit_date', cutoff.toISOString().split('T')[0])
+        }
 
-      const { data: statsData, error: statsError } = await statsQuery
+        const { data: statsData, error: statsError } = await statsQuery
 
-      if (statsError) {
-        console.error('Error fetching customer_stats for filter, skipping stats filter:', statsError)
-        // Gracefully skip stats filter on error
-      } else {
-        const statsIds = new Set((statsData || []).map((s: { customer_id: string }) => s.customer_id))
-        filteredIds = filteredIds ? new Set([...filteredIds].filter(id => statsIds.has(id))) : statsIds
+        if (statsError) {
+          console.error('[customers] Stats filter error (skipping):', statsError.message, statsError.code)
+        } else {
+          const statsIds = new Set((statsData || []).map((s: { customer_id: string }) => s.customer_id))
+          filteredIds = filteredIds ? new Set([...filteredIds].filter(id => statsIds.has(id))) : statsIds
+        }
+      } catch (statsErr) {
+        console.error('[customers] Stats filter exception (skipping):', statsErr)
       }
     }
 
     if (tagIds) {
       const ids = tagIds.split(',').filter(Boolean)
       if (ids.length > 0) {
-        const { data: tagData, error: tagError } = await sb
-          .from('customer_tag_links')
-          .select('customer_id')
-          .in('tag_id', ids)
+        try {
+          const { data: tagData, error: tagError } = await sb
+            .from('customer_tag_links')
+            .select('customer_id')
+            .in('tag_id', ids)
 
-        if (tagError) {
-          console.error('Error fetching tag links for filter, skipping tag filter:', tagError)
-          // Gracefully skip tag filter on error — return all customers unfiltered by tags
-        } else {
-          const tagMatchIds = new Set((tagData || []).map((t: { customer_id: string }) => t.customer_id))
-          filteredIds = filteredIds ? new Set([...filteredIds].filter(id => tagMatchIds.has(id))) : tagMatchIds
+          if (tagError) {
+            console.error('[customers] Tag filter error (skipping):', tagError.message, tagError.code)
+          } else {
+            const tagMatchIds = new Set((tagData || []).map((t: { customer_id: string }) => t.customer_id))
+            filteredIds = filteredIds ? new Set([...filteredIds].filter(id => tagMatchIds.has(id))) : tagMatchIds
+          }
+        } catch (tagErr) {
+          console.error('[customers] Tag filter exception (skipping):', tagErr)
         }
       }
     }
@@ -146,41 +157,51 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
 
     if (customersError) {
-      console.error('Error fetching customers:', customersError)
-      return NextResponse.json({ error: customersError.message }, { status: 500 })
+      console.error('[customers] Error fetching customers:', customersError.message, customersError.code)
+      return NextResponse.json({ error: customersError.message, code: customersError.code }, { status: 500 })
     }
 
-    // Step 4: Fetch stats for the page of customers
+    // Step 4: Fetch stats for the page of customers (non-critical, wrap in try-catch)
     const customerIds = customersData?.map(c => c.id) || []
     let statsData: Record<string, any> = {}
 
     if (customerIds.length > 0) {
-      const { data: stats, error: statsError } = await sb
-        .from('customer_stats')
-        .select('customer_id, total_visits, total_spent, last_visit_date, loyalty_tier, is_recurring')
-        .in('customer_id', customerIds)
+      try {
+        const { data: stats, error: statsError } = await sb
+          .from('customer_stats')
+          .select('customer_id, total_visits, total_spent, last_visit_date, loyalty_tier, is_recurring')
+          .in('customer_id', customerIds)
 
-      if (statsError) {
-        console.error('Error fetching stats:', statsError)
-      } else if (stats) {
-        statsData = Object.fromEntries(stats.map(s => [s.customer_id, s]))
+        if (statsError) {
+          console.error('[customers] Stats fetch error (non-critical, using defaults):', statsError.message, statsError.code)
+        } else if (stats) {
+          statsData = Object.fromEntries(stats.map(s => [s.customer_id, s]))
+        }
+      } catch (statsErr) {
+        console.error('[customers] Stats fetch exception (non-critical, using defaults):', statsErr)
       }
     }
 
-    // Step 5: Fetch tags for the page of customers
+    // Step 5: Fetch tags for the page of customers (non-critical, wrap in try-catch)
     let tagsByCustomer: Record<string, string[]> = {}
     if (customerIds.length > 0) {
-      const { data: tagLinks, error: tagLinksError } = await sb
-        .from('customer_tag_links')
-        .select('customer_id, tag_id')
-        .in('customer_id', customerIds)
+      try {
+        const { data: tagLinks, error: tagLinksError } = await sb
+          .from('customer_tag_links')
+          .select('customer_id, tag_id')
+          .in('customer_id', customerIds)
 
-      if (!tagLinksError && tagLinks) {
-        tagsByCustomer = tagLinks.reduce((acc: Record<string, string[]>, link: { customer_id: string; tag_id: string }) => {
-          if (!acc[link.customer_id]) acc[link.customer_id] = []
-          acc[link.customer_id].push(link.tag_id)
-          return acc
-        }, {})
+        if (tagLinksError) {
+          console.error('[customers] Tag links fetch error (non-critical):', tagLinksError.message, tagLinksError.code)
+        } else if (tagLinks) {
+          tagsByCustomer = tagLinks.reduce((acc: Record<string, string[]>, link: { customer_id: string; tag_id: string }) => {
+            if (!acc[link.customer_id]) acc[link.customer_id] = []
+            acc[link.customer_id].push(link.tag_id)
+            return acc
+          }, {})
+        }
+      } catch (tagErr) {
+        console.error('[customers] Tag links fetch exception (non-critical):', tagErr)
       }
     }
 
@@ -206,8 +227,11 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil((count || 0) / validLimit),
     })
   } catch (err: unknown) {
-    console.error('GET /api/admin/customers error:', err)
-    const msg = err instanceof Error ? err.message : 'Error desconocido'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    // Enhanced error logging — include full details so Vercel logs show the root cause
+    const errorDetails = err instanceof Error
+      ? { message: err.message, stack: err.stack, name: err.name }
+      : { message: String(err), type: typeof err }
+    console.error('[customers] FATAL GET error:', JSON.stringify(errorDetails))
+    return NextResponse.json({ error: errorDetails.message, details: errorDetails }, { status: 500 })
   }
 }

@@ -162,9 +162,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 3: Paginate and fetch customers
+    // Note: Must call .order() BEFORE .range() — PostgREST requires order before range
+    // Also use { referencedTable: undefined } to avoid "customers.created_at" prefix issue
+    customersQuery = customersQuery.order('created_at', { ascending: false })
     const { data: customersData, count, error: customersError } = await customersQuery
       .range(offset, offset + validLimit - 1)
-      .order('created_at', { ascending: false })
 
     if (customersError) {
       console.error('[customers] Error fetching customers:', customersError.message, customersError.code)

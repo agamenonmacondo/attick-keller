@@ -47,9 +47,18 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const admin = await getAdminUser(request)
-    if (!admin) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+    // Step 0: Auth check with detailed logging
+    let admin
+    try {
+      admin = await getAdminUser(request)
+      if (!admin) {
+        console.log('[customers] Auth failed - getAdminUser returned null')
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+      }
+      console.log('[customers] Auth OK - admin:', admin.email, admin.role)
+    } catch (authErr) {
+      console.error('[customers] Auth exception:', authErr instanceof Error ? authErr.message : String(authErr))
+      return NextResponse.json({ error: 'Auth error: ' + (authErr instanceof Error ? authErr.message : String(authErr)) }, { status: 500 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -58,7 +67,8 @@ export async function GET(request: NextRequest) {
     // Log env verification to diagnose truncated keys on Vercel
     const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
     const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-    console.log('[customers] ENV check - SUPABASE_URL length:', sbUrl.length, 'SERVICE_ROLE_KEY length:', sbKey.length, 'key ends with:', sbKey.slice(-10))
+    const sbAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+    console.log('[customers] ENV check - URL:', sbUrl, 'SERVICE_KEY length:', sbKey.length, 'ANON_KEY length:', sbAnon.length)
 
     const page = parseInt(searchParams.get('page') || '1', 10)
     const validPage = isNaN(page) || page < 1 ? 1 : page

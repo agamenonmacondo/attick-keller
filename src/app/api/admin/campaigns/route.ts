@@ -198,14 +198,60 @@ export async function POST(request: NextRequest) {
     }).eq('id', campaignId)
   }
 
-  // Fire and forget - return immediately to client
-  sendCampaignAsync().catch(err => {
-    console.error('Campaign send error:', err)
-    // Mark campaign as failed on unexpected error
-    sb.from('email_campaigns').update({ status: 'failed' }).eq('id', campaignId).then(() => {}, () => {})
-  })
+  // Send emails with await (Vercel serverless kills fire-and-forget)
+  let sendResult
+  try {
+    sendResult = await sendCampaignEmailBatch(batchRecipients, subject, body_html)
+  } catch (sendErr: any) {
+    console.error('[campaigns] Batch send exception:', sendErr)
+    sendResult = { succeeded: 0, failed: batchRecipients.length, errors: [sendErr.message] }
+  }
+
+  // Update sent recipients
+  if (sendResult.succeeded > 0 && batchRecipients.length > 0) {
+    const sentEmails = batchRecipients.slice(0, sendResult.succeeded).map(r => r.to)
+    const failedEmails = batchRecipients.slice(sendResult.succeeded).map(r => r.to)
+
+    const CHUNK_SIZE = 100
+    for (let i = 0; i < sentEmails.length; i += CHUNK_SIZE) {
+      const chunk = sentEmails.slice(i, i + CHUNK_SIZE)
+      await sb.from('campaign_recipients')
+        .update({ status: 'sent', sent_at: new Date().toISOString() })
+        .eq('campaign_id', campaignId)
+        .in('email', chunk)
+        .then(() => {}, () => {})
+    }
+
+    for (let i = 0; i < failedEmails.length; i += CHUNK_SIZE) {
+      const chunk = failedEmails.slice(i, i + CHUNK_SIZE)
+      await sb.from('campaign_recipients')
+        .update({ status: 'failed', error: 'Batch send failure or API error' })
+        .eq('campaign_id', campaignId)
+        .in('email', chunk)
+        .then(() => {}, () => {})
+    }
+  } else if (sendResult.failed > 0) {
+    await sb.from('campaign_recipients')
+      .update({ status: 'failed', error: sendResult.errors.join('; ') || 'Unknown error' })
+      .eq('campaign_id', campaignId)
+      .then(() => {}, () => {})
+  }
+
+  // Update campaign status
+  await sb.from('email_campaigns').update({
+    sent_count: sendResult.succeeded,
+    failed_count: sendResult.failed,
+    status: sendResult.failed === batchRecipients.length && batchRecipients.length > 0 ? 'failed' : 'completed',
+    sent_at: new Date().toISOString(),
+  }).eq('id', campaignId)
 
   return NextResponse.json({
-    campaign: { id: campaignId, recipient_count: uniqueRecipients.length },
+    campaign: {
+      id: campaignId,
+      recipient_count: uniqueRecipients.length,
+      sent_count: sendResult.succeeded,
+      failed_count: sendResult.failed,
+      status: sendResult.failed === batchRecipients.length && batchRecipients.length > 0 ? 'failed' : 'completed',
+    },
   }, { status: 201 })
 }

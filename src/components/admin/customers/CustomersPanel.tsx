@@ -12,7 +12,7 @@ import { CampaignComposer } from './CampaignComposer'
 import { CustomerDetail } from './CustomerDetail'
 
 export function CustomersPanel() {
-  const { customers, total, totalPages, currentPage, loading, applyFilters, goToPage } = useCustomers()
+  const { customers, total, totalPages, currentPage, loading, error, applyFilters, goToPage } = useCustomers()
   const { data: detail, loading: detailLoading, fetchCustomer, clear: clearDetail } = useCustomerDetail()
   const { tags, createTag } = useCustomerTags()
 
@@ -146,6 +146,7 @@ export function CustomersPanel() {
         <CustomerList
           customers={customers}
           loading={loading}
+          error={error}
           page={currentPage}
           total={total}
           totalPages={totalPages}

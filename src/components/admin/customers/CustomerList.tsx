@@ -21,6 +21,7 @@ interface Customer {
 interface CustomerListProps {
   customers: Customer[]
   loading: boolean
+  error: string | null
   page: number
   total: number
   totalPages: number
@@ -36,7 +37,7 @@ interface CustomerListProps {
 }
 
 export function CustomerList({
-  customers, loading, page, total, totalPages,
+  customers, loading, error, page, total, totalPages,
   selectedIds, onToggleSelect, onSelectAll, onClearSelection,
   onPageChange, onCustomerClick, activeCustomerId,
   onSelectAllFiltered, selectingAll,
@@ -97,13 +98,19 @@ export function CustomerList({
         </div>
       )}
 
+      {error && (
+        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          Error al cargar clientes: {error}
+        </div>
+      )}
+
       {loading && (
         <div className="flex items-center justify-center py-12">
           <Spinner size={24} className="animate-spin text-[#8D6E63]" />
         </div>
       )}
 
-      {!loading && customers.length === 0 && (
+      {!loading && !error && customers.length === 0 && (
         <EmptyState
           icon={<User size={32} />}
           title="Sin resultados"

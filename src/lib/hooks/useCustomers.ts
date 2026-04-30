@@ -35,6 +35,7 @@ interface CustomersResponse {
   page: number
   limit: number
   totalPages: number
+  error?: string
 }
 
 export function useCustomers() {
@@ -43,10 +44,12 @@ export function useCustomers() {
   const [totalPages, setTotalPages] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [currentFilters, setCurrentFilters] = useState<FetchOptions>({})
 
   const fetchCustomers = useCallback(async (opts: FetchOptions = {}) => {
     setLoading(true)
+    setError(null)
     setCurrentFilters(opts)
     try {
       const params = new URLSearchParams()
@@ -62,14 +65,32 @@ export function useCustomers() {
 
       const query = params.toString()
       const res = await fetch('/api/admin/customers' + (query ? '?' + query : ''))
-      if (res.ok) {
-        const d: CustomersResponse = await res.json()
+
+      if (!res.ok) {
+        let msg = `Error ${res.status}`
+        try {
+          const errData = await res.json()
+          msg = errData.error || msg
+        } catch {}
+        setError(msg)
+        setCustomers([])
+        setTotal(0)
+        setTotalPages(0)
+        return
+      }
+
+      const d: CustomersResponse = await res.json()
+      if (d.error) {
+        setError(d.error)
+        setCustomers([])
+      } else {
         setCustomers(d.customers || [])
         setTotal(d.total)
         setTotalPages(d.totalPages)
         setCurrentPage(d.page)
       }
-    } catch {
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error de conexion')
       setCustomers([])
     } finally {
       setLoading(false)
@@ -89,7 +110,7 @@ export function useCustomers() {
   }, [fetchCustomers])
 
   return {
-    customers, total, totalPages, currentPage, loading,
+    customers, total, totalPages, currentPage, loading, error,
     fetchCustomers, applyFilters, goToPage,
   }
 }

@@ -5,23 +5,26 @@ import { createBrowserClient } from '@supabase/ssr'
 import { RESTAURANT_ID } from '@/lib/utils/constants'
 import { createDebouncedRefetch } from '@/lib/utils/debounceRefetch'
 
+interface TableItem {
+  id: string
+  number: string
+  capacity: number
+  is_occupied: boolean
+  current_reservation_id: string | null
+  current_party_size: number | null
+  current_customer_name: string | null
+  current_time: string | null
+  can_combine: boolean
+  combine_group: string | null
+  reservation_status: string | null
+}
+
 interface Zone {
   id: string
   name: string
   description: string | null
   sort_order: number
-  tables: Array<{
-    id: string
-    number: string
-    capacity: number
-    is_occupied: boolean
-    current_reservation_id: string | null
-    current_party_size: number | null
-    current_customer_name: string | null
-    current_time: string | null
-    can_combine: boolean
-    combine_group: string | null
-  }>
+  tables: TableItem[]
 }
 
 interface OccupancyData {
@@ -79,5 +82,38 @@ export function useHostOccupancy() {
     }
   }, [fetchData, debouncedRefetch])
 
-  return { data, loading, refetch: fetchData }
+  /** Compute per-zone capacity summary */
+  const zoneSummaries = (data?.zones || []).map(zone => {
+    const totalSeats = zone.tables.reduce((sum, t) => sum + t.capacity, 0)
+    const occupiedSeats = zone.tables
+      .filter(t => t.is_occupied && t.reservation_status === 'seated')
+      .reduce((sum, t) => sum + (t.current_party_size ?? t.capacity), 0)
+    const reservedSeats = zone.tables
+      .filter(t => t.is_occupied && t.reservation_status !== 'seated')
+      .reduce((sum, t) => sum + (t.current_party_size ?? t.capacity), 0)
+    const availableSeats = totalSeats - occupiedSeats - reservedSeats
+    const occupancyPercent = totalSeats > 0 ? Math.round(((occupiedSeats + reservedSeats) / totalSeats) * 100) : 0
+
+    return {
+      id: zone.id,
+      name: zone.name,
+      totalSeats,
+      occupiedSeats,
+      reservedSeats,
+      availableSeats,
+      occupancyPercent,
+    }
+  })
+
+  /** Compute overall quick stats */
+  const quickStats = {
+    totalCapacity: zoneSummaries.reduce((s, z) => s + z.totalSeats, 0),
+    occupied: zoneSummaries.reduce((s, z) => s + z.occupiedSeats, 0),
+    available: zoneSummaries.reduce((s, z) => s + z.availableSeats, 0),
+    reserved: zoneSummaries.reduce((s, z) => s + z.reservedSeats, 0),
+  }
+
+  return { data, loading, refetch: fetchData, zoneSummaries, quickStats }
 }
+
+export type { Zone, TableItem, OccupancyData }

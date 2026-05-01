@@ -47,7 +47,7 @@ export function HostShell() {
   const prefersReduced = usePrefersReducedMotion()
 
   const { data: dashData, loading: dashLoading, refetch: refetchDash } = useHostDashboard()
-  const { data: occupancyData, loading: occLoading, refetch: refetchOcc } = useHostOccupancy()
+  const { data: occupancyData, loading: occLoading, refetch: refetchOcc, zoneSummaries, quickStats } = useHostOccupancy()
 
   const handleRefetch = () => {
     refetchDash()
@@ -189,7 +189,7 @@ export function HostShell() {
             ))}
           </div>
         ) : todayStats && occupancy ? (
-          <HostOccupancySummary stats={todayStats} occupancy={occupancy} />
+          <HostOccupancySummary stats={todayStats} occupancy={occupancy} quickStats={quickStats} zoneSummaries={zoneSummaries} />
         ) : null}
 
         {/* Quick actions */}

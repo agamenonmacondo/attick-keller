@@ -3,11 +3,10 @@
 import { useState } from 'react'
 import { motion, type Variants } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
-import { StatusBadge } from '../admin/shared/StatusBadge'
 import { EmptyState } from '../admin/shared/EmptyState'
 import { SectionHeading } from '../admin/shared/SectionHeading'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
-import { Table, Warning } from '@phosphor-icons/react'
+import { Table, Users, ArrowsMerge, X } from '@phosphor-icons/react'
 
 const SPRING = { stiffness: 100, damping: 20, mass: 1 }
 
@@ -41,6 +40,7 @@ interface TableItem {
   current_time: string | null
   can_combine: boolean
   combine_group: string | null
+  reservation_status: string | null
 }
 
 interface Zone {
@@ -55,6 +55,40 @@ interface HostTableMapProps {
   zones: Zone[]
   reservations: Array<Record<string, unknown>>
   onAction: () => void
+}
+
+/** Determine table status for coloring */
+function getTableStatus(table: TableItem): 'available' | 'occupied' | 'reserved' {
+  if (!table.is_occupied) return 'available'
+  if (table.reservation_status === 'seated') return 'occupied'
+  return 'reserved'
+}
+
+/** Status-based card styling */
+function getTableStatusStyle(status: 'available' | 'occupied' | 'reserved') {
+  switch (status) {
+    case 'available':
+      return {
+        border: 'border-[#5C7A4D]/30',
+        bg: 'bg-[#5C7A4D]/5',
+        dot: 'bg-[#5C7A4D]',
+        hoverBorder: 'hover:border-[#5C7A4D]/50',
+      }
+    case 'occupied':
+      return {
+        border: 'border-[#6B2737]/30',
+        bg: 'bg-[#6B2737]/8',
+        dot: 'bg-[#6B2737]',
+        hoverBorder: 'hover:border-[#6B2737]/50',
+      }
+    case 'reserved':
+      return {
+        border: 'border-[#D4922A]/30',
+        bg: 'bg-[#D4922A]/8',
+        dot: 'bg-[#D4922A]',
+        hoverBorder: 'hover:border-[#D4922A]/50',
+      }
+  }
 }
 
 export function HostTableMap({ zones, reservations, onAction }: HostTableMapProps) {
@@ -110,9 +144,24 @@ export function HostTableMap({ zones, reservations, onAction }: HostTableMapProp
   }
 
   return (
-    <div className="space-y-4"
-    >
+    <div className="space-y-4">
       <SectionHeading>Mapa de Mesas</SectionHeading>
+
+      {/* Status legend */}
+      <div className="flex items-center gap-4 text-xs text-[#8D6E63]">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#5C7A4D]" />
+          Disponible
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#6B2737]" />
+          Ocupada
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#D4922A]" />
+          Reservada
+        </span>
+      </div>
 
       {error && (
         <motion.div
@@ -125,10 +174,8 @@ export function HostTableMap({ zones, reservations, onAction }: HostTableMapProp
       )}
 
       {zones.map(zone => (
-        <div key={zone.id}
-        >
-          <h3 className="text-sm font-medium text-[#5D4037] uppercase tracking-wider mb-2"
-          >
+        <div key={zone.id}>
+          <h3 className="text-sm font-medium text-[#5D4037] uppercase tracking-wider mb-2">
             {zone.name}
           </h3>
           <motion.div
@@ -183,37 +230,58 @@ function HostTableCard({
   variants?: Variants
 }) {
   const prefersReduced = usePrefersReducedMotion()
+  const status = getTableStatus(table)
+  const statusStyle = getTableStatusStyle(status)
 
   return (
-    <div className="relative"
-    >
+    <div className="relative">
       <motion.button
         onClick={onClick}
         variants={variants}
         className={cn(
           'w-full rounded-xl border-2 p-2 md:p-3 text-left transition-colors',
-          table.is_occupied
-            ? 'border-[#6B2737]/30 bg-[#6B2737]/5'
-            : 'border-[#D7CCC8] bg-white hover:border-[#5C7A4D]/40',
+          statusStyle.border,
+          statusStyle.bg,
+          statusStyle.hoverBorder,
           isActive && 'ring-2 ring-[#D4922A] ring-offset-1'
         )}
         style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out' }}
         whileTap={prefersReduced ? undefined : { scale: 0.97 }}
       >
-        <div className="flex items-center justify-between mb-1"
-        >
-          <span className="text-sm md:text-base font-bold text-[#3E2723]"
-          >Mesa {table.number}</span>
-          <span className={cn(
-            'w-2.5 h-2.5 rounded-full',
-            table.is_occupied ? 'bg-[#6B2737]' : 'bg-[#5C7A4D]'
-          )} />
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-sm md:text-base font-bold text-[#3E2723]">
+            Mesa {table.number}
+          </span>
+          <span className={cn('w-2.5 h-2.5 rounded-full', statusStyle.dot)} />
         </div>
-        <p className="text-xs text-[#8D6E63]"
-        >{table.capacity} personas</p>
+
+        {/* Capacity — prominent */}
+        <div className="flex items-center gap-1 text-xs text-[#8D6E63]">
+          <Users size={12} weight="bold" />
+          <span className="font-semibold text-[#3E2723]">{table.capacity}</span>
+          <span>{table.capacity === 1 ? 'persona' : 'personas'}</span>
+        </div>
+
+        {/* Combine badge */}
+        {table.can_combine && table.combine_group && (
+          <div className="flex items-center gap-0.5 mt-1.5">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-[#C9A94E]/10 border border-[#C9A94E]/20 text-[10px] font-medium text-[#C9A94E]">
+              <ArrowsMerge size={10} weight="bold" />
+              {table.combine_group}
+            </span>
+          </div>
+        )}
+
+        {/* Occupied info */}
         {table.is_occupied && table.current_customer_name && (
-          <p className="text-xs text-[#3E2723] font-medium truncate mt-1"
-          >{table.current_customer_name}</p>
+          <p className="text-xs text-[#3E2723] font-medium truncate mt-1">
+            {table.current_customer_name}
+          </p>
+        )}
+        {table.is_occupied && table.current_time && (
+          <p className="text-[10px] text-[#8D6E63] mt-0.5">
+            {table.current_time}
+          </p>
         )}
       </motion.button>
 
@@ -226,20 +294,31 @@ function HostTableCard({
           className="absolute z-30 left-0 right-0 mt-1 bg-white rounded-xl border border-[#D7CCC8] shadow-lg p-3"
           style={{ minWidth: '180px' }}
         >
+          {/* Dismiss button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onClick() }}
+            className="absolute top-2 right-2 text-[#8D6E63] hover:text-[#3E2723] transition-colors"
+          >
+            <X size={14} />
+          </button>
+
           {table.is_occupied && table.current_reservation_id ? (
             <div>
-              <p className="text-sm font-medium text-[#3E2723] mb-2"
-              >
+              <p className="text-sm font-medium text-[#3E2723] mb-1">
                 {table.current_customer_name || 'Ocupada'}
               </p>
-              <p className="text-xs text-[#8D6E63] mb-3"
-              >
+              <p className="text-xs text-[#8D6E63] mb-1">
                 {table.current_party_size} personas
                 {table.current_time ? ` · ${table.current_time}` : ''}
               </p>
+              {table.reservation_status && (
+                <p className="text-[10px] uppercase tracking-wider text-[#8D6E63] mb-3">
+                  {table.reservation_status === 'seated' ? 'Sentados' : table.reservation_status}
+                </p>
+              )}
               <button
                 onClick={(e) => { e.stopPropagation(); onUnassign(table.current_reservation_id!) }}
-                className="w-full py-2 text-sm font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 active:scale-[0.97] transition-all"
+                className="w-full py-2 text-sm font-medium rounded-lg bg-[#6B2737] text-white hover:bg-[#5C2230] active:scale-[0.97] transition-all"
                 style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
               >
                 Liberar mesa
@@ -247,14 +326,11 @@ function HostTableCard({
             </div>
           ) : (
             <div>
-              <p className="text-sm font-medium text-[#3E2723] mb-2"
-              >Asignar reserva</p>
+              <p className="text-sm font-medium text-[#3E2723] mb-2">Asignar reserva</p>
               {unassignedReservations.length === 0 ? (
-                <p className="text-xs text-[#8D6E63]"
-                >Sin reservas pendientes</p>
+                <p className="text-xs text-[#8D6E63]">Sin reservas pendientes</p>
               ) : (
-                <div className="space-y-1.5 max-h-40 overflow-y-auto"
-                >
+                <div className="space-y-1.5 max-h-40 overflow-y-auto">
                   {unassignedReservations.map(r => (
                     <button
                       key={r.id}
@@ -262,10 +338,8 @@ function HostTableCard({
                       className="w-full text-left p-2 rounded-lg bg-[#F5EDE0] hover:bg-[#D7CCC8]/50 text-xs transition-colors active:scale-[0.97]"
                       style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                     >
-                      <span className="font-medium text-[#3E2723]"
-                      >{r.customers?.full_name || 'Sin nombre'}</span>
-                      <span className="text-[#8D6E63] ml-2"
-                      >{r.party_size}p · {r.time_start?.slice(0, 5)}</span>
+                      <span className="font-medium text-[#3E2723]">{r.customers?.full_name || 'Sin nombre'}</span>
+                      <span className="text-[#8D6E63] ml-2">{r.party_size}p · {r.time_start?.slice(0, 5)}</span>
                     </button>
                   ))}
                 </div>

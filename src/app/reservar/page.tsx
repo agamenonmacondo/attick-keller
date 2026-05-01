@@ -1,14 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/lib/auth/auth-provider'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
-
-interface Zone {
-  id: string
-  name: string
-}
 
 export default function ReservarPage() {
   const { user, loading: authLoading } = useAuth()
@@ -17,19 +12,10 @@ export default function ReservarPage() {
   const [date, setDate] = useState('')
   const [partySize, setPartySize] = useState(2)
   const [timeSlot, setTimeSlot] = useState('')
-  const [zoneId, setZoneId] = useState('')
-  const [zones, setZones] = useState<Zone[]>([])
   const [specialRequests, setSpecialRequests] = useState('')
   const [phone, setPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetch('/api/zones')
-      .then(r => r.json())
-      .then(data => setZones(data.zones || []))
-      .catch(() => {})
-  }, [])
 
   if (authLoading) return <div className="min-h-screen bg-[#F5EDE0] flex items-center justify-center">Cargando...</div>
   if (!user) return <div className="min-h-screen bg-[#F5EDE0] flex items-center justify-center">Cargando...</div>
@@ -56,7 +42,6 @@ export default function ReservarPage() {
           time_start: start,
           time_end: end,
           party_size: partySize,
-          zone_id: zoneId,
           special_requests: specialRequests,
           customer_phone: phone || undefined,
         }),
@@ -84,9 +69,9 @@ export default function ReservarPage() {
           Reservar Mesa
         </h1>
 
-        {/* Steps indicator */}
+        {/* Steps indicator — 2 steps */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2, 3].map(s => (
+          {[1, 2].map(s => (
             <div key={s} className="flex items-center gap-2">
               <div className={cn(
                 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
@@ -94,17 +79,17 @@ export default function ReservarPage() {
               )}>
                 {s}
               </div>
-              {s < 3 && <div className={cn('w-12 h-0.5', step > s ? 'bg-[#6B2737]' : 'bg-[#D7CCC8]')} />}
+              {s < 2 && <div className={cn('w-12 h-0.5', step > s ? 'bg-[#6B2737]' : 'bg-[#D7CCC8]')} />}
             </div>
           ))}
         </div>
 
         {error && <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
 
-        {/* Step 1: Date & Party */}
+        {/* Step 1: Date, Party Size & Time */}
         {step === 1 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
-            <h2 className="text-xl font-semibold text-[#3E2723]">¿Cuándo y cuántos?</h2>
+            <h2 className="text-xl font-semibold text-[#3E2723]">¿Cuándo, cuántos y a qué hora?</h2>
             <div>
               <label className="block text-sm font-medium text-[#3E2723] mb-1">Fecha</label>
               <input
@@ -128,20 +113,6 @@ export default function ReservarPage() {
                 ))}
               </select>
             </div>
-            <button
-              onClick={() => date && setStep(2)}
-              disabled={!date}
-              className="w-full py-3 bg-[#6B2737] text-white rounded-lg font-semibold hover:bg-[#8B3747] transition-colors disabled:opacity-50"
-            >
-              Siguiente
-            </button>
-          </div>
-        )}
-
-        {/* Step 2: Time & Zone */}
-        {step === 2 && (
-          <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
-            <h2 className="text-xl font-semibold text-[#3E2723]">Hora y zona</h2>
             <div>
               <label className="block text-sm font-medium text-[#3E2723] mb-2">Hora</label>
               <div className="grid grid-cols-3 gap-2">
@@ -161,52 +132,24 @@ export default function ReservarPage() {
                 ))}
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-[#3E2723] mb-2">Zona</label>
-              <div className="grid grid-cols-3 gap-2">
-                {zones.map(z => (
-                  <button
-                    key={z.id}
-                    onClick={() => setZoneId(z.id)}
-                    className={cn(
-                      'py-3 rounded-lg text-sm font-medium transition-all',
-                      zoneId === z.id
-                        ? 'bg-[#6B2737] text-white'
-                        : 'bg-[#EFEBE9] text-[#3E2723] hover:bg-[#D7CCC8]'
-                    )}
-                  >
-                    {z.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setStep(1)}
-                className="flex-1 py-3 border border-[#D7CCC8] rounded-lg font-medium hover:bg-[#EFEBE9] transition-colors"
-              >
-                Atrás
-              </button>
-              <button
-                onClick={() => timeSlot && zoneId && setStep(3)}
-                disabled={!timeSlot || !zoneId}
-                className="flex-1 py-3 bg-[#6B2737] text-white rounded-lg font-semibold hover:bg-[#8B3747] transition-colors disabled:opacity-50"
-              >
-                Siguiente
-              </button>
-            </div>
+            <button
+              onClick={() => date && timeSlot && setStep(2)}
+              disabled={!date || !timeSlot}
+              className="w-full py-3 bg-[#6B2737] text-white rounded-lg font-semibold hover:bg-[#8B3747] transition-colors disabled:opacity-50"
+            >
+              Siguiente
+            </button>
           </div>
         )}
 
-        {/* Step 3: Confirm */}
-        {step === 3 && (
+        {/* Step 2: Confirm + Phone + Notes */}
+        {step === 2 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
             <h2 className="text-xl font-semibold text-[#3E2723]">Confirmar reserva</h2>
             <div className="space-y-3 text-[#3E2723]">
               <p><span className="font-medium">Fecha:</span> {date}</p>
               <p><span className="font-medium">Hora:</span> {timeSlot}</p>
               <p><span className="font-medium">Personas:</span> {partySize}</p>
-              <p><span className="font-medium">Zona:</span> {zones.find(z => z.id === zoneId)?.name}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-[#3E2723] mb-1">Telefono de contacto</label>
@@ -230,7 +173,7 @@ export default function ReservarPage() {
             </div>
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(1)}
                 className="flex-1 py-3 border border-[#D7CCC8] rounded-lg font-medium hover:bg-[#EFEBE9] transition-colors"
               >
                 Atrás

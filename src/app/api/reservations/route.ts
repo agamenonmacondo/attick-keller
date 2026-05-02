@@ -132,21 +132,63 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (customerError) {
-      if (customerError.message?.includes('duplicate key') && user.email) {
-        const { data: fallback } = await sb
-          .from('customers')
-          .select('id')
-          .eq('email', user.email)
-          .eq('restaurant_id', RESTAURANT_ID)
-          .maybeSingle()
-
-        if (fallback?.id) {
-          await sb
+      if (customerError.message?.includes('duplicate key')) {
+        // Try matching by email first
+        if (user.email) {
+          const { data: fallback } = await sb
             .from('customers')
-            .update({ auth_user_id: user.id })
-            .eq('id', fallback.id)
+            .select('id, auth_user_id')
+            .eq('email', user.email)
+            .eq('restaurant_id', RESTAURANT_ID)
+            .maybeSingle()
 
-          customerId = fallback.id
+          if (fallback?.id) {
+            if (fallback.auth_user_id === user.id) {
+              customerId = fallback.id
+            } else {
+              // Same email, different user — link this user to the existing customer
+              await sb
+                .from('customers')
+                .update({ auth_user_id: user.id })
+                .eq('id', fallback.id)
+              customerId = fallback.id
+            }
+          }
+        }
+
+        // If not found by email, try matching by phone
+        if (!customerId && providedPhone) {
+          const { data: byPhone } = await sb
+            .from('customers')
+            .select('id, auth_user_id')
+            .eq('phone', providedPhone)
+            .eq('restaurant_id', RESTAURANT_ID)
+            .maybeSingle()
+
+          if (byPhone?.id) {
+            if (byPhone.auth_user_id === user.id) {
+              customerId = byPhone.id
+            } else {
+              // Same phone, different user — create a new customer record
+              // (phone uniqueness constraint removed, so this is allowed)
+              const phoneValue = providedPhone || `pending_${user.id}`
+              const { data: newCust, error: retryError } = await sb
+                .from('customers')
+                .insert({
+                  auth_user_id: user.id,
+                  restaurant_id: RESTAURANT_ID,
+                  email: user.email,
+                  full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '',
+                  phone: phoneValue,
+                })
+                .select('id')
+                .maybeSingle()
+
+              if (!retryError && newCust?.id) {
+                customerId = newCust.id
+              }
+            }
+          }
         }
       }
 

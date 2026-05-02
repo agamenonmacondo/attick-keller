@@ -33,11 +33,12 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!existingCustomer) {
+      const phoneValue = existingUser.user_metadata?.phone || existingUser.phone || ''
       await sb.from('customers').insert({
         auth_user_id: existingUser.id,
         email: existingUser.email,
         full_name: name || existingUser.user_metadata?.full_name || existingUser.email?.split('@')[0],
-        phone: existingUser.user_metadata?.phone || '',
+        phone: phoneValue || `pending_${existingUser.id}`,
         restaurant_id: 'a0000000-0000-0000-0000-000000000001',
       })
     }

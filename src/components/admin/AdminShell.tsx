@@ -11,6 +11,7 @@ import { MetricsPanel } from './metrics/MetricsPanel'
 import { CustomersPanel } from './customers/CustomersPanel'
 import { MenuPanel } from './menu/MenuPanel'
 import { TeamPanel } from './team/TeamPanel'
+import { TablesPanel } from './inventory/TablesPanel'
 import { Spinner } from '@phosphor-icons/react'
 
 export function AdminShell() {
@@ -51,6 +52,7 @@ export function AdminShell() {
         {activeTab === 'ocupacion' && (
           <OccupancyPanel selectedDate={selectedDate} onDateChange={setSelectedDate} />
         )}
+        {activeTab === 'mesas' && <TablesPanel />}
         {activeTab === 'metricas' && <MetricsPanel />}
         {activeTab === 'clientes' && <CustomersPanel />}
         {activeTab === 'menu' && <MenuPanel />}

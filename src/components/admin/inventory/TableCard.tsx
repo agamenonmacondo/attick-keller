@@ -19,7 +19,14 @@ export function TableCard({ table, onToggle, onEdit }: TableCardProps) {
       {/* Header row */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-base font-semibold text-[#3E2723]">{table.number}</span>
+          {table.name_attick ? (
+            <>
+              <span className="text-base font-semibold text-[#3E2723]">{table.name_attick}</span>
+              <span className="text-xs text-[#8D6E63]">({table.number})</span>
+            </>
+          ) : (
+            <span className="text-base font-semibold text-[#3E2723]">{table.number}</span>
+          )}
           {table.zone?.name && (
             <span className="text-[10px] text-[#8D6E63] bg-[#EFEBE9] rounded-full px-2 py-0.5">{table.zone.name}</span>
           )}
@@ -44,12 +51,6 @@ export function TableCard({ table, onToggle, onEdit }: TableCardProps) {
       {/* Details */}
       <div className="flex items-center gap-2 text-xs text-[#8D6E63] mb-2">
         <span>{capacityLabel}</span>
-        {table.name_attick && (
-          <>
-            <span className="text-[#D7CCC8]">|</span>
-            <span className="italic">{table.name_attick}</span>
-          </>
-        )}
       </div>
 
       {/* Badges + toggle row */}

@@ -48,6 +48,8 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                 const isOccupied = table.is_occupied as boolean
                 const capacity = table.capacity as number
                 const number = String(table.number)
+                const nameAttick = table.name_attick as string | null
+                const displayName = nameAttick || `Mesa ${number}`
                 const customer = table.current_customer_name as string | null
                 const time = table.current_time as string | null
                 const partySize = table.current_party_size as number | null
@@ -69,8 +71,9 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                         style={{ transition: 'transform 160ms ease-out, box-shadow 200ms ease-out' }}
                       >
                         <div className="flex items-center justify-center gap-1 mb-1">
-                          <span className={cn('w-2 h-2 rounded-full', isOccupied ? 'bg-[#6B2737]' : 'bg-emerald-400')} />
-                          <span className="text-sm font-mono font-bold text-[#3E2723]">{number}</span>
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: isOccupied ? '#6B2737' : '#5C7A4D' }} />
+                          <span className="text-sm font-semibold text-[#3E2723]">{displayName}</span>
+                          {nameAttick && <span className="text-[10px] text-[#8D6E63]">({number})</span>}
                         </div>
                         <p className="text-[10px] text-[#8D6E63]">{capacity}p</p>
                         {isOccupied && (
@@ -112,6 +115,8 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
               const isOccupied = table.is_occupied as boolean
               const capacity = table.capacity as number
               const number = String(table.number)
+              const nameAttick = table.name_attick as string | null
+              const displayName = nameAttick || `Mesa ${number}`
               const customer = table.current_customer_name as string | null
               const time = table.current_time as string | null
               const partySize = table.current_party_size as number | null
@@ -132,7 +137,8 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                       )}
                       style={{ transition: 'transform 160ms ease-out, box-shadow 200ms ease-out' }}
                     >
-                      <span className="text-sm font-mono font-bold text-[#3E2723]">{number}</span>
+                      <span className="text-sm font-semibold text-[#3E2723]">{displayName}</span>
+                      {nameAttick && <span className="text-[10px] text-[#8D6E63] ml-0.5">({number})</span>}
                       <p className="text-[10px] text-[#8D6E63]">{capacity}p</p>
                     </button>
                     {isActive && (

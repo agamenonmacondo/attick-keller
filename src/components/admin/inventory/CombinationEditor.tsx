@@ -118,7 +118,8 @@ export function CombinationEditor({ combination, tables, onClose, onSave }: Comb
                         <span className="text-[9px] font-bold">&#10003;</span>
                       )}
                     </span>
-                    <span className="font-medium">{table.number}</span>
+                    <span className="font-medium">{table.name_attick || table.number}</span>
+                    <span className="text-xs opacity-70">({table.number})</span>
                     <span className="text-xs opacity-70">{table.capacity} pers.</span>
                     {table.zone?.name && (
                       <span className="ml-auto text-[10px] opacity-50">{table.zone.name}</span>

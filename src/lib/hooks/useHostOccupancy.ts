@@ -8,6 +8,7 @@ import { createDebouncedRefetch } from '@/lib/utils/debounceRefetch'
 interface TableItem {
   id: string
   number: string
+  name_attick: string | null
   capacity: number
   is_occupied: boolean
   current_reservation_id: string | null

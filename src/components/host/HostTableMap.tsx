@@ -32,6 +32,7 @@ const itemVariants = {
 interface TableItem {
   id: string
   number: string
+  name_attick: string | null
   capacity: number
   is_occupied: boolean
   current_reservation_id: string | null
@@ -250,8 +251,11 @@ function HostTableCard({
       >
         <div className="flex items-center justify-between mb-1">
           <span className="text-sm md:text-base font-bold text-[#3E2723]">
-            Mesa {table.number}
+            {table.name_attick || `Mesa ${table.number}`}
           </span>
+          {table.name_attick && (
+            <span className="text-[10px] text-[#8D6E63] ml-1">({table.number})</span>
+          )}
           <span className={cn('w-2.5 h-2.5 rounded-full', statusStyle.dot)} />
         </div>
 

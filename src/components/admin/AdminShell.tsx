@@ -12,6 +12,7 @@ import { CustomersPanel } from './customers/CustomersPanel'
 import { MenuPanel } from './menu/MenuPanel'
 import { TeamPanel } from './team/TeamPanel'
 import { TablesPanel } from './inventory/TablesPanel'
+import { FloorPlanMap } from './floorplan/FloorPlanMap'
 import { Spinner } from '@phosphor-icons/react'
 
 export function AdminShell() {
@@ -53,6 +54,7 @@ export function AdminShell() {
           <OccupancyPanel selectedDate={selectedDate} onDateChange={setSelectedDate} />
         )}
         {activeTab === 'mesas' && <TablesPanel />}
+        {activeTab === 'plano' && <FloorPlanMap />}
         {activeTab === 'metricas' && <MetricsPanel />}
         {activeTab === 'clientes' && <CustomersPanel />}
         {activeTab === 'menu' && <MenuPanel />}

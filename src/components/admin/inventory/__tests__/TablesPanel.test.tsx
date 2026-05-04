@@ -123,12 +123,13 @@ describe('TablesPanel', () => {
     expect(screen.getAllByText('Salon Principal').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('renders table numbers within zones', async () => {
+  it('renders table display names within zones', async () => {
     mockHookData({ zones: mockZones, tables: mockTables, combinations: [] })
     render(<TablesPanel />)
     // Wait for zones to expand via useEffect
+    // name_attick is displayed as primary (e.g., 'Esquinera'), number as secondary
     await waitFor(() => {
-      expect(screen.getByText('1A')).toBeInTheDocument()
+      expect(screen.getByText('Esquinera')).toBeInTheDocument()
     })
   })
 

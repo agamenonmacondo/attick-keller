@@ -411,20 +411,24 @@ export function FloorPlanMap() {
         {/* Map Container */}
         <div className="flex-1 rounded-xl border border-[#D7CCC8] bg-white overflow-auto relative">
           <div
-            className="relative w-full h-full min-h-[400px]"
             style={{
               transform: `scale(${zoom})`,
               transformOrigin: 'top left',
+              width: zoom !== 1 ? `${100 / zoom}%` : undefined,
             }}
           >
-            {/* Floor plan SVG background */}
+            {/* Floor plan image — uses <img> to preserve full aspect ratio (no crop) */}
             {currentFloor && (
-              <div
-                className="w-full h-full min-h-[400px] bg-cover bg-no-repeat bg-center"
-                style={{ backgroundImage: `url(${currentFloor.image_url})` }}
-              >
-                {/* Hotspots overlay */}
-                <div className="relative w-full h-full min-h-[400px]">
+              <div className="relative inline-block w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={currentFloor.image_url}
+                  alt={`Plano ${currentFloor.name}`}
+                  className="w-full h-auto block select-none pointer-events-none"
+                  draggable={false}
+                />
+                {/* Hotspots overlay — absolute positioned over the image */}
+                <div className="absolute inset-0">
                   <AnimatePresence>
                     {currentFloorTables
                       .filter((t) => t.position_x !== null && t.position_y !== null)

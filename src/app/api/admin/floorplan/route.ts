@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
       return !tz || !tz.floor_num
     })
     .map((t) => {
-      const reservation = tableReservationMap.get(t.id) || null
+      const tz = Array.isArray(t.table_zones) ? t.table_zones[0] : t.table_zones
       return {
         id: t.id,
         number: t.number,
@@ -142,6 +142,7 @@ export async function GET(request: NextRequest) {
         position_x: t.position_x,
         position_y: t.position_y,
         zone_id: t.zone_id,
+        zone_name: tz?.name ?? null,
       }
     })
 
@@ -154,7 +155,7 @@ export async function GET(request: NextRequest) {
       return tz && tz.floor_num // has a zone but no position
     })
     .map((t) => {
-      const reservation = tableReservationMap.get(t.id) || null
+      const tz = Array.isArray(t.table_zones) ? t.table_zones[0] : t.table_zones
       return {
         id: t.id,
         number: t.number,
@@ -163,6 +164,7 @@ export async function GET(request: NextRequest) {
         position_x: t.position_x,
         position_y: t.position_y,
         zone_id: t.zone_id,
+        zone_name: tz?.name ?? null,
       }
     })
 

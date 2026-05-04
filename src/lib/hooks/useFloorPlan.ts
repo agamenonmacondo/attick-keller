@@ -45,6 +45,7 @@ export interface UnpositionedTable {
   position_x: number | null
   position_y: number | null
   zone_id: string | null
+  zone_name: string | null
 }
 
 interface FloorPlanData {

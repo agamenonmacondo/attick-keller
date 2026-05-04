@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MapTrifold,
@@ -403,12 +403,21 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
   const [editMode, setEditMode] = useState(false)
   const [selectedTable, setSelectedTable] = useState<TableWithPosition | null>(null)
   const [saving, setSaving] = useState(false)
-  const [zoom, setZoom] = useState(1)
+  const [zoom, setZoom] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 1024) ? 0.75 : 1)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const pendingUpdates = useRef<Map<string, { position_x: number; position_y: number }>>(new Map())
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const currentFloor: FloorPlanFloor | undefined = floors[activeFloor]
+
+  // Reset zoom to mobile default when switching floors on mobile
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setZoom(0.75)
+    } else {
+      setZoom(1)
+    }
+  }, [activeFloor])
 
   const currentFloorTables = useMemo<TableWithPosition[]>(() => {
     if (!currentFloor) return []

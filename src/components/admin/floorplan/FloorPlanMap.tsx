@@ -403,7 +403,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
   const [editMode, setEditMode] = useState(false)
   const [selectedTable, setSelectedTable] = useState<TableWithPosition | null>(null)
   const [saving, setSaving] = useState(false)
-  const [zoom, setZoom] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 1024) ? 0.75 : 1)
+  const [zoom, setZoom] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 1024) ? 0.6 : 1)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const pendingUpdates = useRef<Map<string, { position_x: number; position_y: number }>>(new Map())
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -413,7 +413,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
   // Reset zoom to mobile default when switching floors on mobile
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      setZoom(0.75)
+      setZoom(0.6)
     } else {
       setZoom(1)
     }

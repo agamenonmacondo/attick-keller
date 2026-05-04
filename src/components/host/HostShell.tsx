@@ -9,9 +9,10 @@ import { HostReservationQueue } from './HostReservationQueue'
 import { HostOccupancySummary } from './HostOccupancySummary'
 import { HostQuickActions } from './HostQuickActions'
 import { HostWalkInForm } from './HostWalkInForm'
+import { HostFloorPlan } from './HostFloorPlan'
 import { useHostDashboard } from '@/lib/hooks/useHostDashboard'
 import { useHostOccupancy } from '@/lib/hooks/useHostOccupancy'
-import { Spinner, Table, CalendarDots, Plus } from '@phosphor-icons/react'
+import { Spinner, Table, CalendarDots, Plus, MapTrifold } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 
@@ -36,7 +37,7 @@ const itemVariants = {
   },
 }
 
-type HostTab = 'mesas' | 'reservas'
+type HostTab = 'mesas' | 'reservas' | 'plano'
 
 export function HostShell() {
   const { user, loading: authLoading, roleLoading, isHost, isAdmin } = useAuth()
@@ -139,23 +140,33 @@ export function HostShell() {
         <div className="flex">
           <button
             onClick={() => setActiveTab('mesas')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 transition-colors duration-200 ${
               activeTab === 'mesas' ? 'border-[#6B2737] text-[#3E2723]' : 'border-transparent text-[#8D6E63]'
             }`}
             style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
           >
-            <Table size={18} />
+            <Table size={16} />
             Mesas
           </button>
           <button
             onClick={() => setActiveTab('reservas')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 transition-colors duration-200 ${
               activeTab === 'reservas' ? 'border-[#6B2737] text-[#3E2723]' : 'border-transparent text-[#8D6E63]'
             }`}
             style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
           >
-            <CalendarDots size={18} />
+            <CalendarDots size={16} />
             Reservas
+          </button>
+          <button
+            onClick={() => setActiveTab('plano')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 transition-colors duration-200 ${
+              activeTab === 'plano' ? 'border-[#6B2737] text-[#3E2723]' : 'border-transparent text-[#8D6E63]'
+            }`}
+            style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
+          >
+            <MapTrifold size={16} />
+            Plano
           </button>
         </div>
       </div>
@@ -202,8 +213,34 @@ export function HostShell() {
           />
         </motion.div>
 
+        {/* Desktop view toggle — show when Plano tab is relevant */}
+        <div className="hidden lg:flex items-center gap-2 mt-4 mb-2">
+          <button
+            onClick={() => setActiveTab('mesas')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'mesas' || activeTab === 'reservas'
+                ? 'bg-[#6B2737] text-white'
+                : 'bg-white text-[#8D6E63] border border-[#D7CCC8] hover:border-[#6B2737]'
+            }`}
+          >
+            <Table size={16} />
+            Mesas + Reservas
+          </button>
+          <button
+            onClick={() => setActiveTab('plano')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'plano'
+                ? 'bg-[#6B2737] text-white'
+                : 'bg-white text-[#8D6E63] border border-[#D7CCC8] hover:border-[#6B2737]'
+            }`}
+          >
+            <MapTrifold size={16} />
+            Plano
+          </button>
+        </div>
+
         {/* Desktop: two columns. Mobile: tab switcher */}
-        <div className="lg:grid lg:grid-cols-5 lg:gap-6 mt-4">
+        <div className={`lg:grid lg:grid-cols-5 lg:gap-6 mt-4 ${activeTab === 'plano' ? 'hidden' : ''}`}>
           <div className={`lg:col-span-3 ${activeTab !== 'mesas' ? 'hidden lg:block' : ''}`}>
             {isLoading && zones.length === 0 ? (
               <div className="space-y-4">
@@ -241,6 +278,13 @@ export function HostShell() {
             )}
           </div>
         </div>
+
+        {/* Floor Plan tab (mobile + desktop) */}
+        {activeTab === 'plano' && (
+          <div className="mt-4">
+            <HostFloorPlan />
+          </div>
+        )}
       </motion.div>
 
       {/* Walk-in button */}

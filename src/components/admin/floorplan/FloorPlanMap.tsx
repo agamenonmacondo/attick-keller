@@ -9,15 +9,16 @@ import {
   Check,
   X,
   Spinner,
-  Table,
   Users,
   Clock,
   Warning,
   CaretDown,
   CaretRight,
+  Sidebar,
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils/cn'
 import { useFloorPlan, type FloorPlanFloor, type TableWithPosition, type UnpositionedTable, type TableStatus } from '@/lib/hooks/useFloorPlan'
+import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 
 // ── Constants ──────────────────────────────────────────────────────────
 
@@ -33,31 +34,17 @@ const STATUS_LABELS: Record<TableStatus, string> = {
   seated: 'Ocupada',
 }
 
-// Zone colors — each zone gets a distinct color for its hotspots
 const ZONE_COLORS: Record<string, string> = {
-  'Taller': '#8B5E3C',     // warm brown
-  'Salón Central': '#6B2737', // burgundy
-  'Barra': '#4A7C59',     // deep green
-  'Tipi': '#7B68EE',      // medium slate blue
-  'Semi-Privado': '#D4922A', // gold
-  'Jardín': '#2E8B57',    // sea green
-  'Chispas': '#CD5C5C',   // indian red
-  'Ático': '#4682B4',     // steel blue
-  'Attic': '#4682B4',     // steel blue
-  'Lounge': '#4682B4',    // steel blue
-}
-
-const ZONE_BG: Record<string, string> = {
-  'Taller': '#8B5E3C15',
-  'Salón Central': '#6B273715',
-  'Barra': '#4A7C5915',
-  'Tipi': '#7B68EE15',
-  'Semi-Privado': '#D4922A15',
-  'Jardín': '#2E8B5715',
-  'Chispas': '#CD5C5C15',
-  'Ático': '#4682B415',
-  'Attic': '#4682B415',
-  'Lounge': '#4682B415',
+  'Taller': '#8B5E3C',
+  'Salón Central': '#6B2737',
+  'Barra': '#4A7C59',
+  'Tipi': '#7B68EE',
+  'Semi-Privado': '#D4922A',
+  'Jardín': '#2E8B57',
+  'Chispas': '#CD5C5C',
+  'Ático': '#4682B4',
+  'Attic': '#4682B4',
+  'Lounge': '#4682B4',
 }
 
 const DEFAULT_ZONE_COLOR = '#8D6E63'
@@ -67,12 +54,18 @@ function getZoneColor(zoneName: string | null): string {
   return ZONE_COLORS[zoneName] ?? DEFAULT_ZONE_COLOR
 }
 
-function getZoneBg(zoneName: string | null): string {
-  if (!zoneName) return '#8D6E6315'
-  return ZONE_BG[zoneName] ?? '#8D6E6315'
+/** Abbreviate table name for mobile bubbles */
+function shortName(name: string): string {
+  if (name.length <= 6) return name
+  return name.slice(0, 6) + '.'
 }
 
-// ── TableHotspot with zone color ────────────────────────────────────────
+/** Format label: name_attick (number) or Mesa number */
+function tableLabel(t: { name_attick: string | null; number: string }): string {
+  return t.name_attick ? `${t.name_attick} (${t.number})` : `Mesa ${t.number}`
+}
+
+// ── TableHotspot ────────────────────────────────────────────────────────
 
 function TableHotspot({
   table,
@@ -92,7 +85,8 @@ function TableHotspot({
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null)
 
   const statusColor = STATUS_COLORS[table.status]
-  const label = table.name_attick || `Mesa ${table.number}`
+  const fullName = table.name_attick || `Mesa ${table.number}`
+  const nomen = table.name_attick ? `(${table.number})` : ''
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -142,54 +136,49 @@ function TableHotspot({
     >
       <motion.button
         className={cn(
-          'relative flex flex-col items-center justify-center rounded-full border-2 shadow-lg transition-shadow',
-          editMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer hover:shadow-xl',
+          'relative flex flex-col items-center justify-center rounded-full border-2 shadow-lg',
+          'w-11 h-11 lg:w-[52px] lg:h-[52px]',
+          editMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
         )}
         style={{
           borderColor: zoneColor,
           backgroundColor: zoneColor + '20',
-          width: editMode ? 48 : 44,
-          height: editMode ? 48 : 44,
           boxShadow: dragging ? `0 0 20px ${zoneColor}66` : undefined,
         }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       >
-        <span className="text-[10px] font-bold leading-none text-[#3E2723]">{label}</span>
-        <span className="text-[8px] text-[#8D6E63]">
-          <Users size={8} className="inline" /> {table.capacity}
+        {/* Mobile: 2-line abbreviated label */}
+        <span className="lg:hidden text-[8px] font-bold leading-tight text-[#3E2723] text-center truncate max-w-[38px]">
+          {shortName(fullName)}
         </span>
+        {nomen && <span className="lg:hidden text-[6px] text-[#8D6E63] leading-none">{nomen}</span>}
+        {/* Desktop: single-line full label */}
+        <span className="hidden lg:block text-[9px] font-bold leading-tight text-[#3E2723] text-center">
+          {tableLabel(table)}
+        </span>
+        <span className="hidden lg:block text-[7px] text-[#8D6E63]">
+          <Users size={7} className="inline" /> {table.capacity}
+        </span>
+        <span className="lg:hidden text-[6px] text-[#8D6E63]">{table.capacity}p</span>
         {/* Status dot */}
         <div
-          className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border border-white"
+          className="absolute -top-0.5 -right-0.5 w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full border border-white"
           style={{ backgroundColor: statusColor }}
         />
         {editMode && (
           <div
-            className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border border-white"
+            className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white"
             style={{ backgroundColor: zoneColor }}
           />
         )}
       </motion.button>
-      {/* Tooltip on hover when not in edit mode */}
-      {!editMode && table.reservation_id && (
-        <motion.div
-          className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 pointer-events-none whitespace-nowrap"
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.15 }}
-        >
-          <div className="bg-[#3E2723] text-white text-[9px] rounded px-1.5 py-0.5 shadow-md">
-            {table.customer_name} · {table.time_range}
-          </div>
-        </motion.div>
-      )}
     </div>
   )
 }
 
-// ── Collapsible zone group in sidebar ───────────────────────────────────
+// ── Collapsible zone group ─────────────────────────────────────────────
 
 function ZoneGroup({
   zoneName,
@@ -197,7 +186,7 @@ function ZoneGroup({
   tables,
   editMode,
   onPosition,
-  defaultOpen = true,
+  defaultOpen = false,
 }: {
   zoneName: string
   zoneColor: string
@@ -243,7 +232,7 @@ function ZoneGroup({
                 >
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: zoneColor }} />
                   <span className="font-medium text-[#3E2723] truncate flex-1">
-                    {table.name_attick || `Mesa ${table.number}`}
+                    {tableLabel(table)}
                   </span>
                   <span className="text-[#8D6E63]">
                     <Users size={10} className="inline mr-0.5" />
@@ -262,80 +251,170 @@ function ZoneGroup({
   )
 }
 
-// ── Table Detail Card ────────────────────────────────────────────────────
+// ── Bottom Sheet for table detail (mobile) ──────────────────────────────
 
-function TableDetailCard({ table, zoneColor, onClose }: { table: TableWithPosition; zoneColor: string; onClose: () => void }) {
+function TableDetailSheet({
+  table,
+  zoneColor,
+  onClose,
+}: {
+  table: TableWithPosition
+  zoneColor: string
+  onClose: () => void
+}) {
+  const prefersReduced = usePrefersReducedMotion()
   const statusColor = STATUS_COLORS[table.status]
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 12 }}
-      className="bg-white rounded-xl border border-[#D7CCC8] shadow-lg p-4 min-w-[220px]"
-    >
+    <>
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+        onClick={onClose}
+      />
+      {/* Bottom sheet */}
+      <motion.div
+        initial={prefersReduced ? undefined : { y: '100%' }}
+        animate={{ y: 0 }}
+        exit={prefersReduced ? undefined : { y: '100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white rounded-t-2xl shadow-2xl border-t border-[#D7CCC8] max-h-[60vh] overflow-y-auto"
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-2 pb-1">
+          <div className="w-10 h-1 rounded-full bg-[#D7CCC8]" />
+        </div>
+        <div className="px-4 pb-6 pt-1">
+          <TableDetailContent table={table} zoneColor={zoneColor} onClose={onClose} />
+        </div>
+      </motion.div>
+    </>
+  )
+}
+
+// ── Detail Content (shared between mobile sheet and desktop card) ──────
+
+function TableDetailContent({
+  table,
+  zoneColor,
+  onClose,
+}: {
+  table: TableWithPosition
+  zoneColor: string
+  onClose: () => void
+}) {
+  const statusColor = STATUS_COLORS[table.status]
+
+  return (
+    <>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: zoneColor }} />
           <div>
             <h3 className="font-['Playfair_Display'] text-lg font-bold text-[#3E2723]">
-              {table.name_attick || `Mesa ${table.number}`}
+              {tableLabel(table)}
             </h3>
-            <p className="text-xs text-[#8D6E63]">Mesa {table.number}</p>
+            <p className="text-xs text-[#8D6E63]">Zona · Capacidad: {table.capacity} personas</p>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded hover:bg-[#D7CCC8]/50 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-[#D7CCC8]/50 transition-colors"
         >
-          <X size={16} className="text-[#8D6E63]" />
+          <X size={18} className="text-[#8D6E63]" />
         </button>
       </div>
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg" style={{ backgroundColor: statusColor + '15' }}>
         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: statusColor }} />
-        <span className="text-sm font-medium text-[#3E2723]">
+        <span className="text-sm font-semibold" style={{ color: statusColor }}>
           {STATUS_LABELS[table.status]}
         </span>
       </div>
-      <div className="space-y-1 text-xs text-[#8D6E63]">
-        <p><Users size={12} className="inline mr-1" /> Capacidad: {table.capacity} personas</p>
+      <div className="space-y-2 text-sm text-[#3E2723]">
+        <div className="flex items-center gap-2">
+          <Users size={14} className="text-[#8D6E63]" />
+          <span>Capacidad: {table.capacity} personas</span>
+        </div>
         {table.can_combine && (
-          <p className="text-[#5C7A4D]"><Check size={12} className="inline mr-1" /> Combinable</p>
+          <div className="flex items-center gap-2 text-[#5C7A4D]">
+            <Check size={14} weight="bold" />
+            <span>Mesa combinable</span>
+          </div>
         )}
         {table.customer_name && (
-          <p><Users size={12} className="inline mr-1" /> {table.customer_name}</p>
+          <div className="flex items-center gap-2">
+            <Users size={14} className="text-[#8D6E63]" />
+            <span className="font-medium">{table.customer_name}</span>
+          </div>
         )}
         {table.time_range && (
-          <p><Clock size={12} className="inline mr-1" /> {table.time_range}</p>
+          <div className="flex items-center gap-2">
+            <Clock size={14} className="text-[#8D6E63]" />
+            <span>{table.time_range}</span>
+          </div>
         )}
         {table.party_size && (
-          <p><Users size={12} className="inline mr-1" /> {table.party_size} personas</p>
+          <div className="flex items-center gap-2">
+            <Users size={14} className="text-[#8D6E63]" />
+            <span>{table.party_size} personas en la reserva</span>
+          </div>
+        )}
+        {!table.customer_name && table.status === 'available' && (
+          <p className="text-[#5C7A4D] text-xs mt-2">Mesa disponible para asignar reservas</p>
         )}
       </div>
+    </>
+  )
+}
+
+// ── Desktop detail card (float on map) ──────────────────────────────────
+
+function TableDetailCard({
+  table,
+  zoneColor,
+  onClose,
+}: {
+  table: TableWithPosition
+  zoneColor: string
+  onClose: () => void
+}) {
+  const prefersReduced = usePrefersReducedMotion()
+  return (
+    <motion.div
+      initial={prefersReduced ? undefined : { opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={prefersReduced ? undefined : { opacity: 0, y: 12 }}
+      className="hidden lg:block bg-white rounded-xl border border-[#D7CCC8] shadow-lg p-4 min-w-[240px]"
+    >
+      <TableDetailContent table={table} zoneColor={zoneColor} onClose={onClose} />
     </motion.div>
   )
 }
 
 // ── Main Component ─────────────────────────────────────────────────────
 
-export function FloorPlanMap() {
+export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: boolean; onTableSelect?: (table: TableWithPosition) => void }) {
+  const prefersReduced = usePrefersReducedMotion()
   const { floors, unpositionedTables, loading, refetch } = useFloorPlan()
   const [activeFloor, setActiveFloor] = useState(0)
   const [editMode, setEditMode] = useState(false)
   const [selectedTable, setSelectedTable] = useState<TableWithPosition | null>(null)
   const [saving, setSaving] = useState(false)
   const [zoom, setZoom] = useState(1)
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const pendingUpdates = useRef<Map<string, { position_x: number; position_y: number }>>(new Map())
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const currentFloor: FloorPlanFloor | undefined = floors[activeFloor]
 
-  // All tables for the current floor (flat across zones)
   const currentFloorTables = useMemo<TableWithPosition[]>(() => {
     if (!currentFloor) return []
     return currentFloor.zones.flatMap((z) => z.tables)
   }, [currentFloor])
 
-  // Build a zone_name lookup for positioned tables
   const zoneNameMap = useMemo(() => {
     const map = new Map<string, string>()
     if (!currentFloor) return map
@@ -347,11 +426,9 @@ export function FloorPlanMap() {
     return map
   }, [currentFloor])
 
-  // Group unpositioned tables by zone_name
   const unpositionedByZone = useMemo(() => {
     const groups = new Map<string, UnpositionedTable[]>()
     const zoneOrder: string[] = []
-
     for (const table of unpositionedTables) {
       const key = table.zone_name || 'Sin zona'
       if (!groups.has(key)) {
@@ -360,15 +437,12 @@ export function FloorPlanMap() {
       }
       groups.get(key)!.push(table)
     }
-
     return { groups, zoneOrder }
   }, [unpositionedTables])
 
-  // Drag end handler
   const handleDragEnd = useCallback(
     (tableId: string, x: number, y: number) => {
       pendingUpdates.current.set(tableId, { position_x: x, position_y: y })
-
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(async () => {
         const updates = Array.from(pendingUpdates.current.entries()).map(([id, pos]) => ({
@@ -376,7 +450,6 @@ export function FloorPlanMap() {
           ...pos,
         }))
         if (updates.length === 0) return
-
         setSaving(true)
         try {
           const res = await fetch('/api/admin/floorplan', {
@@ -398,10 +471,18 @@ export function FloorPlanMap() {
 
   const handleUnpositionedClick = useCallback(
     (table: UnpositionedTable) => {
-      if (!editMode) return
+      if (!editMode || readOnly) return
       handleDragEnd(table.id, 50, 50)
     },
-    [editMode, handleDragEnd],
+    [editMode, readOnly, handleDragEnd],
+  )
+
+  const handleSelectTable = useCallback(
+    (table: TableWithPosition) => {
+      setSelectedTable(table)
+      onTableSelect?.(table)
+    },
+    [onTableSelect],
   )
 
   if (loading) {
@@ -422,6 +503,77 @@ export function FloorPlanMap() {
     )
   }
 
+  const sidebarContent = (
+    <>
+      {/* Mesas sin posición */}
+      <div className="bg-white rounded-xl border border-[#D7CCC8] p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Warning size={16} className="text-[#D4922A]" weight="fill" />
+          <h3 className="text-sm font-semibold text-[#3E2723]">Mesas sin posición</h3>
+          <span className="text-[10px] text-[#8D6E63] ml-auto">{unpositionedTables.length} total</span>
+        </div>
+        {unpositionedTables.length === 0 ? (
+          <p className="text-xs text-[#8D6E63]">
+            ✅ Todas las mesas están posicionadas en el plano.
+          </p>
+        ) : (
+          <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+            {unpositionedByZone.zoneOrder.map((zoneName) => {
+              const tables = unpositionedByZone.groups.get(zoneName) ?? []
+              const color = getZoneColor(zoneName)
+              return (
+                <ZoneGroup
+                  key={zoneName}
+                  zoneName={zoneName}
+                  zoneColor={color}
+                  tables={tables}
+                  editMode={editMode && !readOnly}
+                  onPosition={handleUnpositionedClick}
+                  defaultOpen={tables.length <= 5}
+                />
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Floor Summary */}
+      {currentFloor && (
+        <div className="bg-white rounded-xl border border-[#D7CCC8] p-3">
+          <h3 className="text-sm font-semibold text-[#3E2723] mb-3 flex items-center gap-2">
+            <MapTrifold size={16} className="text-[#6B2737]" />
+            {currentFloor.name} — Resumen
+          </h3>
+          <div className="space-y-2">
+            {currentFloor.zones.map((zone) => {
+              const color = getZoneColor(zone.name)
+              return (
+                <div key={zone.id} className="text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                    <span className="font-medium text-[#3E2723]">{zone.name}</span>
+                    <span className="text-[#8D6E63] ml-auto">{zone.tables.length} mesas</span>
+                  </div>
+                  <div className="flex gap-3 text-[#8D6E63] mt-0.5 ml-4">
+                    <span className="text-[#5C7A4D]">
+                      {zone.tables.filter((t) => t.status === 'available').length} libres
+                    </span>
+                    <span className="text-[#D4922A]">
+                      {zone.tables.filter((t) => t.status === 'reserved').length} reservadas
+                    </span>
+                    <span className="text-[#6B2737]">
+                      {zone.tables.filter((t) => t.status === 'seated').length} ocupadas
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </>
+  )
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-[calc(100dvh-8rem)]">
       {/* ── Main Map Area ──────────────────────────────────────────────── */}
@@ -435,7 +587,7 @@ export function FloorPlanMap() {
                 key={floor.floor_num}
                 onClick={() => { setActiveFloor(idx); setSelectedTable(null) }}
                 className={cn(
-                  'px-4 py-2 text-sm font-medium transition-colors',
+                  'px-3 py-2 text-sm font-medium transition-colors',
                   idx === activeFloor
                     ? 'bg-[#6B2737] text-white'
                     : 'bg-white text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#D7CCC8]/30',
@@ -447,6 +599,17 @@ export function FloorPlanMap() {
           </div>
 
           <div className="flex-1" />
+
+          {/* Mobile sidebar toggle */}
+          {unpositionedTables.length > 0 && (
+            <button
+              onClick={() => setShowMobileSidebar(true)}
+              className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#D4922A] bg-[#D4922A]/10 text-[#D4922A] text-xs font-medium"
+            >
+              <Sidebar size={14} />
+              {unpositionedTables.length} sin posición
+            </button>
+          )}
 
           {/* Zoom controls */}
           <div className="flex items-center gap-1">
@@ -474,22 +637,24 @@ export function FloorPlanMap() {
             </button>
           </div>
 
-          {/* Edit mode toggle */}
-          <button
-            onClick={() => {
-              setEditMode(!editMode)
-              setSelectedTable(null)
-            }}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all',
-              editMode
-                ? 'bg-[#5C7A4D] text-white border-[#5C7A4D]'
-                : 'bg-white text-[#3E2723] border-[#D7CCC8] hover:border-[#5C7A4D]',
-            )}
-          >
-            {editMode ? <Check size={16} /> : <PencilSimple size={16} />}
-            {editMode ? 'Guardar' : 'Editar'}
-          </button>
+          {/* Edit mode toggle (admin only) */}
+          {!readOnly && (
+            <button
+              onClick={() => {
+                setEditMode(!editMode)
+                setSelectedTable(null)
+              }}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all',
+                editMode
+                  ? 'bg-[#5C7A4D] text-white border-[#5C7A4D]'
+                  : 'bg-white text-[#3E2723] border-[#D7CCC8] hover:border-[#5C7A4D]',
+              )}
+            >
+              {editMode ? <Check size={16} /> : <PencilSimple size={16} />}
+              {editMode ? 'Guardar' : 'Editar'}
+            </button>
+          )}
 
           {saving && (
             <span className="text-xs text-[#8D6E63] flex items-center gap-1">
@@ -498,33 +663,30 @@ export function FloorPlanMap() {
           )}
         </div>
 
-        {/* Zone color legend */}
+        {/* Legend — horizontal scroll */}
         {currentFloor && (
-          <div className="flex items-center gap-3 mb-2 flex-wrap">
+          <div className="flex items-center gap-3 mb-2 overflow-x-auto pb-1 scrollbar-hide">
             {currentFloor.zones.map((zone) => (
-              <span key={zone.id} className="flex items-center gap-1 text-[11px] text-[#8D6E63]">
-                <span
-                  className="w-3 h-3 rounded-full shrink-0"
-                  style={{ backgroundColor: getZoneColor(zone.name) }}
-                />
+              <span key={zone.id} className="flex items-center gap-1 text-[11px] text-[#8D6E63] shrink-0">
+                <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getZoneColor(zone.name) }} />
                 {zone.name}
               </span>
             ))}
-            <span className="text-[#D7CCC8] mx-1">|</span>
-            <span className="flex items-center gap-1 text-[11px] text-[#8D6E63]">
+            <span className="text-[#D7CCC8] mx-1 shrink-0">|</span>
+            <span className="flex items-center gap-1 text-[11px] text-[#8D6E63] shrink-0">
               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#5C7A4D' }} /> Libre
             </span>
-            <span className="flex items-center gap-1 text-[11px] text-[#8D6E63]">
+            <span className="flex items-center gap-1 text-[11px] text-[#8D6E63] shrink-0">
               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#D4922A' }} /> Reservada
             </span>
-            <span className="flex items-center gap-1 text-[11px] text-[#8D6E63]">
+            <span className="flex items-center gap-1 text-[11px] text-[#8D6E63] shrink-0">
               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#6B2737' }} /> Ocupada
             </span>
           </div>
         )}
 
         {/* Map Container */}
-        <div className="flex-1 rounded-xl border border-[#D7CCC8] bg-white overflow-auto relative">
+        <div className="flex-1 rounded-xl border border-[#D7CCC8] bg-white overflow-auto relative min-h-[300px]">
           <div
             style={{
               transform: `scale(${zoom})`,
@@ -547,15 +709,14 @@ export function FloorPlanMap() {
                     {currentFloorTables
                       .filter((t) => t.position_x !== null && t.position_y !== null)
                       .map((table) => {
-                        // Find zone name for this table
                         const zoneName = zoneNameMap.get(table.id) ?? null
                         return (
                           <TableHotspot
                             key={table.id}
                             table={table}
-                            editMode={editMode}
+                            editMode={editMode && !readOnly}
                             onDragEnd={handleDragEnd}
-                            onSelect={setSelectedTable}
+                            onSelect={handleSelectTable}
                             zoneColor={getZoneColor(zoneName)}
                           />
                         )
@@ -566,10 +727,10 @@ export function FloorPlanMap() {
             )}
           </div>
 
-          {/* Selected Table Detail */}
+          {/* Selected Table Detail — Desktop float */}
           <AnimatePresence>
             {selectedTable && !editMode && (
-              <div className="absolute bottom-4 right-4 z-30">
+              <div className="hidden lg:block absolute bottom-4 right-4 z-30">
                 <TableDetailCard
                   table={selectedTable}
                   zoneColor={getZoneColor(zoneNameMap.get(selectedTable.id) ?? null)}
@@ -579,83 +740,61 @@ export function FloorPlanMap() {
             )}
           </AnimatePresence>
 
-          {editMode && (
+          {/* Selected Table Detail — Mobile bottom sheet */}
+          <AnimatePresence>
+            {selectedTable && !editMode && (
+              <TableDetailSheet
+                table={selectedTable}
+                zoneColor={getZoneColor(zoneNameMap.get(selectedTable.id) ?? null)}
+                onClose={() => setSelectedTable(null)}
+              />
+            )}
+          </AnimatePresence>
+
+          {editMode && !readOnly && (
             <div className="absolute top-3 left-3 z-20 bg-[#5C7A4D]/90 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 backdrop-blur-sm">
               <PencilSimple size={14} />
-              Modo edición — arrastra las mesas para reposicionar
+              Modo edición — arrastra las mesas
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Sidebar ────────────────────────────────────────────────────── */}
-      <div className="w-full lg:w-72 shrink-0 flex flex-col gap-3 overflow-y-auto">
-        {/* Mesas sin posición — collapsed by zone */}
-        <div className="bg-white rounded-xl border border-[#D7CCC8] p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <Warning size={16} className="text-[#D4922A]" weight="fill" />
-            <h3 className="text-sm font-semibold text-[#3E2723]">Mesas sin posición</h3>
-            <span className="text-[10px] text-[#8D6E63] ml-auto">{unpositionedTables.length} total</span>
-          </div>
-          {unpositionedTables.length === 0 ? (
-            <p className="text-xs text-[#8D6E63]">
-              ✅ Todas las mesas están posicionadas en el plano.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {unpositionedByZone.zoneOrder.map((zoneName) => {
-                const tables = unpositionedByZone.groups.get(zoneName) ?? []
-                const color = getZoneColor(zoneName)
-                return (
-                  <ZoneGroup
-                    key={zoneName}
-                    zoneName={zoneName}
-                    zoneColor={color}
-                    tables={tables}
-                    editMode={editMode}
-                    onPosition={handleUnpositionedClick}
-                  />
-                )
-              })}
-            </div>
-          )}
-        </div>
+      {/* ── Sidebar — Desktop ────────────────────────────────────────────── */}
+      <div className="hidden lg:flex w-72 shrink-0 flex-col gap-3 overflow-y-auto">
+        {sidebarContent}
+      </div>
 
-        {/* Floor Summary */}
-        {currentFloor && (
-          <div className="bg-white rounded-xl border border-[#D7CCC8] p-3">
-            <h3 className="text-sm font-semibold text-[#3E2723] mb-3 flex items-center gap-2">
-              <MapTrifold size={16} className="text-[#6B2737]" />
-              {currentFloor.name} — Resumen
-            </h3>
-            <div className="space-y-2">
-              {currentFloor.zones.map((zone) => {
-                const color = getZoneColor(zone.name)
-                return (
-                  <div key={zone.id} className="text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                      <span className="font-medium text-[#3E2723]">{zone.name}</span>
-                      <span className="text-[#8D6E63] ml-auto">{zone.tables.length} mesas</span>
-                    </div>
-                    <div className="flex gap-3 text-[#8D6E63] mt-0.5 ml-4">
-                      <span className="text-[#5C7A4D]">
-                        {zone.tables.filter((t) => t.status === 'available').length} libres
-                      </span>
-                      <span className="text-[#D4922A]">
-                        {zone.tables.filter((t) => t.status === 'reserved').length} reservadas
-                      </span>
-                      <span className="text-[#6B2737]">
-                        {zone.tables.filter((t) => t.status === 'seated').length} ocupadas
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
+      {/* ── Sidebar — Mobile bottom drawer ──────────────────────────────── */}
+      <AnimatePresence>
+        {showMobileSidebar && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+              onClick={() => setShowMobileSidebar(false)}
+            />
+            <motion.div
+              initial={prefersReduced ? undefined : { y: '100%' }}
+              animate={{ y: 0 }}
+              exit={prefersReduced ? undefined : { y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#F5EDE0] rounded-t-2xl shadow-2xl max-h-[70vh] overflow-y-auto"
+            >
+              <div className="flex justify-center pt-2 pb-1">
+                <button onClick={() => setShowMobileSidebar(false)}>
+                  <div className="w-10 h-1 rounded-full bg-[#D7CCC8]" />
+                </button>
+              </div>
+              <div className="px-4 pb-6 pt-1 space-y-3">
+                {sidebarContent}
+              </div>
+            </motion.div>
+          </>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   )
 }

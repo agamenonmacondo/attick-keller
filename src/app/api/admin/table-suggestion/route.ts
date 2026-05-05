@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
   // ── 2. Fetch all active tables with zone info (try with letter, fallback without) ──
   let tablesRes = await sb
     .from('tables')
-    .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
+    .select('id, number, capacity, capacity_min, can_combine, combine_group, zone:table_zones!zone_id(id, name, letter)')
     .eq('restaurant_id', RESTAURANT_ID)
     .eq('is_active', true)
     .order('capacity', { ascending: true })
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
   if (tablesRes.error) {
     tablesRes = await sb
       .from('tables')
-      .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name)')
+      .select('id, number, capacity, capacity_min, can_combine, combine_group, zone:table_zones!zone_id(id, name)')
       .eq('restaurant_id', RESTAURANT_ID)
       .eq('is_active', true)
       .order('capacity', { ascending: true })
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Flatten zone info — Supabase returns join as nested object
-  type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter?: string | null } | null }
+  type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; zone: { id: string; name: string; letter?: string | null } | null }
   const availableTables = (tablesRes.data as unknown as TableRow[]).map(t => {
     const zone = t.zone
     return {
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
       capacity_min: (t.capacity_min ?? t.capacity) as number,
       can_combine: (t.can_combine ?? false) as boolean,
       combine_group: (t.combine_group ?? null) as string | null,
-      floor_num: (t.floor_num ?? 1) as number,
+      floor_num: 1 as number,
     }
   })
 

@@ -203,10 +203,10 @@ export async function GET(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const reservations = (data || []).map(r => {
-    const tablesArr = r.tables as unknown as Array<{ table_zones: Array<{ name: string }> }> | null
-    const table = Array.isArray(tablesArr) ? tablesArr[0] : null
+    const tablesRaw = r.tables as unknown as Array<{ table_zones: Array<{ name: string }> }> | { table_zones: Array<{ name: string }> | { name: string } } | null
+    const table = Array.isArray(tablesRaw) ? tablesRaw[0] : tablesRaw
     const zoneArr = table?.table_zones
-    const zone = Array.isArray(zoneArr) ? zoneArr[0] : null
+    const zone = Array.isArray(zoneArr) ? zoneArr[0] : zoneArr as { name: string } | null
     return { ...r, zone_name: zone?.name || null, table_zones: undefined, tables: undefined }
   })
 

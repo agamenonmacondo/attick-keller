@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStaffUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { assignTable } from '@/lib/algorithms/table-assignment'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   pending: ['confirmed', 'cancelled', 'no_show'],
@@ -56,11 +57,82 @@ export async function PATCH(
     if (special_requests !== undefined) updateData.special_requests = special_requests || null
     if (table_id !== undefined) updateData.table_id = table_id || null
 
-    if (zone_id) {
+    // Zone + table reassignment using algorithm (checks availability & time overlaps)
+    if (zone_id || (party_size && party_size !== reservation.party_size) || (time_start && time_start !== reservation.time_start) || (time_end && time_end !== reservation.time_end)) {
+      // Determine effective values (use new values if provided, else fall back to existing)
       const effectiveParty = (party_size as number) || reservation.party_size
-      const { data: zoneTables } = await sb
-        .from('tables').select('id, capacity').eq('restaurant_id', RESTAURANT_ID).eq('zone_id', zone_id).eq('is_active', true).gte('capacity', effectiveParty).order('capacity', { ascending: true }).limit(1)
-      if (zoneTables && zoneTables.length > 0) updateData.table_id = zoneTables[0].id
+      const effectiveDate = (date as string) || reservation.date
+      const effectiveTimeStart = (time_start as string) || reservation.time_start
+      const effectiveTimeEnd = (time_end as string) || reservation.time_end
+
+      // Fetch all active tables with zone info
+      const [tablesRes, reservationsRes, combosRes] = await Promise.all([
+        sb.from('tables')
+          .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
+          .eq('restaurant_id', RESTAURANT_ID)
+          .eq('is_active', true),
+        sb.from('reservations')
+          .select('table_id, time_start, time_end')
+          .eq('date', effectiveDate)
+          .neq('status', 'cancelled')
+          .not('table_id', 'is', null),
+        sb.from('table_combinations')
+          .select('id, table_ids, combined_capacity, is_active, name')
+          .eq('is_active', true),
+      ])
+
+      type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter: string } | null }
+      type ComboRow = { id: string; table_ids: string[]; combined_capacity: number; is_active: boolean; name: string | null }
+
+      const availableTables = (tablesRes.data as unknown as TableRow[] | null)?.map(t => ({
+        id: t.id,
+        number: t.number,
+        zone_letter: t.zone?.letter ?? 'E',
+        zone_name: t.zone?.name ?? 'Sin zona',
+        capacity: t.capacity,
+        capacity_min: t.capacity_min ?? t.capacity,
+        can_combine: t.can_combine ?? false,
+        combine_group: t.combine_group ?? null,
+        floor_num: t.floor_num ?? 1,
+      })) ?? []
+
+      const existingResList = (reservationsRes.data as { table_id: string; time_start: string; time_end: string }[] | null) ?? []
+      // Exclude the current reservation's table from the overlap check
+      const otherResList = existingResList.filter(r => r.table_id !== reservation.table_id)
+      const combosList = (combosRes.data as unknown as ComboRow[] | null) ?? []
+
+      // Build zone score override if zone_id is specified
+      let customZoneScores: Record<string, number> | undefined
+      if (zone_id) {
+        const requestedZone = zone_id
+          ? (await sb.from('table_zones').select('letter').eq('id', zone_id).single()).data?.letter
+          : undefined
+        if (requestedZone) {
+          customZoneScores = { A: 1, B: 1, C: 1, D: 1, E: 1 }
+          customZoneScores[requestedZone] = 5
+        }
+      }
+
+      const result = assignTable({
+        reservation: {
+          id: reservation.id,
+          party_size: effectiveParty,
+          date: effectiveDate,
+          time_start: effectiveTimeStart,
+          time_end: effectiveTimeEnd,
+        },
+        available_tables: availableTables,
+        existing_reservations: otherResList,
+        combinations: combosList,
+        zone_scores: customZoneScores,
+      })
+
+      if (result.suggested_table_id) {
+        updateData.table_id = result.suggested_table_id
+      } else {
+        // No suitable table found; clear table assignment
+        updateData.table_id = null
+      }
     }
   }
 

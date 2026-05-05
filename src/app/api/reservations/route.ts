@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
       table_id: assignedTableId,
       customer_id: customerId,
       restaurant_id: RESTAURANT_ID,
-      status: 'pending',
+      status: 'confirmed',
       special_requests: special_requests || null,
     })
     .select()
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  sendStatusEmail(sb, reservation.id, 'pending').catch(e => console.error('Email error:', e))
+  sendStatusEmail(sb, reservation.id, 'confirmed').catch(e => console.error('Email error:', e))
   return NextResponse.json({ reservation })
 }
 

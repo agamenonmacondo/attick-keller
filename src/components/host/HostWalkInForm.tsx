@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X, Spinner } from '@phosphor-icons/react'
+import { getColombiaDate, getColombiaTime } from '@/lib/utils/date'
 
 interface Zone {
   id: string
@@ -31,12 +32,12 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
     setError(null)
 
     try {
-      const now = new Date()
-      const timeStart = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+      const date = getColombiaDate()
+      const timeStart = getColombiaTime()
       // Default end time: 2 hours later
-      const endTime = new Date(now.getTime() + 2 * 60 * 60 * 1000)
-      const timeEnd = `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`
-      const date = now.toISOString().split('T')[0]
+      const [hours, minutes] = timeStart.split(':').map(Number)
+      const endHours = hours + 2
+      const timeEnd = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
 
       const res = await fetch('/api/admin/reservations', {
         method: 'POST',

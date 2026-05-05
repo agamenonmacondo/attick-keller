@@ -66,34 +66,11 @@ export function HostShell() {
   const occupancy = dashData?.occupancy
   const zones = occupancyData?.zones || []
 
-  const pendingCount = todayStats?.pending ?? 0
   const confirmedCount = todayStats?.confirmed ?? 0
 
   const sortedReservations = [...reservations].sort((a, b) =>
     String(a.time_start || '').localeCompare(String(b.time_start || ''))
   )
-
-  const handleConfirmNext = async () => {
-    const next = sortedReservations.find(r => r.status === 'pending')
-    if (!next) return
-    try {
-      const res = await fetch(`/api/admin/reservations/${next.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'confirmed' }),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setError(data.error || 'Error al confirmar')
-        setTimeout(() => setError(null), 4000)
-      } else {
-        handleRefetch()
-      }
-    } catch {
-      setError('Error de conexion')
-      setTimeout(() => setError(null), 4000)
-    }
-  }
 
   const handleSeatNext = async () => {
     const next = sortedReservations.find(r => r.status === 'confirmed')
@@ -212,9 +189,7 @@ export function HostShell() {
         {/* Quick actions */}
         <motion.div variants={prefersReduced ? undefined : itemVariants}>
           <HostQuickActions
-            onConfirmNext={handleConfirmNext}
             onSeatNext={handleSeatNext}
-            pendingCount={pendingCount}
             confirmedCount={confirmedCount}
           />
         </motion.div>

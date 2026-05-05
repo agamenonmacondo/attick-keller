@@ -64,46 +64,71 @@ interface OccupancySummaryProps {
 export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummaries }: OccupancySummaryProps) {
   const prefersReduced = usePrefersReducedMotion()
 
+  const occupied = quickStats?.occupied ?? occupancy.occupiedCapacity
+  const reserved = quickStats?.reserved ?? stats.confirmed
+  const available = quickStats?.available ?? (occupancy.totalCapacity - occupancy.occupiedCapacity)
+  const total = quickStats?.totalCapacity ?? occupancy.totalCapacity
+
   const cards = [
     {
       label: 'Capacidad Total',
-      value: quickStats?.totalCapacity ?? occupancy.totalCapacity,
+      value: total,
       suffix: 'asientos',
       color: 'text-[#3E2723]',
       bg: 'bg-white',
       borderColor: 'border-[#D7CCC8]',
+      // chip props
+      dotColor: 'bg-[#8D6E63]',
+      chipLabel: 'Tot',
     },
     {
       label: 'Ocupados',
-      value: quickStats?.occupied ?? occupancy.occupiedCapacity,
+      value: occupied,
       suffix: 'asientos',
       color: 'text-[#6B2737]',
       bg: 'bg-[#6B2737]/5',
       borderColor: 'border-[#6B2737]/20',
+      dotColor: 'bg-[#6B2737]',
+      chipLabel: 'Ocup',
     },
     {
       label: 'Disponibles',
-      value: quickStats?.available ?? (occupancy.totalCapacity - occupancy.occupiedCapacity),
+      value: available,
       suffix: 'asientos',
       color: 'text-[#5C7A4D]',
       bg: 'bg-[#5C7A4D]/5',
       borderColor: 'border-[#5C7A4D]/20',
+      dotColor: 'bg-[#5C7A4D]',
+      chipLabel: 'Lib',
     },
     {
       label: 'Reservados',
-      value: quickStats?.reserved ?? stats.confirmed,
+      value: reserved,
       suffix: quickStats ? 'asientos' : undefined,
       color: 'text-[#D4922A]',
       bg: 'bg-[#D4922A]/5',
       borderColor: 'border-[#D4922A]/20',
+      dotColor: 'bg-[#D4922A]',
+      chipLabel: 'Res',
     },
   ]
 
   return (
     <div className="space-y-4">
-      {/* Quick stats bar */}
+      {/* Mobile: compact chips */}
+      <div className="flex lg:hidden items-center gap-3 text-sm font-medium">
+        {cards.map(card => (
+          <span key={card.label} className="inline-flex items-center gap-1">
+            <span className={`w-2 h-2 rounded-full ${card.dotColor}`} />
+            <span className={`font-bold ${card.color}`}><AnimatedCounter value={card.value} /></span>
+            <span className="text-[#8D6E63] text-xs">{card.chipLabel}</span>
+          </span>
+        ))}
+      </div>
+
+      {/* Desktop: full card layout */}
       <motion.div
-        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+        className="hidden lg:grid grid-cols-2 sm:grid-cols-4 gap-3"
         variants={prefersReduced ? undefined : containerVariants}
         initial="hidden"
         animate="visible"
@@ -134,13 +159,13 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
         ))}
       </motion.div>
 
-      {/* Walk-in seats indicator (visual awareness only) */}
+      {/* Walk-in seats indicator — hidden on mobile (redundant with chips) */}
       {quickStats && (
         <motion.div
           initial={prefersReduced ? false : { opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', ...SPRING, delay: 0.2 }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#F5EDE0] border border-[#D7CCC8]"
+          className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg bg-[#F5EDE0] border border-[#D7CCC8]"
         >
           <span className="w-2.5 h-2.5 rounded-full bg-[#5C7A4D] flex-shrink-0" />
           <span className="text-xs text-[#8D6E63]">

@@ -8,6 +8,7 @@ import { SectionHeading } from '../admin/shared/SectionHeading'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import { useTableSuggestion } from '@/lib/hooks/useTableSuggestion'
 import { timeToMinutes } from '@/lib/utils/time'
+import { formatTime12, formatTimeRange12 } from '@/lib/utils/format-time'
 import { getUrgencyBadge } from '@/lib/utils/urgency'
 import type { ReservationTimeline } from '@/lib/hooks/useHostOccupancy'
 import type { AssignmentResult } from '@/lib/algorithms/table-assignment'
@@ -521,29 +522,12 @@ function HostTableCard({
         {/* Capacity */}
         <div className="flex items-center gap-1 text-xs text-[#8D6E63]">
           <Users size={12} weight="bold" />
-          <span className="font-semibold text-[#3E2723]">{table.capacity}</span>
-          <span>{table.capacity === 1 ? 'persona' : 'personas'}</span>
-          {table.zone_name && (
-            <>
-              <span className="mx-0.5">·</span>
-              <span>{table.zone_name}</span>
-            </>
-          )}
+          <span className="font-semibold text-[#3E2723]">{table.capacity}p</span>
         </div>
 
         {/* Mini-timeline bar */}
         {reservationsList.length > 0 && currentTime && (
           <MiniTimeline reservations={reservationsList} currentTime={currentTime} />
-        )}
-
-        {/* Combine badge */}
-        {table.can_combine && table.combine_group && (
-          <div className="flex items-center gap-0.5 mt-1.5">
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-[#C9A94E]/10 border border-[#C9A94E]/20 text-[10px] font-medium text-[#C9A94E]">
-              <ArrowsMerge size={10} weight="bold" />
-              {table.combine_group}
-            </span>
-          </div>
         )}
 
         {/* Current/upcoming customer info */}
@@ -554,7 +538,7 @@ function HostTableCard({
         )}
         {(table.is_occupied || table.reservations?.some(r => r.is_upcoming)) && table.current_time && (
           <p className="text-[10px] text-[#8D6E63] mt-0.5">
-            {table.current_time}
+            {formatTime12(table.current_time)}
           </p>
         )}
 
@@ -563,7 +547,7 @@ function HostTableCard({
           <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[#8D6E63]">
             <Clock size={10} weight="bold" />
             <span className="truncate">
-              {nextRes.time_start.slice(0, 5)} – {nextRes.customer_name || 'Sin nombre'} ({nextRes.party_size}p)
+              {formatTime12(nextRes.time_start)} – {nextRes.customer_name || 'Sin nombre'} ({nextRes.party_size}p)
             </span>
           </div>
         )}
@@ -607,8 +591,8 @@ function HostTableCard({
                 {table.current_customer_name || 'Ocupada'}
               </p>
               <p className="text-xs text-[#8D6E63] mb-1">
-                {table.current_party_size} personas
-                {table.current_time ? ` · ${table.current_time}` : ''}
+                {table.current_party_size}p
+                {table.current_time ? ` · ${formatTime12(table.current_time)}` : ''}
               </p>
               {table.reservation_status && (
                 <p className="text-[10px] uppercase tracking-wider text-[#8D6E63] mb-3">
@@ -682,7 +666,7 @@ function TimelinePopover({
           <span className="text-xs text-[#8D6E63]">· {table.zone_name}</span>
         )}
         <span className="text-xs text-[#8D6E63]">
-          ({table.capacity} {table.capacity === 1 ? 'persona' : 'personas'})
+          ({table.capacity}p)
         </span>
       </div>
 

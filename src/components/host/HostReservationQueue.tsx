@@ -9,6 +9,7 @@ import { ConfirmDialog } from '../admin/shared/ConfirmDialog'
 import { SectionHeading } from '../admin/shared/SectionHeading'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import { Check, X, Armchair, CalendarX, Warning, Clock, WhatsappLogo, EnvelopeSimple, Note, CaretDown, CaretUp } from '@phosphor-icons/react'
+import { formatTime12 } from '@/lib/utils/format-time'
 
 const SPRING = { stiffness: 100, damping: 20, mass: 1 }
 
@@ -32,14 +33,6 @@ const itemVariants = {
 }
 
 const HOST_ACTION_MAP: Record<string, Array<{ status: string; label: string; variant: 'primary' | 'danger' | 'warning' }>> = {
-  pending: [
-    { status: 'confirmed', label: 'Confirmar', variant: 'primary' },
-    { status: 'no_show', label: 'No asistio', variant: 'warning' },
-    { status: 'cancelled', label: 'Cancelar', variant: 'danger' },
-  ],
-  pre_paid: [
-    { status: 'confirmed', label: 'Confirmar', variant: 'primary' },
-  ],
   confirmed: [
     { status: 'seated', label: 'Sentar', variant: 'primary' },
     { status: 'no_show', label: 'No asistio', variant: 'warning' },
@@ -109,8 +102,14 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
     }
   }
 
+  // Filter: host only sees confirmed and seated reservations
+  const hostReservations = reservations.filter(r => {
+    const status = r.status as string
+    return status === 'confirmed' || status === 'seated'
+  })
+
   // Sort by time_start
-  const sorted = [...reservations].sort((a, b) =>
+  const sorted = [...hostReservations].sort((a, b) =>
     String(a.time_start || '').localeCompare(String(b.time_start || ''))
   )
 
@@ -150,8 +149,8 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
           {sorted.map(r => {
             const id = r.id as string
             const status = r.status as string
-            const timeStart = (r.time_start as string)?.slice(0, 5) || ''
-            const timeEnd = (r.time_end as string)?.slice(0, 5) || ''
+            const timeStart = formatTime12((r.time_start as string) || '') || ''
+            const timeEnd = formatTime12((r.time_end as string) || '') || ''
             const partySize = r.party_size as number
             const customerName = (r.customers as { full_name: string } | null)?.full_name || 'Sin nombre'
             const custData = r.customers as { full_name: string; phone: string; email: string } | null

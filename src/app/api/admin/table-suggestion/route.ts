@@ -105,30 +105,21 @@ export async function POST(request: NextRequest) {
     }, { status: 400 })
   }
 
-  // ── 2. Fetch all active tables with zone info (try with letter, fallback without) ──
-  let tablesRes = await sb
+  // ── 2. Fetch all active tables with zone info ──
+  const { data: tablesData, error: tablesErr } = await sb
     .from('tables')
     .select('id, number, capacity, capacity_min, can_combine, combine_group, zone:table_zones!zone_id(id, name, letter)')
     .eq('restaurant_id', RESTAURANT_ID)
     .eq('is_active', true)
     .order('capacity', { ascending: true })
 
-  if (tablesRes.error) {
-    tablesRes = await sb
-      .from('tables')
-      .select('id, number, capacity, capacity_min, can_combine, combine_group, zone:table_zones!zone_id(id, name)')
-      .eq('restaurant_id', RESTAURANT_ID)
-      .eq('is_active', true)
-      .order('capacity', { ascending: true })
-  }
-
-  if (tablesRes.error || !tablesRes.data) {
+  if (tablesErr || !tablesData) {
     return NextResponse.json({ error: 'Error cargando mesas' }, { status: 500 })
   }
 
   // Flatten zone info — Supabase returns join as nested object
   type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; zone: { id: string; name: string; letter?: string | null } | null }
-  const availableTables = (tablesRes.data as unknown as TableRow[]).map(t => {
+  const availableTables = (tablesData as unknown as TableRow[]).map(t => {
     const zone = t.zone
     return {
       id: t.id as string,

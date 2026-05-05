@@ -362,6 +362,12 @@ function TableDetailContent({
             <span>{table.party_size} personas en la reserva</span>
           </div>
         )}
+        {table.reservation_id && (
+          <div className="flex items-center gap-2">
+            <Clock size={14} className="text-[#8D6E63]" />
+            <span className="text-xs text-[#8D6E63] font-mono">ID: {table.reservation_id.slice(0, 8)}…</span>
+          </div>
+        )}
         {!table.customer_name && table.status === 'available' && (
           <p className="text-[#5C7A4D] text-xs mt-2">Mesa disponible para asignar reservas</p>
         )}

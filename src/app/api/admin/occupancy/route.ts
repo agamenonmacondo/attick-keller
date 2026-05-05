@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStaffUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 import { getColombiaTime } from '@/lib/utils/date'
-import { computeUrgency, diffMinutes } from '@/lib/utils/urgency'
+import { computeUrgency } from '@/lib/utils/urgency'
 
 export async function GET(request: NextRequest) {
   const staff = await getStaffUser(request)

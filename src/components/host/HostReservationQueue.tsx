@@ -187,6 +187,12 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                     <p className="text-xs text-[#8D6E63]">
                       {partySize} personas{r.zone_name ? ` · ${r.zone_name}` : ''}
                     </p>
+                    {(r.table_number as string | null) && (
+                      <p className="text-xs text-[#5C7A4D] flex items-center gap-1">
+                        <Armchair size={12} />
+                        Mesa {r.table_number as string}{r.zone_name ? ` · ${r.zone_name as string}` : ''}
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-col gap-1.5 shrink-0"
                   >

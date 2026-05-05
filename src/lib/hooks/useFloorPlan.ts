@@ -22,6 +22,10 @@ export interface TableWithPosition {
   party_size: number | null
   customer_name: string | null
   time_range: string | null
+  customer_phone: string | null
+  customer_email: string | null
+  special_requests: string | null
+  reservation_status: string | null
 }
 
 export interface FloorPlanZone {

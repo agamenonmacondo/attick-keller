@@ -132,6 +132,9 @@ export async function GET(request: NextRequest) {
       current_reservation_id: currentReservation?.id || anyActiveReservation?.id || null,
       current_party_size: currentReservation?.party_size || anyActiveReservation?.party_size || null,
       current_customer_name: currentReservation?.customer_name || anyActiveReservation?.customer_name || null,
+      current_customer_phone: currentReservation?.customer_phone || anyActiveReservation?.customer_phone || null,
+      current_customer_email: currentReservation?.customer_email || anyActiveReservation?.customer_email || null,
+      current_special_requests: currentReservation?.special_requests || anyActiveReservation?.special_requests || null,
       current_time: currentReservation
         ? `${currentReservation.time_start} - ${currentReservation.time_end}`
         : anyActiveReservation

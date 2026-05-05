@@ -15,6 +15,9 @@ import {
   CaretDown,
   CaretRight,
   Sidebar,
+  WhatsappLogo,
+  EnvelopeSimple,
+  Note,
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils/cn'
 import { useFloorPlan, type FloorPlanFloor, type TableWithPosition, type UnpositionedTable, type TableStatus } from '@/lib/hooks/useFloorPlan'
@@ -257,10 +260,12 @@ function TableDetailSheet({
   table,
   zoneColor,
   onClose,
+  onAction,
 }: {
   table: TableWithPosition
   zoneColor: string
   onClose: () => void
+  onAction?: () => void
 }) {
   const prefersReduced = usePrefersReducedMotion()
   const statusColor = STATUS_COLORS[table.status]
@@ -288,7 +293,7 @@ function TableDetailSheet({
           <div className="w-10 h-1 rounded-full bg-[#D7CCC8]" />
         </div>
         <div className="px-4 pb-6 pt-1">
-          <TableDetailContent table={table} zoneColor={zoneColor} onClose={onClose} />
+          <TableDetailContent table={table} zoneColor={zoneColor} onClose={onClose} onAction={onAction} />
         </div>
       </motion.div>
     </>
@@ -301,12 +306,34 @@ function TableDetailContent({
   table,
   zoneColor,
   onClose,
+  onAction,
 }: {
   table: TableWithPosition
   zoneColor: string
   onClose: () => void
+  onAction?: () => void
 }) {
   const statusColor = STATUS_COLORS[table.status]
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  const [showDetails, setShowDetails] = useState(false)
+  const hasDetails = !!(table.customer_phone || table.customer_email || table.special_requests)
+
+  const handleStatusAction = async (newStatus: string) => {
+    if (!table.reservation_id) return
+    setActionLoading(newStatus)
+    try {
+      await fetch(`/api/admin/reservations/${table.reservation_id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      onAction?.()
+      onClose()
+    } finally {
+      setActionLoading(null)
+    }
+  }
 
   return (
     <>
@@ -344,12 +371,65 @@ function TableDetailContent({
             <span>Mesa combinable</span>
           </div>
         )}
+
+        {/* Customer info with expand/collapse */}
         {table.customer_name && (
-          <div className="flex items-center gap-2">
-            <Users size={14} className="text-[#8D6E63]" />
-            <span className="font-medium">{table.customer_name}</span>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Users size={14} className="text-[#8D6E63]" />
+              <span className="font-medium text-[#3E2723]">{table.customer_name}</span>
+            </div>
+
+            {hasDetails && (
+              <>
+                <button
+                  onClick={() => setShowDetails(!showDetails)}
+                  className="flex items-center gap-1 text-[10px] text-[#D4922A] ml-1"
+                >
+                  {showDetails ? <CaretDown size={10} /> : <CaretRight size={10} />}
+                  {showDetails ? 'Menos detalles' : 'Ver detalles'}
+                </button>
+                <AnimatePresence>
+                  {showDetails && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pl-6 space-y-1 border-l-2 border-[#D7CCC8] ml-1 mt-1">
+                        {table.customer_phone && (
+                          <a
+                            href={`https://wa.me/57${table.customer_phone.replace(/^0+/, '').replace(/^\+/, '')}`}
+                            target="_blank"
+                            className="flex items-center gap-1.5 text-xs text-[#25D366] hover:underline"
+                          >
+                            <WhatsappLogo size={12} weight="fill" /> {table.customer_phone}
+                          </a>
+                        )}
+                        {table.customer_email && (
+                          <a
+                            href={`mailto:${table.customer_email}`}
+                            className="flex items-center gap-1.5 text-xs text-[#1565C0] hover:underline"
+                          >
+                            <EnvelopeSimple size={12} /> {table.customer_email}
+                          </a>
+                        )}
+                        {table.special_requests && (
+                          <div className="flex items-start gap-1.5 text-xs text-[#5D4037] bg-[#F5EDE0] rounded-md px-2 py-1">
+                            <Note size={12} className="text-[#D4922A] shrink-0 mt-0.5" />
+                            <span>{table.special_requests}</span>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            )}
           </div>
         )}
+
         {table.time_range && (
           <div className="flex items-center gap-2">
             <Clock size={14} className="text-[#8D6E63]" />
@@ -372,6 +452,33 @@ function TableDetailContent({
           <p className="text-[#5C7A4D] text-xs mt-2">Mesa disponible para asignar reservas</p>
         )}
       </div>
+
+      {/* Action buttons */}
+      {table.reservation_status && table.reservation_id && (
+        <div className="flex gap-2 mt-3 pt-3 border-t border-[#D7CCC8]/50">
+          {['confirmed', 'pre_paid'].includes(table.reservation_status) && (
+            <button
+              onClick={() => handleStatusAction('seated')}
+              disabled={actionLoading !== null}
+              className="flex-1 py-2 text-xs font-medium rounded-lg bg-green-700 text-white hover:bg-green-800 active:scale-[0.97] disabled:opacity-50"
+            >
+              {actionLoading === 'seated' ? '...' : 'Sentar'}
+            </button>
+          )}
+          {table.reservation_status === 'seated' && (
+            <button
+              onClick={() => handleStatusAction('completed')}
+              disabled={actionLoading !== null}
+              className="flex-1 py-2 text-xs font-medium rounded-lg bg-[#6B2737] text-white hover:bg-[#5C2230] active:scale-[0.97] disabled:opacity-50"
+            >
+              {actionLoading === 'completed' ? '...' : 'Liberar'}
+            </button>
+          )}
+          <button className="flex-1 py-2 text-xs font-medium rounded-lg border border-[#D7CCC8] text-[#3E2723] hover:bg-[#EFEBE9]">
+            Reasignar
+          </button>
+        </div>
+      )}
     </>
   )
 }
@@ -382,10 +489,12 @@ function TableDetailCard({
   table,
   zoneColor,
   onClose,
+  onAction,
 }: {
   table: TableWithPosition
   zoneColor: string
   onClose: () => void
+  onAction?: () => void
 }) {
   const prefersReduced = usePrefersReducedMotion()
   return (
@@ -395,7 +504,7 @@ function TableDetailCard({
       exit={prefersReduced ? undefined : { opacity: 0, y: 12 }}
       className="hidden lg:block bg-white rounded-xl border border-[#D7CCC8] shadow-lg p-4 min-w-[240px]"
     >
-      <TableDetailContent table={table} zoneColor={zoneColor} onClose={onClose} />
+      <TableDetailContent table={table} zoneColor={zoneColor} onClose={onClose} onAction={onAction} />
     </motion.div>
   )
 }
@@ -750,6 +859,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
                   table={selectedTable}
                   zoneColor={getZoneColor(zoneNameMap.get(selectedTable.id) ?? null)}
                   onClose={() => setSelectedTable(null)}
+                  onAction={refetch}
                 />
               </div>
             )}
@@ -762,6 +872,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
                 table={selectedTable}
                 zoneColor={getZoneColor(zoneNameMap.get(selectedTable.id) ?? null)}
                 onClose={() => setSelectedTable(null)}
+                onAction={refetch}
               />
             )}
           </AnimatePresence>

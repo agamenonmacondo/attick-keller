@@ -59,6 +59,7 @@ interface HostReservationQueueProps {
 export function HostReservationQueue({ reservations, onAction }: HostReservationQueueProps) {
   const [confirming, setConfirming] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
     reservationId: string
@@ -66,6 +67,15 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
     label: string
   }>({ open: false, reservationId: '', status: '', label: '' })
   const prefersReduced = usePrefersReducedMotion()
+
+  const toggleExpand = (id: string) => {
+    setExpanded(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const handleStatusChange = async (id: string, status: string) => {
     setConfirming(id)
@@ -144,6 +154,12 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
             const timeEnd = (r.time_end as string)?.slice(0, 5) || ''
             const partySize = r.party_size as number
             const customerName = (r.customers as { full_name: string } | null)?.full_name || 'Sin nombre'
+            const custData = r.customers as { full_name: string; phone: string; email: string } | null
+            const phone = custData?.phone || null
+            const email = custData?.email || null
+            const notes = r.special_requests as string | null
+            const hasDetails = !!(phone || email || notes)
+            const isExpanded = expanded.has(id)
             const actions = HOST_ACTION_MAP[status] || []
             const isConfirming = confirming === id
 
@@ -183,7 +199,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                         </span>
                       )}
                     </div>
-                    <p className="text-sm font-medium text-[#3E2723] truncate">{customerName}</p>
+                    <p className="text-sm font-medium text-[#3E2723] break-words">{customerName}</p>
                     <p className="text-xs text-[#8D6E63]">
                       {partySize} personas{r.zone_name ? ` · ${r.zone_name}` : ''}
                     </p>
@@ -193,6 +209,55 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                         Mesa {r.table_number as string}{r.zone_name ? ` · ${r.zone_name as string}` : ''}
                       </p>
                     )}
+
+                    {hasDetails && (
+                      <div className="mt-1">
+                        <button
+                          onClick={() => toggleExpand(id)}
+                          className="text-[10px] text-[#D4922A] flex items-center gap-0.5"
+                        >
+                          {isExpanded ? <CaretUp size={10} /> : <CaretDown size={10} />}
+                          {isExpanded ? 'Menos' : 'Ver detalles'}
+                        </button>
+                      </div>
+                    )}
+
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="mt-2 space-y-1 pl-3 border-l-2 border-[#D7CCC8]">
+                            {phone && (
+                              <a
+                                href={`https://wa.me/57${phone.replace(/^0+/, '').replace(/^\+/, '')}`}
+                                target="_blank"
+                                className="flex items-center gap-1.5 text-xs text-[#25D366] hover:underline"
+                              >
+                                <WhatsappLogo size={12} weight="fill" /> {phone}
+                              </a>
+                            )}
+                            {email && (
+                              <a
+                                href={`mailto:${email}`}
+                                className="flex items-center gap-1.5 text-xs text-[#1565C0] hover:underline"
+                              >
+                                <EnvelopeSimple size={12} /> {email}
+                              </a>
+                            )}
+                            {notes && (
+                              <div className="flex items-start gap-1.5 text-xs text-[#5D4037] bg-[#F5EDE0] rounded-md px-2 py-1">
+                                <Note size={12} className="text-[#D4922A] shrink-0 mt-0.5" />
+                                <span>{notes}</span>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                   <div className="flex flex-col gap-1.5 shrink-0"
                   >

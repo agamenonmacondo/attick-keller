@@ -553,25 +553,39 @@ function HostTableCard({
         )}
       </motion.button>
 
-      {/* ── Popover ── */}
+      {/* ── Backdrop ── */}
+      {isActive && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/30 transition-opacity"
+          onClick={(e) => { e.stopPropagation(); onClick(); suggestion.clear() }}
+        />
+      )}
+
+      {/* ── Popover / Bottom Sheet ── */}
       {isActive && (
         <motion.div
-          initial={prefersReduced ? false : { opacity: 0, scale: 0.95, transform: 'scale(0.95)' }}
-          animate={{ opacity: 1, scale: 1, transform: 'scale(1)' }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          initial={prefersReduced ? false : { opacity: 0, translateY: 40, transform: 'translateY(40px)' }}
+          animate={{ opacity: 1, translateY: 0, transform: 'translateY(0px)' }}
+          exit={{ opacity: 0, translateY: 40, transform: 'translateY(40px)' }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className={cn(
-            'absolute z-50 left-0 right-0 mt-1 bg-white rounded-xl border border-[#D7CCC8] shadow-xl overflow-y-auto',
-            // Wider on desktop for timeline view
-            (reservationsList.length > 0) ? 'p-4' : 'p-3'
+            'fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl overflow-y-auto',
+            'max-h-[80vh]',
+            (reservationsList.length > 0) ? 'p-5' : 'p-4'
           )}
-          style={{ minWidth: reservationsList.length > 0 ? '320px' : '240px', maxWidth: '400px', maxHeight: '70vh' }}
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 16px), 20px)' }}
         >
+          {/* Drag handle */}
+          <div className="flex justify-center mb-3">
+            <div className="w-10 h-1 rounded-full bg-[#D7CCC8]" />
+          </div>
+
           {/* Dismiss */}
           <button
             onClick={(e) => { e.stopPropagation(); onClick(); suggestion.clear() }}
-            className="absolute top-2 right-2 text-[#8D6E63] hover:text-[#3E2723] transition-colors z-10"
+            className="absolute top-3 right-4 text-[#8D6E63] hover:text-[#3E2723] transition-colors z-10 p-1"
           >
-            <X size={14} />
+            <X size={16} />
           </button>
 
           {reservationsList.length > 0 ? (
@@ -657,17 +671,19 @@ function TimelinePopover({
   return (
     <div className="space-y-3">
       {/* Popover header */}
-      <div className="flex items-center gap-1.5 mb-2 pr-5">
-        <Armchair size={14} className="text-[#6B2737]" />
-        <span className="font-semibold text-sm text-[#3E2723]">
-          {table.name_attick || `Mesa ${table.number}`}
-        </span>
-        {table.zone_name && (
-          <span className="text-xs text-[#8D6E63]">· {table.zone_name}</span>
-        )}
-        <span className="text-xs text-[#8D6E63]">
-          ({table.capacity}p)
-        </span>
+      <div className="flex items-center justify-between mb-3 pr-6">
+        <div className="flex items-center gap-2">
+          <Armchair size={16} className="text-[#6B2737]" />
+          <span className="font-bold text-base text-[#3E2723] font-['Playfair_Display']">
+            {table.name_attick || `Mesa ${table.number}`}
+          </span>
+          {table.zone_name && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[#6B2737]/10 text-[#6B2737] font-medium">
+              {table.zone_name}
+            </span>
+          )}
+        </div>
+        <span className="text-sm text-[#8D6E63] font-medium">{table.capacity}p</span>
       </div>
 
       {/* Current reservation */}
@@ -683,15 +699,15 @@ function TimelinePopover({
               {currentRes.status === 'seated' && onStatusChange && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onStatusChange(currentRes.id, 'completed') }}
-                  className="flex-1 py-1.5 text-xs font-medium rounded-lg bg-[#6B2737] text-white hover:bg-[#5C2230] active:scale-[0.97] transition-all"
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[#6B2737] text-white hover:bg-[#5C2230] active:scale-[0.97] transition-all"
                 >
-                  Liberar
+                  Liberar mesa
                 </button>
               )}
-              {(['confirmed', 'pre_paid'].includes(currentRes.status)) && onStatusChange && (
+              {currentRes.status === 'confirmed' && onStatusChange && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onStatusChange(currentRes.id, 'seated') }}
-                  className="flex-1 py-1.5 text-xs font-medium rounded-lg bg-green-700 text-white hover:bg-green-800 active:scale-[0.97] transition-all"
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[#5C7A4D] text-white hover:bg-[#4A6640] active:scale-[0.97] transition-all"
                 >
                   Sentar
                 </button>
@@ -699,12 +715,9 @@ function TimelinePopover({
               {onReassign && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onReassign(currentRes, tableInfo) }}
-                  className="flex-1 py-1.5 text-xs font-medium rounded-lg border border-[#D7CCC8] text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97] transition-all"
+                  className="py-2.5 px-3 text-xs font-medium rounded-xl border border-[#D7CCC8] text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97] transition-all"
                 >
-                  <span className="flex items-center justify-center gap-1">
-                    <ArrowsLeftRight size={10} />
-                    Reasignar
-                  </span>
+                  <ArrowsLeftRight size={12} />
                 </button>
               )}
             </div>
@@ -715,22 +728,26 @@ function TimelinePopover({
       {/* Next reservation */}
       {nextRes && !nextRes.is_current && (
         <div>
-          <h4 className="text-[10px] font-semibold text-[#D4922A] uppercase tracking-wider mb-1.5 flex items-center gap-1">
-            <Clock size={10} weight="fill" className="text-[#D4922A]" />
+          <h4 className="text-[11px] font-semibold text-[#D4922A] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+            <Clock size={11} weight="fill" className="text-[#D4922A]" />
             PRÓXIMA
             {currentTime && (() => {
               const diff = timeToMinutes(nextRes.time_start) - timeToMinutes(currentTime)
-              if (diff > 0 && diff <= 60) return <span className="text-[#E65100] font-bold">(⚠ {diff}min)</span>
+              if (diff > 0 && diff <= 60) return (
+                <span className="text-[10px] font-bold text-[#E65100] bg-[#E65100]/10 px-1.5 py-0.5 rounded-full">
+                  {diff} min
+                </span>
+              )
               return null
             })()}
           </h4>
           <div className="bg-[#D4922A]/5 rounded-lg border border-[#D4922A]/20 p-3 space-y-2">
             <ReservationDetail reservation={nextRes} />
             <div className="flex gap-1.5 pt-1">
-              {(['confirmed', 'pre_paid'].includes(nextRes.status)) && onStatusChange && (
+              {nextRes.status === 'confirmed' && onStatusChange && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onStatusChange(nextRes.id, 'seated') }}
-                  className="flex-1 py-1.5 text-xs font-medium rounded-lg bg-green-700 text-white hover:bg-green-800 active:scale-[0.97] transition-all"
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[#5C7A4D] text-white hover:bg-[#4A6640] active:scale-[0.97] transition-all"
                 >
                   Sentar
                 </button>
@@ -738,12 +755,9 @@ function TimelinePopover({
               {onReassign && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onReassign(nextRes, tableInfo) }}
-                  className="flex-1 py-1.5 text-xs font-medium rounded-lg border border-[#D7CCC8] text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97] transition-all"
+                  className="py-2.5 px-3 text-xs font-medium rounded-xl border border-[#D7CCC8] text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97] transition-all"
                 >
-                  <span className="flex items-center justify-center gap-1">
-                    <ArrowsLeftRight size={10} />
-                    Reasignar
-                  </span>
+                  <ArrowsLeftRight size={12} />
                 </button>
               )}
             </div>

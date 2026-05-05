@@ -576,11 +576,11 @@ function HostTableCard({
           animate={{ opacity: 1, scale: 1, transform: 'scale(1)' }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           className={cn(
-            'absolute z-30 left-0 right-0 mt-1 bg-white rounded-xl border border-[#D7CCC8] shadow-lg',
+            'absolute z-50 left-0 right-0 mt-1 bg-white rounded-xl border border-[#D7CCC8] shadow-xl overflow-y-auto',
             // Wider on desktop for timeline view
             (reservationsList.length > 0) ? 'p-4' : 'p-3'
           )}
-          style={{ minWidth: reservationsList.length > 0 ? '280px' : '220px' }}
+          style={{ minWidth: reservationsList.length > 0 ? '320px' : '240px', maxWidth: '400px', maxHeight: '70vh' }}
         >
           {/* Dismiss */}
           <button

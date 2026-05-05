@@ -62,7 +62,7 @@ export function ReservationDetail({ reservation, compact = false }: ReservationD
           {reservation.is_upcoming && !reservation.is_current && (
             <Clock size={12} className="text-[#D4922A] shrink-0" />
           )}
-          <span className="font-medium text-[#3E2723] truncate">
+          <span className="font-medium text-[#3E2723] break-words">
             {reservation.customer_name || 'Sin nombre'}
           </span>
           <span className="text-[#8D6E63] shrink-0">

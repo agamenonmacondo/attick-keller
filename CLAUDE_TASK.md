@@ -1,181 +1,247 @@
-# CLAUDE TASK: Host Panel v2 — Multi-Reservation UI + Urgency + Reassign
+# CLAUDE TASK — mejorar UI de ocupación, plano y host
 
-## Context
-This is a Next.js 14 restaurant management app (Attick & Keller). The backend already returns multi-reservation data per table via the occupancy API. Your job is to update the FRONTEND components to use this new data.
+Eres un desarrollador senior trabajando en el proyecto Attick & Keller (Next.js 14, TypeScript, Supabase, Tailwind, Framer Motion).
 
-## What's ALREADY DONE (DO NOT MODIFY):
-- `src/lib/utils/time.ts` — time helpers (formatTimeColombia, diffMinutes, etc.)
-- `src/lib/utils/urgency.ts` — computeUrgency(), classifyTime(), URGENCY_STYLES, getUrgencyBadge()
-- `src/app/api/admin/occupancy/route.ts` — returns multi-reservation timeline per table
-- `src/lib/hooks/useHostOccupancy.ts` — updated interface with ReservationTimeline, urgency_level, etc.
-- `src/app/api/admin/floorplan/route.ts` — DO NOT TOUCH
+## REGLAS
+- NO cambies la lógica del algoritmo de asignación
+- NO toques archivos que no se mencionan aquí
+- NO agregues dependencias nuevas
+- Sigue el diseño visual existente (colores tierra, serif Playfair Display para títulos, @phosphor-icons/react)
+- Los textos en ESPAÑOL
+- Al terminar, corre `npx tsc --noEmit` para verificar 0 errores de TypeScript
 
-## Read DESIGN-HOST-V2.md for full spec
+---
 
-## Key API Changes You Need to Know
+## TAREA 1: FloorPlanMap — agregar detalles del cliente y acciones en la burbuja
 
-The `occupancy` API now returns each table with:
-```ts
-interface TableItem {
-  // ... existing fields ...
-  reservations: ReservationTimeline[]  // ALL reservations tonight for this table
-  current_reservation: ReservationTimeline | null  // happening NOW
-  next_reservation: ReservationTimeline | null  // next upcoming
-  urgency_level: 'urgent' | 'warning' | 'info' | 'none'
-  zone_name: string | null
-  reservation_status: string | null  // backward compat
+**Problema:** Cuando el usuario hace clic en una burbuja del plano, el `TableDetailContent` solo muestra nombre, hora y capacidad. No muestra teléfono, email, notas, ni acciones (sentar, reasignar, liberar).
+
+**Archivo:** `/mnt/f/attick-keller/web/src/components/admin/floorplan/FloorPlanMap.tsx`
+
+**Pasos:**
+
+1. **Ampliar el tipo `TableWithPosition`** en `/mnt/f/attick-keller/web/src/lib/hooks/useFloorPlan.ts` — agregar estos campos opcionales:
+```typescript
+export interface TableWithPosition {
+  // ...campos existentes...
+  customer_phone: string | null     // NUEVO
+  customer_email: string | null     // NUEVO
+  special_requests: string | null   // NUEVO
+  reservation_status: string | null // NUEVO: 'confirmed' | 'pre_paid' | 'seated' | 'pending' | etc.
 }
 ```
 
-```ts
-interface ReservationTimeline {
-  id: string
-  status: 'pending' | 'confirmed' | 'pre_paid' | 'seated' | 'completed' | 'no_show' | 'cancelled'
-  party_size: number
-  customer_name: string | null
-  customer_phone: string | null
-  customer_email: string | null
-  special_requests: string | null
-  time_start: string  // "18:00"
-  time_end: string    // "20:00"
-  is_current: boolean
-  is_past: boolean
-  is_upcoming: boolean
+2. **Ampliar la API** `/mnt/f/attick-keller/web/src/app/api/admin/floorplan/route.ts`:
+   - En la query de reservas, agregar `customers(full_name, phone, email)` y `special_requests, status`
+   - En el mapeo de respuesta (around line 97-111), agregar los nuevos campos:
+```typescript
+return {
+  // ...campos existentes...
+  customer_phone: cust?.phone ?? null,
+  customer_email: cust?.email ?? null,
+  special_requests: reservation?.special_requests ?? null,
+  reservation_status: reservation?.status ?? null,
 }
 ```
 
-The API also returns `current_time` (HH:MM Colombia time) at the top level.
+3. **Mejorar `TableDetailContent`** en FloorPlanMap.tsx (lines 300-376):
+   - Reemplace la sección de información del cliente con datos de contacto expandibles:
+   - Agregar WhatsApp link (https://wa.me/57{phone}), email link (mailto:), notas con ícono de nota
+   - Importar `WhatsappLogo, EnvelopeSimple, Note, CaretDown, CaretUp` de `@phosphor-icons/react`
+   - Agregar `AnimatePresence` de framer-motion para expandir/colapsar detalles
+   - Cuando mesa está `reserved` o `seated`, mostrar botones de acción:
+     - Si `reservation_status === 'confirmed' || 'pre_paid'` → botón verde "Sentar" que llama a PATCH `/api/admin/reservations/{id}` con `{status: 'seated'}`
+     - Si `reservation_status === 'seated'` → botón bordó "Liberar" que llama a PATCH con `{status: 'completed'}`
+     - Siempre que haya reserva → botón gris "Reasignar" (solo placeholder, no implementa nada todavía)
 
-## TASKS (in order of priority):
+   - Ejemplo de estructura:
+```tsx
+{/* Detalles del cliente con expand/collapse */}
+{table.customer_name && (
+  <div className="space-y-1.5">
+    <div className="flex items-center gap-2">
+      <Users size={14} className="text-[#8D6E63]" />
+      <span className="font-medium text-[#3E2723]">{table.customer_name}</span>
+    </div>
+    {/* expandir teléfono, email, notas */}
+    {(table.customer_phone || table.customer_email || table.special_requests) && (
+      <div className="pl-6 space-y-1 border-l-2 border-[#D7CCC8] ml-1">
+        {table.customer_phone && (
+          <a href={`https://wa.me/57${table.customer_phone.replace(/^0+/, '').replace(/^\\+/, '')}`}
+             target="_blank" className="flex items-center gap-1.5 text-xs text-[#25D366]">
+            <WhatsappLogo size={12} weight="fill" /> {table.customer_phone}
+          </a>
+        )}
+        {table.customer_email && (
+          <a href={`mailto:${table.customer_email}`} className="flex items-center gap-1.5 text-xs text-[#1565C0]">
+            <EnvelopeSimple size={12} /> {table.customer_email}
+          </a>
+        )}
+        {table.special_requests && (
+          <div className="flex items-start gap-1.5 text-xs text-[#5D4037] bg-[#F5EDE0] rounded-md px-2 py-1">
+            <Note size={12} className="text-[#D4922A] shrink-0 mt-0.5" /> <span>{table.special_requests}</span>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+)}
 
-### 1. UPDATE `src/components/host/HostTableMap.tsx`
-
-**Import the new types and utilities:**
-- Import `ReservationTimeline` from `@/lib/hooks/useHostOccupancy`
-- Import `computeUrgency`, `URGENCY_STYLES`, `getUrgencyBadge` from `@/lib/utils/urgency`
-- Import `formatTimeColombia` from `@/lib/utils/time`
-
-**Update TableItem interface** to include the new fields: reservations, current_reservation, next_reservation, urgency_level, zone_name, reservation_status.
-
-**Update the card (HostTableCard):**
-
-a) **Urgency visual system** — Replace the simple 3-color system with urgency-aware colors:
-- available (green #5C7A4D) — no reservations
-- reserved-far (amber #D4922A) — has upcoming reservation >60min
-- info (blue #1565C0) — next reservation 31-60min, badge "1h"
-- warning (orange #E65100) — next reservation 16-30min, badge "30m", subtle pulse
-- urgent (red #C62828) — next reservation ≤15min, badge "15m", strong pulse animation
-- occupied (burgundy #6B2737) — currently seated
-- transition (purple #7B1FA2) — between reservations
-
-b) **Mini-timeline bar** — Below the capacity line, show a horizontal bar representing the evening:
-- Each reservation is a colored block proportional to its duration
-- Current reservation filled solid, upcoming outlined
-- "Now" marker as a thin vertical line
-
-c) **Next reservation preview** — Below the mini-timeline:
+{/* Acciones */}
+{table.reservation_status && table.reservation_id && (
+  <div className="flex gap-2 mt-3 pt-3 border-t border-[#D7CCC8]/50">
+    {(['confirmed', 'pre_paid'].includes(table.reservation_status)) && (
+      <button onClick={async () => {
+        await fetch(`/api/admin/reservations/${table.reservation_id}`, {
+          method: 'PATCH', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ status: 'seated' })
+        })
+        onClose() // trigger refetch by closing
+      }} className="flex-1 py-2 text-xs font-medium rounded-lg bg-green-700 text-white hover:bg-green-800 active:scale-[0.97]">
+        Sentar
+      </button>
+    )}
+    {table.reservation_status === 'seated' && (
+      <button onClick={async () => {
+        await fetch(`/api/admin/reservations/${table.reservation_id}`, {
+          method: 'PATCH', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ status: 'completed' })
+        })
+        onClose()
+      }} className="flex-1 py-2 text-xs font-medium rounded-lg bg-[#6B2737] text-white hover:bg-[#5C2230] active:scale-[0.97]">
+        Liberar
+      </button>
+    )}
+    <button className="flex-1 py-2 text-xs font-medium rounded-lg border border-[#D7CCC8] text-[#3E2723] hover:bg-[#EFEBE9]">
+      Reasignar
+    </button>
+  </div>
+)}
 ```
-⏳ 21:30 - María García (4p)
+
+4. **Agregar prop `onAction` a FloorPlanMap y TableDetailContent** — cuando se ejecuta una acción (sentar/liberar), llamar `onAction` además de `onClose` para que el padre haga refetch. FloorPlanMap ya tiene `refetch()` de useFloorPlan.
+
+---
+
+## TAREA 2: Ocupación Admin — mostrar estado de reserva en las tarjetas de mesa
+
+**Problema:** En la pestaña de Ocupación, las tarjetas de mesa solo muestran un punto verde/rojo y "ocupada/libre", pero NO muestran el estado real de la reserva (Confirmado, Pre-pagado, Sentado).
+
+**Archivos a modificar:**
+- `/mnt/f/attick-keller/web/src/app/api/admin/occupancy/route.ts` — agregar `status` de reserva en la respuesta
+- `/mnt/f/attick-keller/web/src/components/admin/occupancy/TableMap.tsx` — mostrar el estado con badge de color
+- `/mnt/f/attick-keller/web/src/components/admin/occupancy/TableActionPopover.tsx` — agregar detalles del cliente (teléfono, email, notas) y botón sentar
+
+**Pasos:**
+
+1. **API occupancy** — en la query de reservas, ya se hace `.select('id, table_id, party_size, status, time_start, time_end, customers(full_name)')`. Agregar `customers(full_name, phone, email)` y `special_requests`:
+
+   En `/mnt/f/attick-keller/web/src/app/api/admin/occupancy/route.ts`, buscar la query de reservas y agregar los campos:
+   ```
+   .select('id, table_id, party_size, status, time_start, time_end, special_requests, customers(full_name, phone, email)')
+   ```
+
+   En el mapeo de tablas que devuelve `current_customer_name`, agregar:
+   - `current_customer_phone`
+   - `current_customer_email` 
+   - `current_special_requests`
+   - `current_reservation_status` (ya existe `status` en la reserva but quizá no se pasa al response)
+
+2. **TableMap.tsx** — agregar indicador visual del estado de la reserva:
+   - Cambiar el punto de la mesa para que refleje el estado:
+     - Verde: disponible
+     - Naranja (#D4922A): confirmada/pre-pagada (reservada pero no sentada)
+     - Bordó (#6B2737): sentada (ocupada)
+     - Gris: completed/no_show
+   - Debajo del nombre del cliente, agregar un badge de estado inline:
+   ```tsx
+   <span className="text-[9px] inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-50 text-green-700">
+     <span className="w-1 h-1 rounded-full bg-green-600" /> Confirmado
+   </span>
+   ```
+
+3. **TableActionPopover.tsx** — agregar detalles del cliente expandibles:
+   - Agregar props nuevas: `currentCustomerPhone`, `currentCustomerEmail`, `currentSpecialRequests`, `currentReservationStatus`
+   - Cuando la mesa está ocupada, mostrar además del nombre:
+     - WhatsApp link si hay teléfono
+     - Email link si hay email
+     - Notas si hay
+   - Agregar botón "Sentar" cuando `currentReservationStatus` es `confirmed` o `pre_paid` (actualmente solo muestra "Liberar mesa")
+   - Agregar botón "No asistió" cuando `currentReservationStatus` es `confirmed` o `pre_paid`
+
+---
+
+## TAREA 3: HostReservationQueue — agregar detalles del cliente en la lista lateral
+
+**Problema:** La lista lateral de reservas del host no muestra teléfono, email ni notas del cliente.
+
+**Archivos:**
+- `/mnt/f/attick-keller/web/src/components/host/HostReservationQueue.tsx` 
+
+**Pasos:**
+
+1. Ya se agregaron los imports `WhatsappLogo, EnvelopeSimple, Note, CaretDown, CaretUp, AnimatePresence` en un patch anterior. Verificar que estén presentes.
+
+2. **Extraer datos del cliente de la reserva** — en el map de `sorted`, agregar:
+```typescript
+const phone = r.customer_phone as string | null
+const email = r.customer_email as string | null
+const notes = r.special_requests as string | null
+const hasDetails = !!(phone || email || notes)
 ```
-Only shown if there's an upcoming reservation and table is free or occupied.
 
-**Update the popover (when table is clicked):**
-
-The popover should now show a FULL TIMELINE of reservations for this table:
-
-```
-┌─────────────────────────────────────┐
-│ Mesa 3B · Tipi (6 personas)    [✕] │
-│                                     │
-│ ── AHORA ───────────────────────── │
-│ 🟢 Juan Pérez              6 personas│
-│    7:30 p.m. – 9:30 p.m.  ● Confirmado│
-│    📱 310 555 1234                    │
-│    ✉️ juan@email.com                  │
-│    📝 Alergia a mariscos              │
-│                              [Sentados]│
-│                                      │
-│ ── PRÓXIMA (⚠ 30min) ───────────── │
-│ 🟠 María García            4 personas │
-│    9:30 p.m. – 11:00 p.m.  ● Confirmado│
-│    📱 310 666 7890                    │
-│                      [Reasignar] [Sentar]│
-│                                      │
-│ ── MÁS TARDE ────────────────────── │
-│ ⏳ Carlos López             2 personas │
-│    11:00 p.m. – 11:30 p.m.  ● Pre-pagado│
-│                                      │
-│ ── ACCIONES ─────────────────────── │
-│ [+ Walk-in]  [Reasignar reserva]     │
-└─────────────────────────────────────┘
+3. **Hacer la tarjeta expandible** — cuando `hasDetails` es true, agregar un botón de expandir/colapsar debajo del nombre:
+```tsx
+{hasDetails && (
+  <button onClick={() => toggleExpand(id)} className="text-[10px] text-[#D4922A] flex items-center gap-0.5 mt-0.5">
+    {expanded ? <CaretUp size={10} /> : <CaretDown size={10} />}
+    {expanded ? 'Menos' : 'Ver detalles'}
+  </button>
+)}
 ```
 
-Each reservation section should be expandable — initially show just name + time + people, click to expand and see phone (with WhatsApp icon link), email, special_requests.
+4. **Contenido expandido** con `AnimatePresence`:
+```tsx
+<AnimatePresence>
+  {expanded && (
+    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+      <div className="mt-2 space-y-1 pl-3 border-l-2 border-[#D7CCC8]">
+        {phone && <a href={...} className="flex items-center gap-1.5 text-xs text-[#25D366]"><WhatsappLogo size={12} weight="fill" /> {phone}</a>}
+        {email && <a href={...} className="flex items-center gap-1.5 text-xs text-[#1565C0]"><EnvelopeSimple size={12} /> {email}</a>}
+        {notes && <div className="flex items-start gap-1.5 text-xs text-[#5D4037] bg-[#F5EDE0] rounded-md px-2 py-1"><Note size={12} className="text-[#D4922A] shrink-0" /><span>{notes}</span></div>}
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+```
 
-**Status badges:**
-- confirmed → green dot + "Confirmado"
-- pre_paid → green dot + "Pre-pagado"  
-- seated → green dot + "Sentados"
-- pending → yellow dot + "Pendiente"
-- no_show → red dot + "No asistió"
-- cancelled → grey dot + "Cancelada"
+5. **Quitar `truncate` del nombre del cliente** (línea 186) — cambiar a `break-words`:
+```tsx
+<p className="text-sm font-medium text-[#3E2723] break-words">{customerName}</p>
+```
 
-**Actions per reservation:**
-- If status is confirmed/pre_paid → "Sentar" button (PATCH status=seated)
-- If status is seated → "Liberar" button (PATCH with table_id=null or status=completed)
-- "Reasignar" button → opens ReassignModal
-- Walk-in button at bottom → uses HostWalkInForm
+---
 
-### 2. CREATE `src/components/host/ReassignModal.tsx`
+## TAREA 4: Verificar y arreglar la API de occupancy para que devuelva datos del cliente
 
-A modal that lets the admin move a reservation to a different table:
+**Archivo:** `/mnt/f/attick-keller/web/src/app/api/admin/occupancy/route.ts`
 
-- Shows current reservation info (name, people, time, current table+zone)
-- Fetches available tables from `/api/admin/occupancy` (reuse the data from useHostOccupancy)
-- Filters tables by:
-  - capacity >= reservation.party_size
-  - No overlapping reservations (use reservations[] timeline to check time conflicts with 30min buffer)
-  - Sorted by zone preference (same zone first, then by capacity match)
-- Each table option shows: table name, zone, capacity, "Libre hasta XX:XX" if applicable
-- Confirm button → PATCH `/api/admin/reservations/${id}` with `{ table_id: newTableId }`
-- Cancel button
-- Mobile-friendly (full-width on phone, centered modal on desktop)
+Leer el archivo completo. Verificar que:
+1. La query de reservas incluye `customers(full_name, phone, email)` y `special_requests`
+2. El objeto de respuesta por mesa incluye los campos `current_customer_phone`, `current_customer_email`, `current_special_requests`
+3. Si no los tiene, agregarlos
 
-### 3. CREATE `src/components/host/ReservationDetail.tsx`
+---
 
-A reusable expandable reservation detail component:
+## RESUMEN DE ARCHIVOS A MODIFICAR
 
-- Compact mode: name + time + people
-- Expanded mode: adds phone (WhatsApp link), email, special_requests
-- WhatsApp link: `https://wa.me/57{phone}` (strip leading 0/+, prepend 57 if not present)
-- Smooth expand/collapse with framer-motion
+1. `/mnt/f/attick-keller/web/src/lib/hooks/useFloorPlan.ts` — agregar campos a TableWithPosition
+2. `/mnt/f/attick-keller/web/src/app/api/admin/floorplan/route.ts` — agregar phone/email/notes/status en query
+3. `/mnt/f/attick-keller/web/src/components/admin/floorplan/FloorPlanMap.tsx` — details + actions en burbuja
+4. `/mnt/f/attick-keller/web/src/app/api/admin/occupancy/route.ts` — agregar phone/email/notes/status
+5. `/mnt/f/attick-keller/web/src/components/admin/occupancy/TableMap.tsx` — mostrar estado reserva
+6. `/mnt/f/attick-keller/web/src/components/admin/occupancy/TableActionPopover.tsx` — detalles cliente + acciones
+7. `/mnt/f/attick-keller/web/src/components/host/HostReservationQueue.tsx` — detalles expandibles
 
-### 4. UPDATE `src/components/host/HostShell.tsx`
-
-- Pass `currentTime` from occupancyData to HostTableMap
-- Import and render ReassignModal when triggered
-
-### 5. UPDATE `src/components/host/HostWalkInForm.tsx`
-
-- After entering # of people, show a dropdown of AVAILABLE tables
-- Each option shows: "Mesa X · Zone (capacity) · Libre hasta XX:XX" when applicable
-- Use the table's reservations[] timeline to compute "libre hasta"
-- Pre-select the best table using the algorithm from useTableSuggestion
-
-## STYLE GUIDELINES
-- Use the existing color palette: burgundy #6B2737, amber #D4922A, brown #3E2723/#5D4037/#8D6E63, cream #F5EDE0
-- Use @phosphor-icons/react for all icons (already installed)
-- Use framer-motion for animations (already installed)
-- Use `cn()` from `@/lib/utils/cn` for conditional classes
-- Mobile-first responsive design
-- All text in Spanish
-- Pulse animation for urgent tables: `animate-pulse` from Tailwind
-
-## IMPORTANT
-- DO NOT modify any API routes
-- DO NOT modify time.ts or urgency.ts (they're done)
-- DO NOT modify useHostOccupancy.ts (it's done)
-- Keep ALL existing functionality working (assignment, suggestions, unassign)
-- The existing HostTableMap popover already has assign/unassign — integrate naturally with the new timeline
-- Make sure the component compiles without TypeScript errors
-- Run `npx tsc --noEmit` at the end to verify
+## VERIFICACIÓN FINAL
+Correr `npx tsc --noEmit` y verificar 0 errores en archivos del proyecto (ignorar warnings de node_modules).

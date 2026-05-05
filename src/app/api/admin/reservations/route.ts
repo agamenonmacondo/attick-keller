@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
   {
     const [tablesRes, reservationsRes, combosRes] = await Promise.all([
       sb.from('tables')
-        .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
+        .select('id, number, capacity, capacity_min, can_combine, combine_group, zone:table_zones!zone_id(id, name, letter)')
         .eq('restaurant_id', RESTAURANT_ID)
         .eq('is_active', true),
       sb.from('reservations')
@@ -75,13 +75,13 @@ export async function POST(request: NextRequest) {
     let tableRows: unknown[] | null = tablesRes.data as unknown[] | null
     if (tablesRes.error) {
       const res2 = await sb.from('tables')
-        .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name)')
+        .select('id, number, capacity, capacity_min, can_combine, combine_group, zone:table_zones!zone_id(id, name)')
         .eq('restaurant_id', RESTAURANT_ID)
         .eq('is_active', true)
       tableRows = res2.data as unknown[] | null
     }
 
-    type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter?: string | null } | null }
+    type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; zone: { id: string; name: string; letter?: string | null } | null }
     type ComboRow = { id: string; table_ids: string[]; combined_capacity: number; is_active: boolean; name: string | null }
 
     const availableTables = (tableRows as unknown as TableRow[] | null)?.map(t => ({
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       capacity_min: t.capacity_min ?? t.capacity,
       can_combine: t.can_combine ?? false,
       combine_group: t.combine_group ?? null,
-      floor_num: t.floor_num ?? 1,
+      floor_num: 1,
     })) ?? []
 
     const existingResList = (reservationsRes.data as { table_id: string; time_start: string; time_end: string }[] | null) ?? []

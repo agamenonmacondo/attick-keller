@@ -1,77 +1,181 @@
-# Task: Add table assignment info to reservation cards and table detail popover
+# CLAUDE TASK: Host Panel v2 — Multi-Reservation UI + Urgency + Reassign
 
 ## Context
-Attick & Keller restaurant host panel. When a host taps a table bubble in the floor plan OR looks at a reservation card in the "Reservas" tab, they need to see which table is assigned and who is seated there.
+This is a Next.js 14 restaurant management app (Attick & Keller). The backend already returns multi-reservation data per table via the occupancy API. Your job is to update the FRONTEND components to use this new data.
 
-## Problems to fix
+## What's ALREADY DONE (DO NOT MODIFY):
+- `src/lib/utils/time.ts` — time helpers (formatTimeColombia, diffMinutes, etc.)
+- `src/lib/utils/urgency.ts` — computeUrgency(), classifyTime(), URGENCY_STYLES, getUrgencyBadge()
+- `src/app/api/admin/occupancy/route.ts` — returns multi-reservation timeline per table
+- `src/lib/hooks/useHostOccupancy.ts` — updated interface with ReservationTimeline, urgency_level, etc.
+- `src/app/api/admin/floorplan/route.ts` — DO NOT TOUCH
 
-### Problem 1: Reservation cards in "Reservas" tab don't show assigned table
-**File:** `src/components/host/HostReservationQueue.tsx`
+## Read DESIGN-HOST-V2.md for full spec
 
-Currently on line 187-189 it shows:
-```
-{partySize} personas{r.zone_name ? ` · ${r.zone_name}` : ''}
-```
+## Key API Changes You Need to Know
 
-But it does NOT show the table number (e.g. "Mesa 5E · Ático"). The `table_id` is available in the reservation data from the dashboard API, but we need `table_number` and `zone_name` to display it.
-
-**Fix needed:**
-1. The dashboard API (`src/app/api/admin/dashboard/route.ts`) currently returns reservations with `table_id` but NOT `table_number` or `zone_name`. Add a join to get `tables(number)` and `table_zones(name)` for each reservation's `table_id`.
-2. In `HostReservationQueue.tsx`, add a line showing the table assignment: "Mesa 5E · Ático" using an `Armchair` or `Table` icon from phosphor-icons.
-
-### Problem 2: Table popover in floor plan shows limited info
-**File:** `src/components/admin/floorplan/FloorPlanMap.tsx`
-
-The `TableDetailContent` component (lines 300-370) already shows:
-- Zone, capacity, status
-- `customer_name`, `time_range`, `party_size` IF the floorplan API provides them
-
-**The floorplan API** (`src/app/api/admin/floorplan/route.ts`) already joins reservations and populates these fields. BUT it only matches one reservation per table via `tableReservationMap` which only keeps the LAST reservation for each table_id.
-
-**Fix needed:**
-1. In the floorplan API, for tables with a `confirmed` reservation, show the reservation info (name, time, party_size) — this is already implemented.
-2. Add the reservation ID to the popover so the host can tap to open the full reservation detail.
-3. Make sure the `customer_name` field properly extracts from the Supabase join (the current code at line 89 already does this).
-
-### Problem 3: Dashboard API doesn't include table/zone info for reservations
-**File:** `src/app/api/admin/dashboard/route.ts`
-
-Line 15 currently selects:
-```
-'id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, created_at, customers(id, email, full_name, phone)'
+The `occupancy` API now returns each table with:
+```ts
+interface TableItem {
+  // ... existing fields ...
+  reservations: ReservationTimeline[]  // ALL reservations tonight for this table
+  current_reservation: ReservationTimeline | null  // happening NOW
+  next_reservation: ReservationTimeline | null  // next upcoming
+  urgency_level: 'urgent' | 'warning' | 'info' | 'none'
+  zone_name: string | null
+  reservation_status: string | null  // backward compat
+}
 ```
 
-**Fix needed:** Add `tables(number, table_zones(name))` to the select so the frontend has table_number and zone_name for each reservation.
+```ts
+interface ReservationTimeline {
+  id: string
+  status: 'pending' | 'confirmed' | 'pre_paid' | 'seated' | 'completed' | 'no_show' | 'cancelled'
+  party_size: number
+  customer_name: string | null
+  customer_phone: string | null
+  customer_email: string | null
+  special_requests: string | null
+  time_start: string  // "18:00"
+  time_end: string    // "20:00"
+  is_current: boolean
+  is_past: boolean
+  is_upcoming: boolean
+}
+```
 
-## Implementation Steps
+The API also returns `current_time` (HH:MM Colombia time) at the top level.
 
-1. **Dashboard API** (`src/app/api/admin/dashboard/route.ts` line 15):
-   - Change the reservations select to include table info:
-   ```
-   'id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, created_at, customers(id, email, full_name, phone), tables(id, number, table_zones(id, name))'
-   ```
-   - After fetching, flatten the data so each reservation has `table_number` and `zone_name` fields (extract from the nested join).
+## TASKS (in order of priority):
 
-2. **Reservation Queue** (`src/components/host/HostReservationQueue.tsx`):
-   - Import `Armchair` from `@phosphor-icons/react` (already available)
-   - After line 186 (customerName), add table info:
-   ```tsx
-   {r.table_number && (
-     <p className="text-xs text-[#5C7A4D] flex items-center gap-1">
-       <Armchair size={12} />
-       Mesa {r.table_number}{r.zone_name ? ` · ${r.zone_name}` : ''}
-     </p>
-   )}
-   ```
-   - Make sure `table_number` and `zone_name` are extracted from the reservation data.
+### 1. UPDATE `src/components/host/HostTableMap.tsx`
 
-3. **Verify floorplan popover works** — no code changes needed if the API already populates customer_name and time_range. Just ensure the mock reservations have proper table assignments.
+**Import the new types and utilities:**
+- Import `ReservationTimeline` from `@/lib/hooks/useHostOccupancy`
+- Import `computeUrgency`, `URGENCY_STYLES`, `getUrgencyBadge` from `@/lib/utils/urgency`
+- Import `formatTimeColombia` from `@/lib/utils/time`
 
-## Important Notes
-- The project uses `@phosphor-icons/react` for icons
-- Color palette: primary `#6B2737`, secondary `#8D6E63`, accent green `#5C7A4D`
-- The `Armchair` icon is already used on line 11 of HostReservationQueue
-- Keep the UI style consistent: text-xs for secondary info, Playfair Display for headings
-- Make sure TypeScript types are correct — reservations come as `Array<Record<string, unknown>>`
-- After changes, run: `npx tsc --noEmit --project tsconfig.json` to verify
-- Commit with descriptive message when done
+**Update TableItem interface** to include the new fields: reservations, current_reservation, next_reservation, urgency_level, zone_name, reservation_status.
+
+**Update the card (HostTableCard):**
+
+a) **Urgency visual system** — Replace the simple 3-color system with urgency-aware colors:
+- available (green #5C7A4D) — no reservations
+- reserved-far (amber #D4922A) — has upcoming reservation >60min
+- info (blue #1565C0) — next reservation 31-60min, badge "1h"
+- warning (orange #E65100) — next reservation 16-30min, badge "30m", subtle pulse
+- urgent (red #C62828) — next reservation ≤15min, badge "15m", strong pulse animation
+- occupied (burgundy #6B2737) — currently seated
+- transition (purple #7B1FA2) — between reservations
+
+b) **Mini-timeline bar** — Below the capacity line, show a horizontal bar representing the evening:
+- Each reservation is a colored block proportional to its duration
+- Current reservation filled solid, upcoming outlined
+- "Now" marker as a thin vertical line
+
+c) **Next reservation preview** — Below the mini-timeline:
+```
+⏳ 21:30 - María García (4p)
+```
+Only shown if there's an upcoming reservation and table is free or occupied.
+
+**Update the popover (when table is clicked):**
+
+The popover should now show a FULL TIMELINE of reservations for this table:
+
+```
+┌─────────────────────────────────────┐
+│ Mesa 3B · Tipi (6 personas)    [✕] │
+│                                     │
+│ ── AHORA ───────────────────────── │
+│ 🟢 Juan Pérez              6 personas│
+│    7:30 p.m. – 9:30 p.m.  ● Confirmado│
+│    📱 310 555 1234                    │
+│    ✉️ juan@email.com                  │
+│    📝 Alergia a mariscos              │
+│                              [Sentados]│
+│                                      │
+│ ── PRÓXIMA (⚠ 30min) ───────────── │
+│ 🟠 María García            4 personas │
+│    9:30 p.m. – 11:00 p.m.  ● Confirmado│
+│    📱 310 666 7890                    │
+│                      [Reasignar] [Sentar]│
+│                                      │
+│ ── MÁS TARDE ────────────────────── │
+│ ⏳ Carlos López             2 personas │
+│    11:00 p.m. – 11:30 p.m.  ● Pre-pagado│
+│                                      │
+│ ── ACCIONES ─────────────────────── │
+│ [+ Walk-in]  [Reasignar reserva]     │
+└─────────────────────────────────────┘
+```
+
+Each reservation section should be expandable — initially show just name + time + people, click to expand and see phone (with WhatsApp icon link), email, special_requests.
+
+**Status badges:**
+- confirmed → green dot + "Confirmado"
+- pre_paid → green dot + "Pre-pagado"  
+- seated → green dot + "Sentados"
+- pending → yellow dot + "Pendiente"
+- no_show → red dot + "No asistió"
+- cancelled → grey dot + "Cancelada"
+
+**Actions per reservation:**
+- If status is confirmed/pre_paid → "Sentar" button (PATCH status=seated)
+- If status is seated → "Liberar" button (PATCH with table_id=null or status=completed)
+- "Reasignar" button → opens ReassignModal
+- Walk-in button at bottom → uses HostWalkInForm
+
+### 2. CREATE `src/components/host/ReassignModal.tsx`
+
+A modal that lets the admin move a reservation to a different table:
+
+- Shows current reservation info (name, people, time, current table+zone)
+- Fetches available tables from `/api/admin/occupancy` (reuse the data from useHostOccupancy)
+- Filters tables by:
+  - capacity >= reservation.party_size
+  - No overlapping reservations (use reservations[] timeline to check time conflicts with 30min buffer)
+  - Sorted by zone preference (same zone first, then by capacity match)
+- Each table option shows: table name, zone, capacity, "Libre hasta XX:XX" if applicable
+- Confirm button → PATCH `/api/admin/reservations/${id}` with `{ table_id: newTableId }`
+- Cancel button
+- Mobile-friendly (full-width on phone, centered modal on desktop)
+
+### 3. CREATE `src/components/host/ReservationDetail.tsx`
+
+A reusable expandable reservation detail component:
+
+- Compact mode: name + time + people
+- Expanded mode: adds phone (WhatsApp link), email, special_requests
+- WhatsApp link: `https://wa.me/57{phone}` (strip leading 0/+, prepend 57 if not present)
+- Smooth expand/collapse with framer-motion
+
+### 4. UPDATE `src/components/host/HostShell.tsx`
+
+- Pass `currentTime` from occupancyData to HostTableMap
+- Import and render ReassignModal when triggered
+
+### 5. UPDATE `src/components/host/HostWalkInForm.tsx`
+
+- After entering # of people, show a dropdown of AVAILABLE tables
+- Each option shows: "Mesa X · Zone (capacity) · Libre hasta XX:XX" when applicable
+- Use the table's reservations[] timeline to compute "libre hasta"
+- Pre-select the best table using the algorithm from useTableSuggestion
+
+## STYLE GUIDELINES
+- Use the existing color palette: burgundy #6B2737, amber #D4922A, brown #3E2723/#5D4037/#8D6E63, cream #F5EDE0
+- Use @phosphor-icons/react for all icons (already installed)
+- Use framer-motion for animations (already installed)
+- Use `cn()` from `@/lib/utils/cn` for conditional classes
+- Mobile-first responsive design
+- All text in Spanish
+- Pulse animation for urgent tables: `animate-pulse` from Tailwind
+
+## IMPORTANT
+- DO NOT modify any API routes
+- DO NOT modify time.ts or urgency.ts (they're done)
+- DO NOT modify useHostOccupancy.ts (it's done)
+- Keep ALL existing functionality working (assignment, suggestions, unassign)
+- The existing HostTableMap popover already has assign/unassign — integrate naturally with the new timeline
+- Make sure the component compiles without TypeScript errors
+- Run `npx tsc --noEmit` at the end to verify

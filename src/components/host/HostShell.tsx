@@ -10,8 +10,10 @@ import { HostOccupancySummary } from './HostOccupancySummary'
 import { HostQuickActions } from './HostQuickActions'
 import { HostWalkInForm } from './HostWalkInForm'
 import { HostFloorPlan } from './HostFloorPlan'
+import { ReassignModal } from './ReassignModal'
 import { useHostDashboard } from '@/lib/hooks/useHostDashboard'
 import { useHostOccupancy } from '@/lib/hooks/useHostOccupancy'
+import type { ReservationTimeline } from '@/lib/hooks/useHostOccupancy'
 import { Spinner, Table, CalendarDots, Plus, MapTrifold } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
@@ -44,6 +46,10 @@ export function HostShell() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<HostTab>('mesas')
   const [showWalkIn, setShowWalkIn] = useState(false)
+  const [reassignTarget, setReassignTarget] = useState<{
+    reservation: ReservationTimeline
+    tableInfo: { id: string; name: string; zoneName: string }
+  } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const prefersReduced = usePrefersReducedMotion()
 
@@ -257,6 +263,8 @@ export function HostShell() {
                 zones={zones}
                 reservations={reservations}
                 onAction={handleRefetch}
+                currentTime={occupancyData?.current_time || undefined}
+                onReassign={(reservation, tableInfo) => setReassignTarget({ reservation, tableInfo })}
               />
             )}
           </div>
@@ -302,6 +310,17 @@ export function HostShell() {
           zones={zones}
           onClose={() => setShowWalkIn(false)}
           onCreated={handleRefetch}
+        />
+      )}
+
+      {reassignTarget && (
+        <ReassignModal
+          reservation={reassignTarget.reservation}
+          currentTableName={reassignTarget.tableInfo.name}
+          currentZoneName={reassignTarget.tableInfo.zoneName}
+          zones={zones}
+          onClose={() => setReassignTarget(null)}
+          onReassigned={handleRefetch}
         />
       )}
     </div>

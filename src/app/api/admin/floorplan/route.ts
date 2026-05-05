@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       .eq('is_active', true),
     sb
       .from('reservations')
-      .select('id, table_id, party_size, status, time_start, time_end, customers(full_name)')
+      .select('id, table_id, party_size, status, time_start, time_end, special_requests, customers(full_name, phone, email)')
       .eq('restaurant_id', RESTAURANT_ID)
       .eq('date', date)
       .in('status', ['confirmed', 'pre_paid', 'seated']),
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
           })
           .map((t) => {
             const reservation = tableReservationMap.get(t.id) || null
-            const custArr = reservation?.customers as unknown as Array<{ full_name: string }> | null | undefined
+            const custArr = reservation?.customers as unknown as Array<{ full_name: string; phone: string; email: string }> | null | undefined
             const cust = Array.isArray(custArr) ? custArr[0] : null
 
             let status: 'available' | 'reserved' | 'seated' = 'available'
@@ -108,6 +108,10 @@ export async function GET(request: NextRequest) {
               party_size: reservation?.party_size ?? null,
               customer_name: cust?.full_name ?? null,
               time_range: reservation ? `${reservation.time_start} - ${reservation.time_end}` : null,
+              customer_phone: cust?.phone ?? null,
+              customer_email: cust?.email ?? null,
+              special_requests: (reservation as any)?.special_requests ?? null,
+              reservation_status: reservation?.status ?? null,
             }
           })
 

@@ -1,14 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
 import { StatusBadge } from '../admin/shared/StatusBadge'
 import { EmptyState } from '../admin/shared/EmptyState'
 import { ConfirmDialog } from '../admin/shared/ConfirmDialog'
 import { SectionHeading } from '../admin/shared/SectionHeading'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
-import { Check, X, Armchair, CalendarX, Warning, Clock } from '@phosphor-icons/react'
+import { Check, X, Armchair, CalendarX, Warning, Clock, WhatsappLogo, EnvelopeSimple, Note, CaretDown, CaretUp } from '@phosphor-icons/react'
 
 const SPRING = { stiffness: 100, damping: 20, mass: 1 }
 

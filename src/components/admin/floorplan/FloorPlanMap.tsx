@@ -140,7 +140,7 @@ function TableHotspot({
       <motion.button
         className={cn(
           'relative flex flex-col items-center justify-center rounded-full border-2 shadow-lg',
-          'w-11 h-11 lg:w-[52px] lg:h-[52px]',
+          'w-8 h-8 lg:w-[52px] lg:h-[52px]',
           editMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
         )}
         style={{
@@ -153,10 +153,10 @@ function TableHotspot({
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       >
         {/* Mobile: 2-line abbreviated label */}
-        <span className="lg:hidden text-[8px] font-bold leading-tight text-[#3E2723] text-center truncate max-w-[38px]">
+        <span className="lg:hidden text-[7px] font-bold leading-tight text-[#3E2723] text-center truncate max-w-[28px]">
           {shortName(fullName)}
         </span>
-        {nomen && <span className="lg:hidden text-[6px] text-[#8D6E63] leading-none">{nomen}</span>}
+        {nomen && <span className="lg:hidden text-[5px] text-[#8D6E63] leading-none">{nomen}</span>}
         {/* Desktop: single-line full label */}
         <span className="hidden lg:block text-[9px] font-bold leading-tight text-[#3E2723] text-center">
           {tableLabel(table)}
@@ -164,7 +164,7 @@ function TableHotspot({
         <span className="hidden lg:block text-[7px] text-[#8D6E63]">
           <Users size={7} className="inline" /> {table.capacity}
         </span>
-        <span className="lg:hidden text-[6px] text-[#8D6E63]">{table.capacity}p</span>
+        <span className="lg:hidden text-[5px] text-[#8D6E63]">{table.capacity}p</span>
         {/* Status dot */}
         <div
           className="absolute -top-0.5 -right-0.5 w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full border border-white"
@@ -518,7 +518,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
   const [editMode, setEditMode] = useState(false)
   const [selectedTable, setSelectedTable] = useState<TableWithPosition | null>(null)
   const [saving, setSaving] = useState(false)
-  const [zoom, setZoom] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 1024) ? 0.6 : 1)
+  const [zoom, setZoom] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 1024) ? 0.4 : 1)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const pendingUpdates = useRef<Map<string, { position_x: number; position_y: number }>>(new Map())
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -528,7 +528,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
   // Reset zoom to mobile default when switching floors on mobile
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      setZoom(0.6)
+      setZoom(0.4)
     } else {
       setZoom(1)
     }

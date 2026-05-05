@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
 import { formatTimeRangeColombia } from '@/lib/utils/time'
 import type { ReservationTimeline } from '@/lib/hooks/useHostOccupancy'
+import { formatTime12 } from '@/lib/utils/format-time'
 import {
   CaretDown,
   CaretUp,
@@ -18,9 +19,9 @@ const STATUS_CONFIG: Record<
   ReservationTimeline['status'],
   { label: string; dotClass: string; bgClass: string }
 > = {
-  confirmed: { label: 'Confirmado', dotClass: 'bg-green-600', bgClass: 'bg-green-50' },
-  pre_paid: { label: 'Pre-pagado', dotClass: 'bg-green-600', bgClass: 'bg-green-50' },
-  seated: { label: 'Sentados', dotClass: 'bg-green-600', bgClass: 'bg-green-50' },
+  confirmed: { label: 'Confirmada', dotClass: 'bg-[#D4922A]', bgClass: 'bg-[#D4922A]/5' },
+  pre_paid: { label: 'Confirmada', dotClass: 'bg-[#D4922A]', bgClass: 'bg-[#D4922A]/5' },
+  seated: { label: 'Sentados', dotClass: 'bg-[#6B2737]', bgClass: 'bg-[#6B2737]/5' },
   pending: { label: 'Pendiente', dotClass: 'bg-[#D4922A]', bgClass: 'bg-[#D4922A]/5' },
   no_show: { label: 'No asistió', dotClass: 'bg-red-600', bgClass: 'bg-red-50' },
   cancelled: { label: 'Cancelada', dotClass: 'bg-gray-400', bgClass: 'bg-gray-50' },
@@ -66,12 +67,12 @@ export function ReservationDetail({ reservation, compact = false }: ReservationD
             {reservation.customer_name || 'Sin nombre'}
           </span>
           <span className="text-[#8D6E63] shrink-0">
-            {reservation.party_size} {reservation.party_size === 1 ? 'persona' : 'personas'}
+            {reservation.party_size}p
           </span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-[10px] text-[#8D6E63]">
-            {reservation.time_start.slice(0, 5)}–{reservation.time_end.slice(0, 5)}
+          <span className="text-[11px] font-medium text-[#8D6E63]">
+            {formatTime12(reservation.time_start)} – {formatTime12(reservation.time_end)}
           </span>
           {hasDetails && (
             expanded ? <CaretUp size={12} className="text-[#8D6E63]" /> : <CaretDown size={12} className="text-[#8D6E63]" />

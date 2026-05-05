@@ -4,19 +4,46 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { RESTAURANT_ID } from '@/lib/utils/constants'
 import { createDebouncedRefetch } from '@/lib/utils/debounceRefetch'
+import type { UrgencyLevel } from '@/lib/utils/urgency'
+
+// ─── Multi-reservation timeline entry ──────────────────────────────
+interface ReservationTimeline {
+  id: string
+  status: 'pending' | 'confirmed' | 'pre_paid' | 'seated' | 'completed' | 'no_show' | 'cancelled'
+  party_size: number
+  customer_name: string | null
+  customer_phone: string | null
+  customer_email: string | null
+  special_requests: string | null
+  time_start: string
+  time_end: string
+  is_current: boolean
+  is_past: boolean
+  is_upcoming: boolean
+}
 
 interface TableItem {
   id: string
   number: string
   name_attick: string | null
   capacity: number
+  zone_id: string
+  zone_name: string | null
+  can_combine: boolean
+  combine_group: string | null
+
+  // Timeline of ALL reservations for this table tonight
+  reservations: ReservationTimeline[]
+  current_reservation: ReservationTimeline | null
+  next_reservation: ReservationTimeline | null
+  urgency_level: UrgencyLevel
+
+  // Backward compat (derived from current_reservation)
   is_occupied: boolean
   current_reservation_id: string | null
   current_party_size: number | null
   current_customer_name: string | null
   current_time: string | null
-  can_combine: boolean
-  combine_group: string | null
   reservation_status: string | null
 }
 
@@ -30,8 +57,9 @@ interface Zone {
 
 interface OccupancyData {
   zones: Zone[]
-  unassignedTables: Array<Record<string, unknown>>
+  unassignedTables: Array<TableItem | Record<string, unknown>>
   combinations: Array<Record<string, unknown>>
+  current_time: string  // HH:MM Colombia time when data was fetched
 }
 
 export function useHostOccupancy() {
@@ -84,15 +112,28 @@ export function useHostOccupancy() {
     }
   }, [fetchData, debouncedRefetch])
 
-  /** Compute per-zone capacity summary */
+  /** Compute per-zone capacity summary — accounts for multi-reservation per table */
   const zoneSummaries = (data?.zones || []).map(zone => {
     const totalSeats = zone.tables.reduce((sum, t) => sum + t.capacity, 0)
+
+    // Count seats based on time-aware status
     const occupiedSeats = zone.tables
       .filter(t => t.is_occupied && t.reservation_status === 'seated')
       .reduce((sum, t) => sum + (t.current_party_size ?? t.capacity), 0)
+
     const reservedSeats = zone.tables
-      .filter(t => t.is_occupied && t.reservation_status !== 'seated')
-      .reduce((sum, t) => sum + (t.current_party_size ?? t.capacity), 0)
+      .filter(t => {
+        // Reserved = has upcoming reservations but not currently seated
+        if (t.is_occupied && t.reservation_status !== 'seated') return true
+        // Also count tables with upcoming but not current (transitional)
+        if (!t.is_occupied && t.reservations && t.reservations.some(r => r.is_upcoming)) return true
+        return false
+      })
+      .reduce((sum, t) => {
+        if (t.next_reservation) return sum + t.next_reservation.party_size
+        return sum + (t.current_party_size ?? t.capacity)
+      }, 0)
+
     const availableSeats = totalSeats - occupiedSeats - reservedSeats
     const occupancyPercent = totalSeats > 0 ? Math.round(((occupiedSeats + reservedSeats) / totalSeats) * 100) : 0
 
@@ -118,4 +159,4 @@ export function useHostOccupancy() {
   return { data, loading, refetch: fetchData, zoneSummaries, quickStats }
 }
 
-export type { Zone, TableItem, OccupancyData }
+export type { Zone, TableItem, OccupancyData, ReservationTimeline }

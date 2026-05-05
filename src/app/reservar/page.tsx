@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth/auth-provider'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
@@ -16,6 +16,8 @@ export default function ReservarPage() {
   const [phone, setPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [availableSlots, setAvailableSlots] = useState<Record<string, boolean> | null>(null)
+  const [loadingAvailability, setLoadingAvailability] = useState(false)
 
   if (authLoading) return <div className="min-h-screen bg-[#F5EDE0] flex items-center justify-center">Cargando...</div>
   if (!user) return <div className="min-h-screen bg-[#F5EDE0] flex items-center justify-center">Cargando...</div>
@@ -57,6 +59,40 @@ export default function ReservarPage() {
       setSubmitting(false)
     }
   }
+
+  // ── Fetch availability when date or party size changes ──
+  useEffect(() => {
+    if (!date || !partySize) {
+      setAvailableSlots(null)
+      return
+    }
+
+    let cancelled = false
+    setLoadingAvailability(true)
+    setAvailableSlots(null)
+    setTimeSlot('')
+
+    fetch(`/api/availability?date=${date}&party_size=${partySize}`)
+      .then(res => res.json())
+      .then(data => {
+        if (cancelled) return
+        if (data.slots) {
+          const slotMap: Record<string, boolean> = {}
+          for (const slot of data.slots) {
+            slotMap[slot.time] = slot.available
+          }
+          setAvailableSlots(slotMap)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setAvailableSlots(null)
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingAvailability(false)
+      })
+
+    return () => { cancelled = true }
+  }, [date, partySize])
 
   const tomorrow = new Date()
   tomorrow.setDate(tomorrow.getDate() + 1)
@@ -115,26 +151,45 @@ export default function ReservarPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-[#3E2723] mb-2">Hora</label>
-              <div className="grid grid-cols-3 gap-2">
-                {timeSlots.map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setTimeSlot(t)}
-                    className={cn(
-                      'py-2 rounded-lg text-sm font-medium transition-all',
-                      timeSlot === t
-                        ? 'bg-[#6B2737] text-white'
-                        : 'bg-[#EFEBE9] text-[#3E2723] hover:bg-[#D7CCC8]'
-                    )}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+              {loadingAvailability && (
+                <div className="text-sm text-[#8D6E63] text-center py-6">
+                  Verificando disponibilidad...
+                </div>
+              )}
+              {!loadingAvailability && availableSlots !== null && Object.keys(availableSlots).length === 0 && (
+                <div className="text-sm text-[#8D6E63] text-center py-6">
+                  No hay disponibilidad para esta fecha
+                </div>
+              )}
+              {!loadingAvailability && (availableSlots === null || Object.keys(availableSlots).length > 0) && (
+                <div className="grid grid-cols-3 gap-2">
+                  {(availableSlots !== null ? Object.keys(availableSlots) : timeSlots).map(t => {
+                    const isAvailable = availableSlots === null || availableSlots[t]
+                    const isSelected = timeSlot === t
+                    return (
+                      <button
+                        key={t}
+                        onClick={() => isAvailable && setTimeSlot(t)}
+                        disabled={!isAvailable}
+                        className={cn(
+                          'py-2 rounded-lg text-sm font-medium transition-all',
+                          isSelected
+                            ? 'bg-[#6B2737] text-white'
+                            : isAvailable
+                              ? 'bg-[#EFEBE9] text-[#3E2723] hover:bg-[#D7CCC8]'
+                              : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                        )}
+                      >
+                        {t}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
             <button
               onClick={() => date && timeSlot && setStep(2)}
-              disabled={!date || !timeSlot}
+              disabled={!date || !timeSlot || loadingAvailability || (availableSlots !== null && !availableSlots[timeSlot])}
               className="w-full py-3 bg-[#6B2737] text-white rounded-lg font-semibold hover:bg-[#8B3747] transition-colors disabled:opacity-50"
             >
               Siguiente

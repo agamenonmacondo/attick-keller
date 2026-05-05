@@ -6,7 +6,9 @@ import { cn } from '@/lib/utils/cn'
 import { EmptyState } from '../admin/shared/EmptyState'
 import { SectionHeading } from '../admin/shared/SectionHeading'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
-import { Table, Users, ArrowsMerge, X } from '@phosphor-icons/react'
+import { useTableSuggestion } from '@/lib/hooks/useTableSuggestion'
+import type { AssignmentResult } from '@/lib/algorithms/table-assignment'
+import { Table, Users, ArrowsMerge, X, Sparkle, ArrowRight, Lightbulb } from '@phosphor-icons/react'
 
 const SPRING = { stiffness: 100, damping: 20, mass: 1 }
 
@@ -95,14 +97,16 @@ function getTableStatusStyle(status: 'available' | 'occupied' | 'reserved') {
 export function HostTableMap({ zones, reservations, onAction }: HostTableMapProps) {
   const [activeTableId, setActiveTableId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [selectedReservationId, setSelectedReservationId] = useState<string | null>(null)
   const prefersReduced = usePrefersReducedMotion()
+  const suggestion = useTableSuggestion()
 
   // Unassigned reservations (confirmed/pre_paid with no table)
   const unassignedReservations = reservations.filter(
     r => ['confirmed', 'pre_paid', 'pending'].includes(r.status as string) && !r.table_id
   ) as Array<{ id: string; party_size: number; time_start: string; customers: { full_name: string } | null }>
 
-  const handleAssign = async (reservationId: string, tableId: string) => {
+  const handleAssign = async (reservationId: string, tableId: string, suggestedTableId?: string | null) => {
     try {
       const res = await fetch(`/api/admin/reservations/${reservationId}`, {
         method: 'PATCH',
@@ -114,13 +118,24 @@ export function HostTableMap({ zones, reservations, onAction }: HostTableMapProp
         setError(data.error || 'Error al asignar mesa')
         setTimeout(() => setError(null), 4000)
       } else {
+        // Log correction if host chose different table than suggested
+        if (suggestedTableId && suggestedTableId !== tableId) {
+          logSuggestionCorrection(reservationId, suggestedTableId, tableId).catch(() => {})
+        }
         setActiveTableId(null)
+        setSelectedReservationId(null)
+        suggestion.clear()
         onAction()
       }
     } catch {
       setError('Error de conexion')
       setTimeout(() => setError(null), 4000)
     }
+  }
+
+  const handleSuggestAssign = async (reservationId: string) => {
+    if (!suggestion.result?.suggested_table_id) return
+    await handleAssign(reservationId, suggestion.result.suggested_table_id, suggestion.result.suggested_table_id)
   }
 
   const handleUnassign = async (reservationId: string) => {
@@ -141,6 +156,28 @@ export function HostTableMap({ zones, reservations, onAction }: HostTableMapProp
     } catch {
       setError('Error de conexion')
       setTimeout(() => setError(null), 4000)
+    }
+  }
+
+  const handleSelectReservation = (reservationId: string) => {
+    setSelectedReservationId(reservationId)
+    suggestion.suggest(reservationId)
+  }
+
+  /** Log when host overrides a suggestion — feeds auto-learning (FASE 6) */
+  const logSuggestionCorrection = async (reservationId: string, suggestedTableId: string, actualTableId: string) => {
+    try {
+      await fetch('/api/admin/table-suggestion', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reservation_id: reservationId,
+          suggested_table_id: suggestedTableId,
+          actual_table_id: actualTableId,
+        }),
+      })
+    } catch {
+      // Silently fail — correction logging is non-critical
     }
   }
 
@@ -195,6 +232,10 @@ export function HostTableMap({ zones, reservations, onAction }: HostTableMapProp
                 onUnassign={handleUnassign}
                 onClick={() => setActiveTableId(activeTableId === table.id ? null : table.id)}
                 variants={prefersReduced ? undefined : itemVariants}
+                selectedReservationId={selectedReservationId}
+                onSelectReservation={handleSelectReservation}
+                suggestion={suggestion}
+                onSuggestAssign={handleSuggestAssign}
               />
             ))}
           </motion.div>
@@ -221,14 +262,22 @@ function HostTableCard({
   onUnassign,
   onClick,
   variants,
+  selectedReservationId,
+  onSelectReservation,
+  suggestion,
+  onSuggestAssign,
 }: {
   table: TableItem
   isActive: boolean
   unassignedReservations: Array<{ id: string; party_size: number; time_start: string; customers: { full_name: string } | null }>
-  onAssign: (reservationId: string, tableId: string) => Promise<void>
+  onAssign: (reservationId: string, tableId: string, suggestedTableId?: string | null) => Promise<void>
   onUnassign: (reservationId: string) => Promise<void>
   onClick: () => void
   variants?: Variants
+  selectedReservationId: string | null
+  onSelectReservation: (reservationId: string) => void
+  suggestion: { loading: boolean; result: AssignmentResult | null; error: string | null; suggest: (id: string) => void; clear: () => void }
+  onSuggestAssign: (reservationId: string) => Promise<void>
 }) {
   const prefersReduced = usePrefersReducedMotion()
   const status = getTableStatus(table)
@@ -296,11 +345,11 @@ function HostTableCard({
           animate={{ opacity: 1, scale: 1, transform: 'scale(1)' }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           className="absolute z-30 left-0 right-0 mt-1 bg-white rounded-xl border border-[#D7CCC8] shadow-lg p-3"
-          style={{ minWidth: '180px' }}
+          style={{ minWidth: '220px' }}
         >
           {/* Dismiss button */}
           <button
-            onClick={(e) => { e.stopPropagation(); onClick() }}
+            onClick={(e) => { e.stopPropagation(); onClick(); suggestion.clear(); }}
             className="absolute top-2 right-2 text-[#8D6E63] hover:text-[#3E2723] transition-colors"
           >
             <X size={14} />
@@ -333,17 +382,148 @@ function HostTableCard({
               <p className="text-sm font-medium text-[#3E2723] mb-2">Asignar reserva</p>
               {unassignedReservations.length === 0 ? (
                 <p className="text-xs text-[#8D6E63]">Sin reservas pendientes</p>
+              ) : selectedReservationId ? (
+                /* ── Suggestion view for selected reservation ── */
+                <div className="space-y-3">
+                  {suggestion.loading && (
+                    <div className="flex items-center gap-2 text-xs text-[#8D6E63] py-2">
+                      <Sparkle size={14} className="animate-pulse text-[#D4922A]" />
+                      Calculando mejor mesa...
+                    </div>
+                  )}
+                  {suggestion.error && (
+                    <p className="text-xs text-red-600">{suggestion.error}</p>
+                  )}
+                  {suggestion.result && !suggestion.loading && (
+                    <>
+                      {/* Suggested table card */}
+                      {suggestion.result.suggested_table_id && (
+                        <div className="rounded-lg border-2 border-[#D4922A]/40 bg-[#D4922A]/5 p-3">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <Lightbulb size={14} weight="fill" className="text-[#D4922A]" />
+                            <span className="text-xs font-semibold text-[#D4922A] uppercase tracking-wider">
+                              Sugerencia
+                            </span>
+                          </div>
+                          <p className="text-sm font-bold text-[#3E2723] mb-1">
+                            {suggestion.result.alternatives[0]?.table_numbers.join(' + ')}
+                            <span className="font-normal text-[#8D6E63] ml-1.5">
+                              {suggestion.result.alternatives[0]?.zone_name}
+                            </span>
+                          </p>
+                          <p className="text-[11px] text-[#8D6E63] mb-2">
+                            {suggestion.result.reason}
+                          </p>
+                          {/* Score bar */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex-1 h-1.5 rounded-full bg-[#D7CCC8] overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-[#D4922A]"
+                                style={{ width: `${Math.min(suggestion.result.score, 100)}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-medium text-[#8D6E63]">
+                              {Math.round(suggestion.result.score)}%
+                            </span>
+                          </div>
+                          {/* Accept button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              // If this IS the suggested table, assign directly
+                              if (table.id === suggestion.result!.suggested_table_id) {
+                                onSuggestAssign(selectedReservationId)
+                              } else {
+                                // Host is assigning to a different table → log correction
+                                onAssign(selectedReservationId, table.id, suggestion.result!.suggested_table_id)
+                              }
+                            }}
+                            disabled={suggestion.loading}
+                            className={cn(
+                              'w-full py-2 text-sm font-semibold rounded-lg text-white active:scale-[0.97] disabled:opacity-50',
+                              table.id === suggestion.result!.suggested_table_id
+                                ? 'bg-[#6B2737] hover:bg-[#5C2230]'
+                                : 'bg-[#D4922A] hover:bg-[#D4922A]/90'
+                            )}
+                            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                          >
+                            {table.id === suggestion.result!.suggested_table_id
+                              ? 'Aceptar sugerencia'
+                              : 'Asignar aquí (cambio)'}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* No table available */}
+                      {!suggestion.result.suggested_table_id && (
+                        <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                          <p className="text-xs text-red-700">
+                            {suggestion.result.reason}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Alternatives (top 3) */}
+                      {suggestion.result.alternatives.length > 1 && (
+                        <div>
+                          <p className="text-[10px] font-medium text-[#8D6E63] uppercase tracking-wider mb-1.5">
+                            Alternativas
+                          </p>
+                          <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {suggestion.result.alternatives.slice(1, 4).map((alt, i) => (
+                              <button
+                                key={alt.table_id}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onAssign(selectedReservationId, alt.table_id, suggestion.result!.suggested_table_id)
+                                }}
+                                className="w-full flex items-center gap-2 text-left p-2 rounded-lg bg-[#F5EDE0] hover:bg-[#D7CCC8]/50 text-xs transition-colors active:scale-[0.97]"
+                                style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                              >
+                                <span className="font-medium text-[#3E2723]">
+                                  {alt.table_numbers.join(' + ')}
+                                </span>
+                                <span className="text-[#8D6E63]">
+                                  {alt.zone_name} · {Math.round(alt.score)}%
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Back to list */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); suggestion.clear() }}
+                        className="w-full text-xs text-[#8D6E63] hover:text-[#3E2723] py-1 transition-colors"
+                      >
+                        ← Ver todas las reservas
+                      </button>
+                    </>
+                  )}
+                </div>
               ) : (
-                <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                /* ── Unassigned reservations list with suggestion triggers ── */
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
                   {unassignedReservations.map(r => (
                     <button
                       key={r.id}
-                      onClick={(e) => { e.stopPropagation(); onAssign(r.id, table.id) }}
+                      onClick={(e) => { e.stopPropagation(); onSelectReservation(r.id) }}
                       className="w-full text-left p-2 rounded-lg bg-[#F5EDE0] hover:bg-[#D7CCC8]/50 text-xs transition-colors active:scale-[0.97]"
                       style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                     >
-                      <span className="font-medium text-[#3E2723]">{r.customers?.full_name || 'Sin nombre'}</span>
-                      <span className="text-[#8D6E63] ml-2">{r.party_size}p · {r.time_start?.slice(0, 5)}</span>
+                      <div className="flex items-center gap-2">
+                        <Sparkle size={12} className="text-[#D4922A] shrink-0" />
+                        <span className="font-medium text-[#3E2723] truncate">
+                          {r.customers?.full_name || 'Sin nombre'}
+                        </span>
+                        <span className="text-[#8D6E63] ml-auto shrink-0">
+                          {r.party_size}p · {r.time_start?.slice(0, 5)}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-[#8D6E63] mt-0.5 ml-5">
+                        Toca para ver sugerencia
+                      </p>
                     </button>
                   ))}
                 </div>

@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
 
   const sb = getServiceClient()
   const url = new URL(request.url)
-  const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0]
+  const date = url.searchParams.get('date') || new Date(Date.now() - 5*60*60*1000 + new Date().getTimezoneOffset()*60*1000).toISOString().split('T')[0]
 
   const [tablesRes, reservationsRes] = await Promise.all([
     sb

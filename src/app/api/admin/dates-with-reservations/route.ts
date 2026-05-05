@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
 
   const sb = getServiceClient()
   const url = new URL(request.url)
-  const center = url.searchParams.get('center') || new Date().toISOString().split('T')[0]
+  const center = url.searchParams.get('center') || new Date(Date.now() - 5*60*60*1000 + new Date().getTimezoneOffset()*60*1000).toISOString().split('T')[0]
   const range = Math.min(parseInt(url.searchParams.get('range') || '45', 10), 90)
 
   const centerDate = new Date(center + 'T00:00:00')

@@ -39,7 +39,8 @@ export function useHostOccupancy() {
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
-    const today = new Date().toISOString().split('T')[0]
+    const { getColombiaDate } = await import('@/lib/utils/date')
+    const today = getColombiaDate()
     try {
       const res = await fetch(`/api/admin/occupancy?date=${today}`)
       if (res.ok) {

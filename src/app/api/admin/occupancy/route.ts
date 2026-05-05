@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
 
   const sb = getServiceClient()
   const url = new URL(request.url)
-  const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0]
+  const date = url.searchParams.get('date') || new Date(Date.now() - 5*60*60*1000 + new Date().getTimezoneOffset()*60*1000).toISOString().split('T')[0]
 
   const [tablesRes, zonesRes, activeResRes, combosRes] = await Promise.all([
     sb.from('tables').select('id, number, name_attick, capacity, zone_id, can_combine, combine_group, is_active, sort_order, table_zones(id, name)').eq('restaurant_id', RESTAURANT_ID).eq('is_active', true).order('sort_order', { ascending: true }),

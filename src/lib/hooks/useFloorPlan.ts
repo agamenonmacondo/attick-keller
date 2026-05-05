@@ -61,7 +61,7 @@ export function useFloorPlan(date?: string) {
   const [error, setError] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const dateParam = date || new Date().toISOString().split('T')[0]
+  const dateParam = date || new Date(Date.now() - 5*60*60*1000 + new Date().getTimezoneOffset()*60*1000).toISOString().split('T')[0]
 
   const fetchData = useCallback(async () => {
     try {

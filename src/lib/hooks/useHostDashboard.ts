@@ -35,7 +35,8 @@ export function useHostDashboard() {
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
-    const today = new Date().toISOString().split('T')[0]
+    const { getColombiaDate } = await import('@/lib/utils/date')
+    const today = getColombiaDate()
     try {
       const res = await fetch(`/api/admin/dashboard?date=${today}`)
       if (res.ok) {

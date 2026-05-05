@@ -46,6 +46,10 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
               {tables.map((table, ti) => {
                 const isOccupied = table.is_occupied as boolean
+                const hasUpcomingReservation = (table.reservations as Array<Record<string, unknown>> | undefined)?.some(
+                  (r) => r.is_upcoming === true || r.is_current === true
+                ) ?? false
+                const showReservationInfo = isOccupied || hasUpcomingReservation
                 const capacity = table.capacity as number
                 const number = String(table.number)
                 const nameAttick = table.name_attick as string | null
@@ -61,7 +65,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                 const customerEmail = table.current_customer_email as string | null
                 const specialRequests = table.current_special_requests as string | null
 
-                const statusColor = !isOccupied ? '#5C7A4D'
+                const statusColor = !showReservationInfo ? '#5C7A4D'
                   : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? '#D4922A'
                   : reservationStatus === 'seated' ? '#6B2737'
                   : '#9E9E9E'
@@ -74,17 +78,17 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                   : reservationStatus === 'no_show' ? 'No asistió'
                   : reservationStatus
 
-                const statusBadgeBg = !isOccupied ? 'bg-green-50'
+                const statusBadgeBg = !showReservationInfo ? 'bg-green-50'
                   : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'bg-amber-50'
                   : reservationStatus === 'seated' ? 'bg-[#6B2737]/10'
                   : 'bg-gray-50'
 
-                const statusBadgeText = !isOccupied ? 'text-green-700'
+                const statusBadgeText = !showReservationInfo ? 'text-green-700'
                   : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'text-[#D4922A]'
                   : reservationStatus === 'seated' ? 'text-[#6B2737]'
                   : 'text-gray-500'
 
-                const statusDotColor = !isOccupied ? 'bg-green-600'
+                const statusDotColor = !showReservationInfo ? 'bg-green-600'
                   : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'bg-[#D4922A]'
                   : reservationStatus === 'seated' ? 'bg-[#6B2737]'
                   : 'bg-gray-400'
@@ -97,7 +101,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                         onClick={() => setActiveTableId(isActive ? null : tableId)}
                         className={cn(
                           'w-full rounded-lg border-2 p-3 text-center cursor-pointer hover:shadow-md active:scale-[0.97]',
-                          isOccupied ? 'bg-white border-[#D7CCC8]' : 'bg-white border-[#D7CCC8]',
+                          showReservationInfo ? 'bg-white border-[#D7CCC8]' : 'bg-white border-[#D7CCC8]',
                           isActive && 'ring-2 ring-[#6B2737]/40',
                         )}
                         style={{ transition: 'transform 160ms ease-out, box-shadow 200ms ease-out' }}
@@ -108,7 +112,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                           {nameAttick && <span className="text-[10px] text-[#8D6E63]">({number})</span>}
                         </div>
                         <p className="text-[10px] text-[#8D6E63]">{capacity}p</p>
-                        {isOccupied && (
+                        {showReservationInfo && (
                           <div className="mt-1 pt-1 border-t border-[#D7CCC8]/50">
                             <p className="text-[10px] font-medium text-[#3E2723] truncate">{customer}</p>
                             <p className="text-[9px] text-[#8D6E63]">{partySize}p · {time}</p>
@@ -153,6 +157,10 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
             {unassignedTables.map((table, ti) => {
               const isOccupied = table.is_occupied as boolean
+              const hasUpcomingReservation = (table.reservations as Array<Record<string, unknown>> | undefined)?.some(
+                (r) => r.is_upcoming === true || r.is_current === true
+              ) ?? false
+              const showReservationInfo = isOccupied || hasUpcomingReservation
               const capacity = table.capacity as number
               const number = String(table.number)
               const nameAttick = table.name_attick as string | null
@@ -168,7 +176,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
               const customerEmail = table.current_customer_email as string | null
               const specialRequests = table.current_special_requests as string | null
 
-              const statusColor = !isOccupied ? '#5C7A4D'
+              const statusColor = !showReservationInfo ? '#5C7A4D'
                 : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? '#D4922A'
                 : reservationStatus === 'seated' ? '#6B2737'
                 : '#9E9E9E'
@@ -181,17 +189,17 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                 : reservationStatus === 'no_show' ? 'No asistió'
                 : reservationStatus
 
-              const statusBadgeBg = !isOccupied ? 'bg-green-50'
+              const statusBadgeBg = !showReservationInfo ? 'bg-green-50'
                 : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'bg-amber-50'
                 : reservationStatus === 'seated' ? 'bg-[#6B2737]/10'
                 : 'bg-gray-50'
 
-              const statusBadgeText = !isOccupied ? 'text-green-700'
+              const statusBadgeText = !showReservationInfo ? 'text-green-700'
                 : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'text-[#D4922A]'
                 : reservationStatus === 'seated' ? 'text-[#6B2737]'
                 : 'text-gray-500'
 
-              const statusDotColor = !isOccupied ? 'bg-green-600'
+              const statusDotColor = !showReservationInfo ? 'bg-green-600'
                 : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'bg-[#D4922A]'
                 : reservationStatus === 'seated' ? 'bg-[#6B2737]'
                 : 'bg-gray-400'
@@ -210,12 +218,12 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                       style={{ transition: 'transform 160ms ease-out, box-shadow 200ms ease-out' }}
                     >
                       <div className="flex items-center justify-center gap-1 mb-1">
-                        {isOccupied && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: statusColor }} />}
+                        {showReservationInfo && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: statusColor }} />}
                         <span className="text-sm font-semibold text-[#3E2723]">{displayName}</span>
                         {nameAttick && <span className="text-[10px] text-[#8D6E63] ml-0.5">({number})</span>}
                       </div>
                       <p className="text-[10px] text-[#8D6E63]">{capacity}p</p>
-                      {isOccupied && (
+                      {showReservationInfo && (
                         <div className="mt-1 pt-1 border-t border-[#D7CCC8]/50">
                           <p className="text-[10px] font-medium text-[#3E2723] truncate">{customer}</p>
                           <p className="text-[9px] text-[#8D6E63]">{partySize}p · {time}</p>

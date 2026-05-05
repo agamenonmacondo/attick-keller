@@ -546,20 +546,20 @@ function HostTableCard({
           </div>
         )}
 
-        {/* Current customer info */}
-        {table.is_occupied && table.current_customer_name && (
+        {/* Current/upcoming customer info */}
+        {(table.is_occupied || table.reservations?.some(r => r.is_upcoming)) && table.current_customer_name && (
           <p className="text-xs text-[#3E2723] font-medium truncate mt-1">
             {table.current_customer_name}
           </p>
         )}
-        {table.is_occupied && table.current_time && (
+        {(table.is_occupied || table.reservations?.some(r => r.is_upcoming)) && table.current_time && (
           <p className="text-[10px] text-[#8D6E63] mt-0.5">
             {table.current_time}
           </p>
         )}
 
-        {/* Next reservation preview */}
-        {!table.is_occupied && nextRes && (
+        {/* Next reservation preview — show when no current/upcoming customer name displayed and there's an upcoming reservation */}
+        {!table.current_customer_name && nextRes && (
           <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[#8D6E63]">
             <Clock size={10} weight="bold" />
             <span className="truncate">
@@ -600,7 +600,7 @@ function HostTableCard({
               onUnassign={onUnassign}
               onReassign={onReassign}
             />
-          ) : table.is_occupied && table.current_reservation_id ? (
+          ) : (table.is_occupied || table.reservations?.some(r => r.is_upcoming)) && table.current_reservation_id ? (
             /* ═══ OCCUPIED (backward compat — old API data without reservations[]) ═══ */
             <div>
               <p className="text-sm font-medium text-[#3E2723] mb-1">

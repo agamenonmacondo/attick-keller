@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
       urgency_level: urgencyLevel,
 
       // Backward compat (derived from current/any reservation)
-      is_occupied: reservations.length > 0 && !!currentReservation,
+      is_occupied: reservations.length > 0 && !!(currentReservation || reservations.find((r: any) => r.is_upcoming)),
       current_reservation_id: currentReservation?.id || anyActiveReservation?.id || null,
       current_party_size: currentReservation?.party_size || anyActiveReservation?.party_size || null,
       current_customer_name: currentReservation?.customer_name || anyActiveReservation?.customer_name || null,

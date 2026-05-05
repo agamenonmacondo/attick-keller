@@ -203,22 +203,67 @@ export async function POST(request: NextRequest) {
 
   if (!customerId) return NextResponse.json({ error: 'Error al crear cliente' }, { status: 500 })
 
-  // ALWAYS resolve table from zone_id
-  const zone = body.zone || body.zone_id
   let assignedTableId: string | null = null
 
-  if (zone) {
-    const { data: zoneTables } = await sb
-      .from('tables')
-      .select('id, capacity')
-      .eq('restaurant_id', RESTAURANT_ID)
-      .eq('zone_id', zone)
-      .eq('is_active', true)
-      .gte('capacity', party_size)
-      .order('capacity', { ascending: true })
-      .limit(1)
-    if (zoneTables && zoneTables.length > 0) assignedTableId = zoneTables[0].id
-  }
+  // ── Auto-assign table using the algorithm ──
+  // 1. Fetch all active tables with zone info
+  const { data: allTables } = await sb
+    .from('tables')
+    .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
+    .eq('restaurant_id', RESTAURANT_ID)
+    .eq('is_active', true)
+
+  // 2. Fetch existing reservations for the same date that overlap
+  const { data: existingReservations } = await sb
+    .from('reservations')
+    .select('table_id, time_start, time_end')
+    .eq('date', date)
+    .neq('status', 'cancelled')
+    .not('table_id', 'is', null)
+
+  // 3. Fetch table combinations
+  const { data: combinations } = await sb
+    .from('table_combinations')
+    .select('id, table_ids, combined_capacity, is_active, name')
+    .eq('is_active', true)
+
+  // 4. Fetch zone scores from corrections (if any)
+  // For now, use default ZONE_SCORES
+
+  // 5. Run the algorithm
+  type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter: string } | null }
+  const availableTables = (allTables as unknown as TableRow[] | null)?.map(t => ({
+    id: t.id,
+    number: t.number,
+    zone_letter: t.zone?.letter ?? 'E',
+    zone_name: t.zone?.name ?? 'Sin zona',
+    capacity: t.capacity,
+    capacity_min: t.capacity_min ?? t.capacity,
+    can_combine: t.can_combine ?? false,
+    combine_group: t.combine_group ?? null,
+    floor_num: t.floor_num ?? 1,
+  })) ?? []
+
+  const existingResList = (existingReservations as { table_id: string; time_start: string; time_end: string }[] | null) ?? []
+  type ComboRow = { id: string; table_ids: string[]; combined_capacity: number; is_active: boolean; name: string | null }
+  const combosList = (combinations as unknown as ComboRow[] | null) ?? []
+
+  const { assignTable } = await import('@/lib/algorithms/table-assignment')
+
+  const result = assignTable({
+    reservation: {
+      id: 'new',
+      party_size,
+      date,
+      time_start,
+      time_end,
+    },
+    available_tables: availableTables,
+    existing_reservations: existingResList,
+    combinations: combosList,
+  })
+
+  assignedTableId = result.suggested_table_id
 
   const { data: reservation, error } = await sb
     .from('reservations')
@@ -283,20 +328,67 @@ export async function PUT(request: NextRequest) {
   if (party_size) updateData.party_size = party_size
   if (special_requests !== undefined) updateData.special_requests = special_requests || null
 
-  // If zone changed, reassign table
-  if (zone_id) {
+  // If zone changed or party_size changed, reassign table using algorithm
+  if (zone_id || party_size) {
+    const effectiveDate = date || reservation.date
+    const effectiveTimeStart = time_start || reservation.time_start
+    const effectiveTimeEnd = time_end || reservation.time_end
     const effectiveParty = party_size || reservation.party_size
-    const { data: zoneTables } = await sb
+
+    const { data: allTables } = await sb
       .from('tables')
-      .select('id, capacity')
+      .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
       .eq('restaurant_id', RESTAURANT_ID)
-      .eq('zone_id', zone_id)
       .eq('is_active', true)
-      .gte('capacity', effectiveParty)
-      .order('capacity', { ascending: true })
-      .limit(1)
-    if (zoneTables && zoneTables.length > 0) {
-      updateData.table_id = zoneTables[0].id
+
+    const { data: existingReservations } = await sb
+      .from('reservations')
+      .select('table_id, time_start, time_end')
+      .eq('date', effectiveDate)
+      .neq('status', 'cancelled')
+      .not('table_id', 'is', null)
+
+    const { data: combinations } = await sb
+      .from('table_combinations')
+      .select('id, table_ids, combined_capacity, is_active, name')
+      .eq('is_active', true)
+
+    type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter: string } | null }
+    const availableTables = (allTables as unknown as TableRow[] | null)?.map(t => ({
+      id: t.id,
+      number: t.number,
+      zone_letter: t.zone?.letter ?? 'E',
+      zone_name: t.zone?.name ?? 'Sin zona',
+      capacity: t.capacity,
+      capacity_min: t.capacity_min ?? t.capacity,
+      can_combine: t.can_combine ?? false,
+      combine_group: t.combine_group ?? null,
+      floor_num: t.floor_num ?? 1,
+    })) ?? []
+
+    const existingResList = (existingReservations as { table_id: string; time_start: string; time_end: string }[] | null) ?? []
+    type ComboRow = { id: string; table_ids: string[]; combined_capacity: number; is_active: boolean; name: string | null }
+    const combosList = (combinations as unknown as ComboRow[] | null) ?? []
+
+    const { assignTable } = await import('@/lib/algorithms/table-assignment')
+
+    const result = assignTable({
+      reservation: {
+        id: reservation_id,
+        party_size: effectiveParty,
+        date: effectiveDate,
+        time_start: effectiveTimeStart,
+        time_end: effectiveTimeEnd,
+      },
+      available_tables: availableTables,
+      existing_reservations: existingResList,
+      combinations: combosList,
+    })
+
+    if (result.suggested_table_id) {
+      updateData.table_id = result.suggested_table_id
+    } else {
+      updateData.table_id = null
     }
   }
 
@@ -365,10 +457,67 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ reservation: data })
   }
 
-  // Other status changes (confirmed, completed)
+  // If seating and no table assigned yet, auto-assign using the algorithm
+  const updateData: Record<string, unknown> = { status }
+  if (status === 'seated' && !reservation.table_id) {
+    const { data: allTables } = await sb
+      .from('tables')
+      .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
+      .eq('restaurant_id', RESTAURANT_ID)
+      .eq('is_active', true)
+
+    const { data: existingReservations } = await sb
+      .from('reservations')
+      .select('table_id, time_start, time_end')
+      .eq('date', reservation.date)
+      .neq('status', 'cancelled')
+      .not('table_id', 'is', null)
+
+    const { data: combinations } = await sb
+      .from('table_combinations')
+      .select('id, table_ids, combined_capacity, is_active, name')
+      .eq('is_active', true)
+
+    type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter: string } | null }
+    const availableTables = (allTables as unknown as TableRow[] | null)?.map(t => ({
+      id: t.id,
+      number: t.number,
+      zone_letter: t.zone?.letter ?? 'E',
+      zone_name: t.zone?.name ?? 'Sin zona',
+      capacity: t.capacity,
+      capacity_min: t.capacity_min ?? t.capacity,
+      can_combine: t.can_combine ?? false,
+      combine_group: t.combine_group ?? null,
+      floor_num: t.floor_num ?? 1,
+    })) ?? []
+
+    const existingResList = (existingReservations as { table_id: string; time_start: string; time_end: string }[] | null) ?? []
+    type ComboRow = { id: string; table_ids: string[]; combined_capacity: number; is_active: boolean; name: string | null }
+    const combosList = (combinations as unknown as ComboRow[] | null) ?? []
+
+    const { assignTable } = await import('@/lib/algorithms/table-assignment')
+
+    const result = assignTable({
+      reservation: {
+        id: reservation.id,
+        party_size: reservation.party_size,
+        date: reservation.date,
+        time_start: reservation.time_start,
+        time_end: reservation.time_end,
+      },
+      available_tables: availableTables,
+      existing_reservations: existingResList,
+      combinations: combosList,
+    })
+
+    if (result.suggested_table_id) {
+      updateData.table_id = result.suggested_table_id
+    }
+  }
+
   const { data, error } = await sb
     .from('reservations')
-    .update({ status })
+    .update(updateData)
     .eq('id', reservation_id)
     .select()
     .single()

@@ -113,6 +113,14 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
     String(a.time_start || '').localeCompare(String(b.time_start || ''))
   )
 
+  // Group by time_start (formatted as 12h key)
+  const groupedByTime = sorted.reduce<Record<string, Array<Record<string, unknown>>>>((acc, r) => {
+    const key = formatTime12((r.time_start as string) || '') || 'Sin hora'
+    if (!acc[key]) acc[key] = []
+    acc[key].push(r)
+    return acc
+  }, {})
+
   const now = new Date()
   const fifteenMin = 15 * 60 * 1000
   const todayStr = now.toISOString().split('T')[0]
@@ -141,144 +149,181 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
         />
       ) : (
         <motion.div
-          className="space-y-2 max-h-[60vh] overflow-y-auto pr-1"
+          className="space-y-4 max-h-[60vh] overflow-y-auto pr-1"
           variants={prefersReduced ? undefined : containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {sorted.map(r => {
-            const id = r.id as string
-            const status = r.status as string
-            const timeStart = formatTime12((r.time_start as string) || '') || ''
-            const timeEnd = formatTime12((r.time_end as string) || '') || ''
-            const partySize = r.party_size as number
-            const customerName = (r.customers as { full_name: string } | null)?.full_name || 'Sin nombre'
-            const custData = r.customers as { full_name: string; phone: string; email: string } | null
-            const phone = custData?.phone || null
-            const email = custData?.email || null
-            const notes = r.special_requests as string | null
-            const hasDetails = !!(phone || email || notes)
-            const isExpanded = expanded.has(id)
-            const actions = HOST_ACTION_MAP[status] || []
-            const isConfirming = confirming === id
-
-            // Highlight reservations starting within 15 minutes
-            const startDateTime = new Date(`${todayStr}T${r.time_start as string}`)
-            const isUrgent = status === 'confirmed' &&
-              startDateTime.getTime() - now.getTime() < fifteenMin &&
-              startDateTime.getTime() > now.getTime() - fifteenMin
-
+          {Object.entries(groupedByTime).map(([timeLabel, reservations]) => {
+            // Check if any reservation in this group is currently happening
+            const isNow = reservations.some(r => {
+              const startStr = r.time_start as string
+              const endStr = r.time_end as string
+              if (!startStr || !endStr) return false
+              const start = new Date(`${todayStr}T${startStr}`)
+              const end = new Date(`${todayStr}T${endStr}`)
+              return now >= start && now <= end
+            })
+            const isUpcoming = !isNow && reservations.some(r => {
+              const startStr = r.time_start as string
+              if (!startStr) return false
+              const start = new Date(`${todayStr}T${startStr}`)
+              return start > now
+            })
+            
             return (
-              <motion.div
-                key={id}
-                variants={prefersReduced ? undefined : itemVariants}
-                className={cn(
-                  'bg-white rounded-xl border p-3 md:p-4',
-                  isUrgent ? 'border-[#D4922A]/50 bg-[#D4922A]/5' : 'border-[#D7CCC8]',
-                  status === 'seated' && 'opacity-60',
-                )}
-              >
-                <div className="flex items-start justify-between gap-3"
-                >
-                  <div className="min-w-0 flex-1"
-                  >
-                    <div className="flex items-center gap-2 mb-1"
-                    >
-                      <span className="text-base md:text-lg font-bold font-['Playfair_Display'] text-[#3E2723]"
+              <div key={timeLabel}>
+                {/* Time group header */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm font-bold font-['Playfair_Display'] text-[#3E2723]">{timeLabel}</span>
+                  {isNow && (
+                    <span className="text-[10px] font-semibold text-[#6B2737] bg-[#6B2737]/10 px-2 py-0.5 rounded-full">AHORA</span>
+                  )}
+                  {!isNow && isUpcoming && (
+                    <span className="text-[10px] font-semibold text-[#D4922A] bg-[#D4922A]/10 px-2 py-0.5 rounded-full">PRÓXIMAS</span>
+                  )}
+                  <span className="text-[10px] text-[#8D6E63] ml-auto">{reservations.length} reserva{reservations.length > 1 ? 's' : ''}</span>
+                  <div className="flex-1 h-px bg-[#D7CCC8] ml-2" />
+                </div>
+
+                {/* Reservation cards for this time group */}
+                <div className="space-y-2">
+                  {reservations.map(r => {
+                    const id = r.id as string
+                    const status = r.status as string
+                    const timeStart = formatTime12((r.time_start as string) || '') || ''
+                    const timeEnd = formatTime12((r.time_end as string) || '') || ''
+                    const partySize = r.party_size as number
+                    const customerName = (r.customers as { full_name: string } | null)?.full_name || 'Sin nombre'
+                    const custData = r.customers as { full_name: string; phone: string; email: string } | null
+                    const phone = custData?.phone || null
+                    const email = custData?.email || null
+                    const notes = r.special_requests as string | null
+                    const hasDetails = !!(phone || email || notes)
+                    const isExpanded = expanded.has(id)
+                    const actions = HOST_ACTION_MAP[status] || []
+                    const isConfirming = confirming === id
+
+                    // Highlight reservations starting within 15 minutes
+                    const startDateTime = new Date(`${todayStr}T${r.time_start as string}`)
+                    const isUrgent = status === 'confirmed' &&
+                      startDateTime.getTime() - now.getTime() < fifteenMin &&
+                      startDateTime.getTime() > now.getTime() - fifteenMin
+
+                    // Compact time display in group: only show end time
+                    const timeDisplay = `— ${timeEnd}`
+
+                    return (
+                      <motion.div
+                        key={id}
+                        variants={prefersReduced ? undefined : itemVariants}
+                        className={cn(
+                          'bg-white rounded-xl border p-3 md:p-4',
+                          isUrgent ? 'border-[#D4922A]/50 bg-[#D4922A]/5' : 'border-[#D7CCC8]',
+                          status === 'seated' && 'opacity-60',
+                        )}
                       >
-                        {timeStart}
-                      </span>
-                      <span className="text-xs text-[#8D6E63]">— {timeEnd}</span>
-                      <StatusBadge status={status} />
-                      {isUrgent && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#D4922A] bg-[#D4922A]/10 px-2 py-0.5 rounded-full"
+                        <div className="flex items-start justify-between gap-3"
                         >
-                          <Clock size={10} weight="fill" />
-                          Proxima
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm font-medium text-[#3E2723] break-words">{customerName}</p>
-                    <p className="text-xs text-[#8D6E63]">
-                      {partySize} personas{r.zone_name ? ` · ${r.zone_name}` : ''}
-                    </p>
-                    {(r.table_number as string | null) && (
-                      <p className="text-xs text-[#5C7A4D] flex items-center gap-1">
-                        <Armchair size={12} />
-                        Mesa {r.table_number as string}{r.zone_name ? ` · ${r.zone_name as string}` : ''}
-                      </p>
-                    )}
-
-                    {hasDetails && (
-                      <div className="mt-1">
-                        <button
-                          onClick={() => toggleExpand(id)}
-                          className="text-[10px] text-[#D4922A] flex items-center gap-0.5"
-                        >
-                          {isExpanded ? <CaretUp size={10} /> : <CaretDown size={10} />}
-                          {isExpanded ? 'Menos' : 'Ver detalles'}
-                        </button>
-                      </div>
-                    )}
-
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="mt-2 space-y-1 pl-3 border-l-2 border-[#D7CCC8]">
-                            {phone && (
-                              <a
-                                href={`https://wa.me/57${phone.replace(/^0+/, '').replace(/^\+/, '')}`}
-                                target="_blank"
-                                className="flex items-center gap-1.5 text-xs text-[#25D366] hover:underline"
-                              >
-                                <WhatsappLogo size={12} weight="fill" /> {phone}
-                              </a>
+                          <div className="min-w-0 flex-1"
+                          >
+                            <div className="flex items-center gap-2 mb-1"
+                            >
+                              <span className="text-xs text-[#8D6E63]">{timeDisplay}</span>
+                              <StatusBadge status={status} />
+                              {isUrgent && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#D4922A] bg-[#D4922A]/10 px-2 py-0.5 rounded-full"
+                                >
+                                  <Clock size={10} weight="fill" />
+                                  Proxima
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm font-medium text-[#3E2723] break-words">{customerName}</p>
+                            <p className="text-xs text-[#8D6E63]">
+                              {partySize}p{r.zone_name ? ` · ${r.zone_name}` : ''}
+                            </p>
+                            {(r.table_number as string | null) && (
+                              <p className="text-xs text-[#5C7A4D] flex items-center gap-1">
+                                <Armchair size={12} />
+                                Mesa {r.table_number as string}{r.zone_name ? ` · ${r.zone_name as string}` : ''}
+                              </p>
                             )}
-                            {email && (
-                              <a
-                                href={`mailto:${email}`}
-                                className="flex items-center gap-1.5 text-xs text-[#1565C0] hover:underline"
-                              >
-                                <EnvelopeSimple size={12} /> {email}
-                              </a>
-                            )}
-                            {notes && (
-                              <div className="flex items-start gap-1.5 text-xs text-[#5D4037] bg-[#F5EDE0] rounded-md px-2 py-1">
-                                <Note size={12} className="text-[#D4922A] shrink-0 mt-0.5" />
-                                <span>{notes}</span>
+
+                            {hasDetails && (
+                              <div className="mt-1">
+                                <button
+                                  onClick={() => toggleExpand(id)}
+                                  className="text-[10px] text-[#D4922A] flex items-center gap-0.5"
+                                >
+                                  {isExpanded ? <CaretUp size={10} /> : <CaretDown size={10} />}
+                                  {isExpanded ? 'Menos' : 'Ver detalles'}
+                                </button>
                               </div>
                             )}
+
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="mt-2 space-y-1 pl-3 border-l-2 border-[#D7CCC8]">
+                                    {phone && (
+                                      <a
+                                        href={`https://wa.me/57${phone.replace(/^0+/, '').replace(/^\+/, '')}`}
+                                        target="_blank"
+                                        className="flex items-center gap-1.5 text-xs text-[#25D366] hover:underline"
+                                      >
+                                        <WhatsappLogo size={12} weight="fill" /> {phone}
+                                      </a>
+                                    )}
+                                    {email && (
+                                      <a
+                                        href={`mailto:${email}`}
+                                        className="flex items-center gap-1.5 text-xs text-[#1565C0] hover:underline"
+                                      >
+                                        <EnvelopeSimple size={12} /> {email}
+                                      </a>
+                                    )}
+                                    {notes && (
+                                      <div className="flex items-start gap-1.5 text-xs text-[#5D4037] bg-[#F5EDE0] rounded-md px-2 py-1">
+                                        <Note size={12} className="text-[#D4922A] shrink-0 mt-0.5" />
+                                        <span>{notes}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                  <div className="flex flex-col gap-1.5 shrink-0"
-                  >
-                    {actions.map(action => (
-                      <button
-                        key={action.status}
-                        onClick={() => requestStatusChange(id, action.status, action.label)}
-                        disabled={isConfirming}
-                        className={cn(
-                          'px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium rounded-lg text-white active:scale-[0.97] disabled:opacity-50',
-                          action.variant === 'primary' && 'bg-[#6B2737] hover:bg-[#5C2230]',
-                          action.variant === 'warning' && 'bg-[#D4922A] hover:bg-[#D4922A]/90',
-                          action.variant === 'danger' && 'bg-red-600 hover:bg-red-700',
-                        )}
-                        style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
-                      >
-                        {isConfirming ? '...' : action.label}
-                      </button>
-                    ))}
-                  </div>
+                          <div className="flex flex-col gap-1.5 shrink-0"
+                          >
+                            {actions.map(action => (
+                              <button
+                                key={action.status}
+                                onClick={() => requestStatusChange(id, action.status, action.label)}
+                                disabled={isConfirming}
+                                className={cn(
+                                  'px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium rounded-lg text-white active:scale-[0.97] disabled:opacity-50',
+                                  action.variant === 'primary' && 'bg-[#6B2737] hover:bg-[#5C2230]',
+                                  action.variant === 'warning' && 'bg-[#D4922A] hover:bg-[#D4922A]/90',
+                                  action.variant === 'danger' && 'bg-red-600 hover:bg-red-700',
+                                )}
+                                style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                              >
+                                {isConfirming ? '...' : action.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )
+                  })}
                 </div>
-              </motion.div>
+              </div>
             )
           })}
         </motion.div>

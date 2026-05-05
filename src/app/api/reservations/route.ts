@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAdminUser, getServiceClient as getAdminServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { getZoneLetter } from '@/lib/utils/zone-letter'
 
 const RESTAURANT_ID_LOCAL = 'a0000000-0000-0000-0000-000000000001'
 
@@ -206,12 +207,26 @@ export async function POST(request: NextRequest) {
   let assignedTableId: string | null = null
 
   // ── Auto-assign table using the algorithm ──
-  // 1. Fetch all active tables with zone info
-  const { data: allTables } = await sb
-    .from('tables')
-    .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
-    .eq('restaurant_id', RESTAURANT_ID)
-    .eq('is_active', true)
+  // 1. Fetch all active tables with zone info (try with letter column, fallback without)
+  let allTables: unknown = null
+  {
+    const res = await sb
+      .from('tables')
+      .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
+      .eq('restaurant_id', RESTAURANT_ID)
+      .eq('is_active', true)
+    if (res.error) {
+      // Fallback: query without letter column (may not exist in DB yet)
+      const res2 = await sb
+        .from('tables')
+        .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name)')
+        .eq('restaurant_id', RESTAURANT_ID)
+        .eq('is_active', true)
+      allTables = res2.data
+    } else {
+      allTables = res.data
+    }
+  }
 
   // 2. Fetch existing reservations for the same date that overlap
   const { data: existingReservations } = await sb
@@ -231,11 +246,11 @@ export async function POST(request: NextRequest) {
   // For now, use default ZONE_SCORES
 
   // 5. Run the algorithm
-  type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter: string } | null }
+  type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter?: string | null } | null }
   const availableTables = (allTables as unknown as TableRow[] | null)?.map(t => ({
     id: t.id,
     number: t.number,
-    zone_letter: t.zone?.letter ?? 'E',
+    zone_letter: t.zone?.letter ?? getZoneLetter(t.zone?.name),
     zone_name: t.zone?.name ?? 'Sin zona',
     capacity: t.capacity,
     capacity_min: t.capacity_min ?? t.capacity,
@@ -335,29 +350,36 @@ export async function PUT(request: NextRequest) {
     const effectiveTimeEnd = time_end || reservation.time_end
     const effectiveParty = party_size || reservation.party_size
 
-    const { data: allTables } = await sb
-      .from('tables')
-      .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
-      .eq('restaurant_id', RESTAURANT_ID)
-      .eq('is_active', true)
+    const [tablesRes, reservationsRes, combosRes] = await Promise.all([
+      sb.from('tables')
+        .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
+        .eq('restaurant_id', RESTAURANT_ID)
+        .eq('is_active', true),
+      sb.from('reservations')
+        .select('table_id, time_start, time_end')
+        .eq('date', effectiveDate)
+        .neq('status', 'cancelled')
+        .not('table_id', 'is', null),
+      sb.from('table_combinations')
+        .select('id, table_ids, combined_capacity, is_active, name')
+        .eq('is_active', true),
+    ])
 
-    const { data: existingReservations } = await sb
-      .from('reservations')
-      .select('table_id, time_start, time_end')
-      .eq('date', effectiveDate)
-      .neq('status', 'cancelled')
-      .not('table_id', 'is', null)
+    // Fallback without letter column if the primary query fails
+    let tableRows: unknown[] | null = tablesRes.data as unknown[] | null
+    if (tablesRes.error) {
+      const res2 = await sb.from('tables')
+        .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name)')
+        .eq('restaurant_id', RESTAURANT_ID)
+        .eq('is_active', true)
+      tableRows = res2.data
+    }
 
-    const { data: combinations } = await sb
-      .from('table_combinations')
-      .select('id, table_ids, combined_capacity, is_active, name')
-      .eq('is_active', true)
-
-    type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter: string } | null }
-    const availableTables = (allTables as unknown as TableRow[] | null)?.map(t => ({
+    type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter?: string | null } | null }
+    const availableTables = (tableRows as unknown as TableRow[] | null)?.map(t => ({
       id: t.id,
       number: t.number,
-      zone_letter: t.zone?.letter ?? 'E',
+      zone_letter: t.zone?.letter ?? getZoneLetter(t.zone?.name),
       zone_name: t.zone?.name ?? 'Sin zona',
       capacity: t.capacity,
       capacity_min: t.capacity_min ?? t.capacity,
@@ -366,9 +388,9 @@ export async function PUT(request: NextRequest) {
       floor_num: t.floor_num ?? 1,
     })) ?? []
 
-    const existingResList = (existingReservations as { table_id: string; time_start: string; time_end: string }[] | null) ?? []
+    const existingResList = (reservationsRes.data as { table_id: string; time_start: string; time_end: string }[] | null) ?? []
     type ComboRow = { id: string; table_ids: string[]; combined_capacity: number; is_active: boolean; name: string | null }
-    const combosList = (combinations as unknown as ComboRow[] | null) ?? []
+    const combosList = (combosRes.data as unknown as ComboRow[] | null) ?? []
 
     const { assignTable } = await import('@/lib/algorithms/table-assignment')
 
@@ -460,11 +482,24 @@ export async function PATCH(request: NextRequest) {
   // If seating and no table assigned yet, auto-assign using the algorithm
   const updateData: Record<string, unknown> = { status }
   if (status === 'seated' && !reservation.table_id) {
-    const { data: allTables } = await sb
-      .from('tables')
-      .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
-      .eq('restaurant_id', RESTAURANT_ID)
-      .eq('is_active', true)
+    let allTables: unknown = null
+    {
+      const res = await sb
+        .from('tables')
+        .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
+        .eq('restaurant_id', RESTAURANT_ID)
+        .eq('is_active', true)
+      if (res.error) {
+        const res2 = await sb
+          .from('tables')
+          .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name)')
+          .eq('restaurant_id', RESTAURANT_ID)
+          .eq('is_active', true)
+        allTables = res2.data
+      } else {
+        allTables = res.data
+      }
+    }
 
     const { data: existingReservations } = await sb
       .from('reservations')
@@ -478,11 +513,11 @@ export async function PATCH(request: NextRequest) {
       .select('id, table_ids, combined_capacity, is_active, name')
       .eq('is_active', true)
 
-    type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter: string } | null }
+    type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter?: string | null } | null }
     const availableTables = (allTables as unknown as TableRow[] | null)?.map(t => ({
       id: t.id,
       number: t.number,
-      zone_letter: t.zone?.letter ?? 'E',
+      zone_letter: t.zone?.letter ?? getZoneLetter(t.zone?.name),
       zone_name: t.zone?.name ?? 'Sin zona',
       capacity: t.capacity,
       capacity_min: t.capacity_min ?? t.capacity,

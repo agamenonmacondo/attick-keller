@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { getServiceClient, getStaffUser, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 import { checkAvailability } from '@/lib/algorithms/table-assignment'
 import type { TableWithZone } from '@/lib/algorithms/table-assignment'
+import { getZoneLetter } from '@/lib/utils/zone-letter'
 
 // ─── Auth helpers ──────────────────────────────────────────────────
 
@@ -25,6 +26,9 @@ async function getAuthUser(request: NextRequest) {
 }
 
 // ─── Zone letter mapping ───────────────────────────────────────────
+// Uses getZoneLetter() from zone-letter.ts as primary source.
+// The ZONE_LETTERS array below is kept as a fallback for zones 
+// that might not be in the mapping (shouldn't happen in practice).
 
 const ZONE_LETTERS = ['A', 'B', 'C', 'D', 'E'] as const
 
@@ -117,7 +121,12 @@ export async function GET(request: NextRequest) {
 
   for (let i = 0; i < zones.length; i++) {
     const zone = zones[i] as Record<string, unknown>
-    const letter = typeof zone.zone_letter === 'string' ? zone.zone_letter : ZONE_LETTERS[i] ?? ''
+    // Try DB letter column first, then name-based fallback
+    const letter = typeof zone.letter === 'string' && zone.letter
+      ? zone.letter
+      : typeof zone.zone_letter === 'string' && zone.zone_letter
+        ? zone.zone_letter
+        : getZoneLetter(zone.name as string) || ZONE_LETTERS[i] || ''
     zoneLetterMap.set(zone.id as string, letter)
     zoneNameMap.set(zone.id as string, zone.name as string)
   }

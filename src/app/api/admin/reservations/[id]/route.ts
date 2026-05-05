@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStaffUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 import { assignTable } from '@/lib/algorithms/table-assignment'
+import { getZoneLetter } from '@/lib/utils/zone-letter'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   pending: ['confirmed', 'cancelled', 'no_show'],
@@ -81,13 +82,23 @@ export async function PATCH(
           .eq('is_active', true),
       ])
 
-      type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter: string } | null }
+      // Fallback: re-query without letter column if it doesn't exist yet
+      let tableRows: unknown[] | null = tablesRes.data as unknown[] | null
+      if (tablesRes.error) {
+        const res2 = await sb.from('tables')
+          .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name)')
+          .eq('restaurant_id', RESTAURANT_ID)
+          .eq('is_active', true)
+        tableRows = res2.data as unknown[] | null
+      }
+
+      type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter?: string | null } | null }
       type ComboRow = { id: string; table_ids: string[]; combined_capacity: number; is_active: boolean; name: string | null }
 
-      const availableTables = (tablesRes.data as unknown as TableRow[] | null)?.map(t => ({
+      const availableTables = (tableRows as unknown as TableRow[] | null)?.map(t => ({
         id: t.id,
         number: t.number,
-        zone_letter: t.zone?.letter ?? 'E',
+        zone_letter: t.zone?.letter ?? getZoneLetter(t.zone?.name),
         zone_name: t.zone?.name ?? 'Sin zona',
         capacity: t.capacity,
         capacity_min: t.capacity_min ?? t.capacity,
@@ -104,12 +115,13 @@ export async function PATCH(
       // Build zone score override if zone_id is specified
       let customZoneScores: Record<string, number> | undefined
       if (zone_id) {
-        const requestedZone = zone_id
-          ? (await sb.from('table_zones').select('letter').eq('id', zone_id).single()).data?.letter
+        const requestedZoneData = zone_id
+          ? (await sb.from('table_zones').select('id, name, letter').eq('id', zone_id).single()).data
           : undefined
-        if (requestedZone) {
+        const requestedZoneLetter = requestedZoneData?.letter ?? getZoneLetter(requestedZoneData?.name)
+        if (requestedZoneLetter) {
           customZoneScores = { A: 1, B: 1, C: 1, D: 1, E: 1 }
-          customZoneScores[requestedZone] = 5
+          customZoneScores[requestedZoneLetter] = 5
         }
       }
 

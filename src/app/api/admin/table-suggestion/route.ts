@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStaffUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 import { assignTable, type AssignmentInput } from '@/lib/algorithms/table-assignment'
+import { getZoneLetter } from '@/lib/utils/zone-letter'
 
 /**
  * POST /api/admin/table-suggestion
@@ -39,15 +40,23 @@ export async function PUT(request: NextRequest) {
 
   const sb = getServiceClient()
 
-  // Get zone letters for both tables
+  // Get zone info for both tables (with fallback if letter column missing)
   const [suggestedTable, actualTable] = await Promise.all([
-    sb.from('tables').select('id, zone:table_zones!zone_id(letter)').eq('id', suggested_table_id).single(),
-    sb.from('tables').select('id, zone:table_zones!zone_id(letter)').eq('id', actual_table_id).single(),
+    sb.from('tables').select('id, zone:table_zones!zone_id(id, name, letter)').eq('id', suggested_table_id).single(),
+    sb.from('tables').select('id, zone:table_zones!zone_id(id, name, letter)').eq('id', actual_table_id).single(),
   ])
-
-  type ZoneRow = { id: string; zone: { letter: string } | null }
-  const suggestedZone = ((suggestedTable.data as unknown as ZoneRow | null)?.zone)?.letter ?? null
-  const actualZone = ((actualTable.data as unknown as ZoneRow | null)?.zone)?.letter ?? null
+  // If letter column doesn't exist, re-query without it and use name-based fallback
+  const fetchZoneLetter = async (res: typeof suggestedTable, tableId: string): Promise<string | null> => {
+    if (res.error) {
+      const res2 = await sb.from('tables').select('id, zone:table_zones!zone_id(id, name)').eq('id', tableId).single()
+      const zone = (res2.data as unknown as { id: string; zone: { id: string; name: string } | null } | null)?.zone
+      return zone ? getZoneLetter(zone.name) : null
+    }
+    const zone = (res.data as unknown as { id: string; zone: { id: string; name: string; letter: string | null } | null } | null)?.zone
+    return zone?.letter ?? (zone ? getZoneLetter(zone.name) : null)
+  }
+  const suggestedZone = await fetchZoneLetter(suggestedTable, suggested_table_id)
+  const actualZone = await fetchZoneLetter(actualTable, actual_table_id)
 
   // Log the correction — matches María's migration schema
   const { error: insertErr } = await sb.from('assignment_corrections').insert({
@@ -96,26 +105,35 @@ export async function POST(request: NextRequest) {
     }, { status: 400 })
   }
 
-  // ── 2. Fetch all active tables with zone info ──
-  const { data: tables, error: tablesErr } = await sb
+  // ── 2. Fetch all active tables with zone info (try with letter, fallback without) ──
+  let tablesRes = await sb
     .from('tables')
     .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name, letter)')
     .eq('restaurant_id', RESTAURANT_ID)
     .eq('is_active', true)
     .order('capacity', { ascending: true })
 
-  if (tablesErr || !tables) {
+  if (tablesRes.error) {
+    tablesRes = await sb
+      .from('tables')
+      .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name)')
+      .eq('restaurant_id', RESTAURANT_ID)
+      .eq('is_active', true)
+      .order('capacity', { ascending: true })
+  }
+
+  if (tablesRes.error || !tablesRes.data) {
     return NextResponse.json({ error: 'Error cargando mesas' }, { status: 500 })
   }
 
   // Flatten zone info — Supabase returns join as nested object
-  type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter: string } | null }
-  const availableTables = (tables as unknown as TableRow[]).map(t => {
+  type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter?: string | null } | null }
+  const availableTables = (tablesRes.data as unknown as TableRow[]).map(t => {
     const zone = t.zone
     return {
       id: t.id as string,
       number: t.number as string,
-      zone_letter: (zone?.letter ?? 'E') as string,
+      zone_letter: (zone?.letter ?? getZoneLetter(zone?.name)) as string,
       zone_name: (zone?.name ?? 'Sin zona') as string,
       capacity: t.capacity as number,
       capacity_min: (t.capacity_min ?? t.capacity) as number,

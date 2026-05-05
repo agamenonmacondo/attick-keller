@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStaffUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 import { assignTable } from '@/lib/algorithms/table-assignment'
+import { getZoneLetter } from '@/lib/utils/zone-letter'
 
 export async function POST(request: NextRequest) {
   const staff = await getStaffUser(request)
@@ -70,13 +71,23 @@ export async function POST(request: NextRequest) {
         .eq('is_active', true),
     ])
 
-    type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter: string } | null }
+    // Fallback without letter column if the primary query fails
+    let tableRows: unknown[] | null = tablesRes.data as unknown[] | null
+    if (tablesRes.error) {
+      const res2 = await sb.from('tables')
+        .select('id, number, capacity, capacity_min, can_combine, combine_group, floor_num, zone:table_zones!zone_id(id, name)')
+        .eq('restaurant_id', RESTAURANT_ID)
+        .eq('is_active', true)
+      tableRows = res2.data as unknown[] | null
+    }
+
+    type TableRow = { id: string; number: string; capacity: number; capacity_min: number | null; can_combine: boolean | null; combine_group: string | null; floor_num: number | null; zone: { id: string; name: string; letter?: string | null } | null }
     type ComboRow = { id: string; table_ids: string[]; combined_capacity: number; is_active: boolean; name: string | null }
 
-    const availableTables = (tablesRes.data as unknown as TableRow[] | null)?.map(t => ({
+    const availableTables = (tableRows as unknown as TableRow[] | null)?.map(t => ({
       id: t.id,
       number: t.number,
-      zone_letter: t.zone?.letter ?? 'E',
+      zone_letter: t.zone?.letter ?? getZoneLetter(t.zone?.name),
       zone_name: t.zone?.name ?? 'Sin zona',
       capacity: t.capacity,
       capacity_min: t.capacity_min ?? t.capacity,
@@ -94,12 +105,13 @@ export async function POST(request: NextRequest) {
     if (zone_id) {
       // Find the zone letter for the requested zone
       const requestedZone = zone_id
-        ? (await sb.from('table_zones').select('letter').eq('id', zone_id).single()).data?.letter
+        ? (await sb.from('table_zones').select('id, name, letter').eq('id', zone_id).single()).data
         : undefined
-      if (requestedZone) {
+      const requestedZoneLetter = requestedZone?.letter ?? getZoneLetter(requestedZone?.name)
+      if (requestedZoneLetter) {
         // Boost the preferred zone score significantly
         customZoneScores = { A: 1, B: 1, C: 1, D: 1, E: 1 }
-        customZoneScores[requestedZone] = 5  // strong preference for requested zone
+        customZoneScores[requestedZoneLetter] = 5  // strong preference for requested zone
       }
     }
 

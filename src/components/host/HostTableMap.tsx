@@ -101,7 +101,7 @@ type CardStyle = {
 
 function getTableCardStyle(table: TableItem): CardStyle {
   // Occupied (seated) — burgundy
-  if (table.is_occupied && table.reservation_status === 'seated') {
+  if (table.reservations?.some((r: any) => r.is_current && r.status === 'seated') || table.reservations?.some((r: any) => r.is_upcoming && r.status === 'seated')) {
     return {
       border: 'border-[#6B2737]/30',
       bg: 'bg-[#6B2737]/8',

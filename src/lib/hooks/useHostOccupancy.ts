@@ -117,16 +117,21 @@ export function useHostOccupancy() {
     const totalSeats = zone.tables.reduce((sum, t) => sum + t.capacity, 0)
 
     // Count seats based on time-aware status
+    // Occupied = currently seated OR seated-upcoming (host manually seated them early)
     const occupiedSeats = zone.tables
-      .filter(t => t.reservations?.some((r: any) => r.is_current) && t.reservation_status === 'seated')
+      .filter(t => {
+        const hasSeatedCurrent = t.reservations?.some((r: any) => r.is_current && r.status === 'seated')
+        const hasSeatedUpcoming = t.reservations?.some((r: any) => r.is_upcoming && r.status === 'seated')
+        return (hasSeatedCurrent || hasSeatedUpcoming)
+      })
       .reduce((sum, t) => sum + (t.current_party_size ?? t.capacity), 0)
 
     const reservedSeats = zone.tables
       .filter(t => {
-        // Reserved = has upcoming or current reservations but not currently seated
-        if (t.reservations?.some((r: any) => r.is_current) && t.reservation_status !== 'seated') return true
-        // Also count tables with upcoming reservations
-        if (t.reservations?.some((r: any) => r.is_upcoming)) return true
+        // Reserved = has upcoming reservation that is NOT seated
+        if (t.reservations?.some((r: any) => r.is_upcoming && r.status !== 'seated')) return true
+        // Also count current reservations that are not seated
+        if (t.reservations?.some((r: any) => r.is_current && r.status !== 'seated')) return true
         return false
       })
       .reduce((sum, t) => {

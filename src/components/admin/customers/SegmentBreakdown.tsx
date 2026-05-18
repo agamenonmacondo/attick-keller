@@ -9,12 +9,10 @@ interface SegmentBreakdownProps {
 
 const TIER_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
   vip:        { label: 'VIP',           color: '#1B5E20', icon: '🌟' },
-  habitual:   { label: 'Habitual',      color: '#2E7D32', icon: '🏆' },
-  frecuente:  { label: 'Frecuente',     color: '#F9A825', icon: '👍' },
-  ocasional:  { label: 'Ocasional',     color: '#E65100', icon: '🔄' },
-  nuevo:      { label: 'Nuevo',         color: '#1565C0', icon: '✨' },
-  prospecto:  { label: 'Prospecto',     color: '#9E9E9E', icon: '❓' },
-  none:       { label: 'Sin clase',     color: '#BDBDBD', icon: '—' },
+  regular:    { label: 'Regular',       color: '#2E7D32', icon: '🏆' },
+  occasional: { label: 'Ocasional',     color: '#F9A825', icon: '👍' },
+  new:        { label: 'Nuevo',         color: '#1565C0', icon: '✨' },
+  none:       { label: 'Sin actividad', color: '#9E9E9E', icon: '—' },
 }
 
 export function SegmentBreakdown({ segments, total }: SegmentBreakdownProps) {
@@ -22,9 +20,13 @@ export function SegmentBreakdown({ segments, total }: SegmentBreakdownProps) {
     .map(([key, count]) => ({
       key: key || 'none',
       count,
-      config: TIER_CONFIG[key] || TIER_CONFIG['none'],
+      config: TIER_CONFIG[key] || { label: key, color: '#757575', icon: '•' },
     }))
     .sort((a, b) => b.count - a.count)
+
+  // Compute retainable percentage (occasional + new that could become regular)
+  const retainable = (segments.occasional || 0) + (segments.new || 0)
+  const retainablePct = total > 0 ? ((retainable / total) * 100).toFixed(0) : '0'
 
   return (
     <AnimatedCard delay={0.24} className="bg-white rounded-xl border border-[#D7CCC8] p-5">
@@ -39,7 +41,7 @@ export function SegmentBreakdown({ segments, total }: SegmentBreakdownProps) {
           return (
             <div key={key} className="flex items-center gap-2">
               <span className="text-sm w-5 text-center">{config.icon}</span>
-              <div className="w-20 text-xs text-[#5D4037] font-medium">{config.label}</div>
+              <div className="w-24 text-xs text-[#5D4037] font-medium">{config.label}</div>
               <div className="flex-1 h-5 bg-[#F5EDE0] rounded-md overflow-hidden">
                 <div
                   className="h-full rounded-md transition-all duration-700"
@@ -50,7 +52,7 @@ export function SegmentBreakdown({ segments, total }: SegmentBreakdownProps) {
                   }}
                 />
               </div>
-              <div className="w-20 text-right">
+              <div className="w-24 text-right">
                 <span className="text-xs font-semibold text-[#3E2723]">{count.toLocaleString()}</span>
                 <span className="text-[10px] text-[#8D6E63] ml-1">({pct.toFixed(1)}%)</span>
               </div>
@@ -63,7 +65,7 @@ export function SegmentBreakdown({ segments, total }: SegmentBreakdownProps) {
       <div className="mt-4 pt-3 border-t border-[#D7CCC8] text-center">
         <div className="text-[10px] text-[#8D6E63] uppercase tracking-wide mb-1">Oportunidad</div>
         <div className="text-sm font-semibold text-[#5C7A4D]">
-          {total > 0 ? ((segments.ocasional || 0) / total * 100).toFixed(0) : 0}% son retenibles
+          {retainablePct}% son retenibles
         </div>
         <div className="text-xs text-[#8D6E63]">
           con campañas de reactivación

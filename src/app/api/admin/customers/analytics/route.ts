@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 
+// ── Helper: get exact count from Supabase ──
+async function getCount(sb: any, table: string, filter?: { column: string; value: string }): Promise<number> {
+  let query = sb.from(table).select('id', { count: 'exact', head: true })
+  if (filter) query = query.eq(filter.column, filter.value)
+  const { count, error } = await query
+  if (error) throw error
+  return count || 0
+}
+
 // ── Helper: fetch all rows from Supabase with pagination ──
 async function fetchAll<T>(
   sb: any,
@@ -45,15 +54,26 @@ export async function GET(request: NextRequest) {
 
   try {
     if (view === 'overview') {
-      // ── Overview: aggregate KPIs ──
-      const [customers, stats] = await Promise.all([
-        fetchAll<any>(sb, 'customers', 'id, phone, email, created_at', { column: 'restaurant_id', value: RESTAURANT_ID }),
-        fetchAll<any>(sb, 'customer_stats', 'customer_id, total_visits, no_show_count, loyalty_tier, is_recurring, last_visit_date, total_spent'),
+      // ── Use counts + stats only (no need to fetch ALL 20K customers) ──
+      // Get total customer count (efficient)
+      const totalCustomers = await getCount(sb, 'customers', { column: 'restaurant_id', value: RESTAURANT_ID })
+
+      // Fetch ALL stats (they have the aggregate data we need)
+      const stats = await fetchAll<any>(sb, 'customer_stats', 'customer_id, total_visits, no_show_count, loyalty_tier, is_recurring, last_visit_date, total_spent')
+
+      // Contact channel distribution — use Supabase count queries instead of fetching all customers
+      const [withPhoneCount, withEmailCount, withBothCount] = await Promise.all([
+        sb.from('customers').select('id', { count: 'exact', head: true }).eq('restaurant_id', RESTAURANT_ID).not('phone', 'is', null).neq('phone', ''),
+        sb.from('customers').select('id', { count: 'exact', head: true }).eq('restaurant_id', RESTAURANT_ID).not('email', 'is', null).neq('email', ''),
+        sb.from('customers').select('id', { count: 'exact', head: true }).eq('restaurant_id', RESTAURANT_ID).not('phone', 'is', null).neq('phone', '').not('email', 'is', null).neq('email', ''),
       ])
 
-      const totalCustomers = customers.length
+      const withPhone = withPhoneCount.count || 0
+      const withEmail = withEmailCount.count || 0
+      const withBoth = withBothCount.count || 0
+      const withNeither = totalCustomers - withPhone - withEmail + withBoth // inclusion-exclusion
 
-      // Segment distribution
+      // Aggregate from stats
       const segments: Record<string, number> = {}
       let totalVisits = 0
       let totalNoShows = 0
@@ -93,12 +113,6 @@ export async function GET(request: NextRequest) {
         .sort((a: any, b: any) => (b.total_visits || 0) - (a.total_visits || 0))
         .slice(0, 20)
 
-      // Contact channel distribution (customers already loaded via fetchAll)
-      const withPhone = customers.filter(c => c.phone).length
-      const withEmail = customers.filter(c => c.email).length
-      const withBoth = customers.filter(c => c.phone && c.email).length
-      const withNeither = customers.filter(c => !c.phone && !c.email).length
-
       // Avg spend per visit
       const avgSpendPerVisit = totalVisits > 0
         ? Math.round((totalSpent / totalVisits) * 100) / 100
@@ -121,7 +135,7 @@ export async function GET(request: NextRequest) {
         withPhone,
         withEmail,
         withBoth,
-        withNeither,
+        withNeither: Math.max(0, withNeither),
         recent30,
         recent90,
         segments,

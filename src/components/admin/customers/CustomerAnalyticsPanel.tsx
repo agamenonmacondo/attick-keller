@@ -38,7 +38,7 @@ export function CustomerAnalyticsPanel() {
         recurring={overview.recurring}
         recent30={overview.recent30}
         recent90={overview.recent90}
-        avgPartySize={overview.avgPartySize}
+        avgSpendPerVisit={overview.avgSpendPerVisit}
         totalVisits={overview.totalVisits}
       />
 
@@ -67,7 +67,6 @@ export function CustomerAnalyticsPanel() {
           withBoth={overview.withBoth}
           withNeither={overview.withNeither}
           total={overview.totalCustomers}
-          marketingOptIn={overview.marketingOptIn}
         />
       </div>
     </div>

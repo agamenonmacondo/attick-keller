@@ -7,11 +7,11 @@ interface KPIStatsProps {
   recurring: number
   recent30: number
   recent90: number
-  avgPartySize: number
+  avgSpendPerVisit: number
   totalVisits: number
 }
 
-export function KPIStatsBar({ total, recurring, recent30, recent90, avgPartySize, totalVisits }: KPIStatsProps) {
+export function KPIStatsBar({ total, recurring, recent30, recent90, avgSpendPerVisit, totalVisits }: KPIStatsProps) {
   const retentionRate = total > 0 ? ((recurring / total) * 100).toFixed(1) : '0'
   const recentPct = total > 0 ? ((recent30 / total) * 100).toFixed(0) : '0'
 
@@ -40,8 +40,8 @@ export function KPIStatsBar({ total, recurring, recent30, recent90, avgPartySize
         <div className="text-xl font-bold text-[#3E2723]">{totalVisits.toLocaleString()}</div>
       </AnimatedCard>
       <AnimatedCard delay={0.20} className="bg-white rounded-xl border border-[#D7CCC8] p-3 text-center">
-        <div className="text-[10px] text-[#8D6E63] uppercase tracking-wide mb-1">Prom Grupo</div>
-        <div className="text-xl font-bold text-[#5C7A4D]">{avgPartySize}</div>
+        <div className="text-[10px] text-[#8D6E63] uppercase tracking-wide mb-1">Gasto/Visita</div>
+        <div className="text-xl font-bold text-[#5C7A4D]">${avgSpendPerVisit}</div>
       </AnimatedCard>
     </div>
   )

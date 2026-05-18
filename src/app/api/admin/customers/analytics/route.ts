@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       // ── Overview: aggregate KPIs ──
       const [customers, stats] = await Promise.all([
         fetchAll<any>(sb, 'customers', 'id, phone, email, created_at', { column: 'restaurant_id', value: RESTAURANT_ID }),
-        fetchAll<any>(sb, 'customer_stats', 'total_visits, no_show_count, cancellations, total_party_size, avg_party_size, loyalty_tier, is_recurring, marketing_opt_in, blacklisted'),
+        fetchAll<any>(sb, 'customer_stats', 'customer_id, total_visits, no_show_count, loyalty_tier, is_recurring, last_visit_date, total_spent'),
       ])
 
       const totalCustomers = customers.length
@@ -57,21 +57,15 @@ export async function GET(request: NextRequest) {
       const segments: Record<string, number> = {}
       let totalVisits = 0
       let totalNoShows = 0
-      let totalCancellations = 0
-      let totalPartySize = 0
-      let marketingOptIn = 0
-      let blacklisted = 0
+      let totalSpent = 0
       let recurring = 0
 
       for (const s of stats) {
-        const tier = s.loyalty_tier || 'nuevo'
+        const tier = s.loyalty_tier || 'none'
         segments[tier] = (segments[tier] || 0) + 1
         totalVisits += s.total_visits || 0
         totalNoShows += s.no_show_count || 0
-        totalCancellations += s.cancellations || 0
-        totalPartySize += s.total_party_size || 0
-        if (s.marketing_opt_in) marketingOptIn++
-        if (s.blacklisted) blacklisted++
+        totalSpent += s.total_spent || 0
         if (s.is_recurring) recurring++
       }
 
@@ -105,9 +99,9 @@ export async function GET(request: NextRequest) {
       const withBoth = customers.filter(c => c.phone && c.email).length
       const withNeither = customers.filter(c => !c.phone && !c.email).length
 
-      // Avg party size
-      const avgPartySize = stats.length > 0
-        ? Math.round((stats.reduce((sum: number, s: any) => sum + (s.avg_party_size || 0), 0) / stats.length) * 10) / 10
+      // Avg spend per visit
+      const avgSpendPerVisit = totalVisits > 0
+        ? Math.round((totalSpent / totalVisits) * 100) / 100
         : 0
 
       // Recency: last visit buckets
@@ -121,10 +115,8 @@ export async function GET(request: NextRequest) {
         totalCustomers,
         totalVisits,
         totalNoShows,
-        totalCancellations,
-        avgPartySize,
-        marketingOptIn,
-        blacklisted,
+        totalSpent,
+        avgSpendPerVisit,
         recurring,
         withPhone,
         withEmail,

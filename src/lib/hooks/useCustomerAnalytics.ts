@@ -6,10 +6,8 @@ interface AnalyticsOverview {
   totalCustomers: number
   totalVisits: number
   totalNoShows: number
-  totalCancellations: number
-  avgPartySize: number
-  marketingOptIn: number
-  blacklisted: number
+  totalSpent: number
+  avgSpendPerVisit: number
   recurring: number
   withPhone: number
   withEmail: number

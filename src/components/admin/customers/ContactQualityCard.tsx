@@ -8,20 +8,18 @@ interface ContactQualityProps {
   withBoth: number
   withNeither: number
   total: number
-  marketingOptIn: number
 }
 
-export function ContactQualityCard({ withPhone, withEmail, withBoth, withNeither, total, marketingOptIn }: ContactQualityProps) {
+export function ContactQualityCard({ withPhone, withEmail, withBoth, withNeither, total }: ContactQualityProps) {
   const phonePct = total > 0 ? ((withPhone / total) * 100).toFixed(0) : '0'
   const emailPct = total > 0 ? ((withEmail / total) * 100).toFixed(0) : '0'
-  const optInPct = total > 0 ? ((marketingOptIn / total) * 100).toFixed(0) : '0'
 
   return (
     <AnimatedCard delay={0.36} className="bg-white rounded-xl border border-[#D7CCC8] p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-[#3E2723] tracking-wide uppercase">Contactabilidad</h3>
         <span className="text-xs px-2 py-0.5 rounded-full bg-[#E8F5E9] text-[#2E7D32] font-medium">
-          {optInPct}% opt-in
+          {phonePct}% con celular
         </span>
       </div>
 
@@ -67,14 +65,6 @@ export function ContactQualityCard({ withPhone, withEmail, withBoth, withNeither
           </div>
           <div className="h-3 bg-[#F5EDE0] rounded-full overflow-hidden">
             <div className="h-full bg-[#C62828] rounded-full transition-all duration-700 opacity-50" style={{ width: `${total > 0 ? Math.max(((withNeither / total) * 100), 1) : 0}%` }} />
-          </div>
-        </div>
-
-        {/* Marketing opt-in */}
-        <div className="mt-2 pt-2 border-t border-[#D7CCC8]">
-          <div className="flex justify-between text-xs">
-            <span className="text-[#5D4037]">🎯 Opt-in Marketing</span>
-            <span className="font-semibold text-[#2E7D32]">{marketingOptIn.toLocaleString()} ({optInPct}%)</span>
           </div>
         </div>
       </div>

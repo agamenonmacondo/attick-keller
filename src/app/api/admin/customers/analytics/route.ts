@@ -1,6 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 
+// ── Helper: fetch all rows from Supabase with pagination ──
+async function fetchAll<T>(
+  sb: any,
+  table: string,
+  select: string,
+  filter?: { column: string; value: string },
+  batchSize = 2000
+): Promise<T[]> {
+  const allRows: T[] = []
+  let offset = 0
+  let hasMore = true
+
+  while (hasMore) {
+    let query = sb
+      .from(table)
+      .select(select)
+      .range(offset, offset + batchSize - 1)
+
+    if (filter) {
+      query = query.eq(filter.column, filter.value)
+    }
+
+    const { data, error } = await query
+    if (error) throw error
+    if (!data || data.length === 0) break
+
+    allRows.push(...data)
+    hasMore = data.length === batchSize
+    offset += batchSize
+  }
+
+  return allRows
+}
+
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
@@ -12,13 +46,12 @@ export async function GET(request: NextRequest) {
   try {
     if (view === 'overview') {
       // ── Overview: aggregate KPIs ──
-      const [customersRes, statsRes] = await Promise.all([
-        sb.from('customers').select('id, phone, email, created_at', { count: 'exact' }).eq('restaurant_id', RESTAURANT_ID),
-        sb.from('customer_stats').select('total_visits, no_show_count, cancellations, total_party_size, avg_party_size, loyalty_tier, is_recurring, marketing_opt_in, last_visit_date, blacklisted'),
+      const [customers, stats] = await Promise.all([
+        fetchAll<any>(sb, 'customers', 'id, phone, email, created_at', { column: 'restaurant_id', value: RESTAURANT_ID }),
+        fetchAll<any>(sb, 'customer_stats', 'total_visits, no_show_count, cancellations, total_party_size, avg_party_size, loyalty_tier, is_recurring, marketing_opt_in, blacklisted'),
       ])
 
-      const totalCustomers = customersRes.count || 0
-      const stats = statsRes.data || []
+      const totalCustomers = customers.length
 
       // Segment distribution
       const segments: Record<string, number> = {}
@@ -66,8 +99,7 @@ export async function GET(request: NextRequest) {
         .sort((a: any, b: any) => (b.total_visits || 0) - (a.total_visits || 0))
         .slice(0, 20)
 
-      // Contact channel distribution
-      const customers = customersRes.data || []
+      // Contact channel distribution (customers already loaded via fetchAll)
       const withPhone = customers.filter(c => c.phone).length
       const withEmail = customers.filter(c => c.email).length
       const withBoth = customers.filter(c => c.phone && c.email).length
@@ -114,11 +146,11 @@ export async function GET(request: NextRequest) {
 
     if (view === 'retention') {
       // ── Detailed retention data ──
-      const { data: stats, error } = await sb
-        .from('customer_stats')
-        .select('customer_id, total_visits, no_show_count, last_visit_date, is_recurring, loyalty_tier')
-
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      const stats = await fetchAll<any>(
+        sb,
+        'customer_stats',
+        'customer_id, total_visits, no_show_count, last_visit_date, is_recurring, loyalty_tier'
+      )
 
       // Build visit frequency histogram
       const visitCounts: Record<number, number> = {}

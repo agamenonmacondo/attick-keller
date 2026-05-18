@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Users } from '@phosphor-icons/react'
+import { Users, ChartBar, ListMagnifyingGlass } from '@phosphor-icons/react'
 import { useCustomers } from '@/lib/hooks/useCustomers'
 import { useCustomerDetail } from '@/lib/hooks/useCustomerDetail'
 import { useCustomerTags } from '@/lib/hooks/useCustomerTags'
@@ -10,8 +10,12 @@ import { CustomerFilters } from './CustomerFilters'
 import { CustomerList } from './CustomerList'
 import { CampaignComposer } from './CampaignComposer'
 import { CustomerDetail } from './CustomerDetail'
+import { CustomerAnalyticsPanel } from './CustomerAnalyticsPanel'
+
+type CustomerView = 'analytics' | 'list'
 
 export function CustomersPanel() {
+  const [view, setView] = useState<CustomerView>('analytics')
   const { customers, total, totalPages, currentPage, loading, error, applyFilters, goToPage } = useCustomers()
   const { data: detail, loading: detailLoading, fetchCustomer, clear: clearDetail } = useCustomerDetail()
   const { tags, createTag } = useCustomerTags()
@@ -118,6 +122,38 @@ export function CustomersPanel() {
       : null
 
   return (
+    <div className="space-y-4">
+      {/* View toggle */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setView('analytics')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            view === 'analytics'
+              ? 'bg-[#6B2737] text-white'
+              : 'bg-white text-[#5D4037] border border-[#D7CCC8] hover:bg-[#F5EDE0]'
+          }`}
+        >
+          <ChartBar size={16} weight={view === 'analytics' ? 'fill' : 'regular'} />
+          Analytics
+        </button>
+        <button
+          onClick={() => setView('list')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            view === 'list'
+              ? 'bg-[#6B2737] text-white'
+              : 'bg-white text-[#5D4037] border border-[#D7CCC8] hover:bg-[#F5EDE0]'
+          }`}
+        >
+          <ListMagnifyingGlass size={16} weight={view === 'list' ? 'fill' : 'regular'} />
+          Lista
+        </button>
+      </div>
+
+      {/* Analytics view */}
+      {view === 'analytics' && <CustomerAnalyticsPanel />}
+
+      {/* List view (original) */}
+      {view === 'list' && (
     <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] lg:grid-cols-[240px_1fr_400px] gap-6">
       {/* Columna 1: Filtros */}
       <motion.div
@@ -219,6 +255,8 @@ export function CustomersPanel() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+      )}
     </div>
   )
 }

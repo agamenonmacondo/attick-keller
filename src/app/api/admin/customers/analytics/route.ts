@@ -11,22 +11,23 @@ async function getCount(sb: any, table: string, filter?: { column: string; value
 }
 
 // ── Helper: fetch all rows from Supabase with pagination ──
+// Supabase/PostgREST truncates to max 1000 rows per request,
+// so we paginate in batches of 999 using Range headers.
 async function fetchAll<T>(
   sb: any,
   table: string,
   select: string,
   filter?: { column: string; value: string },
-  batchSize = 2000
+  batchSize = 999
 ): Promise<T[]> {
   const allRows: T[] = []
   let offset = 0
-  let hasMore = true
 
-  while (hasMore) {
+  while (true) {
     let query = sb
       .from(table)
       .select(select)
-      .range(offset, offset + batchSize - 1)
+      .range(offset, offset + batchSize)
 
     if (filter) {
       query = query.eq(filter.column, filter.value)
@@ -37,8 +38,9 @@ async function fetchAll<T>(
     if (!data || data.length === 0) break
 
     allRows.push(...data)
-    hasMore = data.length === batchSize
-    offset += batchSize
+    // If we received fewer rows than requested, there are no more pages
+    if (data.length <= batchSize) break
+    offset += batchSize + 1
   }
 
   return allRows

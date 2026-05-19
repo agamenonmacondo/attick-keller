@@ -6,15 +6,30 @@ const TIER_CONFIG: Record<string, { label: string; bg: string; text: string }> =
     bg: 'bg-zinc-100',
     text: 'text-zinc-600',
   },
+  bronze: {
+    label: 'Bronce',
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+  },
   bronce: {
     label: 'Bronce',
     bg: 'bg-amber-50',
     text: 'text-amber-700',
   },
+  silver: {
+    label: 'Plata',
+    bg: 'bg-slate-100',
+    text: 'text-slate-600',
+  },
   plata: {
     label: 'Plata',
     bg: 'bg-slate-100',
     text: 'text-slate-600',
+  },
+  gold: {
+    label: 'Oro',
+    bg: 'bg-yellow-50',
+    text: 'text-yellow-700',
   },
   oro: {
     label: 'Oro',

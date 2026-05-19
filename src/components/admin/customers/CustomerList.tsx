@@ -1,11 +1,13 @@
 'use client'
 
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { User, CheckSquare, Square, CaretLeft, CaretRight } from '@phosphor-icons/react'
+import { User, CheckSquare, Square, CaretLeft, CaretRight, DotsThree } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils/cn'
 import { TierBadge } from '../shared/TierBadge'
 import { EmptyState } from '../shared/EmptyState'
-import { Spinner, Users } from '@phosphor-icons/react'
+import { Spinner } from '@phosphor-icons/react'
+import { formatCOP } from '@/lib/utils/formatCOP'
 
 interface Customer {
   id: string
@@ -13,8 +15,10 @@ interface Customer {
   phone: string | null
   email: string | null
   total_visits: number
+  total_spent: number
   last_visit_date: string | null
   loyalty_tier: string
+  is_recurring: boolean
   tag_ids: string[]
 }
 
@@ -34,18 +38,34 @@ interface CustomerListProps {
   activeCustomerId: string | null
   onSelectAllFiltered?: () => void
   selectingAll?: boolean
+  onCreateCustomer?: () => void
+}
+
+/** Generates page numbers with ellipsis: [1, '...', 4, 5, 6, '...', 20] */
+function getPageNumbers(current: number, total: number): (number | 'dots')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const pages: (number | 'dots')[] = [1]
+  if (current > 3) pages.push('dots')
+  const start = Math.max(2, current - 1)
+  const end = Math.min(total - 1, current + 1)
+  for (let i = start; i <= end; i++) pages.push(i)
+  if (current < total - 2) pages.push('dots')
+  pages.push(total)
+  return pages
 }
 
 export function CustomerList({
   customers, loading, error, page, total, totalPages,
   selectedIds, onToggleSelect, onSelectAll, onClearSelection,
   onPageChange, onCustomerClick, activeCustomerId,
-  onSelectAllFiltered, selectingAll,
+  onSelectAllFiltered, selectingAll, onCreateCustomer,
 }: CustomerListProps) {
   const allSelected = customers.length > 0 && customers.every(c => selectedIds.has(c.id))
   const someSelected = customers.some(c => selectedIds.has(c.id))
   const totalSelected = selectedIds.size
   const isCrossPageSelection = totalSelected > customers.length
+
+  const pageNumbers = useMemo(() => getPageNumbers(page, totalPages), [page, totalPages])
 
   return (
     <div className="space-y-3">
@@ -69,9 +89,10 @@ export function CustomerList({
             <button
               type="button"
               onClick={onSelectAllFiltered}
-              className="text-[#6B2737] font-medium hover:underline"
+              disabled={selectingAll}
+              className="text-[#6B2737] font-medium hover:underline disabled:opacity-50"
             >
-              Seleccionar todos ({total})
+              {selectingAll ? 'Seleccionando...' : `Seleccionar todos (${total})`}
             </button>
           )}
         </div>
@@ -149,9 +170,16 @@ export function CustomerList({
             onClick={() => onCustomerClick(c.id)}
             className="flex-1 text-left min-w-0"
           >
-            <p className="truncate text-sm font-medium text-[#3E2723]">
-              {c.full_name || 'Sin nombre'}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className="truncate text-sm font-medium text-[#3E2723]">
+                {c.full_name || 'Sin nombre'}
+              </p>
+              {c.is_recurring && (
+                <span className="shrink-0 text-[9px] font-medium text-[#5C7A4D] bg-[#5C7A4D]/10 rounded px-1.5 py-0.5">
+                  Recurrente
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-1.5 text-[11px] text-[#8D6E63] mt-0.5">
               {c.phone && <span className="truncate">{c.phone}</span>}
               {c.phone && c.email && <span className="text-[#D7CCC8]">·</span>}
@@ -162,13 +190,22 @@ export function CustomerList({
 
           <div className="flex flex-col items-end gap-1 shrink-0">
             <TierBadge tier={c.loyalty_tier} />
-            <span className="text-[10px] text-[#8D6E63]">{c.total_visits}v</span>
+            <div className="flex items-center gap-2 text-[10px] text-[#8D6E63]">
+              <span>{c.total_visits}v</span>
+              {c.total_spent > 0 && (
+                <>
+                  <span className="text-[#D7CCC8]">·</span>
+                  <span>{formatCOP(c.total_spent).replace('COP$', '$')}</span>
+                </>
+              )}
+            </div>
           </div>
         </motion.div>
       ))}
 
+      {/* Improved pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-2">
+        <div className="flex items-center justify-center gap-1 pt-2">
           <button
             type="button"
             disabled={page <= 1}
@@ -177,9 +214,27 @@ export function CustomerList({
           >
             <CaretLeft size={14} />
           </button>
-          <span className="text-xs text-[#8D6E63]">
-            {page} de {totalPages}
-          </span>
+
+          {pageNumbers.map((p, i) =>
+            p === 'dots' ? (
+              <span key={`dots-${i}`} className="px-1 text-[#BCAAA4] text-xs"><DotsThree size={14} /></span>
+            ) : (
+              <button
+                key={p}
+                type="button"
+                onClick={() => onPageChange(p)}
+                className={cn(
+                  'flex items-center justify-center h-8 w-8 rounded-lg text-xs font-medium transition-colors',
+                  p === page
+                    ? 'bg-[#6B2737] text-white'
+                    : 'border border-[#D7CCC8] text-[#8D6E63] hover:bg-[#EFEBE9]'
+                )}
+              >
+                {p}
+              </button>
+            )
+          )}
+
           <button
             type="button"
             disabled={page >= totalPages}

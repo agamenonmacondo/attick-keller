@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 
 interface CustomerRow {
   id: string
@@ -46,8 +46,14 @@ export function useCustomers() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentFilters, setCurrentFilters] = useState<FetchOptions>({})
+  const abortRef = useRef<AbortController | null>(null)
 
   const fetchCustomers = useCallback(async (opts: FetchOptions = {}) => {
+    // Cancel in-flight request
+    if (abortRef.current) abortRef.current.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     setLoading(true)
     setError(null)
     setCurrentFilters(opts)
@@ -64,7 +70,12 @@ export function useCustomers() {
       if (opts.last_visit_days) params.set('last_visit_days', String(opts.last_visit_days))
 
       const query = params.toString()
-      const res = await fetch('/api/admin/customers' + (query ? '?' + query : ''))
+      const res = await fetch('/api/admin/customers' + (query ? '?' + query : ''), {
+        signal: controller.signal,
+      })
+
+      // Ignore if aborted
+      if (controller.signal.aborted) return
 
       if (!res.ok) {
         let msg = `Error ${res.status}`
@@ -90,10 +101,13 @@ export function useCustomers() {
         setCurrentPage(d.page)
       }
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
       setError(err instanceof Error ? err.message : 'Error de conexion')
       setCustomers([])
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) {
+        setLoading(false)
+      }
     }
   }, [])
 
@@ -107,10 +121,13 @@ export function useCustomers() {
 
   useEffect(() => {
     fetchCustomers({ page: 1, limit: 25 })
+    return () => {
+      if (abortRef.current) abortRef.current.abort()
+    }
   }, [fetchCustomers])
 
   return {
     customers, total, totalPages, currentPage, loading, error,
-    fetchCustomers, applyFilters, goToPage,
+    fetchCustomers, applyFilters, goToPage, currentFilters,
   }
 }

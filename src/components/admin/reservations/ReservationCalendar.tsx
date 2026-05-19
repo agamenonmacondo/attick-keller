@@ -19,27 +19,27 @@ const MONTH_NAMES = [
 ]
 
 // Design MD palette: Madera #3E2723, Borgoña #6B2737, Cal #F5EDE0, Oliva #5C7A4D, Ámbar #D4922A
-// Heat levels: 0→vacío, 1-2→bajo, 3-5→medio, 6-10→alto, 11+→pico
+// Heat levels for 210 tables: 0→vacío, 1-30→bajo (≤14%), 31-80→medio (15-38%), 81-150→alto (39-71%), 151+→pico (>72%)
 function getHeatClass(count: number): string {
   if (count === 0) return 'bg-[#F5EDE0]/40 border border-[#D7CCC8]/60'
-  if (count <= 2) return 'bg-[#5C7A4D]/15 border border-[#5C7A4D]/20'
-  if (count <= 5) return 'bg-[#D4922A]/25 border border-[#D4922A]/30'
-  if (count <= 10) return 'bg-[#6B2737]/45 border border-[#6B2737]/30'
+  if (count <= 30) return 'bg-[#5C7A4D]/15 border border-[#5C7A4D]/20'
+  if (count <= 80) return 'bg-[#D4922A]/25 border border-[#D4922A]/30'
+  if (count <= 150) return 'bg-[#6B2737]/45 border border-[#6B2737]/30'
   return 'bg-[#6B2737]/80 border border-[#6B2737]/50'
 }
 
 function getHeatTextClass(count: number): string {
-  if (count >= 11) return 'text-white font-bold'
-  if (count >= 6) return 'text-[#3E2723] font-semibold'
-  if (count >= 3) return 'text-[#3E2723] font-medium'
+  if (count >= 151) return 'text-white font-bold'
+  if (count >= 81) return 'text-[#3E2723] font-semibold'
+  if (count >= 31) return 'text-[#3E2723] font-medium'
   return 'text-[#3E2723]'
 }
 
 function getHeatLabel(count: number): string {
   if (count === 0) return 'Sin reservas'
-  if (count <= 2) return `${count} reservas — Baja demanda`
-  if (count <= 5) return `${count} reservas — Media demanda`
-  if (count <= 10) return `${count} reservas — Alta demanda`
+  if (count <= 30) return `${count} reservas — Baja demanda`
+  if (count <= 80) return `${count} reservas — Media demanda`
+  if (count <= 150) return `${count} reservas — Alta demanda`
   return `${count} reservas — Pico`
 }
 
@@ -194,19 +194,19 @@ export function ReservationCalendar({
         </div>
         <div className="flex items-center gap-1">
           <span className="h-2.5 w-2.5 rounded-sm bg-[#5C7A4D]/15 border border-[#5C7A4D]/20" />
-          <span className="text-[9px] text-[#8D6E63]">1-2</span>
+          <span className="text-[9px] text-[#8D6E63]">1-30</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="h-2.5 w-2.5 rounded-sm bg-[#D4922A]/25 border border-[#D4922A]/30" />
-          <span className="text-[9px] text-[#8D6E63]">3-5</span>
+          <span className="text-[9px] text-[#8D6E63]">31-80</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="h-2.5 w-2.5 rounded-sm bg-[#6B2737]/45 border border-[#6B2737]/30" />
-          <span className="text-[9px] text-[#8D6E63]">6-10</span>
+          <span className="text-[9px] text-[#8D6E63]">81-150</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="h-2.5 w-2.5 rounded-sm bg-[#6B2737]/80 border border-[#6B2737]/50" />
-          <span className="text-[9px] text-[#8D6E63]">11+</span>
+          <span className="text-[9px] text-[#8D6E63]">151+</span>
         </div>
       </div>
     </div>

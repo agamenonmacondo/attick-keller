@@ -3,19 +3,19 @@
 import type { AnalyticsOverview } from '@/lib/hooks/useCustomerAnalytics'
 import { AnimatedCard } from '../shared/AnimatedCard'
 
-interface KPIStatsBarProps {
+interface KPIStatsBarWithActionsProps {
   overview: AnalyticsOverview | null
   loading: boolean
 }
 
-export function KPIStatsBarWithActions({ overview, loading }: KPIStatsBarProps) {
+export function KPIStatsBarWithActions({ overview, loading }: KPIStatsBarWithActionsProps) {
   if (loading || !overview) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 animate-pulse">
-            <div className="h-3 bg-stone-200 rounded w-2/3 mb-2"></div>
-            <div className="h-6 bg-stone-200 rounded w-1/2"></div>
+          <div key={i} className="bg-[#F5EDE0] rounded-xl shadow-sm border border-[#D7CCC8] p-4 animate-pulse">
+            <div className="h-3 bg-[#D7CCC8] rounded w-2/3 mb-2"></div>
+            <div className="h-6 bg-[#D7CCC8] rounded w-1/2"></div>
           </div>
         ))}
       </div>
@@ -51,14 +51,14 @@ export function KPIStatsBarWithActions({ overview, loading }: KPIStatsBarProps) 
       label: 'Dormidos',
       value: overview.reactivation?.dormantClients?.toLocaleString() || overview.retention.oneTime.toLocaleString(),
       subtext: `${overview.reactivation?.reachableWhatsApp?.toLocaleString() || '—'} por WhatsApp`,
-      action: { label: 'Reactivar', color: 'bg-green-600' },
+      action: { label: 'Reactivar', href: '#reactivation' },
     },
     {
       icon: '⚠️',
       label: 'No-Show',
       value: overview.noShowRisk.highRisk.toString(),
       subtext: `${overview.noShowRisk.medRisk} medio + ${overview.noShowRisk.lowRisk} bajo`,
-      action: { label: 'Ver alertas', color: 'bg-amber-600' },
+      action: { label: 'Ver alertas', href: '#no-show-alerts' },
     },
     {
       icon: '💰',
@@ -74,15 +74,18 @@ export function KPIStatsBarWithActions({ overview, loading }: KPIStatsBarProps) 
         <AnimatedCard key={i} delay={i * 0.05}>
           <div className="p-4 text-center">
             <div className="text-lg mb-1">{kpi.icon}</div>
-            <div className="text-xs text-stone-500 uppercase tracking-wider">{kpi.label}</div>
-            <div className="text-2xl font-bold text-stone-900 mt-1">{kpi.value}</div>
+            <div className="text-[10px] text-[#8D6E63] uppercase tracking-wider font-medium">{kpi.label}</div>
+            <div className="text-2xl font-bold text-[#3E2723] mt-1 font-['Playfair_Display']">{kpi.value}</div>
             {kpi.subtext && (
-              <div className="text-xs text-stone-400 mt-0.5">{kpi.subtext}</div>
+              <div className="text-xs text-[#8D6E63] mt-0.5">{kpi.subtext}</div>
             )}
             {kpi.action && (
-              <button className={`mt-2 ${kpi.action.color} hover:opacity-90 text-white text-xs font-medium px-3 py-1 rounded-full transition-opacity`}>
+              <a
+                href={kpi.action.href}
+                className="mt-2 inline-block bg-[#6B2737] hover:bg-[#3E2723] text-white text-[10px] font-semibold px-3 py-1 rounded-full transition-colors"
+              >
                 {kpi.action.label}
-              </button>
+              </a>
             )}
           </div>
         </AnimatedCard>

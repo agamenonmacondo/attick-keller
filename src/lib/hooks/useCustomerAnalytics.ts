@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
-interface AnalyticsOverview {
+export interface AnalyticsOverview {
   totalCustomers: number
   totalVisits: number
   totalNoShows: number
   totalSpent: number
-  avgSpendPerVisit: number
+  avgSpendPerVisit: number | null
   recurring: number
   withPhone: number
   withEmail: number
@@ -41,6 +41,12 @@ interface AnalyticsOverview {
     no_show_count: number
     loyalty_tier: string
   }>
+  reactivation: {
+    dormantClients: number
+    reachableWhatsApp: number
+    reachableEmail: number
+    notReachable: number
+  }
 }
 
 interface RetentionData {

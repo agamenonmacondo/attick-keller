@@ -127,6 +127,57 @@ export async function GET(request: NextRequest) {
       const recent30 = stats.filter(s => s.last_visit_date && s.last_visit_date >= thirtyDaysAgo).length
       const recent90 = stats.filter(s => s.last_visit_date && s.last_visit_date >= ninetyDaysAgo).length
 
+      // Reactivation data: dormant clients reachable via WhatsApp/email
+      const dormantClients = oneTime // 1-visit clients
+      const dormantIds = stats.filter(s => (s.total_visits || 0) <= 1).map(s => s.customer_id)
+
+      // Get contact info for dormant clients (need to cross-reference customers table)
+      // Since we can't easily join, we use the overall contact percentages as estimates
+      const phonePct = totalCustomers > 0 ? withPhone / totalCustomers : 0
+      const emailPct = totalCustomers > 0 ? withEmail / totalCustomers : 0
+      const bothPct = totalCustomers > 0 ? withBoth / totalCustomers : 0
+      const neitherPct = totalCustomers > 0 ? withNeither / totalCustomers : 0
+
+      // Estimate reachable dormant clients (applying same contact distribution)
+      const reachableWhatsApp = Math.round(dormantClients * (phonePct - bothPct * 0.3)) // phone minus overlap with email-preferred
+      const reachableEmail = Math.round(dormantClients * (emailPct - bothPct * 0.7)) // email minus overlap with phone-preferred
+      const notReachable = Math.round(dormantClients * neitherPct)
+
+      // More precise: fetch dormant customers' contact data directly
+      let preciseDormantWhatsApp = 0
+      let preciseDormantEmail = 0
+      let preciseDormantBoth = 0
+      let preciseDormantNeither = 0
+      try {
+        // Batch query dormant customer IDs (max 1000 per batch)
+        const dormantBatches: string[][] = []
+        for (let i = 0; i < dormantIds.length; i += 999) {
+          dormantBatches.push(dormantIds.slice(i, i + 999))
+        }
+        for (const batch of dormantBatches) {
+          const { data: dormantCustomers } = await sb
+            .from('customers')
+            .select('phone, email')
+            .in('id', batch)
+            .eq('restaurant_id', RESTAURANT_ID)
+          
+          for (const c of dormantCustomers || []) {
+            const hasPhone = c.phone && c.phone.trim() !== ''
+            const hasEmail = c.email && c.email.trim() !== ''
+            if (hasPhone && hasEmail) preciseDormantBoth++
+            else if (hasPhone) preciseDormantWhatsApp++
+            else if (hasEmail) preciseDormantEmail++
+            else preciseDormantNeither++
+          }
+        }
+      } catch {
+        // Fall back to estimates if batch query fails
+        preciseDormantWhatsApp = reachableWhatsApp
+        preciseDormantEmail = reachableEmail
+        preciseDormantNeither = notReachable
+        preciseDormantBoth = dormantClients - reachableWhatsApp - reachableEmail - notReachable
+      }
+
       return NextResponse.json({
         totalCustomers,
         totalVisits,
@@ -149,6 +200,12 @@ export async function GET(request: NextRequest) {
         },
         highRiskClients,
         vipClients,
+        reactivation: {
+          dormantClients,
+          reachableWhatsApp: preciseDormantWhatsApp + preciseDormantBoth, // WhatsApp includes those with both
+          reachableEmail: preciseDormantEmail + preciseDormantBoth, // Email also includes those with both
+          notReachable: preciseDormantNeither,
+        },
       })
     }
 

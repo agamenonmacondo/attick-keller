@@ -5,7 +5,12 @@ import { RetentionFunnel } from './RetentionFunnel'
 import { NoShowRiskCard } from './NoShowRiskCard'
 import { SegmentBreakdown } from './SegmentBreakdown'
 import { ContactQualityCard } from './ContactQualityCard'
-import { KPIStatsBar } from './KPIStatsBar'
+import { KPIStatsBarWithActions } from './KPIStatsBarWithActions'
+import { ReactivationCard } from './ReactivationCard'
+import { NoShowAlertCard } from './NoShowAlertCard'
+import { TrendChart } from './TrendChart'
+import { TableDemandCard } from './TableDemandCard'
+import { VIPInactiveCard } from './VIPInactiveCard'
 import { Spinner } from '@phosphor-icons/react'
 
 export function CustomerAnalyticsPanel() {
@@ -32,17 +37,23 @@ export function CustomerAnalyticsPanel() {
 
   return (
     <div className="space-y-6">
-      {/* KPI Bar */}
-      <KPIStatsBar
-        total={overview.totalCustomers}
-        recurring={overview.recurring}
-        recent30={overview.recent30}
-        recent90={overview.recent90}
-        avgSpendPerVisit={overview.avgSpendPerVisit}
-        totalVisits={overview.totalVisits}
-      />
+      {/* KPI Bar with Action CTAs */}
+      <KPIStatsBarWithActions overview={overview} loading={false} />
 
-      {/* Row 1: Retention + No-Show Risk */}
+      {/* Row 1: Reactivation + No-Show Alerts (P1 actions) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {overview.reactivation && (
+          <ReactivationCard
+            dormantClients={overview.reactivation.dormantClients}
+            reachableWhatsApp={overview.reactivation.reachableWhatsApp}
+            reachableEmail={overview.reactivation.reachableEmail}
+            notReachable={overview.reactivation.notReachable}
+          />
+        )}
+        <NoShowAlertCard />
+      </div>
+
+      {/* Row 2: Retention + No-Show Risk (existing) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RetentionFunnel
           retention={overview.retention}
@@ -55,7 +66,13 @@ export function CustomerAnalyticsPanel() {
         />
       </div>
 
-      {/* Row 2: Segments + Contact Quality */}
+      {/* Row 3: Trends + Table Demand (P2 insights) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TrendChart />
+        <TableDemandCard />
+      </div>
+
+      {/* Row 4: Segments + Contact Quality (existing) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <SegmentBreakdown
           segments={overview.segments}
@@ -69,6 +86,9 @@ export function CustomerAnalyticsPanel() {
           total={overview.totalCustomers}
         />
       </div>
+
+      {/* Row 5: VIP Inactive (P3) */}
+      <VIPInactiveCard />
     </div>
   )
 }

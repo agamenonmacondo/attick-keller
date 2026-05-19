@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { cn } from '@/lib/utils/cn'
 import { AnimatedCard } from '../shared/AnimatedCard'
 import { SectionHeading } from '../shared/SectionHeading'
@@ -24,6 +24,7 @@ interface TableMapProps {
 
 export function TableMap({ zones, unassignedTables, unassignedReservations, onAssign, onUnassign }: TableMapProps) {
   const [activeTableId, setActiveTableId] = useState<string | null>(null)
+  const activeTableRef = useRef<HTMLDivElement | null>(null)
 
   const handleAssign = useCallback(async (reservationId: string, tableId: string) => {
     await onAssign(reservationId, tableId)
@@ -95,7 +96,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
 
                 return (
                   <AnimatedCard key={tableId} delay={(zi * 8 + ti) * 0.03}>
-                    <div className="relative" style={{ zIndex: isActive ? 50 : 'auto' }}>
+                    <div ref={isActive ? activeTableRef : undefined} className="relative">
                       <button
                         type="button"
                         onClick={() => setActiveTableId(isActive ? null : tableId)}
@@ -141,6 +142,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                           onAssign={handleAssign}
                           onUnassign={handleUnassign}
                           onClose={() => setActiveTableId(null)}
+                          anchorRef={activeTableRef}
                         />
                       )}
                     </div>
@@ -206,7 +208,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
 
               return (
                 <AnimatedCard key={tableId} delay={ti * 0.03}>
-                  <div className="relative" style={{ zIndex: isActive ? 50 : 'auto' }}>
+                  <div ref={isActive ? activeTableRef : undefined} className="relative">
                     <button
                       type="button"
                       onClick={() => setActiveTableId(isActive ? null : tableId)}
@@ -252,6 +254,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                         onAssign={handleAssign}
                         onUnassign={handleUnassign}
                         onClose={() => setActiveTableId(null)}
+                        anchorRef={activeTableRef}
                       />
                     )}
                   </div>

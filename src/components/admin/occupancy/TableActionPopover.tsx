@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, User, WhatsappLogo, EnvelopeSimple, Note, CaretDown, CaretUp } from '@phosphor-icons/react'
 import { formatTime } from '@/lib/utils/formatDate'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -30,6 +31,7 @@ interface TableActionPopoverProps {
   onAssign: (reservationId: string, tableId: string) => void
   onUnassign: (reservationId: string) => void
   onClose: () => void
+  anchorRef: React.RefObject<HTMLDivElement | null>
 }
 
 export function TableActionPopover({
@@ -49,13 +51,35 @@ export function TableActionPopover({
   onAssign,
   onUnassign,
   onClose,
+  anchorRef,
 }: TableActionPopoverProps) {
   const [assigning, setAssigning] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [showDetails, setShowDetails] = useState(false)
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
   const hasDetails = !!(currentCustomerPhone || currentCustomerEmail || currentSpecialRequests)
+
+  // Position popover below the anchor element
+  useEffect(() => {
+    const updatePosition = () => {
+      if (anchorRef.current) {
+        const rect = anchorRef.current.getBoundingClientRect()
+        setPosition({
+          top: rect.bottom + 4,
+          left: rect.left + rect.width / 2,
+        })
+      }
+    }
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+    }
+  }, [anchorRef])
 
   // Close on click outside
   useEffect(() => {
@@ -94,10 +118,17 @@ export function TableActionPopover({
     }
   }
 
-  return (
+  if (!position) return null
+
+  const popover = (
     <div
       ref={ref}
-      className="absolute z-50 left-1/2 -translate-x-1/2 top-full mt-1 w-56 rounded-xl border border-[#D7CCC8] bg-white shadow-lg"
+      className="fixed z-[9999] w-56 rounded-xl border border-[#D7CCC8] bg-white shadow-xl"
+      style={{
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        transform: 'translateX(-50%)',
+      }}
     >
       <div className="flex items-center justify-between border-b border-[#D7CCC8] px-3 py-2">
         <span className="text-xs font-medium text-[#3E2723]">Mesa {tableNumber} ({capacity}p)</span>
@@ -120,7 +151,6 @@ export function TableActionPopover({
             {currentTime} · {currentPartySize}p
           </p>
 
-          {/* Customer details expand/collapse */}
           {hasDetails && (
             <>
               <button
@@ -141,7 +171,7 @@ export function TableActionPopover({
                     <div className="space-y-1 pl-3 border-l-2 border-[#D7CCC8]">
                       {currentCustomerPhone && (
                         <a
-                          href={`https://wa.me/57${currentCustomerPhone.replace(/^0+/, '').replace(/^\+/, '')}`}
+                          href={`https://wa.me/57${currentCustomerPhone.replace(/^0+/, '').replace(/^\\+/, '')}`}
                           target="_blank"
                           className="flex items-center gap-1.5 text-xs text-[#25D366] hover:underline"
                         >
@@ -169,7 +199,6 @@ export function TableActionPopover({
             </>
           )}
 
-          {/* Action buttons based on reservation status */}
           <div className="space-y-1.5 pt-1">
             {currentReservationStatus && ['confirmed', 'pre_paid'].includes(currentReservationStatus) && (
               <>
@@ -233,4 +262,6 @@ export function TableActionPopover({
       )}
     </div>
   )
+
+  return createPortal(popover, document.body)
 }

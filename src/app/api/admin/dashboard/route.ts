@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url)
   const date = url.searchParams.get('date') || new Date(Date.now() - 5*60*60*1000 + new Date().getTimezoneOffset()*60*1000).toISOString().split('T')[0]
 
-  const [resRes, tablesRes] = await Promise.all([
+  const [resRes, tablesRes, allTablesRes] = await Promise.all([
     sb
       .from('reservations')
       .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, created_at, customers(id, email, full_name, phone), tables(id, number, table_zones(id, name))')
@@ -22,10 +22,15 @@ export async function GET(request: NextRequest) {
       .select('id, capacity, zone_id, is_active, table_zones(id, name)')
       .eq('restaurant_id', RESTAURANT_ID)
       .eq('is_active', true),
+    sb
+      .from('tables')
+      .select('id, capacity, zone_id, is_active, table_zones(id, name)')
+      .eq('restaurant_id', RESTAURANT_ID),
   ])
 
   const rawReservations = resRes.data || []
-  const allTables = tablesRes.data || []
+  const activeTables = tablesRes.data || []
+  const allTablesData = allTablesRes.data || []
 
   // Flatten nested tables/table_zones data into each reservation
   const reservations = rawReservations.map((r) => {
@@ -72,10 +77,13 @@ export async function GET(request: NextRequest) {
 
   const occupiedTableIds = new Set(occupiedTablePartySize.keys())
 
-  const totalCapacity = allTables.reduce((s, t) => s + t.capacity, 0)
+  // Total capacity from ALL tables (210+), not just active ones
+  const totalCapacity = allTablesData.reduce((s, t) => s + t.capacity, 0)
+  const totalTables = allTablesData.length
 
+  // Zone breakdown only counts active tables (those shown on the map)
   const zoneMap = new Map<string, { zone_id: string; zone_name: string; total_tables: number; occupied_tables: number; capacity: number; occupied_capacity: number }>()
-  for (const table of allTables) {
+  for (const table of activeTables) {
     const tzRaw = table.table_zones as unknown as Array<{ id: string; name: string }> | { id: string; name: string } | null
     const tz = Array.isArray(tzRaw) ? tzRaw[0] : tzRaw
     const zId = tz?.id || 'unassigned'
@@ -96,7 +104,6 @@ export async function GET(request: NextRequest) {
   const totalOccupiedCapacity = [...zoneMap.values()].reduce((s, z) => s + z.occupied_capacity, 0)
 
   const occupiedTables = occupiedTableIds.size
-  const totalTables = allTables.length
 
   return NextResponse.json({
     reservations,

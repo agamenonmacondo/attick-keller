@@ -25,7 +25,7 @@ export function MetricsPanel() {
         <AnimatedCard delay={0.12} className="bg-white rounded-xl border border-[#D7CCC8]"><PartySizeCard average={data.avgPartySize} /></AnimatedCard>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <AnimatedCard delay={0.18} className="bg-white rounded-xl border border-[#D7CCC8] p-5"><PeakHoursChart hours={data.peakHours} /></AnimatedCard>
+        <AnimatedCard delay={0.18} className="bg-white rounded-xl border border-[#D7CCC8] p-5"><PeakHoursChart hours={data.peakHours} totalCapacity={data.totalCapacity} /></AnimatedCard>
         <AnimatedCard delay={0.24} className="bg-white rounded-xl border border-[#D7CCC8] p-5"><SourceBreakdown sources={data.bySource} /></AnimatedCard>
       </div>
       <AnimatedCard delay={0.3} className="bg-white rounded-xl border border-[#D7CCC8] p-5"><DailyTrendChart trend={data.dailyTrend} /></AnimatedCard>

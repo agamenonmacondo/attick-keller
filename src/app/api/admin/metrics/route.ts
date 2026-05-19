@@ -17,13 +17,19 @@ export async function GET(request: NextRequest) {
   const since30 = fmt(thirtyDaysAgo)
   const since14 = fmt(fourteenDaysAgo)
 
-  const [recentRes, dailyRes] = await Promise.all([
+  const [recentRes, dailyRes, tablesRes] = await Promise.all([
     sb.from('reservations').select('time_start, source, status, party_size, date').eq('restaurant_id', RESTAURANT_ID).gte('date', since30),
     sb.from('reservations').select('date, status').eq('restaurant_id', RESTAURANT_ID).gte('date', since14).order('date', { ascending: true }),
+    sb.from('tables').select('id, capacity, is_active').eq('restaurant_id', RESTAURANT_ID),
   ])
 
   const recent = recentRes.data || []
   const daily = dailyRes.data || []
+  const allTables = tablesRes.data || []
+
+  // Total capacity across ALL tables (210+)
+  const totalCapacity = allTables.reduce((s, t) => s + (t.capacity || 0), 0)
+  const totalTables = allTables.length
 
   const hourCounts = new Map<string, number>()
   for (const r of recent) {
@@ -67,5 +73,7 @@ export async function GET(request: NextRequest) {
     noShow: { total: completed + noShows, no_shows: noShows, rate: noShowRate },
     avgPartySize,
     dailyTrend,
+    totalCapacity,
+    totalTables,
   })
 }

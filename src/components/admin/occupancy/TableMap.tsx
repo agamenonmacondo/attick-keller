@@ -95,7 +95,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
 
                 return (
                   <AnimatedCard key={tableId} delay={(zi * 8 + ti) * 0.03}>
-                    <div className="relative">
+                    <div className="relative" style={{ zIndex: isActive ? 50 : 'auto' }}>
                       <button
                         type="button"
                         onClick={() => setActiveTableId(isActive ? null : tableId)}
@@ -206,7 +206,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
 
               return (
                 <AnimatedCard key={tableId} delay={ti * 0.03}>
-                  <div className="relative">
+                  <div className="relative" style={{ zIndex: isActive ? 50 : 'auto' }}>
                     <button
                       type="button"
                       onClick={() => setActiveTableId(isActive ? null : tableId)}

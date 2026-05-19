@@ -97,7 +97,7 @@ export function TableActionPopover({
   return (
     <div
       ref={ref}
-      className="absolute z-30 left-1/2 -translate-x-1/2 top-full mt-1 w-56 rounded-xl border border-[#D7CCC8] bg-white shadow-lg"
+      className="absolute z-50 left-1/2 -translate-x-1/2 top-full mt-1 w-56 rounded-xl border border-[#D7CCC8] bg-white shadow-lg"
     >
       <div className="flex items-center justify-between border-b border-[#D7CCC8] px-3 py-2">
         <span className="text-xs font-medium text-[#3E2723]">Mesa {tableNumber} ({capacity}p)</span>

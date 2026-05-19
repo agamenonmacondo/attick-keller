@@ -46,6 +46,10 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
               {tables.map((table, ti) => {
                 const isOccupied = table.is_occupied as boolean
+                const hasUpcomingReservation = (table.reservations as Array<Record<string, unknown>> | undefined)?.some(
+                  (r) => r.is_upcoming === true || r.is_current === true
+                ) ?? false
+                const showReservationInfo = isOccupied || hasUpcomingReservation
                 const capacity = table.capacity as number
                 const number = String(table.number)
                 const nameAttick = table.name_attick as string | null
@@ -56,6 +60,38 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                 const reservationId = table.current_reservation_id as string | null
                 const tableId = String(table.id)
                 const isActive = activeTableId === tableId
+                const reservationStatus = table.reservation_status as string | null
+                const customerPhone = table.current_customer_phone as string | null
+                const customerEmail = table.current_customer_email as string | null
+                const specialRequests = table.current_special_requests as string | null
+
+                const statusColor = !showReservationInfo ? '#5C7A4D'
+                  : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? '#D4922A'
+                  : reservationStatus === 'seated' ? '#6B2737'
+                  : '#9E9E9E'
+
+                const statusLabel = !reservationStatus ? 'Libre'
+                  : reservationStatus === 'confirmed' ? 'Confirmado'
+                  : reservationStatus === 'pre_paid' ? 'Pre-pagado'
+                  : reservationStatus === 'seated' ? 'Sentado'
+                  : reservationStatus === 'completed' ? 'Completado'
+                  : reservationStatus === 'no_show' ? 'No asistió'
+                  : reservationStatus
+
+                const statusBadgeBg = !showReservationInfo ? 'bg-green-50'
+                  : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'bg-amber-50'
+                  : reservationStatus === 'seated' ? 'bg-[#6B2737]/10'
+                  : 'bg-gray-50'
+
+                const statusBadgeText = !showReservationInfo ? 'text-green-700'
+                  : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'text-[#D4922A]'
+                  : reservationStatus === 'seated' ? 'text-[#6B2737]'
+                  : 'text-gray-500'
+
+                const statusDotColor = !showReservationInfo ? 'bg-green-600'
+                  : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'bg-[#D4922A]'
+                  : reservationStatus === 'seated' ? 'bg-[#6B2737]'
+                  : 'bg-gray-400'
 
                 return (
                   <AnimatedCard key={tableId} delay={(zi * 8 + ti) * 0.03}>
@@ -65,21 +101,25 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                         onClick={() => setActiveTableId(isActive ? null : tableId)}
                         className={cn(
                           'w-full rounded-lg border-2 p-3 text-center cursor-pointer hover:shadow-md active:scale-[0.97]',
-                          isOccupied ? 'bg-[#6B2737]/10 border-[#6B2737]/30' : 'bg-white border-[#D7CCC8]',
+                          showReservationInfo ? 'bg-white border-[#D7CCC8]' : 'bg-white border-[#D7CCC8]',
                           isActive && 'ring-2 ring-[#6B2737]/40',
                         )}
                         style={{ transition: 'transform 160ms ease-out, box-shadow 200ms ease-out' }}
                       >
                         <div className="flex items-center justify-center gap-1 mb-1">
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: isOccupied ? '#6B2737' : '#5C7A4D' }} />
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: statusColor }} />
                           <span className="text-sm font-semibold text-[#3E2723]">{displayName}</span>
                           {nameAttick && <span className="text-[10px] text-[#8D6E63]">({number})</span>}
                         </div>
                         <p className="text-[10px] text-[#8D6E63]">{capacity}p</p>
-                        {isOccupied && (
+                        {showReservationInfo && (
                           <div className="mt-1 pt-1 border-t border-[#D7CCC8]/50">
                             <p className="text-[10px] font-medium text-[#3E2723] truncate">{customer}</p>
                             <p className="text-[9px] text-[#8D6E63]">{partySize}p · {time}</p>
+                            <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] ${statusBadgeBg} ${statusBadgeText}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${statusDotColor}`} />
+                              {statusLabel}
+                            </span>
                           </div>
                         )}
                       </button>
@@ -93,6 +133,10 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                           currentTime={time}
                           currentReservationId={reservationId}
                           currentPartySize={partySize}
+                          currentCustomerPhone={customerPhone}
+                          currentCustomerEmail={customerEmail}
+                          currentSpecialRequests={specialRequests}
+                          currentReservationStatus={reservationStatus}
                           unassignedReservations={unassignedReservations}
                           onAssign={handleAssign}
                           onUnassign={handleUnassign}
@@ -113,6 +157,10 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
             {unassignedTables.map((table, ti) => {
               const isOccupied = table.is_occupied as boolean
+              const hasUpcomingReservation = (table.reservations as Array<Record<string, unknown>> | undefined)?.some(
+                (r) => r.is_upcoming === true || r.is_current === true
+              ) ?? false
+              const showReservationInfo = isOccupied || hasUpcomingReservation
               const capacity = table.capacity as number
               const number = String(table.number)
               const nameAttick = table.name_attick as string | null
@@ -123,6 +171,38 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
               const reservationId = table.current_reservation_id as string | null
               const tableId = String(table.id)
               const isActive = activeTableId === tableId
+              const reservationStatus = table.reservation_status as string | null
+              const customerPhone = table.current_customer_phone as string | null
+              const customerEmail = table.current_customer_email as string | null
+              const specialRequests = table.current_special_requests as string | null
+
+              const statusColor = !showReservationInfo ? '#5C7A4D'
+                : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? '#D4922A'
+                : reservationStatus === 'seated' ? '#6B2737'
+                : '#9E9E9E'
+
+              const statusLabel = !reservationStatus ? 'Libre'
+                : reservationStatus === 'confirmed' ? 'Confirmado'
+                : reservationStatus === 'pre_paid' ? 'Pre-pagado'
+                : reservationStatus === 'seated' ? 'Sentado'
+                : reservationStatus === 'completed' ? 'Completado'
+                : reservationStatus === 'no_show' ? 'No asistió'
+                : reservationStatus
+
+              const statusBadgeBg = !showReservationInfo ? 'bg-green-50'
+                : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'bg-amber-50'
+                : reservationStatus === 'seated' ? 'bg-[#6B2737]/10'
+                : 'bg-gray-50'
+
+              const statusBadgeText = !showReservationInfo ? 'text-green-700'
+                : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'text-[#D4922A]'
+                : reservationStatus === 'seated' ? 'text-[#6B2737]'
+                : 'text-gray-500'
+
+              const statusDotColor = !showReservationInfo ? 'bg-green-600'
+                : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'bg-[#D4922A]'
+                : reservationStatus === 'seated' ? 'bg-[#6B2737]'
+                : 'bg-gray-400'
 
               return (
                 <AnimatedCard key={tableId} delay={ti * 0.03}>
@@ -132,14 +212,27 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                       onClick={() => setActiveTableId(isActive ? null : tableId)}
                       className={cn(
                         'w-full rounded-lg border-2 border-dashed p-3 text-center cursor-pointer hover:shadow-md active:scale-[0.97]',
-                        isOccupied ? 'bg-[#6B2737]/10 border-[#6B2737]/30' : 'bg-[#EFEBE9] border-[#D7CCC8]',
+                        isOccupied ? 'bg-white border-[#D7CCC8]' : 'bg-[#EFEBE9] border-[#D7CCC8]',
                         isActive && 'ring-2 ring-[#6B2737]/40',
                       )}
                       style={{ transition: 'transform 160ms ease-out, box-shadow 200ms ease-out' }}
                     >
-                      <span className="text-sm font-semibold text-[#3E2723]">{displayName}</span>
-                      {nameAttick && <span className="text-[10px] text-[#8D6E63] ml-0.5">({number})</span>}
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        {showReservationInfo && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: statusColor }} />}
+                        <span className="text-sm font-semibold text-[#3E2723]">{displayName}</span>
+                        {nameAttick && <span className="text-[10px] text-[#8D6E63] ml-0.5">({number})</span>}
+                      </div>
                       <p className="text-[10px] text-[#8D6E63]">{capacity}p</p>
+                      {showReservationInfo && (
+                        <div className="mt-1 pt-1 border-t border-[#D7CCC8]/50">
+                          <p className="text-[10px] font-medium text-[#3E2723] truncate">{customer}</p>
+                          <p className="text-[9px] text-[#8D6E63]">{partySize}p · {time}</p>
+                          <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] ${statusBadgeBg} ${statusBadgeText}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${statusDotColor}`} />
+                            {statusLabel}
+                          </span>
+                        </div>
+                      )}
                     </button>
                     {isActive && (
                       <TableActionPopover
@@ -151,6 +244,10 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                         currentTime={time}
                         currentReservationId={reservationId}
                         currentPartySize={partySize}
+                        currentCustomerPhone={customerPhone}
+                        currentCustomerEmail={customerEmail}
+                        currentSpecialRequests={specialRequests}
+                        currentReservationStatus={reservationStatus}
                         unassignedReservations={unassignedReservations}
                         onAssign={handleAssign}
                         onUnassign={handleUnassign}

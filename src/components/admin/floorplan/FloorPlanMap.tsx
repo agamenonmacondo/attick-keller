@@ -15,6 +15,9 @@ import {
   CaretDown,
   CaretRight,
   Sidebar,
+  WhatsappLogo,
+  EnvelopeSimple,
+  Note,
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils/cn'
 import { useFloorPlan, type FloorPlanFloor, type TableWithPosition, type UnpositionedTable, type TableStatus } from '@/lib/hooks/useFloorPlan'
@@ -137,7 +140,7 @@ function TableHotspot({
       <motion.button
         className={cn(
           'relative flex flex-col items-center justify-center rounded-full border-2 shadow-lg',
-          'w-11 h-11 lg:w-[52px] lg:h-[52px]',
+          'w-8 h-8 lg:w-[52px] lg:h-[52px]',
           editMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
         )}
         style={{
@@ -150,10 +153,10 @@ function TableHotspot({
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       >
         {/* Mobile: 2-line abbreviated label */}
-        <span className="lg:hidden text-[8px] font-bold leading-tight text-[#3E2723] text-center truncate max-w-[38px]">
+        <span className="lg:hidden text-[7px] font-bold leading-tight text-[#3E2723] text-center truncate max-w-[28px]">
           {shortName(fullName)}
         </span>
-        {nomen && <span className="lg:hidden text-[6px] text-[#8D6E63] leading-none">{nomen}</span>}
+        {nomen && <span className="lg:hidden text-[5px] text-[#8D6E63] leading-none">{nomen}</span>}
         {/* Desktop: single-line full label */}
         <span className="hidden lg:block text-[9px] font-bold leading-tight text-[#3E2723] text-center">
           {tableLabel(table)}
@@ -161,7 +164,7 @@ function TableHotspot({
         <span className="hidden lg:block text-[7px] text-[#8D6E63]">
           <Users size={7} className="inline" /> {table.capacity}
         </span>
-        <span className="lg:hidden text-[6px] text-[#8D6E63]">{table.capacity}p</span>
+        <span className="lg:hidden text-[5px] text-[#8D6E63]">{table.capacity}p</span>
         {/* Status dot */}
         <div
           className="absolute -top-0.5 -right-0.5 w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full border border-white"
@@ -257,10 +260,12 @@ function TableDetailSheet({
   table,
   zoneColor,
   onClose,
+  onAction,
 }: {
   table: TableWithPosition
   zoneColor: string
   onClose: () => void
+  onAction?: () => void
 }) {
   const prefersReduced = usePrefersReducedMotion()
   const statusColor = STATUS_COLORS[table.status]
@@ -288,7 +293,7 @@ function TableDetailSheet({
           <div className="w-10 h-1 rounded-full bg-[#D7CCC8]" />
         </div>
         <div className="px-4 pb-6 pt-1">
-          <TableDetailContent table={table} zoneColor={zoneColor} onClose={onClose} />
+          <TableDetailContent table={table} zoneColor={zoneColor} onClose={onClose} onAction={onAction} />
         </div>
       </motion.div>
     </>
@@ -301,12 +306,34 @@ function TableDetailContent({
   table,
   zoneColor,
   onClose,
+  onAction,
 }: {
   table: TableWithPosition
   zoneColor: string
   onClose: () => void
+  onAction?: () => void
 }) {
   const statusColor = STATUS_COLORS[table.status]
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  const [showDetails, setShowDetails] = useState(false)
+  const hasDetails = !!(table.customer_phone || table.customer_email || table.special_requests)
+
+  const handleStatusAction = async (newStatus: string) => {
+    if (!table.reservation_id) return
+    setActionLoading(newStatus)
+    try {
+      await fetch(`/api/admin/reservations/${table.reservation_id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      onAction?.()
+      onClose()
+    } finally {
+      setActionLoading(null)
+    }
+  }
 
   return (
     <>
@@ -344,12 +371,65 @@ function TableDetailContent({
             <span>Mesa combinable</span>
           </div>
         )}
+
+        {/* Customer info with expand/collapse */}
         {table.customer_name && (
-          <div className="flex items-center gap-2">
-            <Users size={14} className="text-[#8D6E63]" />
-            <span className="font-medium">{table.customer_name}</span>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Users size={14} className="text-[#8D6E63]" />
+              <span className="font-medium text-[#3E2723]">{table.customer_name}</span>
+            </div>
+
+            {hasDetails && (
+              <>
+                <button
+                  onClick={() => setShowDetails(!showDetails)}
+                  className="flex items-center gap-1 text-[10px] text-[#D4922A] ml-1"
+                >
+                  {showDetails ? <CaretDown size={10} /> : <CaretRight size={10} />}
+                  {showDetails ? 'Menos detalles' : 'Ver detalles'}
+                </button>
+                <AnimatePresence>
+                  {showDetails && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pl-6 space-y-1 border-l-2 border-[#D7CCC8] ml-1 mt-1">
+                        {table.customer_phone && (
+                          <a
+                            href={`https://wa.me/57${table.customer_phone.replace(/^0+/, '').replace(/^\+/, '')}`}
+                            target="_blank"
+                            className="flex items-center gap-1.5 text-xs text-[#25D366] hover:underline"
+                          >
+                            <WhatsappLogo size={12} weight="fill" /> {table.customer_phone}
+                          </a>
+                        )}
+                        {table.customer_email && (
+                          <a
+                            href={`mailto:${table.customer_email}`}
+                            className="flex items-center gap-1.5 text-xs text-[#1565C0] hover:underline"
+                          >
+                            <EnvelopeSimple size={12} /> {table.customer_email}
+                          </a>
+                        )}
+                        {table.special_requests && (
+                          <div className="flex items-start gap-1.5 text-xs text-[#5D4037] bg-[#F5EDE0] rounded-md px-2 py-1">
+                            <Note size={12} className="text-[#D4922A] shrink-0 mt-0.5" />
+                            <span>{table.special_requests}</span>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            )}
           </div>
         )}
+
         {table.time_range && (
           <div className="flex items-center gap-2">
             <Clock size={14} className="text-[#8D6E63]" />
@@ -362,10 +442,43 @@ function TableDetailContent({
             <span>{table.party_size} personas en la reserva</span>
           </div>
         )}
+        {table.reservation_id && (
+          <div className="flex items-center gap-2">
+            <Clock size={14} className="text-[#8D6E63]" />
+            <span className="text-xs text-[#8D6E63] font-mono">ID: {table.reservation_id.slice(0, 8)}…</span>
+          </div>
+        )}
         {!table.customer_name && table.status === 'available' && (
           <p className="text-[#5C7A4D] text-xs mt-2">Mesa disponible para asignar reservas</p>
         )}
       </div>
+
+      {/* Action buttons */}
+      {table.reservation_status && table.reservation_id && (
+        <div className="flex gap-2 mt-3 pt-3 border-t border-[#D7CCC8]/50">
+          {['confirmed', 'pre_paid'].includes(table.reservation_status) && (
+            <button
+              onClick={() => handleStatusAction('seated')}
+              disabled={actionLoading !== null}
+              className="flex-1 py-2 text-xs font-medium rounded-lg bg-green-700 text-white hover:bg-green-800 active:scale-[0.97] disabled:opacity-50"
+            >
+              {actionLoading === 'seated' ? '...' : 'Sentar'}
+            </button>
+          )}
+          {table.reservation_status === 'seated' && (
+            <button
+              onClick={() => handleStatusAction('completed')}
+              disabled={actionLoading !== null}
+              className="flex-1 py-2 text-xs font-medium rounded-lg bg-[#6B2737] text-white hover:bg-[#5C2230] active:scale-[0.97] disabled:opacity-50"
+            >
+              {actionLoading === 'completed' ? '...' : 'Liberar'}
+            </button>
+          )}
+          <button className="flex-1 py-2 text-xs font-medium rounded-lg border border-[#D7CCC8] text-[#3E2723] hover:bg-[#EFEBE9]">
+            Reasignar
+          </button>
+        </div>
+      )}
     </>
   )
 }
@@ -376,10 +489,12 @@ function TableDetailCard({
   table,
   zoneColor,
   onClose,
+  onAction,
 }: {
   table: TableWithPosition
   zoneColor: string
   onClose: () => void
+  onAction?: () => void
 }) {
   const prefersReduced = usePrefersReducedMotion()
   return (
@@ -389,7 +504,7 @@ function TableDetailCard({
       exit={prefersReduced ? undefined : { opacity: 0, y: 12 }}
       className="hidden lg:block bg-white rounded-xl border border-[#D7CCC8] shadow-lg p-4 min-w-[240px]"
     >
-      <TableDetailContent table={table} zoneColor={zoneColor} onClose={onClose} />
+      <TableDetailContent table={table} zoneColor={zoneColor} onClose={onClose} onAction={onAction} />
     </motion.div>
   )
 }
@@ -403,7 +518,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
   const [editMode, setEditMode] = useState(false)
   const [selectedTable, setSelectedTable] = useState<TableWithPosition | null>(null)
   const [saving, setSaving] = useState(false)
-  const [zoom, setZoom] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 1024) ? 0.6 : 1)
+  const [zoom, setZoom] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 1024) ? 0.4 : 1)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const pendingUpdates = useRef<Map<string, { position_x: number; position_y: number }>>(new Map())
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -413,7 +528,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
   // Reset zoom to mobile default when switching floors on mobile
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      setZoom(0.6)
+      setZoom(0.4)
     } else {
       setZoom(1)
     }
@@ -744,6 +859,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
                   table={selectedTable}
                   zoneColor={getZoneColor(zoneNameMap.get(selectedTable.id) ?? null)}
                   onClose={() => setSelectedTable(null)}
+                  onAction={refetch}
                 />
               </div>
             )}
@@ -756,6 +872,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
                 table={selectedTable}
                 zoneColor={getZoneColor(zoneNameMap.get(selectedTable.id) ?? null)}
                 onClose={() => setSelectedTable(null)}
+                onAction={refetch}
               />
             )}
           </AnimatePresence>

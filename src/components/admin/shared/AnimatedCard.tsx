@@ -1,40 +1,31 @@
 'use client'
 
-import { type ReactNode } from 'react'
-import { motion } from 'framer-motion'
-import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
-import { cn } from '@/lib/utils/cn'
-
-// Design system spring physics
-const SPRING = { stiffness: 100, damping: 20, mass: 1 }
-const EASE_OUT: [number, number, number, number] = [0.23, 1, 0.32, 1]
+import { useEffect, useRef, useState } from 'react'
 
 interface AnimatedCardProps {
-  children: ReactNode
-  className?: string
+  children: React.ReactNode
   delay?: number
+  className?: string
   hover?: boolean
 }
 
-export function AnimatedCard({ children, className, delay = 0, hover = false }: AnimatedCardProps) {
-  const prefersReduced = usePrefersReducedMotion()
+export function AnimatedCard({ children, delay = 0, className = '', hover }: AnimatedCardProps) {
+  const [isVisible, setIsVisible] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), delay * 1000)
+    return () => clearTimeout(timer)
+  }, [delay])
 
   return (
-    <motion.div
-      initial={prefersReduced ? false : { opacity: 0, scale: 0.95, y: 8 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{
-        type: 'spring',
-        ...SPRING,
-        delay,
-        duration: prefersReduced ? 0 : undefined,
-      }}
-      whileHover={hover ? { y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' } : undefined}
-      className={cn(className)}
+    <div
+      ref={ref}
+      className={`bg-white rounded-xl shadow-sm border border-stone-200 transition-all duration-500 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+      } ${hover ? 'hover:shadow-md hover:-translate-y-0.5' : ''} ${className}`}
     >
       {children}
-    </motion.div>
+    </div>
   )
 }
-
-export { SPRING }

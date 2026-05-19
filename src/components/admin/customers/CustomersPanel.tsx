@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Users, Plus } from '@phosphor-icons/react'
+import { Users, Plus, ChartBar, ListMagnifyingGlass } from '@phosphor-icons/react'
 import { useCustomers } from '@/lib/hooks/useCustomers'
 import { useCustomerDetail } from '@/lib/hooks/useCustomerDetail'
 import { useCustomerTags } from '@/lib/hooks/useCustomerTags'
@@ -10,6 +10,9 @@ import { CustomerFilters } from './CustomerFilters'
 import { CustomerList } from './CustomerList'
 import { CampaignComposer } from './CampaignComposer'
 import { CustomerDetail } from './CustomerDetail'
+import { CustomerAnalyticsPanel } from './CustomerAnalyticsPanel'
+
+type CustomerView = 'analytics' | 'list'
 
 interface CreateFormState {
   open: boolean
@@ -21,6 +24,7 @@ interface CreateFormState {
 }
 
 export function CustomersPanel() {
+  const [view, setView] = useState<CustomerView>('analytics')
   const { customers, total, totalPages, currentPage, loading, error, applyFilters, goToPage } = useCustomers()
   const { data: detail, loading: detailLoading, fetchCustomer, clear: clearDetail } = useCustomerDetail()
   const { tags, createTag } = useCustomerTags()
@@ -235,119 +239,151 @@ export function CustomersPanel() {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] lg:grid-cols-[240px_1fr_400px] gap-6">
-        {/* Columna 1: Filtros */}
-        <motion.div
-          initial={{ opacity: 0, x: -12 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.25 }}
-          className="bg-white rounded-xl border border-[#D7CCC8] p-4 h-fit lg:sticky lg:top-24"
+      {/* View toggle */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setView('analytics')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            view === 'analytics'
+              ? 'bg-[#6B2737] text-white'
+              : 'bg-white text-[#5D4037] border border-[#D7CCC8] hover:bg-[#F5EDE0]'
+          }`}
         >
-          <CustomerFilters
-            tags={tags}
-            initialFilters={currentFilters}
-            onApply={handleApplyFilters}
-            onCreateTag={() => {
-              const tagName = prompt('Nombre de la etiqueta:')
-              if (tagName) createTag(tagName)
-            }}
-          />
-        </motion.div>
-
-        {/* Columna 2: Lista */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.05 }}
+          <ChartBar size={16} weight={view === 'analytics' ? 'fill' : 'regular'} />
+          Analytics
+        </button>
+        <button
+          onClick={() => setView('list')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            view === 'list'
+              ? 'bg-[#6B2737] text-white'
+              : 'bg-white text-[#5D4037] border border-[#D7CCC8] hover:bg-[#F5EDE0]'
+          }`}
         >
-          <div className="flex justify-end mb-3">
-            <button
-              type="button"
-              onClick={() => setCreateForm(prev => ({ ...prev, open: true }))}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#6B2737] px-3.5 py-2 text-xs font-medium text-white hover:bg-[#6B2737]/90 active:scale-[0.97] transition-transform"
-            >
-              <Plus size={14} weight="bold" />
-              Nuevo cliente
-            </button>
-          </div>
-
-          <CustomerList
-            customers={customers}
-            loading={loading}
-            error={error}
-            page={currentPage}
-            total={total}
-            totalPages={totalPages}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
-            onSelectAll={selectAll}
-            onClearSelection={clearSelection}
-            onPageChange={goToPage}
-            onCustomerClick={handleCustomerClick}
-            activeCustomerId={activeCustomerId}
-            onSelectAllFiltered={handleSelectAllFiltered}
-            selectingAll={selectingAll}
-          />
-        </motion.div>
-
-        {/* Columna 3: Panel contextual */}
-        <AnimatePresence mode="wait">
-          {rightPanel === 'composer' && (
-            <motion.div
-              key="composer"
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 12 }}
-              transition={{ duration: 0.2 }}
-              className="lg:h-[calc(100vh-12rem)] lg:sticky lg:top-24"
-            >
-              <CampaignComposer
-                selectedCount={selectedIds.size}
-                filterTagIds={currentFilters.tag_ids.split(',').filter(Boolean)}
-                filterHasEmail={currentFilters.has_email}
-                filterMinVisits={currentFilters.min_visits}
-                filterLastVisitDays={currentFilters.last_visit_days}
-                tags={tags}
-                previewCustomer={previewCustomer}
-                onSend={handleSendCampaign}
-                onClose={clearSelection}
-              />
-            </motion.div>
-          )}
-
-          {rightPanel === 'detail' && (
-            <motion.div
-              key="detail"
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 12 }}
-              transition={{ duration: 0.2 }}
-            >
-              <CustomerDetail
-                data={detail!}
-                onClose={() => { setActiveCustomerId(null); clearDetail() }}
-                onRefresh={() => applyFilters(currentFilters)}
-              />
-            </motion.div>
-          )}
-
-          {rightPanel === 'empty' && (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="hidden lg:flex flex-col items-center justify-center rounded-xl border border-dashed border-[#D7CCC8] bg-white/30 py-16 text-center min-h-[200px]"
-            >
-              <div className="mb-3 text-[#BCAAA4]"><Users size={36} /></div>
-              <p className="text-sm font-medium text-[#3E2723]">Selecciona clientes</p>
-              <p className="mt-1 text-xs text-[#8D6E63] max-w-[240px]">
-                Usa los filtros y checkboxes para segmentar, luego crea una campana de email
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <ListMagnifyingGlass size={16} weight={view === 'list' ? 'fill' : 'regular'} />
+          Lista
+        </button>
       </div>
+
+      {/* Analytics view */}
+      {view === 'analytics' && <CustomerAnalyticsPanel />}
+
+      {/* List view */}
+      {view === 'list' && (
+        <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] lg:grid-cols-[240px_1fr_400px] gap-6">
+          {/* Columna 1: Filtros */}
+          <motion.div
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.25 }}
+            className="bg-white rounded-xl border border-[#D7CCC8] p-4 h-fit lg:sticky lg:top-24"
+          >
+            <CustomerFilters
+              tags={tags}
+              initialFilters={currentFilters}
+              onApply={handleApplyFilters}
+              onCreateTag={() => {
+                const tagName = prompt('Nombre de la etiqueta:')
+                if (tagName) createTag(tagName)
+              }}
+            />
+          </motion.div>
+
+          {/* Columna 2: Lista */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.05 }}
+          >
+            <div className="flex justify-end mb-3">
+              <button
+                type="button"
+                onClick={() => setCreateForm(prev => ({ ...prev, open: true }))}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#6B2737] px-3.5 py-2 text-xs font-medium text-white hover:bg-[#6B2737]/90 active:scale-[0.97] transition-transform"
+              >
+                <Plus size={14} weight="bold" />
+                Nuevo cliente
+              </button>
+            </div>
+
+            <CustomerList
+              customers={customers}
+              loading={loading}
+              error={error}
+              page={currentPage}
+              total={total}
+              totalPages={totalPages}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+              onSelectAll={selectAll}
+              onClearSelection={clearSelection}
+              onPageChange={goToPage}
+              onCustomerClick={handleCustomerClick}
+              activeCustomerId={activeCustomerId}
+              onSelectAllFiltered={handleSelectAllFiltered}
+              selectingAll={selectingAll}
+            />
+          </motion.div>
+
+          {/* Columna 3: Panel contextual */}
+          <AnimatePresence mode="wait">
+            {rightPanel === 'composer' && (
+              <motion.div
+                key="composer"
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ duration: 0.2 }}
+                className="lg:h-[calc(100vh-12rem)] lg:sticky lg:top-24"
+              >
+                <CampaignComposer
+                  selectedCount={selectedIds.size}
+                  filterTagIds={currentFilters.tag_ids.split(',').filter(Boolean)}
+                  filterHasEmail={currentFilters.has_email}
+                  filterMinVisits={currentFilters.min_visits}
+                  filterLastVisitDays={currentFilters.last_visit_days}
+                  tags={tags}
+                  previewCustomer={previewCustomer}
+                  onSend={handleSendCampaign}
+                  onClose={clearSelection}
+                />
+              </motion.div>
+            )}
+
+            {rightPanel === 'detail' && (
+              <motion.div
+                key="detail"
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ duration: 0.2 }}
+              >
+                <CustomerDetail
+                  data={detail!}
+                  onClose={() => { setActiveCustomerId(null); clearDetail() }}
+                  onRefresh={() => applyFilters(currentFilters)}
+                />
+              </motion.div>
+            )}
+
+            {rightPanel === 'empty' && (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="hidden lg:flex flex-col items-center justify-center rounded-xl border border-dashed border-[#D7CCC8] bg-white/30 py-16 text-center min-h-[200px]"
+              >
+                <div className="mb-3 text-[#BCAAA4]"><Users size={36} /></div>
+                <p className="text-sm font-medium text-[#3E2723]">Selecciona clientes</p>
+                <p className="mt-1 text-xs text-[#8D6E63] max-w-[240px]">
+                  Usa los filtros y checkboxes para segmentar, luego crea una campana de email
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   )
 }

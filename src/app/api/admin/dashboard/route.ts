@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const [resRes, tablesRes] = await Promise.all([
     sb
       .from('reservations')
-      .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, created_at, customers(id, email, full_name, phone)')
+      .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, created_at, customers(id, email, full_name, phone), tables(id, number, table_zones(id, name))')
       .eq('restaurant_id', RESTAURANT_ID)
       .eq('date', date)
       .in('status', ['pending', 'pre_paid', 'confirmed', 'seated'])
@@ -24,8 +24,20 @@ export async function GET(request: NextRequest) {
       .eq('is_active', true),
   ])
 
-  const reservations = resRes.data || []
+  const rawReservations = resRes.data || []
   const allTables = tablesRes.data || []
+
+  // Flatten nested tables/table_zones data into each reservation
+  const reservations = rawReservations.map((r) => {
+    const tbl = r.tables as unknown as { number: string; table_zones: Array<{ name: string }> | { name: string } | null } | null
+    const tz = tbl?.table_zones
+    const zoneObj = Array.isArray(tz) ? tz[0] : tz
+    return {
+      ...r,
+      table_number: tbl?.number ?? null,
+      zone_name: zoneObj?.name ?? null,
+    }
+  })
 
   const todayStats = {
     total: reservations.length,
@@ -64,8 +76,8 @@ export async function GET(request: NextRequest) {
 
   const zoneMap = new Map<string, { zone_id: string; zone_name: string; total_tables: number; occupied_tables: number; capacity: number; occupied_capacity: number }>()
   for (const table of allTables) {
-    const tzArr = table.table_zones as unknown as Array<{ id: string; name: string }> | null
-    const tz = Array.isArray(tzArr) ? tzArr[0] : null
+    const tzRaw = table.table_zones as unknown as Array<{ id: string; name: string }> | { id: string; name: string } | null
+    const tz = Array.isArray(tzRaw) ? tzRaw[0] : tzRaw
     const zId = tz?.id || 'unassigned'
     const zName = tz?.name || 'Sin zona'
     if (!zoneMap.has(zId)) {

@@ -271,7 +271,7 @@ export function TableActionPopover({
               type="button"
               onClick={() => handleAssign(r.id)}
               disabled={assigning}
-              className="w-full text-left rounded-lg border border-[var(--border-default)] px-2.5 py-2 text-xs hover:bg-[#EFEBE9] disabled:opacity-50"
+              className="w-full text-left rounded-lg border border-[var(--border-default)] px-2.5 py-2 text-xs hover:bg-[var(--bg-input)] disabled:opacity-50"
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium text-[var(--text-primary)]">{r.customer_name || 'Cliente'}</span>

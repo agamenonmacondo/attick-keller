@@ -142,7 +142,7 @@ export function ReservationDetail({
         transition={{ duration: 0.15 }}
         className="sticky top-20 flex flex-col items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)]/30 py-16 text-center"
       >
-        <div className="mb-3 text-[#BCAAA4]">
+        <div className="mb-3 text-[var(--text-muted)]">
           <Envelope size={32} />
         </div>
         <p className="text-sm font-medium text-[var(--text-primary)]">Selecciona una reserva</p>
@@ -245,7 +245,7 @@ export function ReservationDetail({
                     type="date"
                     value={form.date}
                     onChange={(e) => setForm(f => ({ ...f, date: e.target.value }))}
-                    className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -254,7 +254,7 @@ export function ReservationDetail({
                     <select
                       value={form.time_start}
                       onChange={(e) => setForm(f => ({ ...f, time_start: e.target.value }))}
-                      className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                     >
                       {SERVICE_HOURS.map(h => (
                         <option key={h} value={h}>{formatTime(h)}</option>
@@ -266,7 +266,7 @@ export function ReservationDetail({
                     <select
                       value={form.time_end}
                       onChange={(e) => setForm(f => ({ ...f, time_end: e.target.value }))}
-                      className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                     >
                       {SERVICE_HOURS.map(h => (
                         <option key={h} value={h}>{formatTime(h)}</option>
@@ -282,7 +282,7 @@ export function ReservationDetail({
                     max={20}
                     value={form.party_size}
                     onChange={(e) => setForm(f => ({ ...f, party_size: parseInt(e.target.value) || 1 }))}
-                    className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -290,7 +290,7 @@ export function ReservationDetail({
                   <select
                     value={form.zone_id}
                     onChange={(e) => setForm(f => ({ ...f, zone_id: e.target.value }))}
-                    className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                   >
                     <option value="">Sin cambio de zona</option>
                     {zones.map(z => (
@@ -304,7 +304,7 @@ export function ReservationDetail({
                     value={form.special_requests}
                     onChange={(e) => setForm(f => ({ ...f, special_requests: e.target.value }))}
                     rows={2}
-                    className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                   />
                 </div>
                 <div className="flex gap-2 pt-1">
@@ -321,7 +321,7 @@ export function ReservationDetail({
                   <button
                     type="button"
                     onClick={() => setEditing(false)}
-                    className="flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[#EFEBE9] active:scale-[0.97]"
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
                     style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                   >
                     <ArrowLeft size={16} />
@@ -358,7 +358,7 @@ export function ReservationDetail({
                 {reservation.special_requests && (
                   <div className="pt-1">
                     <dt className="text-[var(--text-secondary)]">Notas</dt>
-                    <dd className="mt-0.5 rounded-lg bg-[#EFEBE9] p-2 text-xs text-[var(--text-primary)]">
+                    <dd className="mt-0.5 rounded-lg bg-[var(--bg-input)] p-2 text-xs text-[var(--text-primary)]">
                       {reservation.special_requests}
                     </dd>
                   </div>
@@ -379,7 +379,7 @@ export function ReservationDetail({
                   className={cn(
                     'w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white active:scale-[0.97]',
                     action.variant === 'danger'
-                      ? 'bg-red-600 hover:bg-red-700'
+                      ? 'bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/80'
                       : action.variant === 'warning'
                       ? 'bg-[var(--color-ak-ambar)] hover:bg-[var(--color-ak-ambar)]/90'
                       : 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/90',

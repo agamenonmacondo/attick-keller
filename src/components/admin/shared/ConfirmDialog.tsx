@@ -98,7 +98,7 @@ export function ConfirmDialog({
                 className={cn(
                   'rounded-lg px-4 py-2 text-sm font-medium text-white active:scale-[0.97]',
                   confirmVariant === 'danger'
-                    ? 'bg-red-600 hover:bg-red-700'
+                    ? 'bg-[var(--color-danger)] hover:bg-red-700'
                     : 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/90',
                 )}
                 style={{ transition: 'transform 160ms ease-out' }}

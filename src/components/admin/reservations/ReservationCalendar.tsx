@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { CaretLeft, CaretRight } from '@phosphor-icons/react'
 import { addDays, getLocalDate } from '@/lib/utils/formatDate'
 import { cn } from '@/lib/utils/cn'
+import { useTheme } from '@/lib/ThemeProvider'
 
 interface ReservationCalendarProps {
   selectedDate: string
@@ -18,16 +19,17 @@ const MONTH_NAMES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ]
 
-function getHeatClass(count: number): string {
-  if (count === 0) return 'bg-[#EFEBE9]'
-  if (count <= 2) return 'bg-[var(--color-ak-borgona)]/15'
-  if (count <= 5) return 'bg-[var(--color-ak-borgona)]/35'
-  return 'bg-[var(--color-ak-borgona)]/60'
-}
-
-function getHeatTextClass(count: number): string {
-  if (count >= 6) return 'text-white'
-  return 'text-[var(--text-primary)]'
+function getHeatClasses(count: number, isDark: boolean): { bg: string; text: string } {
+  if (isDark) {
+    if (count === 0) return { bg: 'bg-[var(--bg-input)]', text: 'text-[var(--text-muted)]' }
+    if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/25', text: 'text-[#E8DDD0]' }
+    if (count <= 5) return { bg: 'bg-[var(--color-ak-borgona)]/45', text: 'text-white' }
+    return { bg: 'bg-[var(--color-ak-borgona)]/70', text: 'text-white' }
+  }
+  if (count === 0) return { bg: 'bg-[var(--bg-input)]', text: 'text-[var(--text-secondary)]' }
+  if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/15', text: 'text-[var(--text-primary)]' }
+  if (count <= 5) return { bg: 'bg-[var(--color-ak-borgona)]/35', text: 'text-[var(--text-primary)]' }
+  return { bg: 'bg-[var(--color-ak-borgona)]/60', text: 'text-white' }
 }
 
 export function ReservationCalendar({
@@ -35,26 +37,21 @@ export function ReservationCalendar({
   onDateChange,
   days,
 }: ReservationCalendarProps) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const today = getLocalDate()
 
-  // Parse the selected date to determine which month to show
   const viewYear = parseInt(selectedDate.substring(0, 4), 10)
-  const viewMonth = parseInt(selectedDate.substring(5, 7), 10) - 1 // 0-indexed
+  const viewMonth = parseInt(selectedDate.substring(5, 7), 10) - 1
 
   const calendarDays = useMemo(() => {
-    // First day of the month
     const firstDay = new Date(viewYear, viewMonth, 1)
-    // Day of week (0=Sun, adjust to Mon-start)
     let startDow = firstDay.getDay() - 1
-    if (startDow < 0) startDow = 6 // Sunday → 6
+    if (startDow < 0) startDow = 6
 
-    // Number of days in the month
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
-
-    // Build grid: 6 rows x 7 cols
     const cells: Array<{ date: string; day: number; inMonth: boolean }> = []
 
-    // Leading empty days from previous month
     const prevMonthDays = new Date(viewYear, viewMonth, 0).getDate()
     for (let i = startDow - 1; i >= 0; i--) {
       const d = prevMonthDays - i
@@ -64,14 +61,12 @@ export function ReservationCalendar({
       cells.push({ date: dateStr, day: d, inMonth: false })
     }
 
-    // Current month days
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
       cells.push({ date: dateStr, day: d, inMonth: true })
     }
 
-    // Trailing empty days from next month
-    const remaining = 42 - cells.length // 6 rows * 7 cols
+    const remaining = 42 - cells.length
     for (let d = 1; d <= remaining; d++) {
       const m = viewMonth + 2 > 12 ? 1 : viewMonth + 2
       const y = viewMonth + 2 > 12 ? viewYear + 1 : viewYear
@@ -119,7 +114,7 @@ export function ReservationCalendar({
           <button
             type="button"
             onClick={handleToday}
-            className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[#6B2737]/30 text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
+            className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[var(--color-ak-borgona)]/30 text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
             style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
           >
             Hoy
@@ -153,6 +148,7 @@ export function ReservationCalendar({
           const isSelected = cell.date === selectedDate
           const isToday = cell.date === today
           const isWeekend = i % 7 === 5 || i % 7 === 6
+          const heat = getHeatClasses(count, isDark)
 
           return (
             <motion.button
@@ -164,10 +160,10 @@ export function ReservationCalendar({
               onClick={() => onDateChange(cell.date)}
               className={cn(
                 'relative rounded-lg py-1.5 text-center text-xs font-medium cursor-pointer active:scale-[0.95]',
-                getHeatClass(count),
-                getHeatTextClass(count),
+                heat.bg,
+                heat.text,
                 !cell.inMonth && 'opacity-40',
-                isSelected && 'ring-2 ring-[#6B2737] ring-offset-1',
+                isSelected && 'ring-2 ring-[var(--color-ak-borgona)] ring-offset-1 ring-offset-[var(--bg-card)]',
                 isWeekend && cell.inMonth && 'font-semibold',
               )}
               style={{ transition: 'transform 120ms ease-out' }}
@@ -185,7 +181,7 @@ export function ReservationCalendar({
       {/* Legend */}
       <div className="flex items-center justify-center gap-3 mt-3">
         <div className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm bg-[#EFEBE9]" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-[var(--bg-input)]" />
           <span className="text-[9px] text-[var(--text-secondary)]">0</span>
         </div>
         <div className="flex items-center gap-1">

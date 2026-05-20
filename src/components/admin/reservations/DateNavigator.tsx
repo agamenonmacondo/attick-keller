@@ -89,7 +89,7 @@ export function DateNavigator({
                 isSelected
                   ? 'bg-[var(--color-ak-borgona)] text-white'
                   : 'text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 hover:text-[var(--text-primary)]',
-                isToday && !isSelected && 'border border-[#6B2737]/30',
+                isToday && !isSelected && 'border border-[var(--color-ak-borgona)]/30',
               )}
               style={{ transition: 'transform 160ms ease-out, color 200ms ease-out, background-color 200ms ease-out' }}
             >

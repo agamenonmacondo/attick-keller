@@ -103,7 +103,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                         className={cn(
                           'w-full rounded-lg border-2 p-3 text-center cursor-pointer hover:shadow-md active:scale-[0.97]',
                           showReservationInfo ? 'bg-[var(--bg-card)] border-[var(--border-default)]' : 'bg-[var(--bg-card)] border-[var(--border-default)]',
-                          isActive && 'ring-2 ring-[#6B2737]/40',
+                          isActive && 'ring-2 ring-[var(--color-ak-borgona)]/40',
                         )}
                         style={{ transition: 'transform 160ms ease-out, box-shadow 200ms ease-out' }}
                       >
@@ -214,8 +214,8 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                       onClick={() => setActiveTableId(isActive ? null : tableId)}
                       className={cn(
                         'w-full rounded-lg border-2 border-dashed p-3 text-center cursor-pointer hover:shadow-md active:scale-[0.97]',
-                        isOccupied ? 'bg-[var(--bg-card)] border-[var(--border-default)]' : 'bg-[#EFEBE9] border-[var(--border-default)]',
-                        isActive && 'ring-2 ring-[#6B2737]/40',
+                        isOccupied ? 'bg-[var(--bg-card)] border-[var(--border-default)]' : 'bg-[var(--bg-input)] border-[var(--border-default)]',
+                        isActive && 'ring-2 ring-[var(--color-ak-borgona)]/40',
                       )}
                       style={{ transition: 'transform 160ms ease-out, box-shadow 200ms ease-out' }}
                     >

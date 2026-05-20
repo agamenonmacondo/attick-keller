@@ -43,7 +43,7 @@ export function OccupancyGauge({ percent, capacityPercent, occupied, total, gues
           </div>
         </div>
         <p className="text-xs text-[var(--text-secondary)] mt-2">{occupied} de {total} mesas ocupadas</p>
-        <p className="text-[10px] text-[#BCAAA4] mt-0.5">{guestsSeated}/{totalCapacity} asientos · {capacityPercent}% capacidad</p>
+        <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{guestsSeated}/{totalCapacity} asientos · {capacityPercent}% capacidad</p>
       </div>
     </AnimatedCard>
   )

@@ -178,7 +178,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
             <label className="mb-1.5 block text-sm font-medium text-[var(--text-primary)]">Cliente</label>
 
             {selectedCustomer ? (
-              <div className="flex items-center justify-between rounded-lg border border-[#6B2737]/30 bg-[var(--color-ak-borgona)]/5 px-3 py-2">
+              <div className="flex items-center justify-between rounded-lg border border-[var(--color-ak-borgona)]/30 bg-[var(--color-ak-borgona)]/5 px-3 py-2">
                 <div>
                   <p className="text-sm font-medium text-[var(--text-primary)]">{selectedCustomer.full_name || 'Sin nombre'}</p>
                   <p className="text-xs text-[var(--text-secondary)]">{selectedCustomer.phone || selectedCustomer.email}</p>
@@ -196,7 +196,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
                       onChange={(e) => setCustomerSearch(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && searchCustomers()}
                       placeholder="Buscar por nombre o telefono..."
-                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] py-2 pl-9 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] py-2 pl-9 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                     />
                   </div>
                   <button
@@ -216,7 +216,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
                         key={c.id}
                         type="button"
                         onClick={() => { setCustomerId(c.id); setCustomerResults([]); }}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-[#EFEBE9] border-b border-[var(--border-default)]/50 last:border-0"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--bg-input)] border-b border-[var(--border-default)]/50 last:border-0"
                       >
                         <span className="font-medium text-[var(--text-primary)]">{c.full_name || 'Sin nombre'}</span>
                         <span className="ml-2 text-xs text-[var(--text-secondary)]">{c.phone || c.email}</span>
@@ -241,21 +241,21 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
                       placeholder="Nombre completo"
-                      className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                     />
                     <input
                       type="tel"
                       value={newPhone}
                       onChange={(e) => setNewPhone(e.target.value)}
                       placeholder="Telefono *"
-                      className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                     />
                     <input
                       type="email"
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
                       placeholder="Email (opcional)"
-                      className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                     />
                   </div>
                 )}
@@ -271,7 +271,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               />
             </div>
             <div>
@@ -279,7 +279,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
               <select
                 value={timeStart}
                 onChange={(e) => setTimeStart(e.target.value)}
-                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               >
                 {SERVICE_HOURS.map(h => (
                   <option key={h} value={h}>{formatTime(h)}</option>
@@ -291,7 +291,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
               <select
                 value={timeEnd}
                 onChange={(e) => setTimeEnd(e.target.value)}
-                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               >
                 {SERVICE_HOURS.map(h => (
                   <option key={h} value={h}>{formatTime(h)}</option>
@@ -310,7 +310,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
                 max={20}
                 value={partySize}
                 onChange={(e) => setPartySize(parseInt(e.target.value) || 1)}
-                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               />
             </div>
             <div>
@@ -318,7 +318,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
               <select
                 value={zoneId}
                 onChange={(e) => setZoneId(e.target.value)}
-                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               >
                 <option value="">Sin preferencia</option>
                 {zones.map(z => (
@@ -334,7 +334,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
             <select
               value={source}
               onChange={(e) => setSource(e.target.value)}
-              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
             >
               <option value="phone">Telefono</option>
               <option value="web">Web</option>
@@ -351,7 +351,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
               value={specialRequests}
               onChange={(e) => setSpecialRequests(e.target.value)}
               rows={2}
-              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               placeholder="Cumpleanos, alergias, etc."
             />
           </div>
@@ -369,7 +369,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[#EFEBE9] active:scale-[0.97]"
+              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
             >
               Cancelar

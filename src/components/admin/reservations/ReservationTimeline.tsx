@@ -67,7 +67,7 @@ export function ReservationTimeline({
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="h-16 animate-pulse rounded-lg bg-[#EFEBE9]"
+            className="h-16 animate-pulse rounded-lg bg-[var(--border-default)]"
           />
         ))}
       </div>
@@ -79,13 +79,13 @@ export function ReservationTimeline({
     return (
       <div className="py-16 text-center">
         <p className="text-sm text-[var(--text-secondary)]">Sin reservas para este dia</p>
-        <p className="mt-1 text-xs text-[#BCAAA4]">Selecciona otra fecha</p>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">Selecciona otra fecha</p>
       </div>
     )
   }
 
   return (
-    <div className="divide-y divide-[#D7CCC8]/50">
+    <div className="divide-y divide-[var(--border-default)]/50">
       {HOURS.map((hour) => {
         const slotReservations = slots[hour] || []
         if (slotReservations.length === 0) return null
@@ -127,8 +127,8 @@ export function ReservationTimeline({
                         onSelect(detailId === r.id ? null : r.id)
                       }
                       className={cn(
-                        'mb-1 flex cursor-pointer items-center gap-3 rounded-md border border-[var(--border-default)] px-3 py-2 hover:bg-[#EFEBE9] active:scale-[0.99]',
-                        detailId === r.id && 'bg-[#EFEBE9] ring-1 ring-[#6B2737]/20',
+                        'mb-1 flex cursor-pointer items-center gap-3 rounded-md border border-[var(--border-default)] px-3 py-2 hover:bg-[var(--bg-input)] active:scale-[0.99]',
+                        detailId === r.id && 'bg-[var(--bg-input)] ring-1 ring-[var(--color-ak-borgona)]/20',
                         cfg.bg,
                       )}
                       style={{
@@ -161,7 +161,7 @@ export function ReservationTimeline({
                               e.stopPropagation()
                               onSelect(r.id)
                             }}
-                            className="flex h-6 w-6 items-center justify-center rounded bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.97]"
+                            className="flex h-6 w-6 items-center justify-center rounded bg-[var(--color-success)] text-white hover:bg-[var(--color-success)]/80 active:scale-[0.97]"
                             style={{
                               transition:
                                 'transform 160ms ease-out, background-color 200ms ease-out',
@@ -176,7 +176,7 @@ export function ReservationTimeline({
                               e.stopPropagation()
                               onSelect(r.id)
                             }}
-                            className="flex h-6 w-6 items-center justify-center rounded bg-red-600 text-white hover:bg-red-700 active:scale-[0.97]"
+                            className="flex h-6 w-6 items-center justify-center rounded bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger)]/80 active:scale-[0.97]"
                             style={{
                               transition:
                                 'transform 160ms ease-out, background-color 200ms ease-out',

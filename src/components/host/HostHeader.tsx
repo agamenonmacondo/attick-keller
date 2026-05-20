@@ -19,41 +19,41 @@ export function HostHeader() {
   const timeStr = time.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <header className="bg-[var(--color-ak-madera)] text-[var(--bg-primary)] px-4 md:px-6 py-3">
-      <div className="max-w-[1600px] mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="font-['Playfair_Display'] text-lg md:text-xl font-bold">Attick & Keller</h1>
-          <span className="hidden sm:inline-block px-2.5 py-1 text-xs font-medium bg-[var(--color-ak-oliva)]/30 text-[var(--color-ak-oliva)] rounded-full border border-[var(--color-ak-oliva)]/40">
+    <header className="sticky top-0 z-20 bg-[var(--color-ak-madera)]/95 backdrop-blur-sm border-b border-[var(--border-default)]">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="font-['Playfair_Display'] text-xl font-bold text-[var(--color-ak-dorado)]">Attick & Keller</h1>
+          <span className="text-[10px] text-[var(--text-primary)] bg-[var(--color-ak-madera)]/60 px-2 py-0.5 rounded font-medium uppercase tracking-wider">
             Host
           </span>
           {isAdmin && (
             <Link
               href="/admin"
-              className="hidden sm:inline text-xs text-[var(--text-secondary)] hover:text-white transition-colors duration-200"
+              className="hidden sm:inline text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"
             >
               Panel
             </Link>
           )}
         </div>
-        <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-3">
           <button
-            type="button"
             onClick={toggleTheme}
-            className="flex items-center justify-center h-8 w-8 rounded-full border border-[var(--border-light)]/40 text-[var(--bg-primary)] hover:bg-[var(--bg-primary)]/10 active:scale-[0.97]"
-            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--color-ak-dorado)] hover:bg-[var(--bg-hover)] transition-all duration-200 active:scale-[0.95]"
             aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
           >
-            {theme === 'dark' ? <Sun size={18} weight="fill" /> : <Moon size={18} weight="fill" />}
+            {theme === 'dark' ? <Sun size={18} weight="duotone" /> : <Moon size={18} weight="duotone" />}
           </button>
-          <div className="flex items-center gap-2 text-[var(--border-default)]">
-            <Clock size={18} />
-            <span className="font-mono text-base md:text-lg font-bold text-[var(--bg-primary)]">{timeStr}</span>
+          <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+            <Clock size={16} />
+            <span className="font-mono text-sm font-bold text-[var(--color-ak-dorado)]">{timeStr}</span>
           </div>
           <button
             onClick={signOut}
-            className="flex items-center gap-1.5 text-sm text-[var(--border-default)] hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors active:scale-[0.97]"
+            style={{ transition: 'transform 160ms ease-out, color 200ms ease-out' }}
           >
-            <SignOut size={18} />
+            <SignOut size={16} />
             <span className="hidden sm:inline">Salir</span>
           </button>
         </div>

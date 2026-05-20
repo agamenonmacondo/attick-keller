@@ -124,7 +124,7 @@ export function HostShell() {
           <button
             onClick={() => setActiveTab('mesas')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 transition-colors duration-200 ${
-              activeTab === 'mesas' ? 'border-[var(--color-ak-borgona)] text-[var(--color-ak-madera)]' : 'border-transparent text-[var(--text-secondary)]'
+              activeTab === 'mesas' ? 'border-[var(--color-ak-borgona)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)]'
             }`}
             style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
           >
@@ -134,7 +134,7 @@ export function HostShell() {
           <button
             onClick={() => setActiveTab('reservas')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 transition-colors duration-200 ${
-              activeTab === 'reservas' ? 'border-[var(--color-ak-borgona)] text-[var(--color-ak-madera)]' : 'border-transparent text-[var(--text-secondary)]'
+              activeTab === 'reservas' ? 'border-[var(--color-ak-borgona)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)]'
             }`}
             style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
           >
@@ -144,7 +144,7 @@ export function HostShell() {
           <button
             onClick={() => setActiveTab('plano')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 transition-colors duration-200 ${
-              activeTab === 'plano' ? 'border-[var(--color-ak-borgona)] text-[var(--color-ak-madera)]' : 'border-transparent text-[var(--text-secondary)]'
+              activeTab === 'plano' ? 'border-[var(--color-ak-borgona)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)]'
             }`}
             style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
           >
@@ -156,7 +156,7 @@ export function HostShell() {
 
       {/* Content */}
       <motion.div
-        className="flex-1 max-w-[1600px] mx-auto w-full px-4 md:px-6 py-4"
+        className="flex-1 max-w-[1400px] mx-auto w-full px-4 md:px-6 py-4"
         variants={prefersReduced ? undefined : containerVariants}
         initial="hidden"
         animate="visible"

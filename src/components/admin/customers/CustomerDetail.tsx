@@ -122,28 +122,28 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
       initial={{ opacity: 0, transform: 'translateX(30px)' }}
       animate={{ opacity: 1, transform: 'translateX(0)' }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="rounded-xl border border-[#D7CCC8] bg-white"
+      className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)]"
     >
       {/* Header */}
-      <div className="flex items-start justify-between px-5 py-4 border-b border-[#D7CCC8]">
+      <div className="flex items-start justify-between px-5 py-4 border-b border-[var(--border-default)]">
         <div className="flex-1 min-w-0">
           {editing ? (
             <input
               type="text"
               value={form.full_name}
               onChange={(e) => setForm(f => ({ ...f, full_name: e.target.value }))}
-              className="w-full font-['Playfair_Display'] text-lg font-semibold text-[#3E2723] bg-[#EFEBE9] border border-[#D7CCC8] rounded-lg px-3 py-1 focus:border-[#6B2737] focus:outline-none"
+              className="w-full font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)] bg-[#EFEBE9] border border-[var(--border-default)] rounded-lg px-3 py-1 focus:border-[#6B2737] focus:outline-none"
               placeholder="Nombre completo"
             />
           ) : (
-            <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[#3E2723]">
+            <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">
               {customer.full_name || 'Cliente'}
             </h2>
           )}
           <div className="flex items-center gap-2 mt-1">
             {stats && <TierBadge tier={stats.loyalty_tier} />}
             {stats?.is_recurring && (
-              <span className="text-[10px] text-[#5C7A4D] font-medium">Recurrente</span>
+              <span className="text-[10px] text-[var(--color-ak-oliva)] font-medium">Recurrente</span>
             )}
           </div>
         </div>
@@ -152,7 +152,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8D6E63] hover:bg-[#D7CCC8]/50 active:scale-[0.97]"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
               aria-label="Editar cliente"
             >
@@ -162,7 +162,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8D6E63] hover:bg-[#D7CCC8]/50 active:scale-[0.97]"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
             style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
             aria-label="Cerrar detalle"
           >
@@ -193,21 +193,21 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
           {editing ? (
             <div className="space-y-2">
               <div>
-                <label className="mb-1 block text-xs text-[#8D6E63]">Telefono</label>
+                <label className="mb-1 block text-xs text-[var(--text-secondary)]">Telefono</label>
                 <input
                   type="tel"
                   value={form.phone}
                   onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
-                  className="w-full rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-[#8D6E63]">Email</label>
+                <label className="mb-1 block text-xs text-[var(--text-secondary)]">Email</label>
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-                  className="w-full rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
                 />
               </div>
               <div className="flex gap-2 pt-1">
@@ -215,7 +215,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#6B2737] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#6B2737]/90 active:scale-[0.97] disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] disabled:opacity-50"
                   style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                 >
                   <FloppyDisk size={16} />
@@ -224,7 +224,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
                 <button
                   type="button"
                   onClick={() => setEditing(false)}
-                  className="flex items-center justify-center gap-1.5 rounded-lg border border-[#D7CCC8] px-4 py-2.5 text-sm font-medium text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97]"
+                  className="flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[#EFEBE9] active:scale-[0.97]"
                   style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                 >
                   <ArrowLeft size={16} />
@@ -236,14 +236,14 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
             <div className="space-y-2">
               <div className="flex flex-col gap-1.5">
                 {customer.phone && (
-                  <div className="flex items-center gap-2 text-sm text-[#3E2723]">
-                    <Phone size={14} className="text-[#8D6E63] shrink-0" />
+                  <div className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
+                    <Phone size={14} className="text-[var(--text-secondary)] shrink-0" />
                     <span className="font-medium">{customer.phone}</span>
                   </div>
                 )}
                 {customer.email && (
-                  <div className="flex items-center gap-2 text-sm text-[#3E2723]">
-                    <EnvelopeSimple size={14} className="text-[#8D6E63] shrink-0" />
+                  <div className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
+                    <EnvelopeSimple size={14} className="text-[var(--text-secondary)] shrink-0" />
                     <span className="font-medium truncate">{customer.email}</span>
                   </div>
                 )}
@@ -261,18 +261,18 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
               {reservations.slice(0, 5).map((r, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between rounded-lg border border-[#D7CCC8] px-3 py-2"
+                  className="flex items-center justify-between rounded-lg border border-[var(--border-default)] px-3 py-2"
                 >
-                  <div className="text-sm text-[#3E2723]">
+                  <div className="text-sm text-[var(--text-primary)]">
                     {formatDate(String(r.date || ''), 'weekday')}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-[#8D6E63]">{String(r.party_size || '')}p</span>
+                    <span className="text-xs text-[var(--text-secondary)]">{String(r.party_size || '')}p</span>
                     <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                      r.status === 'completed' ? 'bg-[#5C7A4D]/10 text-[#5C7A4D]' :
-                      r.status === 'cancelled' ? 'bg-red-50 text-red-600' :
-                      r.status === 'no_show' ? 'bg-red-50 text-red-600' :
-                      'bg-amber-50 text-amber-700'
+                      r.status === 'completed' ? 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)]' :
+                      r.status === 'cancelled' ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)]' :
+                      r.status === 'no_show' ? 'bg-[var(--color-danger)]/10 text-[var(--color-danger)]' :
+                      'bg-[var(--color-warning)]/10 text-[var(--color-warning)]'
                     }`}>
                       {String(r.status || '')}
                     </span>
@@ -327,7 +327,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
                     e.target.value = ''
                   }
                 }}
-                className="w-full rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-1.5 text-xs text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-1.5 text-xs text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
               >
                 <option value="">+ Agregar etiqueta</option>
                 {unassignedTags.map(tag => (
@@ -350,7 +350,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
             <SectionHeading>Preferencias</SectionHeading>
             <div className="flex flex-wrap gap-2 mt-2">
               {Object.entries(customer.preferences).map(([key, value]) => (
-                <span key={key} className="rounded-full bg-[#EFEBE9] px-2.5 py-1 text-xs text-[#3E2723]">
+                <span key={key} className="rounded-full bg-[#EFEBE9] px-2.5 py-1 text-xs text-[var(--text-primary)]">
                   {key}: {String(value)}
                 </span>
               ))}
@@ -358,7 +358,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
           </div>
         )}
 
-        <p className="text-[10px] text-[#8D6E63]">
+        <p className="text-[10px] text-[var(--text-secondary)]">
           Cliente desde {formatDate(customer.created_at, 'short')}
         </p>
       </div>
@@ -378,10 +378,10 @@ function StatCard({
   variant?: 'default' | 'warning'
 }) {
   return (
-    <div className="rounded-lg border border-[#D7CCC8] bg-[#EFEBE9]/50 p-3">
-      <div className={`mb-1 ${variant === 'warning' ? 'text-red-500' : 'text-[#8D6E63]'}`}>{icon}</div>
-      <p className="text-xs text-[#8D6E63]">{label}</p>
-      <p className={`text-sm font-medium ${variant === 'warning' ? 'text-red-600' : 'text-[#3E2723]'}`}>{value}</p>
+    <div className="rounded-lg border border-[var(--border-default)] bg-[#EFEBE9]/50 p-3">
+      <div className={`mb-1 ${variant === 'warning' ? 'text-red-500' : 'text-[var(--text-secondary)]'}`}>{icon}</div>
+      <p className="text-xs text-[var(--text-secondary)]">{label}</p>
+      <p className={`text-sm font-medium ${variant === 'warning' ? 'text-[var(--color-danger)]' : 'text-[var(--text-primary)]'}`}>{value}</p>
     </div>
   )
 }

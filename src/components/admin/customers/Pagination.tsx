@@ -65,12 +65,12 @@ export function Pagination({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
       {/* Per page selector */}
-      <div className="flex items-center gap-2 text-xs text-[#8D6E63]">
+      <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
         <span>Mostrar</span>
         <select
           value={perPage}
           onChange={(e) => onPerPageChange(parseInt(e.target.value, 10))}
-          className="rounded-lg border border-[#D7CCC8] bg-white px-2 py-1 text-xs text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+          className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
         >
           {PER_PAGE_OPTIONS.map((opt) => (
             <option key={opt} value={opt}>{opt}</option>
@@ -80,7 +80,7 @@ export function Pagination({
       </div>
 
       {/* Info text */}
-      <span className="text-xs text-[#8D6E63]">
+      <span className="text-xs text-[var(--text-secondary)]">
         Mostrando {from}-{to} de {total.toLocaleString()} clientes
       </span>
 
@@ -91,7 +91,7 @@ export function Pagination({
             type="button"
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
-            className="flex items-center justify-center h-7 w-7 rounded-lg border border-[#D7CCC8] text-[#8D6E63] hover:bg-[#EFEBE9] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[#EFEBE9] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             <CaretLeft size={12} />
           </button>
@@ -107,8 +107,8 @@ export function Pagination({
                 className={cn(
                   'flex items-center justify-center h-7 w-7 rounded-lg text-xs font-medium transition-colors',
                   p === page
-                    ? 'bg-[#6B2737] text-white'
-                    : 'text-[#8D6E63] hover:bg-[#EFEBE9] border border-transparent'
+                    ? 'bg-[var(--color-ak-borgona)] text-white'
+                    : 'text-[var(--text-secondary)] hover:bg-[#EFEBE9] border border-transparent'
                 )}
               >
                 {p}
@@ -120,14 +120,14 @@ export function Pagination({
             type="button"
             disabled={page >= totalPages}
             onClick={() => onPageChange(page + 1)}
-            className="flex items-center justify-center h-7 w-7 rounded-lg border border-[#D7CCC8] text-[#8D6E63] hover:bg-[#EFEBE9] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[#EFEBE9] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             <CaretRight size={12} />
           </button>
 
           {totalPages > 10 && (
             <div className="flex items-center gap-1 ml-2">
-              <span className="text-[10px] text-[#8D6E63]">Ir a pagina</span>
+              <span className="text-[10px] text-[var(--text-secondary)]">Ir a pagina</span>
               <input
                 type="number"
                 min={1}
@@ -135,7 +135,7 @@ export function Pagination({
                 value={gotoInput}
                 onChange={(e) => setGotoInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleGoto()}
-                className="w-12 rounded-lg border border-[#D7CCC8] px-1.5 py-1 text-xs text-[#3E2723] text-center focus:border-[#6B2737] focus:outline-none"
+                className="w-12 rounded-lg border border-[var(--border-default)] px-1.5 py-1 text-xs text-[var(--text-primary)] text-center focus:border-[#6B2737] focus:outline-none"
               />
             </div>
           )}

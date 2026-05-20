@@ -50,7 +50,7 @@ export function PeakHoursChart({ hours, totalCapacity }: PeakHoursChartProps) {
 
           return (
             <div key={hour} className="flex items-center gap-3">
-              <span className="text-[11px] font-mono text-[#8D6E63] w-14 text-right shrink-0">{formatTime(hour)}</span>
+              <span className="text-[11px] font-mono text-[var(--text-secondary)] w-14 text-right shrink-0">{formatTime(hour)}</span>
               <div className="flex-1 h-5 bg-[#EFEBE9] rounded overflow-hidden">
                 <div className="h-full rounded" style={{
                   width: `${widthPct}%`,
@@ -58,11 +58,11 @@ export function PeakHoursChart({ hours, totalCapacity }: PeakHoursChartProps) {
                   transition: 'width 500ms cubic-bezier(0.23, 1, 0.32, 1)',
                 }} />
               </div>
-              <span className="text-[11px] font-mono text-[#3E2723] w-12 text-right shrink-0">{count} <span className="text-[9px] text-[#8D6E63]">({capacityPct}%)</span></span>
+              <span className="text-[11px] font-mono text-[var(--text-primary)] w-12 text-right shrink-0">{count} <span className="text-[9px] text-[var(--text-secondary)]">({capacityPct}%)</span></span>
             </div>
           )
         })}
-        {hours.length === 0 && <p className="text-xs text-[#8D6E63] text-center py-4">Sin datos suficientes</p>}
+        {hours.length === 0 && <p className="text-xs text-[var(--text-secondary)] text-center py-4">Sin datos suficientes</p>}
       </div>
     </div>
   )

@@ -120,7 +120,7 @@ export function TablesPanel() {
   if (loading && !data) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Spinner size={32} className="animate-spin text-[#8D6E63]" />
+        <Spinner size={32} className="animate-spin text-[var(--text-secondary)]" />
       </div>
     )
   }
@@ -129,15 +129,15 @@ export function TablesPanel() {
   if (error && !data) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-danger)]/10">
           <Warning size={24} className="text-red-500" />
         </div>
-        <p className="text-sm font-medium text-[#3E2723]">Error al cargar</p>
-        <p className="mt-1 text-xs text-[#8D6E63]">{error}</p>
+        <p className="text-sm font-medium text-[var(--text-primary)]">Error al cargar</p>
+        <p className="mt-1 text-xs text-[var(--text-secondary)]">{error}</p>
         <button
           type="button"
           onClick={refetch}
-          className="mt-4 rounded-lg bg-[#6B2737] px-4 py-2 text-sm font-medium text-white hover:bg-[#6B2737]/90"
+          className="mt-4 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90"
         >
           Reintentar
         </button>
@@ -172,7 +172,7 @@ export function TablesPanel() {
         <button
           type="button"
           onClick={() => openTableEditor()}
-          className="flex items-center gap-1.5 rounded-lg bg-[#6B2737] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#6B2737]/90 active:scale-[0.97]"
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         >
           <Plus size={16} weight="bold" />
@@ -181,7 +181,7 @@ export function TablesPanel() {
         <button
           type="button"
           onClick={() => openCombinationEditor()}
-          className="flex items-center gap-1.5 rounded-lg border border-[#6B2737] px-4 py-2.5 text-sm font-medium text-[#6B2737] hover:bg-[#6B2737]/10 active:scale-[0.97]"
+          className="flex items-center gap-1.5 rounded-lg border border-[#6B2737] px-4 py-2.5 text-sm font-medium text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         >
           <Plus size={16} weight="bold" />
@@ -195,7 +195,7 @@ export function TablesPanel() {
         const isExpanded = expandedZones.has(zone.id)
 
         return (
-          <AnimatedCard key={zone.id} delay={zi * 0.06} className="rounded-xl border border-[#D7CCC8] bg-white overflow-hidden">
+          <AnimatedCard key={zone.id} delay={zi * 0.06} className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
             {/* Zone header */}
             <div
               className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[#EFEBE9]/50"
@@ -203,17 +203,17 @@ export function TablesPanel() {
               style={{ transition: 'background-color 200ms ease-out' }}
             >
               <div className="flex items-center gap-2">
-                {isExpanded ? <CaretDown size={16} className="text-[#8D6E63]" /> : <CaretRight size={16} className="text-[#8D6E63]" />}
-                <h3 className="font-['Playfair_Display'] text-base font-semibold text-[#3E2723]">
+                {isExpanded ? <CaretDown size={16} className="text-[var(--text-secondary)]" /> : <CaretRight size={16} className="text-[var(--text-secondary)]" />}
+                <h3 className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
                   {zone.name}
                 </h3>
-                <span className="text-xs text-[#8D6E63]">({zoneTables.length} {zoneTables.length === 1 ? 'mesa' : 'mesas'})</span>
+                <span className="text-xs text-[var(--text-secondary)]">({zoneTables.length} {zoneTables.length === 1 ? 'mesa' : 'mesas'})</span>
               </div>
               <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                 <button
                   type="button"
                   onClick={() => openTableEditor(undefined, zone.id)}
-                  className="flex h-7 w-7 items-center justify-center rounded text-[#8D6E63] hover:bg-[#D7CCC8]/50"
+                  className="flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50"
                   title="Agregar mesa a esta zona"
                 >
                   <Plus size={14} />
@@ -221,7 +221,7 @@ export function TablesPanel() {
                 <button
                   type="button"
                   onClick={() => openZoneEditor(zone)}
-                  className="flex h-7 w-7 items-center justify-center rounded text-[#8D6E63] hover:bg-[#D7CCC8]/50"
+                  className="flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50"
                   title="Editar zona"
                 >
                   <span className="text-xs font-medium">&#9998;</span>
@@ -229,7 +229,7 @@ export function TablesPanel() {
                 <button
                   type="button"
                   onClick={() => setConfirmDelete({ type: 'zone', id: zone.id, label: zone.name })}
-                  className="flex h-7 w-7 items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600"
+                  className="flex h-7 w-7 items-center justify-center rounded text-red-400 hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]"
                   title="Eliminar zona"
                 >
                   <Trash size={14} />
@@ -247,9 +247,9 @@ export function TablesPanel() {
                   transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
                   className="overflow-hidden"
                 >
-                  <div className="border-t border-[#D7CCC8] px-5 py-4">
+                  <div className="border-t border-[var(--border-default)] px-5 py-4">
                     {zoneTables.length === 0 ? (
-                      <p className="py-4 text-center text-sm text-[#8D6E63]">Sin mesas en esta zona</p>
+                      <p className="py-4 text-center text-sm text-[var(--text-secondary)]">Sin mesas en esta zona</p>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                         {zoneTables.map((table, ti) => (
@@ -278,7 +278,7 @@ export function TablesPanel() {
 
       {/* Unassigned tables */}
       {tablesByZone.has('unassigned') && (
-        <AnimatedCard delay={sortedZones.length * 0.06} className="rounded-xl border border-[#D7CCC8] bg-white overflow-hidden">
+        <AnimatedCard delay={sortedZones.length * 0.06} className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
           <div className="px-5 py-4">
             <SectionHeading>Sin zona ({tablesByZone.get('unassigned')!.length} mesas)</SectionHeading>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-3">
@@ -303,23 +303,23 @@ export function TablesPanel() {
 
       {/* Combinations section */}
       {combinations.length > 0 && (
-        <AnimatedCard delay={(sortedZones.length + 1) * 0.06} className="rounded-xl border border-[#D7CCC8] bg-white overflow-hidden">
+        <AnimatedCard delay={(sortedZones.length + 1) * 0.06} className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
           <div
             className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[#EFEBE9]/50"
             onClick={() => setExpandedCombos(!expandedCombos)}
             style={{ transition: 'background-color 200ms ease-out' }}
           >
             <div className="flex items-center gap-2">
-              {expandedCombos ? <CaretDown size={16} className="text-[#8D6E63]" /> : <CaretRight size={16} className="text-[#8D6E63]" />}
-              <h3 className="font-['Playfair_Display'] text-base font-semibold text-[#3E2723]">
+              {expandedCombos ? <CaretDown size={16} className="text-[var(--text-secondary)]" /> : <CaretRight size={16} className="text-[var(--text-secondary)]" />}
+              <h3 className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
                 Combinaciones
               </h3>
-              <span className="text-xs text-[#8D6E63]">({combinations.length})</span>
+              <span className="text-xs text-[var(--text-secondary)]">({combinations.length})</span>
             </div>
             <button
               type="button"
               onClick={e => { e.stopPropagation(); openCombinationEditor() }}
-              className="flex h-7 w-7 items-center justify-center rounded text-[#8D6E63] hover:bg-[#D7CCC8]/50"
+              className="flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50"
               title="Nueva combinacion"
             >
               <Plus size={14} />
@@ -334,28 +334,28 @@ export function TablesPanel() {
                 transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
                 className="overflow-hidden"
               >
-                <div className="border-t border-[#D7CCC8] px-5 py-4 space-y-2">
+                <div className="border-t border-[var(--border-default)] px-5 py-4 space-y-2">
                   {combinations.map(combo => (
                     <div
                       key={combo.id}
                       className={`flex items-center justify-between rounded-lg border p-3 ${
-                        combo.is_active ? 'border-[#D7CCC8]' : 'border-red-100 bg-red-50/30'
+                        combo.is_active ? 'border-[var(--border-default)]' : 'border-red-100 bg-[var(--color-danger)]/10/30'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-[#3E2723]">
+                        <span className="text-sm font-medium text-[var(--text-primary)]">
                           {combo.name || `Combinacion ${combo.table_ids.length} mesas`}
                         </span>
-                        <span className="text-xs text-[#8D6E63]">{combo.combined_capacity} pers.</span>
+                        <span className="text-xs text-[var(--text-secondary)]">{combo.combined_capacity} pers.</span>
                         {!combo.is_active && (
-                          <span className="rounded-full bg-red-50 px-2 py-0.5 text-[9px] font-medium text-red-500">Inactiva</span>
+                          <span className="rounded-full bg-[var(--color-danger)]/10 px-2 py-0.5 text-[9px] font-medium text-red-500">Inactiva</span>
                         )}
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => openCombinationEditor(combo)}
-                          className="flex h-7 w-7 items-center justify-center rounded text-[#8D6E63] hover:bg-[#D7CCC8]/50"
+                          className="flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50"
                           title="Editar combinacion"
                         >
                           <span className="text-xs font-medium">&#9998;</span>
@@ -363,7 +363,7 @@ export function TablesPanel() {
                         <button
                           type="button"
                           onClick={() => setConfirmDelete({ type: 'combination', id: combo.id, label: combo.name || 'Combinacion' })}
-                          className="flex h-7 w-7 items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600"
+                          className="flex h-7 w-7 items-center justify-center rounded text-red-400 hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]"
                           title="Eliminar combinacion"
                         >
                           <Trash size={14} />
@@ -391,7 +391,7 @@ export function TablesPanel() {
       <button
         type="button"
         onClick={() => openZoneEditor()}
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#6B2737] text-white shadow-lg hover:bg-[#6B2737]/90 active:scale-[0.93]"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-ak-borgona)] text-white shadow-lg hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.93]"
         style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         title="Nueva zona"
       >

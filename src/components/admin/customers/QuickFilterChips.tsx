@@ -67,8 +67,8 @@ export function QuickFilterChips({ filters, onChange }: QuickFilterChipsProps) {
         className={cn(
           'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors duration-150',
           filters.isRecurring === 'true'
-            ? 'bg-[#6B2737]/10 border-[#6B2737] text-[#3E2723] font-medium'
-            : 'bg-white border-[#D7CCC8] text-[#8D6E63] hover:border-[#BCAAA4]'
+            ? 'bg-[var(--color-ak-borgona)]/10 border-[#6B2737] text-[var(--text-primary)] font-medium'
+            : 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[#BCAAA4]'
         )}
       >
         <ArrowClockwise size={12} weight={filters.isRecurring === 'true' ? 'fill' : 'regular'} />
@@ -77,7 +77,7 @@ export function QuickFilterChips({ filters, onChange }: QuickFilterChipsProps) {
 
       {/* Loyalty tiers */}
       <div className="flex items-center gap-1">
-        <ShieldCheck size={12} className="text-[#8D6E63] shrink-0" />
+        <ShieldCheck size={12} className="text-[var(--text-secondary)] shrink-0" />
         {TIER_OPTIONS.map((tier) => (
           <motion.button
             key={tier.key}
@@ -87,8 +87,8 @@ export function QuickFilterChips({ filters, onChange }: QuickFilterChipsProps) {
             className={cn(
               'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors duration-150',
               filters.tiers.includes(tier.key)
-                ? 'bg-[#6B2737]/10 border-[#6B2737] text-[#3E2723] font-medium'
-                : 'bg-white border-[#D7CCC8] text-[#8D6E63] hover:border-[#BCAAA4]'
+                ? 'bg-[var(--color-ak-borgona)]/10 border-[#6B2737] text-[var(--text-primary)] font-medium'
+                : 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[#BCAAA4]'
             )}
           >
             {tier.label}
@@ -98,7 +98,7 @@ export function QuickFilterChips({ filters, onChange }: QuickFilterChipsProps) {
 
       {/* Last activity */}
       <div className="flex items-center gap-1">
-        <Clock size={12} className="text-[#8D6E63] shrink-0" />
+        <Clock size={12} className="text-[var(--text-secondary)] shrink-0" />
         {ACTIVITY_OPTIONS.map((opt) => (
           <motion.button
             key={opt.key}
@@ -108,8 +108,8 @@ export function QuickFilterChips({ filters, onChange }: QuickFilterChipsProps) {
             className={cn(
               'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors duration-150',
               filters.lastActivity === opt.key
-                ? 'bg-[#6B2737]/10 border-[#6B2737] text-[#3E2723] font-medium'
-                : 'bg-white border-[#D7CCC8] text-[#8D6E63] hover:border-[#BCAAA4]'
+                ? 'bg-[var(--color-ak-borgona)]/10 border-[#6B2737] text-[var(--text-primary)] font-medium'
+                : 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[#BCAAA4]'
             )}
           >
             {opt.label}
@@ -125,8 +125,8 @@ export function QuickFilterChips({ filters, onChange }: QuickFilterChipsProps) {
         className={cn(
           'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors duration-150',
           filters.hasEmail !== null
-            ? 'bg-[#6B2737]/10 border-[#6B2737] text-[#3E2723] font-medium'
-            : 'bg-white border-[#D7CCC8] text-[#8D6E63] hover:border-[#BCAAA4]'
+            ? 'bg-[var(--color-ak-borgona)]/10 border-[#6B2737] text-[var(--text-primary)] font-medium'
+            : 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[#BCAAA4]'
         )}
       >
         <Envelope size={12} weight={filters.hasEmail !== null ? 'fill' : 'regular'} />

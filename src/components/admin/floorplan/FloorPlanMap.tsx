@@ -153,18 +153,18 @@ function TableHotspot({
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       >
         {/* Mobile: 2-line abbreviated label */}
-        <span className="lg:hidden text-[7px] font-bold leading-tight text-[#3E2723] text-center truncate max-w-[28px]">
+        <span className="lg:hidden text-[7px] font-bold leading-tight text-[var(--text-primary)] text-center truncate max-w-[28px]">
           {shortName(fullName)}
         </span>
-        {nomen && <span className="lg:hidden text-[5px] text-[#8D6E63] leading-none">{nomen}</span>}
+        {nomen && <span className="lg:hidden text-[5px] text-[var(--text-secondary)] leading-none">{nomen}</span>}
         {/* Desktop: single-line full label */}
-        <span className="hidden lg:block text-[9px] font-bold leading-tight text-[#3E2723] text-center">
+        <span className="hidden lg:block text-[9px] font-bold leading-tight text-[var(--text-primary)] text-center">
           {tableLabel(table)}
         </span>
-        <span className="hidden lg:block text-[7px] text-[#8D6E63]">
+        <span className="hidden lg:block text-[7px] text-[var(--text-secondary)]">
           <Users size={7} className="inline" /> {table.capacity}
         </span>
-        <span className="lg:hidden text-[5px] text-[#8D6E63]">{table.capacity}p</span>
+        <span className="lg:hidden text-[5px] text-[var(--text-secondary)]">{table.capacity}p</span>
         {/* Status dot */}
         <div
           className="absolute -top-0.5 -right-0.5 w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full border border-white"
@@ -201,15 +201,15 @@ function ZoneGroup({
   const [open, setOpen] = useState(defaultOpen)
 
   return (
-    <div className="border border-[#D7CCC8] rounded-lg overflow-hidden">
+    <div className="border border-[var(--border-default)] rounded-lg overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2 bg-white hover:bg-[#F5EDE0] transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 bg-[var(--bg-card)] hover:bg-[var(--bg-primary)] transition-colors"
       >
         <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: zoneColor }} />
-        <span className="text-xs font-semibold text-[#3E2723] flex-1 text-left">{zoneName}</span>
-        <span className="text-[10px] text-[#8D6E63]">{tables.length} mesas</span>
-        {open ? <CaretDown size={12} className="text-[#8D6E63]" /> : <CaretRight size={12} className="text-[#8D6E63]" />}
+        <span className="text-xs font-semibold text-[var(--text-primary)] flex-1 text-left">{zoneName}</span>
+        <span className="text-[10px] text-[var(--text-secondary)]">{tables.length} mesas</span>
+        {open ? <CaretDown size={12} className="text-[var(--text-secondary)]" /> : <CaretRight size={12} className="text-[var(--text-secondary)]" />}
       </button>
       <AnimatePresence>
         {open && (
@@ -228,21 +228,21 @@ function ZoneGroup({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   className={cn(
-                    'flex items-center gap-2 px-2 py-1.5 rounded-md border border-[#D7CCC8] bg-white text-xs',
-                    editMode && 'cursor-pointer hover:border-[#5C7A4D] hover:bg-[#5C7A4D]/5',
+                    'flex items-center gap-2 px-2 py-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-card)] text-xs',
+                    editMode && 'cursor-pointer hover:border-[#5C7A4D] hover:bg-[var(--color-ak-oliva)]/5',
                   )}
                   onClick={() => editMode && onPosition(table)}
                 >
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: zoneColor }} />
-                  <span className="font-medium text-[#3E2723] truncate flex-1">
+                  <span className="font-medium text-[var(--text-primary)] truncate flex-1">
                     {tableLabel(table)}
                   </span>
-                  <span className="text-[#8D6E63]">
+                  <span className="text-[var(--text-secondary)]">
                     <Users size={10} className="inline mr-0.5" />
                     {table.capacity}
                   </span>
                   {editMode && (
-                    <span className="text-[#5C7A4D] text-[9px] font-medium ml-1 shrink-0">Posicionar</span>
+                    <span className="text-[var(--color-ak-oliva)] text-[9px] font-medium ml-1 shrink-0">Posicionar</span>
                   )}
                 </motion.div>
               ))}
@@ -286,11 +286,11 @@ function TableDetailSheet({
         animate={{ y: 0 }}
         exit={prefersReduced ? undefined : { y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white rounded-t-2xl shadow-2xl border-t border-[#D7CCC8] max-h-[60vh] overflow-y-auto"
+        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[var(--bg-card)] rounded-t-2xl shadow-2xl border-t border-[var(--border-default)] max-h-[60vh] overflow-y-auto"
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-2 pb-1">
-          <div className="w-10 h-1 rounded-full bg-[#D7CCC8]" />
+          <div className="w-10 h-1 rounded-full bg-[var(--border-default)]" />
         </div>
         <div className="px-4 pb-6 pt-1">
           <TableDetailContent table={table} zoneColor={zoneColor} onClose={onClose} onAction={onAction} />
@@ -341,17 +341,17 @@ function TableDetailContent({
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: zoneColor }} />
           <div>
-            <h3 className="font-['Playfair_Display'] text-lg font-bold text-[#3E2723]">
+            <h3 className="font-['Playfair_Display'] text-lg font-bold text-[var(--text-primary)]">
               {tableLabel(table)}
             </h3>
-            <p className="text-xs text-[#8D6E63]">Zona · Capacidad: {table.capacity} personas</p>
+            <p className="text-xs text-[var(--text-secondary)]">Zona · Capacidad: {table.capacity} personas</p>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg hover:bg-[#D7CCC8]/50 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-[var(--border-default)]/50 transition-colors"
         >
-          <X size={18} className="text-[#8D6E63]" />
+          <X size={18} className="text-[var(--text-secondary)]" />
         </button>
       </div>
       <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg" style={{ backgroundColor: statusColor + '15' }}>
@@ -360,13 +360,13 @@ function TableDetailContent({
           {STATUS_LABELS[table.status]}
         </span>
       </div>
-      <div className="space-y-2 text-sm text-[#3E2723]">
+      <div className="space-y-2 text-sm text-[var(--text-primary)]">
         <div className="flex items-center gap-2">
-          <Users size={14} className="text-[#8D6E63]" />
+          <Users size={14} className="text-[var(--text-secondary)]" />
           <span>Capacidad: {table.capacity} personas</span>
         </div>
         {table.can_combine && (
-          <div className="flex items-center gap-2 text-[#5C7A4D]">
+          <div className="flex items-center gap-2 text-[var(--color-ak-oliva)]">
             <Check size={14} weight="bold" />
             <span>Mesa combinable</span>
           </div>
@@ -376,15 +376,15 @@ function TableDetailContent({
         {table.customer_name && (
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <Users size={14} className="text-[#8D6E63]" />
-              <span className="font-medium text-[#3E2723]">{table.customer_name}</span>
+              <Users size={14} className="text-[var(--text-secondary)]" />
+              <span className="font-medium text-[var(--text-primary)]">{table.customer_name}</span>
             </div>
 
             {hasDetails && (
               <>
                 <button
                   onClick={() => setShowDetails(!showDetails)}
-                  className="flex items-center gap-1 text-[10px] text-[#D4922A] ml-1"
+                  className="flex items-center gap-1 text-[10px] text-[var(--color-ak-ambar)] ml-1"
                 >
                   {showDetails ? <CaretDown size={10} /> : <CaretRight size={10} />}
                   {showDetails ? 'Menos detalles' : 'Ver detalles'}
@@ -397,7 +397,7 @@ function TableDetailContent({
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="pl-6 space-y-1 border-l-2 border-[#D7CCC8] ml-1 mt-1">
+                      <div className="pl-6 space-y-1 border-l-2 border-[var(--border-default)] ml-1 mt-1">
                         {table.customer_phone && (
                           <a
                             href={`https://wa.me/57${table.customer_phone.replace(/^0+/, '').replace(/^\+/, '')}`}
@@ -416,8 +416,8 @@ function TableDetailContent({
                           </a>
                         )}
                         {table.special_requests && (
-                          <div className="flex items-start gap-1.5 text-xs text-[#5D4037] bg-[#F5EDE0] rounded-md px-2 py-1">
-                            <Note size={12} className="text-[#D4922A] shrink-0 mt-0.5" />
+                          <div className="flex items-start gap-1.5 text-xs text-[var(--text-primary)] bg-[var(--bg-primary)] rounded-md px-2 py-1">
+                            <Note size={12} className="text-[var(--color-ak-ambar)] shrink-0 mt-0.5" />
                             <span>{table.special_requests}</span>
                           </div>
                         )}
@@ -432,30 +432,30 @@ function TableDetailContent({
 
         {table.time_range && (
           <div className="flex items-center gap-2">
-            <Clock size={14} className="text-[#8D6E63]" />
+            <Clock size={14} className="text-[var(--text-secondary)]" />
             <span>{table.time_range}</span>
           </div>
         )}
         {table.party_size && (
           <div className="flex items-center gap-2">
-            <Users size={14} className="text-[#8D6E63]" />
+            <Users size={14} className="text-[var(--text-secondary)]" />
             <span>{table.party_size} personas en la reserva</span>
           </div>
         )}
         {table.reservation_id && (
           <div className="flex items-center gap-2">
-            <Clock size={14} className="text-[#8D6E63]" />
-            <span className="text-xs text-[#8D6E63] font-mono">ID: {table.reservation_id.slice(0, 8)}…</span>
+            <Clock size={14} className="text-[var(--text-secondary)]" />
+            <span className="text-xs text-[var(--text-secondary)] font-mono">ID: {table.reservation_id.slice(0, 8)}…</span>
           </div>
         )}
         {!table.customer_name && table.status === 'available' && (
-          <p className="text-[#5C7A4D] text-xs mt-2">Mesa disponible para asignar reservas</p>
+          <p className="text-[var(--color-ak-oliva)] text-xs mt-2">Mesa disponible para asignar reservas</p>
         )}
       </div>
 
       {/* Action buttons */}
       {table.reservation_status && table.reservation_id && (
-        <div className="flex gap-2 mt-3 pt-3 border-t border-[#D7CCC8]/50">
+        <div className="flex gap-2 mt-3 pt-3 border-t border-[var(--border-default)]/50">
           {['confirmed', 'pre_paid'].includes(table.reservation_status) && (
             <button
               onClick={() => handleStatusAction('seated')}
@@ -469,12 +469,12 @@ function TableDetailContent({
             <button
               onClick={() => handleStatusAction('completed')}
               disabled={actionLoading !== null}
-              className="flex-1 py-2 text-xs font-medium rounded-lg bg-[#6B2737] text-white hover:bg-[#5C2230] active:scale-[0.97] disabled:opacity-50"
+              className="flex-1 py-2 text-xs font-medium rounded-lg bg-[var(--color-ak-borgona)] text-white hover:bg-[#5C2230] active:scale-[0.97] disabled:opacity-50"
             >
               {actionLoading === 'completed' ? '...' : 'Liberar'}
             </button>
           )}
-          <button className="flex-1 py-2 text-xs font-medium rounded-lg border border-[#D7CCC8] text-[#3E2723] hover:bg-[#EFEBE9]">
+          <button className="flex-1 py-2 text-xs font-medium rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[#EFEBE9]">
             Reasignar
           </button>
         </div>
@@ -502,7 +502,7 @@ function TableDetailCard({
       initial={prefersReduced ? undefined : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={prefersReduced ? undefined : { opacity: 0, y: 12 }}
-      className="hidden lg:block bg-white rounded-xl border border-[#D7CCC8] shadow-lg p-4 min-w-[240px]"
+      className="hidden lg:block bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] shadow-lg p-4 min-w-[240px]"
     >
       <TableDetailContent table={table} zoneColor={zoneColor} onClose={onClose} onAction={onAction} />
     </motion.div>
@@ -612,14 +612,14 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner size={32} className="animate-spin text-[#8D6E63]" />
+        <Spinner size={32} className="animate-spin text-[var(--text-secondary)]" />
       </div>
     )
   }
 
   if (floors.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-[#8D6E63]">
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--text-secondary)]">
         <MapTrifold size={48} className="mb-3 opacity-40" />
         <p className="text-lg font-semibold">No hay datos de pisos</p>
         <p className="text-sm">Configura las zonas y mesas primero.</p>
@@ -630,14 +630,14 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
   const sidebarContent = (
     <>
       {/* Mesas sin posición */}
-      <div className="bg-white rounded-xl border border-[#D7CCC8] p-3">
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3">
         <div className="flex items-center gap-2 mb-2">
-          <Warning size={16} className="text-[#D4922A]" weight="fill" />
-          <h3 className="text-sm font-semibold text-[#3E2723]">Mesas sin posición</h3>
-          <span className="text-[10px] text-[#8D6E63] ml-auto">{unpositionedTables.length} total</span>
+          <Warning size={16} className="text-[var(--color-ak-ambar)]" weight="fill" />
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Mesas sin posición</h3>
+          <span className="text-[10px] text-[var(--text-secondary)] ml-auto">{unpositionedTables.length} total</span>
         </div>
         {unpositionedTables.length === 0 ? (
-          <p className="text-xs text-[#8D6E63]">
+          <p className="text-xs text-[var(--text-secondary)]">
             ✅ Todas las mesas están posicionadas en el plano.
           </p>
         ) : (
@@ -663,9 +663,9 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
 
       {/* Floor Summary */}
       {currentFloor && (
-        <div className="bg-white rounded-xl border border-[#D7CCC8] p-3">
-          <h3 className="text-sm font-semibold text-[#3E2723] mb-3 flex items-center gap-2">
-            <MapTrifold size={16} className="text-[#6B2737]" />
+        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+            <MapTrifold size={16} className="text-[var(--color-ak-borgona)]" />
             {currentFloor.name} — Resumen
           </h3>
           <div className="space-y-2">
@@ -675,17 +675,17 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
                 <div key={zone.id} className="text-xs">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                    <span className="font-medium text-[#3E2723]">{zone.name}</span>
-                    <span className="text-[#8D6E63] ml-auto">{zone.tables.length} mesas</span>
+                    <span className="font-medium text-[var(--text-primary)]">{zone.name}</span>
+                    <span className="text-[var(--text-secondary)] ml-auto">{zone.tables.length} mesas</span>
                   </div>
-                  <div className="flex gap-3 text-[#8D6E63] mt-0.5 ml-4">
-                    <span className="text-[#5C7A4D]">
+                  <div className="flex gap-3 text-[var(--text-secondary)] mt-0.5 ml-4">
+                    <span className="text-[var(--color-ak-oliva)]">
                       {zone.tables.filter((t) => t.status === 'available').length} libres
                     </span>
-                    <span className="text-[#D4922A]">
+                    <span className="text-[var(--color-ak-ambar)]">
                       {zone.tables.filter((t) => t.status === 'reserved').length} reservadas
                     </span>
-                    <span className="text-[#6B2737]">
+                    <span className="text-[var(--color-ak-borgona)]">
                       {zone.tables.filter((t) => t.status === 'seated').length} ocupadas
                     </span>
                   </div>
@@ -705,7 +705,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
         {/* Toolbar */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           {/* Floor tabs */}
-          <div className="flex rounded-lg border border-[#D7CCC8] bg-white overflow-hidden">
+          <div className="flex rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
             {floors.map((floor, idx) => (
               <button
                 key={floor.floor_num}
@@ -713,8 +713,8 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
                 className={cn(
                   'px-3 py-2 text-sm font-medium transition-colors',
                   idx === activeFloor
-                    ? 'bg-[#6B2737] text-white'
-                    : 'bg-white text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#D7CCC8]/30',
+                    ? 'bg-[var(--color-ak-borgona)] text-white'
+                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-default)]/30',
                 )}
               >
                 {floor.name}
@@ -728,7 +728,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
           {unpositionedTables.length > 0 && (
             <button
               onClick={() => setShowMobileSidebar(true)}
-              className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#D4922A] bg-[#D4922A]/10 text-[#D4922A] text-xs font-medium"
+              className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#D4922A] bg-[var(--color-ak-ambar)]/10 text-[var(--color-ak-ambar)] text-xs font-medium"
             >
               <Sidebar size={14} />
               {unpositionedTables.length} sin posición
@@ -739,22 +739,22 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
           <div className="flex items-center gap-1">
             <button
               onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}
-              className="p-1.5 rounded border border-[#D7CCC8] bg-white text-[#8D6E63] hover:text-[#3E2723] transition-colors"
+              className="p-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               title="Alejar"
             >
               −
             </button>
-            <span className="text-xs text-[#8D6E63] w-10 text-center">{Math.round(zoom * 100)}%</span>
+            <span className="text-xs text-[var(--text-secondary)] w-10 text-center">{Math.round(zoom * 100)}%</span>
             <button
               onClick={() => setZoom((z) => Math.min(3, z + 0.25))}
-              className="p-1.5 rounded border border-[#D7CCC8] bg-white text-[#8D6E63] hover:text-[#3E2723] transition-colors"
+              className="p-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               title="Acercar"
             >
               +
             </button>
             <button
               onClick={() => setZoom(1)}
-              className="p-1.5 rounded border border-[#D7CCC8] bg-white text-[#8D6E63] hover:text-[#3E2723] transition-colors ml-1"
+              className="p-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors ml-1"
               title="Reiniciar zoom"
             >
               <ArrowsOut size={14} />
@@ -771,8 +771,8 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
               className={cn(
                 'flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all',
                 editMode
-                  ? 'bg-[#5C7A4D] text-white border-[#5C7A4D]'
-                  : 'bg-white text-[#3E2723] border-[#D7CCC8] hover:border-[#5C7A4D]',
+                  ? 'bg-[var(--color-ak-oliva)] text-white border-[#5C7A4D]'
+                  : 'bg-[var(--bg-card)] text-[var(--text-primary)] border-[var(--border-default)] hover:border-[#5C7A4D]',
               )}
             >
               {editMode ? <Check size={16} /> : <PencilSimple size={16} />}
@@ -781,7 +781,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
           )}
 
           {saving && (
-            <span className="text-xs text-[#8D6E63] flex items-center gap-1">
+            <span className="text-xs text-[var(--text-secondary)] flex items-center gap-1">
               <Spinner size={12} className="animate-spin" /> Guardando...
             </span>
           )}
@@ -791,26 +791,26 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
         {currentFloor && (
           <div className="flex items-center gap-3 mb-2 overflow-x-auto pb-1 scrollbar-hide">
             {currentFloor.zones.map((zone) => (
-              <span key={zone.id} className="flex items-center gap-1 text-[11px] text-[#8D6E63] shrink-0">
+              <span key={zone.id} className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] shrink-0">
                 <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getZoneColor(zone.name) }} />
                 {zone.name}
               </span>
             ))}
             <span className="text-[#D7CCC8] mx-1 shrink-0">|</span>
-            <span className="flex items-center gap-1 text-[11px] text-[#8D6E63] shrink-0">
+            <span className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] shrink-0">
               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#5C7A4D' }} /> Libre
             </span>
-            <span className="flex items-center gap-1 text-[11px] text-[#8D6E63] shrink-0">
+            <span className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] shrink-0">
               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#D4922A' }} /> Reservada
             </span>
-            <span className="flex items-center gap-1 text-[11px] text-[#8D6E63] shrink-0">
+            <span className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] shrink-0">
               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#6B2737' }} /> Ocupada
             </span>
           </div>
         )}
 
         {/* Map Container */}
-        <div className="flex-1 rounded-xl border border-[#D7CCC8] bg-white overflow-auto relative min-h-[300px]">
+        <div className="flex-1 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] overflow-auto relative min-h-[300px]">
           <div
             style={{
               transform: `scale(${zoom})`,
@@ -878,7 +878,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
           </AnimatePresence>
 
           {editMode && !readOnly && (
-            <div className="absolute top-3 left-3 z-20 bg-[#5C7A4D]/90 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 backdrop-blur-sm">
+            <div className="absolute top-3 left-3 z-20 bg-[var(--color-ak-oliva)]/90 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 backdrop-blur-sm">
               <PencilSimple size={14} />
               Modo edición — arrastra las mesas
             </div>
@@ -907,11 +907,11 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
               animate={{ y: 0 }}
               exit={prefersReduced ? undefined : { y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#F5EDE0] rounded-t-2xl shadow-2xl max-h-[70vh] overflow-y-auto"
+              className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[var(--bg-primary)] rounded-t-2xl shadow-2xl max-h-[70vh] overflow-y-auto"
             >
               <div className="flex justify-center pt-2 pb-1">
                 <button onClick={() => setShowMobileSidebar(false)}>
-                  <div className="w-10 h-1 rounded-full bg-[#D7CCC8]" />
+                  <div className="w-10 h-1 rounded-full bg-[var(--border-default)]" />
                 </button>
               </div>
               <div className="px-4 pb-6 pt-1 space-y-3">

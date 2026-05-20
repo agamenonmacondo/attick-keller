@@ -68,7 +68,7 @@ export function TeamPanel() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 text-[#8D6E63]">
+      <div className="flex items-center justify-center py-12 text-[var(--text-secondary)]">
         Cargando equipo...
       </div>
     )

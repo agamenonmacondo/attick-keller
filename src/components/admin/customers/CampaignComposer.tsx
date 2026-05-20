@@ -79,12 +79,12 @@ export function CampaignComposer({
   }, [name, subject, body, filterTagIds, filterHasEmail, filterMinVisits, filterLastVisitDays, onSend])
 
   return (
-    <div className="bg-white rounded-xl border border-[#D7CCC8] overflow-hidden h-full flex flex-col">
-      <div className="px-5 py-4 border-b border-[#D7CCC8]">
-        <h3 className="text-sm font-semibold text-[#3E2723] font-['Playfair_Display']">
+    <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] overflow-hidden h-full flex flex-col">
+      <div className="px-5 py-4 border-b border-[var(--border-default)]">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] font-['Playfair_Display']">
           Nueva Campana
         </h3>
-        <p className="text-xs text-[#8D6E63] mt-1">
+        <p className="text-xs text-[var(--text-secondary)] mt-1">
           {selectedCount} destinatario{selectedCount !== 1 ? 's' : ''}
         </p>
         <p className="text-[10px] text-[#BCAAA4] mt-0.5">{segmentDesc}</p>
@@ -92,40 +92,40 @@ export function CampaignComposer({
 
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
         <div>
-          <label className="text-[11px] font-medium text-[#8D6E63]">Nombre de campana</label>
+          <label className="text-[11px] font-medium text-[var(--text-secondary)]">Nombre de campana</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ej: Invitacion evento vinos - Abril"
-            className="w-full mt-1 rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-2 text-sm text-[#3E2723] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
+            className="w-full mt-1 rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="text-[11px] font-medium text-[#8D6E63]">Asunto del email</label>
+          <label className="text-[11px] font-medium text-[var(--text-secondary)]">Asunto del email</label>
           <input
             type="text"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Te esperamos en Attick & Keller..."
-            className="w-full mt-1 rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-2 text-sm text-[#3E2723] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
+            className="w-full mt-1 rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="text-[11px] font-medium text-[#8D6E63]">Mensaje</label>
+          <label className="text-[11px] font-medium text-[var(--text-secondary)]">Mensaje</label>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={6}
             placeholder={'Hola {{full_name}},\n\nQueremos invitarte a...\n\nTe esperamos!'}
-            className="w-full mt-1 rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-2 text-sm text-[#3E2723] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none resize-none"
+            className="w-full mt-1 rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none resize-none"
           />
         </div>
 
         <div>
-          <label className="text-[11px] font-medium text-[#8D6E63] flex items-center gap-1">
+          <label className="text-[11px] font-medium text-[var(--text-secondary)] flex items-center gap-1">
             <Tag size={12} /> Variables disponibles
           </label>
           <div className="flex flex-wrap gap-1.5 mt-1">
@@ -134,7 +134,7 @@ export function CampaignComposer({
                 key={p.key}
                 type="button"
                 onClick={() => setBody(prev => prev + ' ' + p.key)}
-                className="rounded-full bg-[#EFEBE9] px-2.5 py-1 text-[10px] text-[#6B2737] font-mono hover:bg-[#D7CCC8]/50 transition-colors"
+                className="rounded-full bg-[#EFEBE9] px-2.5 py-1 text-[10px] text-[var(--color-ak-borgona)] font-mono hover:bg-[var(--border-default)]/50 transition-colors"
                 title={p.label}
               >
                 {p.key}
@@ -147,7 +147,7 @@ export function CampaignComposer({
           <button
             type="button"
             onClick={() => setShowPreview(!showPreview)}
-            className="flex items-center gap-1.5 text-xs text-[#6B2737] font-medium hover:underline"
+            className="flex items-center gap-1.5 text-xs text-[var(--color-ak-borgona)] font-medium hover:underline"
           >
             <Eye size={14} />
             {showPreview ? 'Ocultar preview' : 'Ver preview'}
@@ -158,26 +158,26 @@ export function CampaignComposer({
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
-            className="rounded-lg border border-[#D7CCC8] overflow-hidden"
+            className="rounded-lg border border-[var(--border-default)] overflow-hidden"
           >
-            <div className="px-3 py-2 bg-[#EFEBE9] border-b border-[#D7CCC8]">
-              <span className="text-[10px] font-medium text-[#8D6E63]">
+            <div className="px-3 py-2 bg-[#EFEBE9] border-b border-[var(--border-default)]">
+              <span className="text-[10px] font-medium text-[var(--text-secondary)]">
                 PREVIEW — {previewCustomer.full_name || 'Cliente'}
               </span>
             </div>
             <div
-              className="p-4 text-sm text-[#3E2723] leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto"
+              className="p-4 text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto"
               dangerouslySetInnerHTML={{ __html: replacePlaceholders(body, previewCustomer).replace(/\n/g, '<br/>') }}
             />
           </motion.div>
         )}
       </div>
 
-      <div className="px-5 py-4 border-t border-[#D7CCC8] flex gap-2">
+      <div className="px-5 py-4 border-t border-[var(--border-default)] flex gap-2">
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 rounded-lg border border-[#D7CCC8] py-2 text-xs font-medium text-[#8D6E63] hover:bg-[#EFEBE9] active:scale-[0.97] transition-transform"
+          className="flex-1 rounded-lg border border-[var(--border-default)] py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[#EFEBE9] active:scale-[0.97] transition-transform"
         >
           Cancelar
         </button>
@@ -185,7 +185,7 @@ export function CampaignComposer({
           type="button"
           onClick={handleSend}
           disabled={sending || !name.trim() || !subject.trim() || !body.trim()}
-          className="flex-1 rounded-lg bg-[#6B2737] py-2 text-xs font-medium text-white hover:bg-[#6B2737]/90 active:scale-[0.97] disabled:opacity-50 flex items-center justify-center gap-1.5 transition-all"
+          className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] py-2 text-xs font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] disabled:opacity-50 flex items-center justify-center gap-1.5 transition-all"
         >
           {sending ? (
             'Enviando...'

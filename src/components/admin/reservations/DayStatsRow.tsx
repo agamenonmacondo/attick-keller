@@ -27,25 +27,25 @@ const STAT_ITEMS = [
 ] as const
 
 const ACCENT_MAP: Record<string, string> = {
-  amber: 'text-amber-700 bg-amber-50',
-  emerald: 'text-emerald-700 bg-emerald-50',
-  wine: 'text-[#6B2737] bg-[#6B2737]/5',
-  blue: 'text-blue-700 bg-blue-50',
+  amber: 'text-[var(--color-warning)] bg-[var(--color-warning)]/10',
+  emerald: 'text-[var(--color-success)] bg-[var(--color-success)]/10',
+  wine: 'text-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/5',
+  blue: 'text-[var(--color-accent)] bg-[var(--color-accent)]/10',
 }
 
 export function DayStatsRow({ stats }: DayStatsRowProps) {
   return (
-    <div className="mb-6 grid grid-cols-5 gap-px overflow-hidden rounded-lg bg-[#D7CCC8]">
+    <div className="mb-6 grid grid-cols-5 gap-px overflow-hidden rounded-lg bg-[var(--border-default)]">
       {STAT_ITEMS.map((item, i) => {
         const value = stats[item.key as keyof typeof stats] ?? 0
         return (
           <AnimatedCard
             key={item.key}
             delay={i * 0.05}
-            className={cn(ACCENT_MAP[item.accent] || 'bg-white')}
+            className={cn(ACCENT_MAP[item.accent] || 'bg-[var(--bg-card)]')}
           >
             <div className="px-3 py-2.5">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-[#8D6E63]">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-secondary)]">
                 {item.label}
               </p>
               <p className="font-mono text-xl font-bold">

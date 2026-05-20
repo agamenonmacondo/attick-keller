@@ -23,7 +23,7 @@ interface AdminTabBarProps {
 
 export function AdminTabBar({ active, onChange }: AdminTabBarProps) {
   return (
-    <div className="border-b border-[#D7CCC8] bg-white">
+    <div className="border-b border-[var(--border-default)] bg-[var(--bg-card)]">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6">
         <nav className="flex gap-1 overflow-x-auto -mb-px">
           {TABS.map(tab => (
@@ -32,7 +32,7 @@ export function AdminTabBar({ active, onChange }: AdminTabBarProps) {
               onClick={() => onChange(tab.key)}
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap',
-                active === tab.key ? 'border-[#6B2737] text-[#3E2723]' : 'border-transparent text-[#8D6E63] hover:text-[#3E2723]'
+                active === tab.key ? 'border-[#6B2737] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               )}
               style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
             >

@@ -26,8 +26,8 @@ export function AdminShell() {
 
   if (authLoading || roleLoading) {
     return (
-      <div className="min-h-[100dvh] bg-[#F5EDE0] flex items-center justify-center">
-        <Spinner size={32} className="animate-spin text-[#8D6E63]" />
+      <div className="min-h-[100dvh] bg-[var(--bg-primary)] flex items-center justify-center">
+        <Spinner size={32} className="animate-spin text-[var(--text-secondary)]" />
       </div>
     )
   }
@@ -43,7 +43,7 @@ export function AdminShell() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#F5EDE0]">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <AdminHeader />
       <AdminTabBar active={activeTab} onChange={setActiveTab} />
       <main className="max-w-[1400px] mx-auto px-4 md:px-6 py-6">

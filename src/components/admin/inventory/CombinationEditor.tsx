@@ -68,33 +68,33 @@ export function CombinationEditor({ combination, tables, onClose, onSave }: Comb
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl bg-[#F5EDE0] border border-[#D7CCC8] shadow-xl p-5" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-md rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-default)] shadow-xl p-5" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[#3E2723]">
+          <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">
             {isEditing ? 'Editar Combinacion' : 'Nueva Combinacion'}
           </h2>
-          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8D6E63] hover:bg-[#D7CCC8]/50">
+          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50">
             <X size={18} />
           </button>
         </div>
 
-        {error && <div className="mb-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">{error}</div>}
+        {error && <div className="mb-3 rounded-lg bg-[var(--color-danger)]/10 border border-red-200 px-3 py-2 text-sm text-[var(--color-danger)]">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-[#8D6E63]">Nombre (opcional)</label>
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Nombre (opcional)</label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
               placeholder="Ej: Terraza grande"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-[#8D6E63]">Mesas combinables ({selectedIds.length} seleccionadas)</label>
-            <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-lg border border-[#D7CCC8] bg-white p-2">
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Mesas combinables ({selectedIds.length} seleccionadas)</label>
+            <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-2">
               {combinableTables.length === 0 ? (
                 <p className="py-3 text-center text-xs text-[#BCAAA4]">No hay mesas combinables</p>
               ) : (
@@ -105,14 +105,14 @@ export function CombinationEditor({ combination, tables, onClose, onSave }: Comb
                     onClick={() => toggleTable(table.id)}
                     className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                       selectedIds.includes(table.id)
-                        ? 'bg-[#6B2737] text-white'
-                        : 'text-[#3E2723] hover:bg-[#EFEBE9]'
+                        ? 'bg-[var(--color-ak-borgona)] text-white'
+                        : 'text-[var(--text-primary)] hover:bg-[#EFEBE9]'
                     }`}
                   >
                     <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
                       selectedIds.includes(table.id)
-                        ? 'border-white bg-white/20'
-                        : 'border-[#D7CCC8]'
+                        ? 'border-white bg-[var(--bg-card)]/20'
+                        : 'border-[var(--border-default)]'
                     }`}>
                       {selectedIds.includes(table.id) && (
                         <span className="text-[9px] font-bold">&#10003;</span>
@@ -142,7 +142,7 @@ export function CombinationEditor({ combination, tables, onClose, onSave }: Comb
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-lg bg-[#6B2737] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#6B2737]/90 disabled:opacity-50 active:scale-[0.97]"
+              className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 disabled:opacity-50 active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out' }}
             >
               {saving ? 'Guardando...' : isEditing ? 'Guardar' : 'Crear Combinacion'}
@@ -150,7 +150,7 @@ export function CombinationEditor({ combination, tables, onClose, onSave }: Comb
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[#D7CCC8] px-4 py-2.5 text-sm font-medium text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97]"
+              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[#EFEBE9] active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out' }}
             >
               Cancelar

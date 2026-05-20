@@ -43,8 +43,8 @@ export function SegmentTabs({ counts, active, onSelect }: SegmentTabsProps) {
             className={cn(
               'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-150',
               isActive
-                ? 'bg-[#6B2737] text-white border-[#6B2737]'
-                : 'text-[#8D6E63] border-[#D7CCC8] bg-white hover:bg-[#EFEBE9]'
+                ? 'bg-[var(--color-ak-borgona)] text-white border-[#6B2737]'
+                : 'text-[var(--text-secondary)] border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[#EFEBE9]'
             )}
           >
             <Icon size={14} weight={isActive ? 'fill' : 'regular'} />
@@ -61,8 +61,8 @@ export function SegmentTabs({ counts, active, onSelect }: SegmentTabsProps) {
               className={cn(
                 'ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none',
                 isActive
-                  ? 'bg-white/20 text-white'
-                  : 'bg-[#F5EDE0] text-[#8D6E63]'
+                  ? 'bg-[var(--bg-card)]/20 text-white'
+                  : 'bg-[var(--bg-primary)] text-[var(--text-secondary)]'
               )}
             >
               {count.toLocaleString()}

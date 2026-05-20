@@ -14,9 +14,9 @@ export function KPIStatsBarWithActions({ overview, loading }: KPIStatsBarProps) 
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-[#F5EDE0] rounded-xl shadow-sm border border-[#D7CCC8] p-4 animate-pulse">
-            <div className="h-3 bg-[#D7CCC8] rounded w-2/3 mb-2"></div>
-            <div className="h-6 bg-[#D7CCC8] rounded w-1/2"></div>
+          <div key={i} className="bg-[var(--bg-primary)] rounded-xl shadow-[var(--shadow-sm)] border border-[var(--border-default)] p-4 animate-pulse">
+            <div className="h-3 bg-[var(--border-default)] rounded w-2/3 mb-2"></div>
+            <div className="h-6 bg-[var(--border-default)] rounded w-1/2"></div>
           </div>
         ))}
       </div>
@@ -33,7 +33,7 @@ export function KPIStatsBarWithActions({ overview, loading }: KPIStatsBarProps) 
       value: overview.totalCustomers.toLocaleString(),
       subtext: undefined,
       action: null,
-      iconColor: '#6B2737',
+      iconColor: 'var(--color-accent)',
     },
     {
       icon: ArrowsClockwise,
@@ -41,7 +41,7 @@ export function KPIStatsBarWithActions({ overview, loading }: KPIStatsBarProps) 
       value: overview.recurring.toLocaleString(),
       subtext: `${Math.round((overview.recurring / overview.totalCustomers) * 100)}%`,
       action: null,
-      iconColor: '#5C7A4D',
+      iconColor: 'var(--color-success)',
     },
     {
       icon: Calendar,
@@ -49,23 +49,23 @@ export function KPIStatsBarWithActions({ overview, loading }: KPIStatsBarProps) 
       value: overview.recent30.toLocaleString(),
       subtext: `${Math.round((overview.recent30 / overview.totalCustomers) * 100)}%`,
       action: null,
-      iconColor: '#D4922A',
+      iconColor: 'var(--color-warning)',
     },
     {
       icon: Fire,
       label: 'Dormidos',
       value: overview.reactivation?.dormantClients?.toLocaleString() || overview.retention.oneTime.toLocaleString(),
       subtext: `${overview.reactivation?.reachableWhatsApp?.toLocaleString() || '—'} por WhatsApp`,
-      action: { label: 'Reactivar', color: 'bg-[#5C7A4D] hover:bg-[#4A6340]' },
-      iconColor: '#A0522D',
+      action: { label: 'Reactivar', color: 'bg-[var(--color-success)] hover:bg-[var(--color-success)]/80' },
+      iconColor: 'var(--color-ak-ladrillo)',
     },
     {
       icon: Warning,
       label: 'No-Show',
       value: overview.noShowRisk.highRisk.toString(),
       subtext: `${overview.noShowRisk.medRisk} medio + ${overview.noShowRisk.lowRisk} bajo`,
-      action: { label: 'Ver alertas', color: 'bg-[#D4922A] hover:bg-[#B87A1F]' },
-      iconColor: '#D4922A',
+      action: { label: 'Ver alertas', color: 'bg-[var(--color-warning)] hover:bg-[var(--color-warning)]/80' },
+      iconColor: 'var(--color-warning)',
     },
     {
       icon: CurrencyDollar,
@@ -73,7 +73,7 @@ export function KPIStatsBarWithActions({ overview, loading }: KPIStatsBarProps) 
       value: spendDisplay,
       subtext: undefined,
       action: null,
-      iconColor: '#C9A94E',
+      iconColor: 'var(--color-ak-dorado)',
     },
   ]
 
@@ -85,13 +85,13 @@ export function KPIStatsBarWithActions({ overview, loading }: KPIStatsBarProps) 
           <AnimatedCard key={i} delay={i * 0.05}>
             <div className="p-4 text-center">
               <Icon size={20} weight="duotone" color={kpi.iconColor} className="mx-auto mb-1" />
-              <div className="text-[10px] text-[#8D6E63] uppercase tracking-wider">{kpi.label}</div>
-              <div className="text-2xl font-bold text-[#3E2723] mt-1 font-['Playfair_Display']">{kpi.value}</div>
+              <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider">{kpi.label}</div>
+              <div className="text-2xl font-bold text-[var(--text-primary)] mt-1 font-['Playfair_Display']">{kpi.value}</div>
               {kpi.subtext && (
-                <div className="text-[10px] text-[#8D6E63] mt-0.5">{kpi.subtext}</div>
+                <div className="text-[10px] text-[var(--text-muted)] mt-0.5">{kpi.subtext}</div>
               )}
               {kpi.action && (
-                <button className={`mt-2 ${kpi.action.color} text-[#F5EDE0] text-xs font-medium px-3 py-1 rounded-full transition-colors`}>
+                <button className={`mt-2 ${kpi.action.color} text-[var(--bg-primary)] text-xs font-medium px-3 py-1 rounded-full transition-colors`}>
                   {kpi.action.label}
                 </button>
               )}

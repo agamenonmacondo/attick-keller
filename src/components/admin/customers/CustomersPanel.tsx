@@ -136,8 +136,8 @@ export function CustomersPanel() {
           onClick={() => setView('analytics')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
             view === 'analytics'
-              ? 'bg-[#6B2737] text-white'
-              : 'bg-white text-[#5D4037] border border-[#D7CCC8] hover:bg-[#F5EDE0]'
+              ? 'bg-[var(--color-ak-borgona)] text-white'
+              : 'bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border-default)] hover:bg-[var(--bg-primary)]'
           }`}
         >
           <ChartBar size={16} weight={view === 'analytics' ? 'fill' : 'regular'} />
@@ -147,8 +147,8 @@ export function CustomersPanel() {
           onClick={() => setView('list')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
             view === 'list'
-              ? 'bg-[#6B2737] text-white'
-              : 'bg-white text-[#5D4037] border border-[#D7CCC8] hover:bg-[#F5EDE0]'
+              ? 'bg-[var(--color-ak-borgona)] text-white'
+              : 'bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border-default)] hover:bg-[var(--bg-primary)]'
           }`}
         >
           <ListMagnifyingGlass size={16} weight={view === 'list' ? 'fill' : 'regular'} />
@@ -175,7 +175,7 @@ export function CustomersPanel() {
           initial={{ opacity: 0, x: -12 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.25 }}
-          className="bg-white rounded-xl border border-[#D7CCC8] p-4 h-fit lg:sticky lg:top-24"
+          className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4 h-fit lg:sticky lg:top-24"
         >
           <CustomerFilters
             tags={tags}
@@ -268,11 +268,11 @@ export function CustomersPanel() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="hidden lg:flex flex-col items-center justify-center rounded-xl border border-dashed border-[#D7CCC8] bg-white/30 py-16 text-center min-h-[200px]"
+              className="hidden lg:flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border-default)] bg-[var(--bg-card)]/30 py-16 text-center min-h-[200px]"
             >
               <div className="mb-3 text-[#BCAAA4]"><Users size={36} /></div>
-              <p className="text-sm font-medium text-[#3E2723]">Selecciona clientes</p>
-              <p className="mt-1 text-xs text-[#8D6E63] max-w-[240px]">
+              <p className="text-sm font-medium text-[var(--text-primary)]">Selecciona clientes</p>
+              <p className="mt-1 text-xs text-[var(--text-secondary)] max-w-[240px]">
                 Usa los filtros y checkboxes para segmentar, luego crea una campana de email
               </p>
             </motion.div>

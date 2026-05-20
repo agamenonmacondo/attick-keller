@@ -78,7 +78,7 @@ export function ReservationTimeline({
   if (reservations.length === 0) {
     return (
       <div className="py-16 text-center">
-        <p className="text-sm text-[#8D6E63]">Sin reservas para este dia</p>
+        <p className="text-sm text-[var(--text-secondary)]">Sin reservas para este dia</p>
         <p className="mt-1 text-xs text-[#BCAAA4]">Selecciona otra fecha</p>
       </div>
     )
@@ -94,13 +94,13 @@ export function ReservationTimeline({
           <div key={hour} className="flex">
             {/* Hour label */}
             <div className="w-16 py-3 pr-3 text-right">
-              <span className="font-mono text-xs text-[#8D6E63]">
+              <span className="font-mono text-xs text-[var(--text-secondary)]">
                 {formatTime(hour)}
               </span>
             </div>
 
             {/* Reservation rows */}
-            <div className="min-h-[3.5rem] flex-1 border-l border-[#D7CCC8] py-2 pl-3">
+            <div className="min-h-[3.5rem] flex-1 border-l border-[var(--border-default)] py-2 pl-3">
               <AnimatePresence>
                 {slotReservations.map((r, i) => {
                   const cfg = getStatusConfig(r.status)
@@ -127,7 +127,7 @@ export function ReservationTimeline({
                         onSelect(detailId === r.id ? null : r.id)
                       }
                       className={cn(
-                        'mb-1 flex cursor-pointer items-center gap-3 rounded-md border border-[#D7CCC8] px-3 py-2 hover:bg-[#EFEBE9] active:scale-[0.99]',
+                        'mb-1 flex cursor-pointer items-center gap-3 rounded-md border border-[var(--border-default)] px-3 py-2 hover:bg-[#EFEBE9] active:scale-[0.99]',
                         detailId === r.id && 'bg-[#EFEBE9] ring-1 ring-[#6B2737]/20',
                         cfg.bg,
                       )}
@@ -139,16 +139,16 @@ export function ReservationTimeline({
                       <StatusBadge status={r.status} />
 
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-[#3E2723]">
+                        <p className="truncate text-sm font-medium text-[var(--text-primary)]">
                           {r.customers?.full_name || r.customers?.email || 'Cliente'}
                         </p>
-                        <p className="text-xs text-[#8D6E63]">
+                        <p className="text-xs text-[var(--text-secondary)]">
                           {formatTime(r.time_start)} - {formatTime(r.time_end)}
                           {r.zone_name && ` \u00B7 ${r.zone_name}`}
                         </p>
                       </div>
 
-                      <span className="rounded bg-white px-1.5 py-0.5 font-mono text-xs font-medium text-[#3E2723]">
+                      <span className="rounded bg-[var(--bg-card)] px-1.5 py-0.5 font-mono text-xs font-medium text-[var(--text-primary)]">
                         {r.party_size}p
                       </span>
 

@@ -66,69 +66,69 @@ export function TableEditor({ table, zoneId, zones, onClose, onSave }: TableEdit
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl bg-[#F5EDE0] border border-[#D7CCC8] shadow-xl p-5" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-md rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-default)] shadow-xl p-5" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[#3E2723]">
+          <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">
             {isEditing ? 'Editar Mesa' : 'Nueva Mesa'}
           </h2>
-          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8D6E63] hover:bg-[#D7CCC8]/50">
+          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50">
             <X size={18} />
           </button>
         </div>
 
-        {error && <div className="mb-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">{error}</div>}
+        {error && <div className="mb-3 rounded-lg bg-[var(--color-danger)]/10 border border-red-200 px-3 py-2 text-sm text-[var(--color-danger)]">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs text-[#8D6E63]">Numero / Nomenclatura</label>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Numero / Nomenclatura</label>
               <input
                 type="text"
                 value={number}
                 onChange={e => setNumber(e.target.value)}
-                className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
                 placeholder="Ej: 1A"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-[#8D6E63]">Capacidad</label>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Capacidad</label>
               <input
                 type="number"
                 value={capacity}
                 onChange={e => setCapacity(Number(e.target.value))}
-                className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
                 min={1}
               />
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-[#8D6E63]">Capacidad minima</label>
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Capacidad minima</label>
             <input
               type="number"
               value={capacityMin}
               onChange={e => setCapacityMin(Number(e.target.value))}
-              className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
               min={1}
               max={capacity}
             />
             <p className="mt-0.5 text-[9px] text-[#BCAAA4]">Minimo de personas requerido (se muestra si es diferente a la capacidad)</p>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-[#8D6E63]">Nombre atick (opcional)</label>
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Nombre atick (opcional)</label>
             <input
               type="text"
               value={nameAttick}
               onChange={e => setNameAttick(e.target.value)}
-              className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
               placeholder="Nombre para mostrar en el plano"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-[#8D6E63]">Zona</label>
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Zona</label>
             <select
               value={selectedZoneId}
               onChange={e => setSelectedZoneId(e.target.value)}
-              className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
             >
               <option value="">Sin zona</option>
               {zones.map(z => (
@@ -144,26 +144,26 @@ export function TableEditor({ table, zoneId, zones, onClose, onSave }: TableEdit
                 aria-checked={canCombine}
                 onClick={() => setCanCombine(!canCombine)}
                 className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-out focus:outline-none ${
-                  canCombine ? 'bg-[#6B2737]' : 'bg-[#D7CCC8]'
+                  canCombine ? 'bg-[var(--color-ak-borgona)]' : 'bg-[var(--border-default)]'
                 }`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform ring-0 transition-transform duration-200 ease-out ${
+                  className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-[var(--bg-card)] shadow transform ring-0 transition-transform duration-200 ease-out ${
                     canCombine ? 'translate-x-4' : 'translate-x-0'
                   }`}
                 />
               </button>
-              <span className="text-xs text-[#3E2723]">Combinable</span>
+              <span className="text-xs text-[var(--text-primary)]">Combinable</span>
             </div>
           </div>
           {canCombine && (
             <div>
-              <label className="mb-1 block text-xs text-[#8D6E63]">Grupo de combinacion</label>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Grupo de combinacion</label>
               <input
                 type="text"
                 value={combineGroup}
                 onChange={e => setCombineGroup(e.target.value)}
-                className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
                 placeholder="Ej: terraza-sur"
               />
             </div>
@@ -172,7 +172,7 @@ export function TableEditor({ table, zoneId, zones, onClose, onSave }: TableEdit
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-lg bg-[#6B2737] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#6B2737]/90 disabled:opacity-50 active:scale-[0.97]"
+              className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 disabled:opacity-50 active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out' }}
             >
               {saving ? 'Guardando...' : isEditing ? 'Guardar' : 'Crear Mesa'}
@@ -180,7 +180,7 @@ export function TableEditor({ table, zoneId, zones, onClose, onSave }: TableEdit
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[#D7CCC8] px-4 py-2.5 text-sm font-medium text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97]"
+              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[#EFEBE9] active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out' }}
             >
               Cancelar

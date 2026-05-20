@@ -115,7 +115,7 @@ export function MenuPanel() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Spinner size={32} className="animate-spin text-[#8D6E63]" />
+        <Spinner size={32} className="animate-spin text-[var(--text-secondary)]" />
       </div>
     )
   }
@@ -127,7 +127,7 @@ export function MenuPanel() {
         <button
           type="button"
           onClick={() => { setEditingCategory(null); setShowCategoryForm(true) }}
-          className="flex items-center gap-1.5 rounded-lg bg-[#6B2737] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#6B2737]/90 active:scale-[0.97]"
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         >
           <Plus size={16} weight="bold" />
@@ -136,7 +136,7 @@ export function MenuPanel() {
         <button
           type="button"
           onClick={() => { setEditingItem(null); setShowItemForm(true) }}
-          className="flex items-center gap-1.5 rounded-lg border border-[#6B2737] px-4 py-2.5 text-sm font-medium text-[#6B2737] hover:bg-[#6B2737]/10 active:scale-[0.97]"
+          className="flex items-center gap-1.5 rounded-lg border border-[#6B2737] px-4 py-2.5 text-sm font-medium text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         >
           <Plus size={16} weight="bold" />
@@ -150,7 +150,7 @@ export function MenuPanel() {
         const isExpanded = expandedCategories.has(cat.id)
 
         return (
-          <AnimatedCard key={cat.id} delay={ci * 0.06} className="rounded-xl border border-[#D7CCC8] bg-white overflow-hidden">
+          <AnimatedCard key={cat.id} delay={ci * 0.06} className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
             {/* Category header */}
             <div
               className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[#EFEBE9]/50"
@@ -158,20 +158,20 @@ export function MenuPanel() {
               style={{ transition: 'background-color 200ms ease-out' }}
             >
               <div className="flex items-center gap-2">
-                {isExpanded ? <CaretDown size={16} className="text-[#8D6E63]" /> : <CaretRight size={16} className="text-[#8D6E63]" />}
-                <h3 className="font-['Playfair_Display'] text-base font-semibold text-[#3E2723]">
+                {isExpanded ? <CaretDown size={16} className="text-[var(--text-secondary)]" /> : <CaretRight size={16} className="text-[var(--text-secondary)]" />}
+                <h3 className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
                   {cat.name}
                 </h3>
-                <span className="text-xs text-[#8D6E63]">({categoryItems.length} platos)</span>
+                <span className="text-xs text-[var(--text-secondary)]">({categoryItems.length} platos)</span>
                 {!cat.is_active && (
-                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600">Inactiva</span>
+                  <span className="rounded-full bg-[var(--color-danger)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--color-danger)]">Inactiva</span>
                 )}
               </div>
               <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                 <button
                   type="button"
                   onClick={() => toggleCategoryActive(cat)}
-                  className="flex h-7 w-7 items-center justify-center rounded text-[#8D6E63] hover:bg-[#D7CCC8]/50"
+                  className="flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50"
                   title={cat.is_active ? 'Ocultar categoria' : 'Mostrar categoria'}
                 >
                   {cat.is_active ? <Eye size={14} /> : <EyeSlash size={14} />}
@@ -179,7 +179,7 @@ export function MenuPanel() {
                 <button
                   type="button"
                   onClick={() => { setEditingCategory(cat); setShowCategoryForm(true) }}
-                  className="flex h-7 w-7 items-center justify-center rounded text-[#8D6E63] hover:bg-[#D7CCC8]/50"
+                  className="flex h-7 w-7 items-center justify-center rounded text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50"
                   title="Editar categoria"
                 >
                   <PencilSimple size={14} />
@@ -197,9 +197,9 @@ export function MenuPanel() {
                   transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
                   className="overflow-hidden"
                 >
-                  <div className="border-t border-[#D7CCC8] px-5 py-4">
+                  <div className="border-t border-[var(--border-default)] px-5 py-4">
                     {categoryItems.length === 0 ? (
-                      <p className="py-4 text-center text-sm text-[#8D6E63]">Sin platos en esta categoria</p>
+                      <p className="py-4 text-center text-sm text-[var(--text-secondary)]">Sin platos en esta categoria</p>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                         {categoryItems.map((item, ii) => (
@@ -209,7 +209,7 @@ export function MenuPanel() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: ii * 0.04, duration: 0.2 }}
                             className={`rounded-lg border p-3 relative group ${
-                              item.is_available ? 'border-[#D7CCC8] bg-white' : 'border-red-100 bg-red-50/30'
+                              item.is_available ? 'border-[var(--border-default)] bg-[var(--bg-card)]' : 'border-red-100 bg-[var(--color-danger)]/10/30'
                             }`}
                           >
                             {/* Featured badge */}
@@ -218,12 +218,12 @@ export function MenuPanel() {
                             )}
 
                             <div className="flex items-start justify-between mb-1">
-                              <h4 className="text-sm font-medium text-[#3E2723] leading-tight">{item.name}</h4>
+                              <h4 className="text-sm font-medium text-[var(--text-primary)] leading-tight">{item.name}</h4>
                               <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100" style={{ transition: 'opacity 150ms ease-out' }}>
                                 <button
                                   type="button"
                                   onClick={() => { setEditingItem(item); setShowItemForm(true) }}
-                                  className="flex h-6 w-6 items-center justify-center rounded text-[#8D6E63] hover:bg-[#D7CCC8]/50"
+                                  className="flex h-6 w-6 items-center justify-center rounded text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50"
                                   title="Editar"
                                 >
                                   <PencilSimple size={12} />
@@ -231,7 +231,7 @@ export function MenuPanel() {
                                 <button
                                   type="button"
                                   onClick={() => deleteItem(item.id)}
-                                  className="flex h-6 w-6 items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600"
+                                  className="flex h-6 w-6 items-center justify-center rounded text-red-400 hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]"
                                   title="Ocultar"
                                 >
                                   <Trash size={12} />
@@ -240,18 +240,18 @@ export function MenuPanel() {
                             </div>
 
                             {item.description && (
-                              <p className="text-[10px] text-[#8D6E63] line-clamp-2 mb-2">{item.description}</p>
+                              <p className="text-[10px] text-[var(--text-secondary)] line-clamp-2 mb-2">{item.description}</p>
                             )}
 
                             <div className="flex items-center justify-between">
-                              <span className="font-mono text-sm font-bold text-[#6B2737]">{formatCOP(item.price)}</span>
+                              <span className="font-mono text-sm font-bold text-[var(--color-ak-borgona)]">{formatCOP(item.price)}</span>
                               <button
                                 type="button"
                                 onClick={() => toggleAvailability(item)}
                                 className={`rounded-full px-2 py-0.5 text-[9px] font-medium ${
                                   item.is_available
-                                    ? 'bg-[#5C7A4D]/10 text-[#5C7A4D]'
-                                    : 'bg-red-50 text-red-500'
+                                    ? 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)]'
+                                    : 'bg-[var(--color-danger)]/10 text-red-500'
                                 }`}
                               >
                                 {item.is_available ? 'Disponible' : 'Oculto'}
@@ -270,8 +270,8 @@ export function MenuPanel() {
       })}
 
       {categories.length === 0 && (
-        <div className="rounded-xl border border-[#D7CCC8] bg-white py-12 text-center">
-          <p className="text-sm text-[#8D6E63]">No hay categorias de menu</p>
+        <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] py-12 text-center">
+          <p className="text-sm text-[var(--text-secondary)]">No hay categorias de menu</p>
           <p className="mt-1 text-xs text-[#BCAAA4]">Crea una categoria para empezar a agregar platos</p>
         </div>
       )}

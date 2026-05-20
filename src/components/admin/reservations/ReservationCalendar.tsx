@@ -20,14 +20,14 @@ const MONTH_NAMES = [
 
 function getHeatClass(count: number): string {
   if (count === 0) return 'bg-[#EFEBE9]'
-  if (count <= 2) return 'bg-[#6B2737]/15'
-  if (count <= 5) return 'bg-[#6B2737]/35'
-  return 'bg-[#6B2737]/60'
+  if (count <= 2) return 'bg-[var(--color-ak-borgona)]/15'
+  if (count <= 5) return 'bg-[var(--color-ak-borgona)]/35'
+  return 'bg-[var(--color-ak-borgona)]/60'
 }
 
 function getHeatTextClass(count: number): string {
   if (count >= 6) return 'text-white'
-  return 'text-[#3E2723]'
+  return 'text-[var(--text-primary)]'
 }
 
 export function ReservationCalendar({
@@ -99,13 +99,13 @@ export function ReservationCalendar({
   const handleToday = () => onDateChange(today)
 
   return (
-    <div className="mb-4 rounded-xl border border-[#D7CCC8] bg-white p-4">
+    <div className="mb-4 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4">
       {/* Month header */}
       <div className="flex items-center justify-between mb-3">
         <button
           type="button"
           onClick={handlePrevMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D7CCC8] text-[#3E2723] hover:bg-[#D7CCC8]/50 active:scale-[0.97]"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
           aria-label="Mes anterior"
         >
@@ -113,13 +113,13 @@ export function ReservationCalendar({
         </button>
 
         <div className="flex items-center gap-3">
-          <span className="font-['Playfair_Display'] text-base font-semibold text-[#3E2723]">
+          <span className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
             {MONTH_NAMES[viewMonth]} {viewYear}
           </span>
           <button
             type="button"
             onClick={handleToday}
-            className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[#6B2737]/30 text-[#6B2737] hover:bg-[#6B2737]/10 active:scale-[0.97]"
+            className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[#6B2737]/30 text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
             style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
           >
             Hoy
@@ -129,7 +129,7 @@ export function ReservationCalendar({
         <button
           type="button"
           onClick={handleNextMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D7CCC8] text-[#3E2723] hover:bg-[#D7CCC8]/50 active:scale-[0.97]"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
           aria-label="Mes siguiente"
         >
@@ -140,7 +140,7 @@ export function ReservationCalendar({
       {/* Weekday headers */}
       <div className="grid grid-cols-7 mb-1">
         {WEEKDAYS.map(d => (
-          <div key={d} className="text-center text-[10px] font-medium text-[#8D6E63] py-1">
+          <div key={d} className="text-center text-[10px] font-medium text-[var(--text-secondary)] py-1">
             {d}
           </div>
         ))}
@@ -175,7 +175,7 @@ export function ReservationCalendar({
             >
               {cell.day}
               {isToday && !isSelected && (
-                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-[#6B2737]" />
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-[var(--color-ak-borgona)]" />
               )}
             </motion.button>
           )
@@ -186,19 +186,19 @@ export function ReservationCalendar({
       <div className="flex items-center justify-center gap-3 mt-3">
         <div className="flex items-center gap-1">
           <span className="h-2.5 w-2.5 rounded-sm bg-[#EFEBE9]" />
-          <span className="text-[9px] text-[#8D6E63]">0</span>
+          <span className="text-[9px] text-[var(--text-secondary)]">0</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm bg-[#6B2737]/15" />
-          <span className="text-[9px] text-[#8D6E63]">1-2</span>
+          <span className="h-2.5 w-2.5 rounded-sm bg-[var(--color-ak-borgona)]/15" />
+          <span className="text-[9px] text-[var(--text-secondary)]">1-2</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm bg-[#6B2737]/35" />
-          <span className="text-[9px] text-[#8D6E63]">3-5</span>
+          <span className="h-2.5 w-2.5 rounded-sm bg-[var(--color-ak-borgona)]/35" />
+          <span className="text-[9px] text-[var(--text-secondary)]">3-5</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm bg-[#6B2737]/60" />
-          <span className="text-[9px] text-[#8D6E63]">6+</span>
+          <span className="h-2.5 w-2.5 rounded-sm bg-[var(--color-ak-borgona)]/60" />
+          <span className="text-[9px] text-[var(--text-secondary)]">6+</span>
         </div>
       </div>
     </div>

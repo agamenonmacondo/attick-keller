@@ -16,7 +16,7 @@ export function SourceBreakdown({ sources }: SourceBreakdownProps) {
     <div>
       <SectionHeading>Fuentes de reserva (ultimos 30 dias)</SectionHeading>
       {total === 0 ? (
-        <p className="text-xs text-[#8D6E63] text-center py-4">Sin datos suficientes</p>
+        <p className="text-xs text-[var(--text-secondary)] text-center py-4">Sin datos suficientes</p>
       ) : (
         <>
           <div className="flex h-6 rounded-full overflow-hidden mt-3">
@@ -32,8 +32,8 @@ export function SourceBreakdown({ sources }: SourceBreakdownProps) {
             {sources.map(({ source, count }) => (
               <div key={source} className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: SOURCE_COLORS[source] || '#8D6E63' }} />
-                <span className="text-[11px] text-[#3E2723]">{SOURCE_LABELS[source] || source}</span>
-                <span className="text-[10px] text-[#8D6E63]">{count} ({Math.round((count / total) * 100)}%)</span>
+                <span className="text-[11px] text-[var(--text-primary)]">{SOURCE_LABELS[source] || source}</span>
+                <span className="text-[10px] text-[var(--text-secondary)]">{count} ({Math.round((count / total) * 100)}%)</span>
               </div>
             ))}
           </div>

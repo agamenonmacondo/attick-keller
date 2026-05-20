@@ -153,12 +153,12 @@ export function TableActionPopover({
     : false
 
   const headerSection = (
-    <div className="flex items-center justify-between border-b border-[#D7CCC8] px-3 py-2">
-      <span className="text-xs font-medium text-[#3E2723]">Mesa {tableNumber} ({capacity}p)</span>
+    <div className="flex items-center justify-between border-b border-[var(--border-default)] px-3 py-2">
+      <span className="text-xs font-medium text-[var(--text-primary)]">Mesa {tableNumber} ({capacity}p)</span>
       <button
         type="button"
         onClick={onClose}
-        className="flex h-6 w-6 items-center justify-center rounded-full text-[#8D6E63] hover:bg-[#D7CCC8]/50"
+        className="flex h-6 w-6 items-center justify-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50"
       >
         <X size={14} />
       </button>
@@ -168,10 +168,10 @@ export function TableActionPopover({
   const occupiedContent = (
     <div className="px-3 py-2 space-y-2">
       <div className="flex items-center gap-2">
-        <User size={14} className="text-[#6B2737]" />
-        <span className="text-sm text-[#3E2723]">{currentCustomerName || 'Cliente'}</span>
+        <User size={14} className="text-[var(--color-ak-borgona)]" />
+        <span className="text-sm text-[var(--text-primary)]">{currentCustomerName || 'Cliente'}</span>
       </div>
-      <p className="text-xs text-[#8D6E63]">
+      <p className="text-xs text-[var(--text-secondary)]">
         {currentTime} · {currentPartySize}p
       </p>
 
@@ -179,7 +179,7 @@ export function TableActionPopover({
         <>
           <button
             onClick={() => setShowDetails(!showDetails)}
-            className="flex items-center gap-1 text-[10px] text-[#D4922A]"
+            className="flex items-center gap-1 text-[10px] text-[var(--color-ak-ambar)]"
           >
             {showDetails ? <CaretUp size={10} /> : <CaretDown size={10} />}
             {showDetails ? 'Menos detalles' : 'Ver detalles'}
@@ -192,7 +192,7 @@ export function TableActionPopover({
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="space-y-1 pl-3 border-l-2 border-[#D7CCC8]">
+                <div className="space-y-1 pl-3 border-l-2 border-[var(--border-default)]">
                   {currentCustomerPhone && (
                     <a
                       href={`https://wa.me/57${currentCustomerPhone.replace(/^0+/, '').replace(/^\+/, '')}`}
@@ -211,8 +211,8 @@ export function TableActionPopover({
                     </a>
                   )}
                   {currentSpecialRequests && (
-                    <div className="flex items-start gap-1.5 text-xs text-[#5D4037] bg-[#F5EDE0] rounded-md px-2 py-1">
-                      <Note size={12} className="text-[#D4922A] shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-1.5 text-xs text-[var(--text-primary)] bg-[var(--bg-primary)] rounded-md px-2 py-1">
+                      <Note size={12} className="text-[var(--color-ak-ambar)] shrink-0 mt-0.5" />
                       <span>{currentSpecialRequests}</span>
                     </div>
                   )}
@@ -238,7 +238,7 @@ export function TableActionPopover({
               type="button"
               onClick={() => handleStatusAction('no_show')}
               disabled={actionLoading !== null}
-              className="w-full rounded-lg border border-[#D4922A] bg-amber-50 px-3 py-1.5 text-xs font-medium text-[#D4922A] hover:bg-amber-100 disabled:opacity-50"
+              className="w-full rounded-lg border border-[#D4922A] bg-[var(--color-warning)]/10 px-3 py-1.5 text-xs font-medium text-[var(--color-ak-ambar)] hover:bg-[var(--color-warning)]/15 disabled:opacity-50"
             >
               {actionLoading === 'no_show' ? '...' : 'No asistió'}
             </button>
@@ -249,7 +249,7 @@ export function TableActionPopover({
             type="button"
             onClick={handleUnassign}
             disabled={assigning}
-            className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50"
+            className="w-full rounded-lg border border-red-200 bg-[var(--color-danger)]/10 px-3 py-1.5 text-xs font-medium text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 disabled:opacity-50"
           >
             {assigning ? 'Liberando...' : 'Liberar mesa'}
           </button>
@@ -261,23 +261,23 @@ export function TableActionPopover({
   const emptyContent = (
     <div className="px-3 py-2">
       {unassignedReservations.length === 0 ? (
-        <p className="py-2 text-center text-xs text-[#8D6E63]">Sin reservas por asignar</p>
+        <p className="py-2 text-center text-xs text-[var(--text-secondary)]">Sin reservas por asignar</p>
       ) : (
         <div className="space-y-1.5 max-h-40 overflow-y-auto">
-          <p className="text-[10px] font-medium text-[#8D6E63] mb-1">Asignar reserva:</p>
+          <p className="text-[10px] font-medium text-[var(--text-secondary)] mb-1">Asignar reserva:</p>
           {unassignedReservations.map(r => (
             <button
               key={r.id}
               type="button"
               onClick={() => handleAssign(r.id)}
               disabled={assigning}
-              className="w-full text-left rounded-lg border border-[#D7CCC8] px-2.5 py-2 text-xs hover:bg-[#EFEBE9] disabled:opacity-50"
+              className="w-full text-left rounded-lg border border-[var(--border-default)] px-2.5 py-2 text-xs hover:bg-[#EFEBE9] disabled:opacity-50"
             >
               <div className="flex items-center justify-between">
-                <span className="font-medium text-[#3E2723]">{r.customer_name || 'Cliente'}</span>
-                <span className="text-[#8D6E63]">{r.party_size}p</span>
+                <span className="font-medium text-[var(--text-primary)]">{r.customer_name || 'Cliente'}</span>
+                <span className="text-[var(--text-secondary)]">{r.party_size}p</span>
               </div>
-              <span className="text-[10px] text-[#8D6E63]">
+              <span className="text-[10px] text-[var(--text-secondary)]">
                 {formatTime(r.time_start)} - {formatTime(r.time_end)}
               </span>
             </button>
@@ -302,11 +302,11 @@ export function TableActionPopover({
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="fixed z-[9999] inset-x-0 bottom-0 max-h-[70vh] overflow-y-auto rounded-t-2xl border border-[#D7CCC8] border-b-0 bg-white shadow-xl"
+          className="fixed z-[9999] inset-x-0 bottom-0 max-h-[70vh] overflow-y-auto rounded-t-2xl border border-[var(--border-default)] border-b-0 bg-[var(--bg-card)] shadow-xl"
         >
           {/* Drag handle */}
           <div className="flex justify-center pt-2 pb-0">
-            <div className="w-8 h-1 rounded-full bg-[#D7CCC8]" />
+            <div className="w-8 h-1 rounded-full bg-[var(--border-default)]" />
           </div>
           {headerSection}
           {isOccupied ? occupiedContent : emptyContent}
@@ -323,7 +323,7 @@ export function TableActionPopover({
   const desktopPopover = (
     <div
       ref={ref}
-      className="fixed z-[9999] w-56 rounded-xl border border-[#D7CCC8] bg-white shadow-xl"
+      className="fixed z-[9999] w-56 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] shadow-xl"
       style={{
         top: showAbove ? undefined : `${position.top}px`,
         bottom: showAbove ? `${window.innerHeight - (anchorRect?.top ?? 0) + 4}px` : undefined,

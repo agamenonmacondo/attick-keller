@@ -39,10 +39,13 @@ export async function GET(request: NextRequest) {
       for (let i = 0; i < customerIds.length; i += 999) {
         const batch = customerIds.slice(i, i + 999)
 
-        const { data: customers } = await sb
+        const { data: customers, error: custError } = await sb
           .from('customers')
           .select('id, full_name, phone')
           .in('id', batch)
+          .eq('restaurant_id', RESTAURANT_ID)
+
+        if (custError) throw custError
 
         for (const c of customers || []) {
           customerNames[c.id] = { name: c.full_name || 'Sin nombre', phone: c.phone }

@@ -10,37 +10,48 @@ async function getCount(sb: any, table: string, filter?: { column: string; value
   return count || 0
 }
 
-// ── Helper: fetch all rows from Supabase with pagination ──
-// Supabase/PostgREST truncates to max 1000 rows per request,
-// so we paginate in batches of 999 using Range headers.
-async function fetchAll<T>(
-  sb: any,
-  table: string,
-  select: string,
-  filter?: { column: string; value: string },
-  batchSize = 999
-): Promise<T[]> {
-  const allRows: T[] = []
+// ── Helper: fetch all customer IDs for the restaurant (paginated) ──
+async function fetchCustomerIds(sb: any): Promise<string[]> {
+  const ids: string[] = []
   let offset = 0
+  const batchSize = 999
 
   while (true) {
-    let query = sb
-      .from(table)
-      .select(select)
+    const { data, error } = await sb
+      .from('customers')
+      .select('id')
+      .eq('restaurant_id', RESTAURANT_ID)
       .range(offset, offset + batchSize)
 
-    if (filter) {
-      query = query.eq(filter.column, filter.value)
-    }
-
-    const { data, error } = await query
     if (error) throw error
     if (!data || data.length === 0) break
 
-    allRows.push(...data)
-    // If we received fewer rows than requested, there are no more pages
+    ids.push(...data.map((d: any) => d.id))
     if (data.length <= batchSize) break
     offset += batchSize + 1
+  }
+
+  return ids
+}
+
+// ── Helper: fetch customer_stats filtered by customer IDs (paginated) ──
+async function fetchStatsForCustomers(
+  sb: any,
+  customerIds: string[],
+  select: string
+): Promise<any[]> {
+  const allRows: any[] = []
+  const batchSize = 999
+
+  for (let i = 0; i < customerIds.length; i += batchSize) {
+    const batch = customerIds.slice(i, i + batchSize)
+    const { data, error } = await sb
+      .from('customer_stats')
+      .select(select)
+      .in('customer_id', batch)
+
+    if (error) throw error
+    if (data) allRows.push(...data)
   }
 
   return allRows
@@ -56,14 +67,20 @@ export async function GET(request: NextRequest) {
 
   try {
     if (view === 'overview') {
-      // ── Use counts + stats only (no need to fetch ALL 20K customers) ──
-      // Get total customer count (efficient)
+      // ── Step 1: Get total customer count ──
       const totalCustomers = await getCount(sb, 'customers', { column: 'restaurant_id', value: RESTAURANT_ID })
 
-      // Fetch ALL stats (they have the aggregate data we need)
-      const stats = await fetchAll<any>(sb, 'customer_stats', 'customer_id, total_visits, no_show_count, loyalty_tier, is_recurring, last_visit_date, total_spent')
+      // ── Step 2: Get ALL customer IDs for this restaurant (needed to filter customer_stats) ──
+      const customerIds = await fetchCustomerIds(sb)
 
-      // Contact channel distribution — use Supabase count queries instead of fetching all customers
+      // ── Step 3: Fetch stats ONLY for this restaurant's customers ──
+      const stats = await fetchStatsForCustomers(
+        sb,
+        customerIds,
+        'customer_id, total_visits, no_show_count, loyalty_tier, is_recurring, last_visit_date, total_spent'
+      )
+
+      // ── Step 4: Contact channel distribution ──
       const [withPhoneCount, withEmailCount, withBothCount] = await Promise.all([
         sb.from('customers').select('id', { count: 'exact', head: true }).eq('restaurant_id', RESTAURANT_ID).not('phone', 'is', null).neq('phone', ''),
         sb.from('customers').select('id', { count: 'exact', head: true }).eq('restaurant_id', RESTAURANT_ID).not('email', 'is', null).neq('email', ''),
@@ -73,9 +90,9 @@ export async function GET(request: NextRequest) {
       const withPhone = withPhoneCount.count || 0
       const withEmail = withEmailCount.count || 0
       const withBoth = withBothCount.count || 0
-      const withNeither = totalCustomers - withPhone - withEmail + withBoth // inclusion-exclusion
+      const withNeither = totalCustomers - withPhone - withEmail + withBoth
 
-      // Aggregate from stats
+      // ── Step 5: Aggregate from stats ──
       const segments: Record<string, number> = {}
       let totalVisits = 0
       let totalNoShows = 0
@@ -127,55 +144,36 @@ export async function GET(request: NextRequest) {
       const recent30 = stats.filter(s => s.last_visit_date && s.last_visit_date >= thirtyDaysAgo).length
       const recent90 = stats.filter(s => s.last_visit_date && s.last_visit_date >= ninetyDaysAgo).length
 
-      // Reactivation data: dormant clients reachable via WhatsApp/email
-      const dormantClients = oneTime // 1-visit clients
+      // ── Step 6: Reactivation data ──
+      // Get contact info for dormant (1-visit) clients
       const dormantIds = stats.filter(s => (s.total_visits || 0) <= 1).map(s => s.customer_id)
+      const dormantClients = dormantIds.length
 
-      // Get contact info for dormant clients (need to cross-reference customers table)
-      // Since we can't easily join, we use the overall contact percentages as estimates
-      const phonePct = totalCustomers > 0 ? withPhone / totalCustomers : 0
-      const emailPct = totalCustomers > 0 ? withEmail / totalCustomers : 0
-      const bothPct = totalCustomers > 0 ? withBoth / totalCustomers : 0
-      const neitherPct = totalCustomers > 0 ? withNeither / totalCustomers : 0
-
-      // Estimate reachable dormant clients (applying same contact distribution)
-      const reachableWhatsApp = Math.round(dormantClients * (phonePct - bothPct * 0.3)) // phone minus overlap with email-preferred
-      const reachableEmail = Math.round(dormantClients * (emailPct - bothPct * 0.7)) // email minus overlap with phone-preferred
-      const notReachable = Math.round(dormantClients * neitherPct)
-
-      // More precise: fetch dormant customers' contact data directly
       let preciseDormantWhatsApp = 0
       let preciseDormantEmail = 0
       let preciseDormantBoth = 0
       let preciseDormantNeither = 0
-      try {
-        // Batch query dormant customer IDs (max 1000 per batch)
-        const dormantBatches: string[][] = []
-        for (let i = 0; i < dormantIds.length; i += 999) {
-          dormantBatches.push(dormantIds.slice(i, i + 999))
+
+      // Batch query dormant customer contact data (max 999 per batch)
+      const dormantBatches: string[][] = []
+      for (let i = 0; i < dormantIds.length; i += 999) {
+        dormantBatches.push(dormantIds.slice(i, i + 999))
+      }
+      for (const batch of dormantBatches) {
+        const { data: dormantCustomers } = await sb
+          .from('customers')
+          .select('phone, email')
+          .in('id', batch)
+          .eq('restaurant_id', RESTAURANT_ID)
+
+        for (const c of dormantCustomers || []) {
+          const hasPhone = c.phone && c.phone.trim() !== ''
+          const hasEmail = c.email && c.email.trim() !== ''
+          if (hasPhone && hasEmail) preciseDormantBoth++
+          else if (hasPhone) preciseDormantWhatsApp++
+          else if (hasEmail) preciseDormantEmail++
+          else preciseDormantNeither++
         }
-        for (const batch of dormantBatches) {
-          const { data: dormantCustomers } = await sb
-            .from('customers')
-            .select('phone, email')
-            .in('id', batch)
-            .eq('restaurant_id', RESTAURANT_ID)
-          
-          for (const c of dormantCustomers || []) {
-            const hasPhone = c.phone && c.phone.trim() !== ''
-            const hasEmail = c.email && c.email.trim() !== ''
-            if (hasPhone && hasEmail) preciseDormantBoth++
-            else if (hasPhone) preciseDormantWhatsApp++
-            else if (hasEmail) preciseDormantEmail++
-            else preciseDormantNeither++
-          }
-        }
-      } catch {
-        // Fall back to estimates if batch query fails
-        preciseDormantWhatsApp = reachableWhatsApp
-        preciseDormantEmail = reachableEmail
-        preciseDormantNeither = notReachable
-        preciseDormantBoth = dormantClients - reachableWhatsApp - reachableEmail - notReachable
       }
 
       return NextResponse.json({
@@ -202,8 +200,8 @@ export async function GET(request: NextRequest) {
         vipClients,
         reactivation: {
           dormantClients,
-          reachableWhatsApp: preciseDormantWhatsApp + preciseDormantBoth, // WhatsApp includes those with both
-          reachableEmail: preciseDormantEmail + preciseDormantBoth, // Email also includes those with both
+          reachableWhatsApp: preciseDormantWhatsApp + preciseDormantBoth,
+          reachableEmail: preciseDormantEmail + preciseDormantBoth,
           notReachable: preciseDormantNeither,
         },
       })
@@ -211,9 +209,10 @@ export async function GET(request: NextRequest) {
 
     if (view === 'retention') {
       // ── Detailed retention data ──
-      const stats = await fetchAll<any>(
+      const customerIds = await fetchCustomerIds(sb)
+      const stats = await fetchStatsForCustomers(
         sb,
-        'customer_stats',
+        customerIds,
         'customer_id, total_visits, no_show_count, last_visit_date, is_recurring, loyalty_tier'
       )
 
@@ -240,6 +239,6 @@ export async function GET(request: NextRequest) {
 
   } catch (err) {
     console.error('[analytics] Error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error', details: err instanceof Error ? err.message : String(err) }, { status: 500 })
   }
 }

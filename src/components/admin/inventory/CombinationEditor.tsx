@@ -87,7 +87,7 @@ export function CombinationEditor({ combination, tables, onClose, onSave }: Comb
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               placeholder="Ej: Terraza grande"
             />
           </div>
@@ -96,7 +96,7 @@ export function CombinationEditor({ combination, tables, onClose, onSave }: Comb
             <label className="mb-1 block text-xs text-[var(--text-secondary)]">Mesas combinables ({selectedIds.length} seleccionadas)</label>
             <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-2">
               {combinableTables.length === 0 ? (
-                <p className="py-3 text-center text-xs text-[#BCAAA4]">No hay mesas combinables</p>
+                <p className="py-3 text-center text-xs text-[var(--text-muted)]">No hay mesas combinables</p>
               ) : (
                 combinableTables.map(table => (
                   <button
@@ -105,8 +105,8 @@ export function CombinationEditor({ combination, tables, onClose, onSave }: Comb
                     onClick={() => toggleTable(table.id)}
                     className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                       selectedIds.includes(table.id)
-                        ? 'bg-[var(--color-ak-borgona)] text-white'
-                        : 'text-[var(--text-primary)] hover:bg-[#EFEBE9]'
+                        ? 'bg-[var(--color-ak-borgona)] text-[var(--bg-primary)]'
+                        : 'text-[var(--text-primary)] hover:bg-[var(--bg-input)]'
                     }`}
                   >
                     <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
@@ -115,7 +115,7 @@ export function CombinationEditor({ combination, tables, onClose, onSave }: Comb
                         : 'border-[var(--border-default)]'
                     }`}>
                       {selectedIds.includes(table.id) && (
-                        <span className="text-[9px] font-bold">&#10003;</span>
+                        <span className="text-[9px] font-bold">&var(--color-ak-borgona);</span>
                       )}
                     </span>
                     <span className="font-medium">{table.name_attick || table.number}</span>
@@ -131,8 +131,8 @@ export function CombinationEditor({ combination, tables, onClose, onSave }: Comb
           </div>
 
           {selectedIds.length >= 2 && (
-            <div className="rounded-lg border border-[#C9A94E]/30 bg-[#C9A94E]/5 px-3 py-2">
-              <p className="text-xs text-[#8B7A3A]">
+            <div className="rounded-lg border border-[var(--color-ak-dorado)]/30 bg-[var(--color-ak-dorado)]/5 px-3 py-2">
+              <p className="text-xs text-[var(--color-ak-ambar)]">
                 Capacidad combinada: <strong>{combinedCapacity} personas</strong>
               </p>
             </div>
@@ -142,7 +142,7 @@ export function CombinationEditor({ combination, tables, onClose, onSave }: Comb
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 disabled:opacity-50 active:scale-[0.97]"
+              className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-[var(--bg-primary)] hover:bg-[var(--color-ak-borgona)]/90 disabled:opacity-50 active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out' }}
             >
               {saving ? 'Guardando...' : isEditing ? 'Guardar' : 'Crear Combinacion'}
@@ -150,7 +150,7 @@ export function CombinationEditor({ combination, tables, onClose, onSave }: Comb
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[#EFEBE9] active:scale-[0.97]"
+              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out' }}
             >
               Cancelar

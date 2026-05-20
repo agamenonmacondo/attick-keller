@@ -26,9 +26,9 @@ import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 // ── Constants ──────────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<TableStatus, string> = {
-  available: '#5C7A4D',
-  reserved: '#D4922A',
-  seated: '#6B2737',
+  available: 'var(--color-ak-oliva)',
+  reserved: 'var(--color-ak-ambar)',
+  seated: 'var(--color-ak-borgona)',
 }
 
 const STATUS_LABELS: Record<TableStatus, string> = {
@@ -38,19 +38,19 @@ const STATUS_LABELS: Record<TableStatus, string> = {
 }
 
 const ZONE_COLORS: Record<string, string> = {
-  'Taller': '#8B5E3C',
-  'Salón Central': '#6B2737',
-  'Barra': '#4A7C59',
-  'Tipi': '#7B68EE',
-  'Semi-Privado': '#D4922A',
-  'Jardín': '#2E8B57',
-  'Chispas': '#CD5C5C',
-  'Ático': '#4682B4',
-  'Attic': '#4682B4',
-  'Lounge': '#4682B4',
+  'Taller': '#A0745A',
+  'Salón Central': 'var(--color-ak-borgona)',
+  'Barra': '#6B9E78',
+  'Tipi': '#9B8AF5',
+  'Semi-Privado': 'var(--color-ak-ambar)',
+  'Jardín': '#4AAF75',
+  'Chispas': '#E07070',
+  'Ático': '#6AA0D0',
+  'Attic': '#6AA0D0',
+  'Lounge': '#6AA0D0',
 }
 
-const DEFAULT_ZONE_COLOR = '#8D6E63'
+const DEFAULT_ZONE_COLOR = 'var(--text-secondary)'
 
 function getZoneColor(zoneName: string | null): string {
   if (!zoneName) return DEFAULT_ZONE_COLOR
@@ -167,12 +167,12 @@ function TableHotspot({
         <span className="lg:hidden text-[5px] text-[var(--text-secondary)]">{table.capacity}p</span>
         {/* Status dot */}
         <div
-          className="absolute -top-0.5 -right-0.5 w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full border border-white"
+          className="absolute -top-0.5 -right-0.5 w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full border border-[var(--bg-card)]"
           style={{ backgroundColor: statusColor }}
         />
         {editMode && (
           <div
-            className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white"
+            className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-[var(--bg-card)]"
             style={{ backgroundColor: zoneColor }}
           />
         )}
@@ -219,7 +219,7 @@ function ZoneGroup({
             exit={{ height: 0 }}
             className="overflow-hidden"
           >
-            <div className="px-3 py-2 space-y-1.5 bg-[#FAFAF8]">
+            <div className="px-3 py-2 space-y-1.5 bg-[var(--bg-primary)]">
               {tables.map((table) => (
                 <motion.div
                   key={table.id}
@@ -229,7 +229,7 @@ function ZoneGroup({
                   exit={{ opacity: 0, y: -4 }}
                   className={cn(
                     'flex items-center gap-2 px-2 py-1.5 rounded-md border border-[var(--border-default)] bg-[var(--bg-card)] text-xs',
-                    editMode && 'cursor-pointer hover:border-[#5C7A4D] hover:bg-[var(--color-ak-oliva)]/5',
+                    editMode && 'cursor-pointer hover:border-[var(--color-ak-oliva)] hover:bg-[var(--color-ak-oliva)]/5',
                   )}
                   onClick={() => editMode && onPosition(table)}
                 >
@@ -402,7 +402,7 @@ function TableDetailContent({
                           <a
                             href={`https://wa.me/57${table.customer_phone.replace(/^0+/, '').replace(/^\+/, '')}`}
                             target="_blank"
-                            className="flex items-center gap-1.5 text-xs text-[#25D366] hover:underline"
+                            className="flex items-center gap-1.5 text-xs text-[var(--color-success)] hover:underline"
                           >
                             <WhatsappLogo size={12} weight="fill" /> {table.customer_phone}
                           </a>
@@ -410,7 +410,7 @@ function TableDetailContent({
                         {table.customer_email && (
                           <a
                             href={`mailto:${table.customer_email}`}
-                            className="flex items-center gap-1.5 text-xs text-[#1565C0] hover:underline"
+                            className="flex items-center gap-1.5 text-xs text-[var(--color-accent)] hover:underline"
                           >
                             <EnvelopeSimple size={12} /> {table.customer_email}
                           </a>
@@ -460,7 +460,7 @@ function TableDetailContent({
             <button
               onClick={() => handleStatusAction('seated')}
               disabled={actionLoading !== null}
-              className="flex-1 py-2 text-xs font-medium rounded-lg bg-green-700 text-white hover:bg-green-800 active:scale-[0.97] disabled:opacity-50"
+              className="flex-1 py-2 text-xs font-medium rounded-lg bg-[var(--color-success)] text-white hover:bg-[var(--color-success)]/80 active:scale-[0.97] disabled:opacity-50"
             >
               {actionLoading === 'seated' ? '...' : 'Sentar'}
             </button>
@@ -469,12 +469,12 @@ function TableDetailContent({
             <button
               onClick={() => handleStatusAction('completed')}
               disabled={actionLoading !== null}
-              className="flex-1 py-2 text-xs font-medium rounded-lg bg-[var(--color-ak-borgona)] text-white hover:bg-[#5C2230] active:scale-[0.97] disabled:opacity-50"
+              className="flex-1 py-2 text-xs font-medium rounded-lg bg-[var(--color-ak-borgona)] text-white hover:bg-[var(--color-ak-borgona)]/80 active:scale-[0.97] disabled:opacity-50"
             >
               {actionLoading === 'completed' ? '...' : 'Liberar'}
             </button>
           )}
-          <button className="flex-1 py-2 text-xs font-medium rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[#EFEBE9]">
+          <button className="flex-1 py-2 text-xs font-medium rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--bg-input)]">
             Reasignar
           </button>
         </div>
@@ -728,7 +728,7 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
           {unpositionedTables.length > 0 && (
             <button
               onClick={() => setShowMobileSidebar(true)}
-              className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#D4922A] bg-[var(--color-ak-ambar)]/10 text-[var(--color-ak-ambar)] text-xs font-medium"
+              className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--color-ak-ambar)] bg-[var(--color-ak-ambar)]/10 text-[var(--color-ak-ambar)] text-xs font-medium"
             >
               <Sidebar size={14} />
               {unpositionedTables.length} sin posición
@@ -771,8 +771,8 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
               className={cn(
                 'flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all',
                 editMode
-                  ? 'bg-[var(--color-ak-oliva)] text-white border-[#5C7A4D]'
-                  : 'bg-[var(--bg-card)] text-[var(--text-primary)] border-[var(--border-default)] hover:border-[#5C7A4D]',
+                  ? 'bg-[var(--color-ak-oliva)] text-white border-[var(--color-ak-oliva)]'
+                  : 'bg-[var(--bg-card)] text-[var(--text-primary)] border-[var(--border-default)] hover:border-[var(--color-ak-oliva)]',
               )}
             >
               {editMode ? <Check size={16} /> : <PencilSimple size={16} />}
@@ -796,15 +796,15 @@ export function FloorPlanMap({ readOnly = false, onTableSelect }: { readOnly?: b
                 {zone.name}
               </span>
             ))}
-            <span className="text-[#D7CCC8] mx-1 shrink-0">|</span>
+            <span className="text-[var(--border-default)] mx-1 shrink-0">|</span>
             <span className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] shrink-0">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#5C7A4D' }} /> Libre
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--color-ak-oliva)' }} /> Libre
             </span>
             <span className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] shrink-0">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#D4922A' }} /> Reservada
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--color-ak-ambar)' }} /> Reservada
             </span>
             <span className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] shrink-0">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#6B2737' }} /> Ocupada
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--color-ak-borgona)' }} /> Ocupada
             </span>
           </div>
         )}

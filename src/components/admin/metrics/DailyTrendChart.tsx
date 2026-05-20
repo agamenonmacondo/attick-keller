@@ -30,7 +30,7 @@ export function DailyTrendChart({ trend }: DailyTrendChartProps) {
               <div className="w-full flex flex-col justify-end" style={{ height: 100 }}>
                 <div className="w-full rounded-t" style={{
                   height: `${heightPct}%`,
-                  backgroundColor: isToday ? '#C9A94E' : '#6B2737',
+                  backgroundColor: isToday ? 'var(--color-ak-dorado)' : 'var(--color-ak-borgona)',
                   transition: 'height 500ms cubic-bezier(0.23, 1, 0.32, 1)',
                   minHeight: total > 0 ? 4 : 0,
                   position: 'relative',
@@ -38,7 +38,7 @@ export function DailyTrendChart({ trend }: DailyTrendChartProps) {
                   {total > 0 && <div className="absolute bottom-0 left-0 right-0 rounded-b" style={{ height: `${confirmedPct}%`, backgroundColor: isToday ? 'rgba(92, 122, 77, 0.5)' : 'rgba(92, 122, 77, 0.3)' }} />}
                 </div>
               </div>
-              <span className={isToday ? 'text-[10px] font-bold text-[#C9A94E]' : 'text-[9px] text-[var(--text-secondary)]'}>{dayLabel}</span>
+              <span className={isToday ? 'text-[10px] font-bold text-[var(--color-ak-dorado)]' : 'text-[9px] text-[var(--text-secondary)]'}>{dayLabel}</span>
             </div>
           )
         })}
@@ -46,7 +46,7 @@ export function DailyTrendChart({ trend }: DailyTrendChartProps) {
       <div className="flex items-center gap-4 mt-3">
         <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-borgona)]" /><span className="text-[10px] text-[var(--text-secondary)]">Total</span></div>
         <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-oliva)]/30" /><span className="text-[10px] text-[var(--text-secondary)]">Confirmadas</span></div>
-        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-[#C9A94E]" /><span className="text-[10px] text-[var(--text-secondary)]">Hoy</span></div>
+        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-dorado)]" /><span className="text-[10px] text-[var(--text-secondary)]">Hoy</span></div>
       </div>
     </div>
   )

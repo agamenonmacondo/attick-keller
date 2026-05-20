@@ -110,7 +110,7 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag, qu
           onChange={(e) => setFilters(prev => ({ ...prev, q: e.target.value }))}
           onKeyDown={(e) => e.key === 'Enter' && apply()}
           placeholder="Nombre, telefono o email..."
-          className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
+          className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
         />
       </div>
 
@@ -129,7 +129,7 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag, qu
         </div>
         <div className="flex flex-wrap gap-1.5">
           {tags.length === 0 && (
-            <p className="text-[10px] text-[#BCAAA4] py-1">Sin etiquetas creadas</p>
+            <p className="text-[10px] text-[var(--text-muted)] py-1">Sin etiquetas creadas</p>
           )}
           {tags.map(tag => (
             <button
@@ -140,10 +140,10 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag, qu
                 'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border transition-colors duration-150',
                 filters.selectedTagIds.includes(tag.id)
                   ? 'text-white border-transparent'
-                  : 'text-[var(--text-primary)] border-[var(--border-default)] hover:border-[#BCAAA4]'
+                  : 'text-[var(--text-primary)] border-[var(--border-default)] hover:border-[var(--text-muted)]'
               )}
               style={{
-                backgroundColor: filters.selectedTagIds.includes(tag.id) ? tag.color : '#F5EDE0',
+                backgroundColor: filters.selectedTagIds.includes(tag.id) ? tag.color : 'var(--bg-input)',
               }}
             >
               {tag.name}
@@ -171,7 +171,7 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag, qu
                 'flex-1 py-1.5 text-[11px] font-medium transition-colors duration-150',
                 filters.hasEmail === opt.value
                   ? 'bg-[var(--color-ak-borgona)] text-white'
-                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[#EFEBE9]'
+                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-input)]'
               )}
             >
               {opt.label}
@@ -193,8 +193,8 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag, qu
               className={cn(
                 'rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors duration-150',
                 filters.lastVisitDays === p.value
-                  ? 'border-[#6B2737] bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)]'
-                  : 'border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[#BCAAA4]'
+                  ? 'border-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)]'
+                  : 'border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]'
               )}
             >
               {p.label}
@@ -213,7 +213,7 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag, qu
           value={filters.minVisits || ''}
           onChange={(e) => setFilters(prev => ({ ...prev, minVisits: parseInt(e.target.value) || 0 }))}
           placeholder="Ej: 3"
-          className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
+          className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
         />
       </div>
 
@@ -229,7 +229,7 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag, qu
         <button
           type="button"
           onClick={clear}
-          className="flex-1 rounded-lg border border-[var(--border-default)] py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[#EFEBE9] active:scale-[0.97] transition-transform"
+          className="flex-1 rounded-lg border border-[var(--border-default)] py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-transform"
         >
           Limpiar
         </button>

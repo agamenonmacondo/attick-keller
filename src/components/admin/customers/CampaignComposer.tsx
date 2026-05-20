@@ -87,7 +87,7 @@ export function CampaignComposer({
         <p className="text-xs text-[var(--text-secondary)] mt-1">
           {selectedCount} destinatario{selectedCount !== 1 ? 's' : ''}
         </p>
-        <p className="text-[10px] text-[#BCAAA4] mt-0.5">{segmentDesc}</p>
+        <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{segmentDesc}</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
@@ -98,7 +98,7 @@ export function CampaignComposer({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ej: Invitacion evento vinos - Abril"
-            className="w-full mt-1 rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
+            className="w-full mt-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
           />
         </div>
 
@@ -109,7 +109,7 @@ export function CampaignComposer({
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Te esperamos en Attick & Keller..."
-            className="w-full mt-1 rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
+            className="w-full mt-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
           />
         </div>
 
@@ -120,7 +120,7 @@ export function CampaignComposer({
             onChange={(e) => setBody(e.target.value)}
             rows={6}
             placeholder={'Hola {{full_name}},\n\nQueremos invitarte a...\n\nTe esperamos!'}
-            className="w-full mt-1 rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none resize-none"
+            className="w-full mt-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--color-ak-borgona)] focus:outline-none resize-none"
           />
         </div>
 
@@ -134,7 +134,7 @@ export function CampaignComposer({
                 key={p.key}
                 type="button"
                 onClick={() => setBody(prev => prev + ' ' + p.key)}
-                className="rounded-full bg-[#EFEBE9] px-2.5 py-1 text-[10px] text-[var(--color-ak-borgona)] font-mono hover:bg-[var(--border-default)]/50 transition-colors"
+                className="rounded-full bg-[var(--bg-input)] px-2.5 py-1 text-[10px] text-[var(--color-ak-borgona)] font-mono hover:bg-[var(--border-default)]/50 transition-colors"
                 title={p.label}
               >
                 {p.key}
@@ -160,7 +160,7 @@ export function CampaignComposer({
             animate={{ height: 'auto', opacity: 1 }}
             className="rounded-lg border border-[var(--border-default)] overflow-hidden"
           >
-            <div className="px-3 py-2 bg-[#EFEBE9] border-b border-[var(--border-default)]">
+            <div className="px-3 py-2 bg-[var(--bg-input)] border-b border-[var(--border-default)]">
               <span className="text-[10px] font-medium text-[var(--text-secondary)]">
                 PREVIEW — {previewCustomer.full_name || 'Cliente'}
               </span>
@@ -177,7 +177,7 @@ export function CampaignComposer({
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 rounded-lg border border-[var(--border-default)] py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[#EFEBE9] active:scale-[0.97] transition-transform"
+          className="flex-1 rounded-lg border border-[var(--border-default)] py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-transform"
         >
           Cancelar
         </button>

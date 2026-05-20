@@ -197,7 +197,7 @@ export function TableActionPopover({
                     <a
                       href={`https://wa.me/57${currentCustomerPhone.replace(/^0+/, '').replace(/^\+/, '')}`}
                       target="_blank"
-                      className="flex items-center gap-1.5 text-xs text-[#25D366] hover:underline"
+                      className="flex items-center gap-1.5 text-xs text-[var(--color-success)] hover:underline"
                     >
                       <WhatsappLogo size={12} weight="fill" /> {currentCustomerPhone}
                     </a>
@@ -205,7 +205,7 @@ export function TableActionPopover({
                   {currentCustomerEmail && (
                     <a
                       href={`mailto:${currentCustomerEmail}`}
-                      className="flex items-center gap-1.5 text-xs text-[#1565C0] hover:underline"
+                      className="flex items-center gap-1.5 text-xs text-[var(--color-accent)] hover:underline"
                     >
                       <EnvelopeSimple size={12} /> {currentCustomerEmail}
                     </a>
@@ -238,7 +238,7 @@ export function TableActionPopover({
               type="button"
               onClick={() => handleStatusAction('no_show')}
               disabled={actionLoading !== null}
-              className="w-full rounded-lg border border-[#D4922A] bg-[var(--color-warning)]/10 px-3 py-1.5 text-xs font-medium text-[var(--color-ak-ambar)] hover:bg-[var(--color-warning)]/15 disabled:opacity-50"
+              className="w-full rounded-lg border border-[var(--color-ak-ambar)] bg-[var(--color-warning)]/10 px-3 py-1.5 text-xs font-medium text-[var(--color-ak-ambar)] hover:bg-[var(--color-warning)]/15 disabled:opacity-50"
             >
               {actionLoading === 'no_show' ? '...' : 'No asistió'}
             </button>

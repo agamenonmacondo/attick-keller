@@ -67,8 +67,8 @@ export function QuickFilterChips({ filters, onChange }: QuickFilterChipsProps) {
         className={cn(
           'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors duration-150',
           filters.isRecurring === 'true'
-            ? 'bg-[var(--color-ak-borgona)]/10 border-[#6B2737] text-[var(--text-primary)] font-medium'
-            : 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[#BCAAA4]'
+            ? 'bg-[var(--color-ak-borgona)]/10 border-[var(--color-ak-borgona)] text-[var(--text-primary)] font-medium'
+            : 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]'
         )}
       >
         <ArrowClockwise size={12} weight={filters.isRecurring === 'true' ? 'fill' : 'regular'} />
@@ -87,8 +87,8 @@ export function QuickFilterChips({ filters, onChange }: QuickFilterChipsProps) {
             className={cn(
               'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors duration-150',
               filters.tiers.includes(tier.key)
-                ? 'bg-[var(--color-ak-borgona)]/10 border-[#6B2737] text-[var(--text-primary)] font-medium'
-                : 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[#BCAAA4]'
+                ? 'bg-[var(--color-ak-borgona)]/10 border-[var(--color-ak-borgona)] text-[var(--text-primary)] font-medium'
+                : 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]'
             )}
           >
             {tier.label}
@@ -108,8 +108,8 @@ export function QuickFilterChips({ filters, onChange }: QuickFilterChipsProps) {
             className={cn(
               'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors duration-150',
               filters.lastActivity === opt.key
-                ? 'bg-[var(--color-ak-borgona)]/10 border-[#6B2737] text-[var(--text-primary)] font-medium'
-                : 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[#BCAAA4]'
+                ? 'bg-[var(--color-ak-borgona)]/10 border-[var(--color-ak-borgona)] text-[var(--text-primary)] font-medium'
+                : 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]'
             )}
           >
             {opt.label}
@@ -125,8 +125,8 @@ export function QuickFilterChips({ filters, onChange }: QuickFilterChipsProps) {
         className={cn(
           'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors duration-150',
           filters.hasEmail !== null
-            ? 'bg-[var(--color-ak-borgona)]/10 border-[#6B2737] text-[var(--text-primary)] font-medium'
-            : 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[#BCAAA4]'
+            ? 'bg-[var(--color-ak-borgona)]/10 border-[var(--color-ak-borgona)] text-[var(--text-primary)] font-medium'
+            : 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]'
         )}
       >
         <Envelope size={12} weight={filters.hasEmail !== null ? 'fill' : 'regular'} />

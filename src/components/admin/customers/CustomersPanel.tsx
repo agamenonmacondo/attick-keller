@@ -270,7 +270,7 @@ export function CustomersPanel() {
               exit={{ opacity: 0 }}
               className="hidden lg:flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border-default)] bg-[var(--bg-card)]/30 py-16 text-center min-h-[200px]"
             >
-              <div className="mb-3 text-[#BCAAA4]"><Users size={36} /></div>
+              <div className="mb-3 text-[var(--text-muted)]"><Users size={36} /></div>
               <p className="text-sm font-medium text-[var(--text-primary)]">Selecciona clientes</p>
               <p className="mt-1 text-xs text-[var(--text-secondary)] max-w-[240px]">
                 Usa los filtros y checkboxes para segmentar, luego crea una campana de email

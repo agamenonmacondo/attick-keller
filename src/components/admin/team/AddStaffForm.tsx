@@ -41,12 +41,12 @@ export function AddStaffForm({ onAdd }: AddStaffFormProps) {
           onChange={e => setEmail(e.target.value)}
           placeholder="correo@ejemplo.com"
           required
-          className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#6B2737]/30"
+          className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
         />
         <select
           value={role}
           onChange={e => setRole(e.target.value)}
-          className="px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#6B2737]/30"
+          className="px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
         >
           <option value="host">Host</option>
           <option value="store_admin">Administrador</option>
@@ -54,7 +54,7 @@ export function AddStaffForm({ onAdd }: AddStaffFormProps) {
         <button
           type="submit"
           disabled={submitting || !email.trim()}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--color-ak-borgona)] text-white font-medium hover:bg-[#5C2230] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--color-ak-borgona)] text-[var(--bg-primary)] font-medium hover:bg-[var(--color-ak-borgona)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <Plus size={18} />
           {submitting ? 'Agregando...' : 'Invitar'}

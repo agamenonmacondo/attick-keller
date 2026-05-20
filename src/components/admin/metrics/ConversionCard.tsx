@@ -17,7 +17,7 @@ export function ConversionCard({ pending, confirmed, rate }: ConversionCardProps
         <span className="text-lg text-[var(--text-secondary)] mb-1">%</span>
       </div>
       <p className="text-xs text-[var(--text-secondary)] mt-1">{confirmed} confirmadas de {total} reservas</p>
-      <div className="flex h-2 bg-[#EFEBE9] rounded-full overflow-hidden mt-3">
+      <div className="flex h-2 bg-[var(--bg-input)] rounded-full overflow-hidden mt-3">
         <div className="h-full bg-[var(--color-ak-oliva)] rounded-full" style={{ width: `${confirmedPct}%`, transition: 'width 500ms ease-out' }} />
         <div className="h-full bg-amber-400" style={{ width: `${100 - confirmedPct}%`, transition: 'width 500ms ease-out' }} />
       </div>

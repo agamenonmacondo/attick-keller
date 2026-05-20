@@ -66,10 +66,10 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                 const customerEmail = table.current_customer_email as string | null
                 const specialRequests = table.current_special_requests as string | null
 
-                const statusColor = !showReservationInfo ? '#5C7A4D'
-                  : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? '#D4922A'
-                  : reservationStatus === 'seated' ? '#6B2737'
-                  : '#9E9E9E'
+                const statusColor = !showReservationInfo ? 'var(--color-ak-oliva)'
+                  : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'var(--color-ak-ambar)'
+                  : reservationStatus === 'seated' ? 'var(--color-ak-borgona)'
+                  : 'var(--text-muted)'
 
                 const statusLabel = !reservationStatus ? 'Libre'
                   : reservationStatus === 'confirmed' ? 'Confirmado'
@@ -92,7 +92,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                 const statusDotColor = !showReservationInfo ? 'bg-[var(--color-success)]'
                   : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'bg-[var(--color-ak-ambar)]'
                   : reservationStatus === 'seated' ? 'bg-[var(--color-ak-borgona)]'
-                  : 'bg-gray-400'
+                  : 'bg-[var(--text-muted)]'
 
                 return (
                   <AnimatedCard key={tableId} delay={(zi * 8 + ti) * 0.03}>
@@ -178,10 +178,10 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
               const customerEmail = table.current_customer_email as string | null
               const specialRequests = table.current_special_requests as string | null
 
-              const statusColor = !showReservationInfo ? '#5C7A4D'
-                : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? '#D4922A'
-                : reservationStatus === 'seated' ? '#6B2737'
-                : '#9E9E9E'
+              const statusColor = !showReservationInfo ? 'var(--color-ak-oliva)'
+                : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'var(--color-ak-ambar)'
+                : reservationStatus === 'seated' ? 'var(--color-ak-borgona)'
+                : 'var(--text-muted)'
 
               const statusLabel = !reservationStatus ? 'Libre'
                 : reservationStatus === 'confirmed' ? 'Confirmado'
@@ -204,7 +204,7 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
               const statusDotColor = !showReservationInfo ? 'bg-[var(--color-success)]'
                 : (reservationStatus === 'confirmed' || reservationStatus === 'pre_paid') ? 'bg-[var(--color-ak-ambar)]'
                 : reservationStatus === 'seated' ? 'bg-[var(--color-ak-borgona)]'
-                : 'bg-gray-400'
+                : 'bg-[var(--text-muted)]'
 
               return (
                 <AnimatedCard key={tableId} delay={ti * 0.03}>

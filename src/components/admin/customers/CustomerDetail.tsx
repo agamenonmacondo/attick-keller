@@ -132,7 +132,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
               type="text"
               value={form.full_name}
               onChange={(e) => setForm(f => ({ ...f, full_name: e.target.value }))}
-              className="w-full font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)] bg-[#EFEBE9] border border-[var(--border-default)] rounded-lg px-3 py-1 focus:border-[#6B2737] focus:outline-none"
+              className="w-full font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)] bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg px-3 py-1 focus:border-[var(--color-ak-borgona)] focus:outline-none"
               placeholder="Nombre completo"
             />
           ) : (
@@ -198,7 +198,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
                   type="tel"
                   value={form.phone}
                   onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
-                  className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                 />
               </div>
               <div>
@@ -207,7 +207,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-                  className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                 />
               </div>
               <div className="flex gap-2 pt-1">
@@ -224,7 +224,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
                 <button
                   type="button"
                   onClick={() => setEditing(false)}
-                  className="flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[#EFEBE9] active:scale-[0.97]"
+                  className="flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
                   style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                 >
                   <ArrowLeft size={16} />
@@ -315,7 +315,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
                 </span>
               ))}
               {assignedTags.length === 0 && (
-                <p className="text-[10px] text-[#BCAAA4]">Sin etiquetas</p>
+                <p className="text-[10px] text-[var(--text-muted)]">Sin etiquetas</p>
               )}
             </div>
             {unassignedTags.length > 0 && (
@@ -327,7 +327,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
                     e.target.value = ''
                   }
                 }}
-                className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-1.5 text-xs text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-1.5 text-xs text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               >
                 <option value="">+ Agregar etiqueta</option>
                 {unassignedTags.map(tag => (
@@ -350,7 +350,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
             <SectionHeading>Preferencias</SectionHeading>
             <div className="flex flex-wrap gap-2 mt-2">
               {Object.entries(customer.preferences).map(([key, value]) => (
-                <span key={key} className="rounded-full bg-[#EFEBE9] px-2.5 py-1 text-xs text-[var(--text-primary)]">
+                <span key={key} className="rounded-full bg-[var(--bg-input)] px-2.5 py-1 text-xs text-[var(--text-primary)]">
                   {key}: {String(value)}
                 </span>
               ))}
@@ -378,7 +378,7 @@ function StatCard({
   variant?: 'default' | 'warning'
 }) {
   return (
-    <div className="rounded-lg border border-[var(--border-default)] bg-[#EFEBE9]/50 p-3">
+    <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)]/50 p-3">
       <div className={`mb-1 ${variant === 'warning' ? 'text-red-500' : 'text-[var(--text-secondary)]'}`}>{icon}</div>
       <p className="text-xs text-[var(--text-secondary)]">{label}</p>
       <p className={`text-sm font-medium ${variant === 'warning' ? 'text-[var(--color-danger)]' : 'text-[var(--text-primary)]'}`}>{value}</p>

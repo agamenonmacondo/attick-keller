@@ -43,8 +43,8 @@ export function SegmentTabs({ counts, active, onSelect }: SegmentTabsProps) {
             className={cn(
               'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-150',
               isActive
-                ? 'bg-[var(--color-ak-borgona)] text-white border-[#6B2737]'
-                : 'text-[var(--text-secondary)] border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[#EFEBE9]'
+                ? 'bg-[var(--color-ak-borgona)] text-white border-[var(--color-ak-borgona)]'
+                : 'text-[var(--text-secondary)] border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-input)]'
             )}
           >
             <Icon size={14} weight={isActive ? 'fill' : 'regular'} />
@@ -52,7 +52,7 @@ export function SegmentTabs({ counts, active, onSelect }: SegmentTabsProps) {
             {tab.subtitle && (
               <span className={cn(
                 'text-[10px]',
-                isActive ? 'text-white/70' : 'text-[#BCAAA4]'
+                isActive ? 'text-white/70' : 'text-[var(--text-muted)]'
               )}>
                 {tab.subtitle}
               </span>

@@ -130,14 +130,14 @@ export function TablesPanel() {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-danger)]/10">
-          <Warning size={24} className="text-red-500" />
+          <Warning size={24} className="text-[var(--color-danger)]" />
         </div>
         <p className="text-sm font-medium text-[var(--text-primary)]">Error al cargar</p>
         <p className="mt-1 text-xs text-[var(--text-secondary)]">{error}</p>
         <button
           type="button"
           onClick={refetch}
-          className="mt-4 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90"
+          className="mt-4 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2 text-sm font-medium text-[var(--bg-primary)] hover:bg-[var(--color-ak-borgona)]/90"
         >
           Reintentar
         </button>
@@ -172,7 +172,7 @@ export function TablesPanel() {
         <button
           type="button"
           onClick={() => openTableEditor()}
-          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97]"
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-[var(--bg-primary)] hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         >
           <Plus size={16} weight="bold" />
@@ -181,7 +181,7 @@ export function TablesPanel() {
         <button
           type="button"
           onClick={() => openCombinationEditor()}
-          className="flex items-center gap-1.5 rounded-lg border border-[#6B2737] px-4 py-2.5 text-sm font-medium text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
+          className="flex items-center gap-1.5 rounded-lg border border-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         >
           <Plus size={16} weight="bold" />
@@ -198,7 +198,7 @@ export function TablesPanel() {
           <AnimatedCard key={zone.id} delay={zi * 0.06} className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
             {/* Zone header */}
             <div
-              className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[#EFEBE9]/50"
+              className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[var(--bg-input)]/50"
               onClick={() => toggleZone(zone.id)}
               style={{ transition: 'background-color 200ms ease-out' }}
             >
@@ -305,7 +305,7 @@ export function TablesPanel() {
       {combinations.length > 0 && (
         <AnimatedCard delay={(sortedZones.length + 1) * 0.06} className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
           <div
-            className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[#EFEBE9]/50"
+            className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[var(--bg-input)]/50"
             onClick={() => setExpandedCombos(!expandedCombos)}
             style={{ transition: 'background-color 200ms ease-out' }}
           >
@@ -348,7 +348,7 @@ export function TablesPanel() {
                         </span>
                         <span className="text-xs text-[var(--text-secondary)]">{combo.combined_capacity} pers.</span>
                         {!combo.is_active && (
-                          <span className="rounded-full bg-[var(--color-danger)]/10 px-2 py-0.5 text-[9px] font-medium text-red-500">Inactiva</span>
+                          <span className="rounded-full bg-[var(--color-danger)]/10 px-2 py-0.5 text-[9px] font-medium text-[var(--color-danger)]">Inactiva</span>
                         )}
                       </div>
                       <div className="flex items-center gap-1">
@@ -381,7 +381,7 @@ export function TablesPanel() {
       {/* Empty state */}
       {zones.length === 0 && tables.length === 0 && (
         <EmptyState
-          icon={<span className="text-2xl">&#127860;</span>}
+          icon={<span className="text-2xl">&var(--color-ak-oliva);</span>}
           title="No hay mesas ni zonas"
           description="Crea una zona o mesa para empezar"
         />
@@ -391,7 +391,7 @@ export function TablesPanel() {
       <button
         type="button"
         onClick={() => openZoneEditor()}
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-ak-borgona)] text-white shadow-lg hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.93]"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-ak-borgona)] text-[var(--bg-primary)] shadow-lg hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.93]"
         style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         title="Nueva zona"
       >

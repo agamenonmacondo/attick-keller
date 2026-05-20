@@ -47,11 +47,11 @@ export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
           Equipo ({staff.length})
         </h2>
       </div>
-      <div className="divide-y divide-[#D7CCC8]">
+      <div className="divide-y divide-[var(--border-default)]">
         {staff.map(member => (
           <div key={member.id} className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
-              <div className="w-9 h-9 rounded-full bg-[#EFEBE9] flex items-center justify-center text-[var(--text-primary)] font-bold text-sm">
+              <div className="w-9 h-9 rounded-full bg-[var(--bg-input)] flex items-center justify-center text-[var(--text-primary)] font-bold text-sm">
                 {(member.email || '?')[0].toUpperCase()}
               </div>
               <div>
@@ -93,7 +93,7 @@ export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
                   </button>
                   <button
                     onClick={() => setConfirmDeleteId(null)}
-                    className="px-3 py-1.5 text-xs rounded-lg bg-[#EFEBE9] text-[var(--text-primary)] hover:bg-[var(--border-default)] transition-colors"
+                    className="px-3 py-1.5 text-xs rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] hover:bg-[var(--border-default)] transition-colors"
                   >
                     No
                   </button>

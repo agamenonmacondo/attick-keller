@@ -9,10 +9,10 @@ interface PeakHoursChartProps {
 }
 
 const CAPACITY_LEVELS = [
-  { maxPct: 14, label: 'Bajo', color: '#8B9E6B' },
-  { maxPct: 38, label: 'Medio', color: '#D4922A' },
-  { maxPct: 71, label: 'Alto', color: '#8B2252' },
-  { maxPct: 100, label: 'Pico', color: '#6B2737' },
+  { maxPct: 14, label: 'Bajo', color: 'var(--color-ak-oliva)' },
+  { maxPct: 38, label: 'Medio', color: 'var(--color-ak-ambar)' },
+  { maxPct: 71, label: 'Alto', color: 'var(--color-ak-borgona)' },
+  { maxPct: 100, label: 'Pico', color: 'var(--color-ak-borgona)' },
 ]
 
 function getLevel(pct: number) {
@@ -33,13 +33,13 @@ export function PeakHoursChart({ hours, totalCapacity }: PeakHoursChartProps) {
       <div className="flex items-center justify-between mb-1">
         <SectionHeading>Horas pico (ultimos 30 dias)</SectionHeading>
         <div className="flex items-center gap-3 text-[9px]">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#8B9E6B' }} /> Bajo</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#D4922A' }} /> Medio</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#8B2252' }} /> Alto</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#6B2737' }} /> Pico</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-ak-oliva)' }} /> Bajo</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-ak-ambar)' }} /> Medio</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-ak-borgona)' }} /> Alto</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-ak-borgona)' }} /> Pico</span>
         </div>
       </div>
-      <p className="text-[10px] text-[#BCAAA4] mb-3">Capacidad: {capacity} asientos · ~{slotCapacity} por franja horaria</p>
+      <p className="text-[10px] text-[var(--text-muted)] mb-3">Capacidad: {capacity} asientos · ~{slotCapacity} por franja horaria</p>
       <div className="space-y-2 mt-1">
         {hours.map(({ hour, count }) => {
           // Percentage of capacity for this time slot
@@ -51,7 +51,7 @@ export function PeakHoursChart({ hours, totalCapacity }: PeakHoursChartProps) {
           return (
             <div key={hour} className="flex items-center gap-3">
               <span className="text-[11px] font-mono text-[var(--text-secondary)] w-14 text-right shrink-0">{formatTime(hour)}</span>
-              <div className="flex-1 h-5 bg-[#EFEBE9] rounded overflow-hidden">
+              <div className="flex-1 h-5 bg-[var(--bg-input)] rounded overflow-hidden">
                 <div className="h-full rounded" style={{
                   width: `${widthPct}%`,
                   backgroundColor: level.color,

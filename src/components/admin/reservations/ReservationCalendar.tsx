@@ -22,7 +22,7 @@ const MONTH_NAMES = [
 function getHeatClasses(count: number, isDark: boolean): { bg: string; text: string } {
   if (isDark) {
     if (count === 0) return { bg: 'bg-[var(--bg-input)]', text: 'text-[var(--text-muted)]' }
-    if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/25', text: 'text-[#E8DDD0]' }
+    if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/25', text: 'text-[var(--border-light)]' }
     if (count <= 5) return { bg: 'bg-[var(--color-ak-borgona)]/45', text: 'text-white' }
     return { bg: 'bg-[var(--color-ak-borgona)]/70', text: 'text-white' }
   }

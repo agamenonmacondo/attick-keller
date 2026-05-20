@@ -86,7 +86,7 @@ export function TableEditor({ table, zoneId, zones, onClose, onSave }: TableEdit
                 type="text"
                 value={number}
                 onChange={e => setNumber(e.target.value)}
-                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                 placeholder="Ej: 1A"
               />
             </div>
@@ -96,7 +96,7 @@ export function TableEditor({ table, zoneId, zones, onClose, onSave }: TableEdit
                 type="number"
                 value={capacity}
                 onChange={e => setCapacity(Number(e.target.value))}
-                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                 min={1}
               />
             </div>
@@ -107,11 +107,11 @@ export function TableEditor({ table, zoneId, zones, onClose, onSave }: TableEdit
               type="number"
               value={capacityMin}
               onChange={e => setCapacityMin(Number(e.target.value))}
-              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               min={1}
               max={capacity}
             />
-            <p className="mt-0.5 text-[9px] text-[#BCAAA4]">Minimo de personas requerido (se muestra si es diferente a la capacidad)</p>
+            <p className="mt-0.5 text-[9px] text-[var(--text-muted)]">Minimo de personas requerido (se muestra si es diferente a la capacidad)</p>
           </div>
           <div>
             <label className="mb-1 block text-xs text-[var(--text-secondary)]">Nombre atick (opcional)</label>
@@ -119,7 +119,7 @@ export function TableEditor({ table, zoneId, zones, onClose, onSave }: TableEdit
               type="text"
               value={nameAttick}
               onChange={e => setNameAttick(e.target.value)}
-              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               placeholder="Nombre para mostrar en el plano"
             />
           </div>
@@ -128,7 +128,7 @@ export function TableEditor({ table, zoneId, zones, onClose, onSave }: TableEdit
             <select
               value={selectedZoneId}
               onChange={e => setSelectedZoneId(e.target.value)}
-              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
             >
               <option value="">Sin zona</option>
               {zones.map(z => (
@@ -163,7 +163,7 @@ export function TableEditor({ table, zoneId, zones, onClose, onSave }: TableEdit
                 type="text"
                 value={combineGroup}
                 onChange={e => setCombineGroup(e.target.value)}
-                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                 placeholder="Ej: terraza-sur"
               />
             </div>
@@ -180,7 +180,7 @@ export function TableEditor({ table, zoneId, zones, onClose, onSave }: TableEdit
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[#EFEBE9] active:scale-[0.97]"
+              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out' }}
             >
               Cancelar

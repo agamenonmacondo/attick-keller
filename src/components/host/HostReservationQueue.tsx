@@ -142,10 +142,10 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
 
       {sorted.length === 0 ? (
         <EmptyState
-          icon={<CalendarX size={40} weight="duotone" className="text-[#D7CCC8]" />}
+          icon={<CalendarX size={40} weight="duotone" className="text-[var(--border-default)]" />}
           title="Sin reservas para hoy"
           description="Las reservas apareceran aqui cuando lleguen."
-          className="bg-white rounded-xl border border-[#D7CCC8]"
+          className="bg-white rounded-xl border border-[var(--border-default)]"
         />
       ) : (
         <motion.div
@@ -175,15 +175,15 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
               <div key={timeLabel}>
                 {/* Time group header */}
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-bold font-['Playfair_Display'] text-[#3E2723]">{timeLabel}</span>
+                  <span className="text-sm font-bold font-['Playfair_Display'] text-[var(--color-ak-madera)]">{timeLabel}</span>
                   {isNow && (
-                    <span className="text-[10px] font-semibold text-[#6B2737] bg-[#6B2737]/10 px-2 py-0.5 rounded-full">AHORA</span>
+                    <span className="text-[10px] font-semibold text-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/10 px-2 py-0.5 rounded-full">AHORA</span>
                   )}
                   {!isNow && isUpcoming && (
-                    <span className="text-[10px] font-semibold text-[#D4922A] bg-[#D4922A]/10 px-2 py-0.5 rounded-full">PRÓXIMAS</span>
+                    <span className="text-[10px] font-semibold text-[var(--color-ak-ambar)] bg-[var(--color-ak-ambar)]/10 px-2 py-0.5 rounded-full">PRÓXIMAS</span>
                   )}
-                  <span className="text-[10px] text-[#8D6E63] ml-auto">{reservations.length} reserva{reservations.length > 1 ? 's' : ''}</span>
-                  <div className="flex-1 h-px bg-[#D7CCC8] ml-2" />
+                  <span className="text-[10px] text-[var(--text-secondary)] ml-auto">{reservations.length} reserva{reservations.length > 1 ? 's' : ''}</span>
+                  <div className="flex-1 h-px bg-[var(--border-default)] ml-2" />
                 </div>
 
                 {/* Reservation cards for this time group */}
@@ -219,7 +219,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                         variants={prefersReduced ? undefined : itemVariants}
                         className={cn(
                           'bg-white rounded-xl border p-3 md:p-4',
-                          isUrgent ? 'border-[#D4922A]/50 bg-[#D4922A]/5' : 'border-[#D7CCC8]',
+                          isUrgent ? 'border-[var(--color-ak-ambar)]/50 bg-[var(--color-ak-ambar)]/5' : 'border-[var(--border-default)]',
                           status === 'seated' && 'opacity-60',
                         )}
                       >
@@ -229,22 +229,22 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                           >
                             <div className="flex items-center gap-2 mb-1"
                             >
-                              <span className="text-xs text-[#8D6E63]">{timeDisplay}</span>
+                              <span className="text-xs text-[var(--text-secondary)]">{timeDisplay}</span>
                               <StatusBadge status={status} />
                               {isUrgent && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#D4922A] bg-[#D4922A]/10 px-2 py-0.5 rounded-full"
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[var(--color-ak-ambar)] bg-[var(--color-ak-ambar)]/10 px-2 py-0.5 rounded-full"
                                 >
                                   <Clock size={10} weight="fill" />
                                   Proxima
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm font-medium text-[#3E2723] break-words">{customerName}</p>
-                            <p className="text-xs text-[#8D6E63]">
+                            <p className="text-sm font-medium text-[var(--color-ak-madera)] break-words">{customerName}</p>
+                            <p className="text-xs text-[var(--text-secondary)]">
                               {partySize}p{r.zone_name ? ` · ${r.zone_name}` : ''}
                             </p>
                             {(r.table_number as string | null) && (
-                              <p className="text-xs text-[#5C7A4D] flex items-center gap-1">
+                              <p className="text-xs text-[var(--color-ak-oliva)] flex items-center gap-1">
                                 <Armchair size={12} />
                                 Mesa {r.table_number as string}{r.zone_name ? ` · ${r.zone_name as string}` : ''}
                               </p>
@@ -254,7 +254,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                               <div className="mt-1">
                                 <button
                                   onClick={() => toggleExpand(id)}
-                                  className="text-[10px] text-[#D4922A] flex items-center gap-0.5"
+                                  className="text-[10px] text-[var(--color-ak-ambar)] flex items-center gap-0.5"
                                 >
                                   {isExpanded ? <CaretUp size={10} /> : <CaretDown size={10} />}
                                   {isExpanded ? 'Menos' : 'Ver detalles'}
@@ -270,12 +270,12 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                   exit={{ height: 0, opacity: 0 }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="mt-2 space-y-1 pl-3 border-l-2 border-[#D7CCC8]">
+                                  <div className="mt-2 space-y-1 pl-3 border-l-2 border-[var(--border-default)]">
                                     {phone && (
                                       <a
                                         href={`https://wa.me/57${phone.replace(/^0+/, '').replace(/^\+/, '')}`}
                                         target="_blank"
-                                        className="flex items-center gap-1.5 text-xs text-[#25D366] hover:underline"
+                                        className="flex items-center gap-1.5 text-xs text-[var(--color-success)] hover:underline"
                                       >
                                         <WhatsappLogo size={12} weight="fill" /> {phone}
                                       </a>
@@ -283,14 +283,14 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                     {email && (
                                       <a
                                         href={`mailto:${email}`}
-                                        className="flex items-center gap-1.5 text-xs text-[#1565C0] hover:underline"
+                                        className="flex items-center gap-1.5 text-xs text-[var(--color-accent)] hover:underline"
                                       >
                                         <EnvelopeSimple size={12} /> {email}
                                       </a>
                                     )}
                                     {notes && (
-                                      <div className="flex items-start gap-1.5 text-xs text-[#5D4037] bg-[#F5EDE0] rounded-md px-2 py-1">
-                                        <Note size={12} className="text-[#D4922A] shrink-0 mt-0.5" />
+                                      <div className="flex items-start gap-1.5 text-xs text-[var(--text-primary)] bg-[var(--bg-primary)] rounded-md px-2 py-1">
+                                        <Note size={12} className="text-[var(--color-ak-ambar)] shrink-0 mt-0.5" />
                                         <span>{notes}</span>
                                       </div>
                                     )}
@@ -308,8 +308,8 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                 disabled={isConfirming}
                                 className={cn(
                                   'px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium rounded-lg text-white active:scale-[0.97] disabled:opacity-50',
-                                  action.variant === 'primary' && 'bg-[#6B2737] hover:bg-[#5C2230]',
-                                  action.variant === 'warning' && 'bg-[#D4922A] hover:bg-[#D4922A]/90',
+                                  action.variant === 'primary' && 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]',
+                                  action.variant === 'warning' && 'bg-[var(--color-ak-ambar)] hover:bg-[var(--color-ak-ambar)]/90',
                                   action.variant === 'danger' && 'bg-red-600 hover:bg-red-700',
                                 )}
                                 style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}

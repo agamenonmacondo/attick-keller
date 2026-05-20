@@ -23,7 +23,7 @@ export function KPIStatsBar({ total, recurring, recent30, recent90, avgSpendPerV
       </AnimatedCard>
       <AnimatedCard delay={0.04} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3 text-center">
         <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wide mb-1">Recurrentes</div>
-        <div className="text-xl font-bold text-[#2E7D32]">{recurring.toLocaleString()}</div>
+        <div className="text-xl font-bold text-[var(--color-success)]">{recurring.toLocaleString()}</div>
         <div className="text-[10px] text-[var(--color-ak-oliva)]">{retentionRate}%</div>
       </AnimatedCard>
       <AnimatedCard delay={0.08} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3 text-center">

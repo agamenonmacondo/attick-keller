@@ -84,18 +84,18 @@ export function CustomerList({
               {totalSelected} seleccionado{totalSelected !== 1 ? 's' : ''}
             </span>
           )}
-          <span className="text-[#BCAAA4]">{total} clientes</span>
+          <span className="text-[var(--text-muted)]">{total} clientes</span>
         </div>
       </div>
 
       {isCrossPageSelection && (
-        <div className="rounded-lg bg-[var(--color-ak-borgona)]/5 border border-[#6B2737]/20 px-3 py-2 text-xs text-[var(--color-ak-borgona)]">
+        <div className="rounded-lg bg-[var(--color-ak-borgona)]/5 border border-[var(--color-ak-borgona)]/20 px-3 py-2 text-xs text-[var(--color-ak-borgona)]">
           Has seleccionado {totalSelected} clientes en total (incluyendo otras paginas).
         </div>
       )}
 
       {selectingAll && (
-        <div className="rounded-lg bg-[#EFEBE9] border border-[var(--border-default)] px-3 py-2 text-xs text-[var(--text-secondary)] flex items-center gap-2">
+        <div className="rounded-lg bg-[var(--bg-input)] border border-[var(--border-default)] px-3 py-2 text-xs text-[var(--text-secondary)] flex items-center gap-2">
           <Spinner size={14} className="animate-spin" />
           Seleccionando todos los clientes...
         </div>
@@ -130,10 +130,10 @@ export function CustomerList({
           className={cn(
             'flex items-center gap-3 rounded-xl border p-3 cursor-pointer group transition-colors duration-200',
             activeCustomerId === c.id
-              ? 'border-[#6B2737] bg-[var(--color-ak-borgona)]/5'
+              ? 'border-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/5'
               : selectedIds.has(c.id)
-                ? 'border-[#6B2737]/50 bg-[var(--color-ak-borgona)]/3'
-                : 'border-[var(--border-default)] bg-[var(--bg-card)] hover:border-[#BCAAA4]'
+                ? 'border-[var(--color-ak-borgona)]/50 bg-[var(--color-ak-borgona)]/3'
+                : 'border-[var(--border-default)] bg-[var(--bg-card)] hover:border-[var(--text-muted)]'
           )}
         >
           <button
@@ -143,7 +143,7 @@ export function CustomerList({
           >
             {selectedIds.has(c.id)
               ? <CheckSquare size={18} weight="fill" className="text-[var(--color-ak-borgona)]" />
-              : <Square size={18} className="text-[#BCAAA4] group-hover:text-[var(--text-secondary)]" />
+              : <Square size={18} className="text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]" />
             }
           </button>
 
@@ -157,7 +157,7 @@ export function CustomerList({
             </p>
             <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-secondary)] mt-0.5">
               {c.phone && <span className="truncate">{c.phone}</span>}
-              {c.phone && c.email && <span className="text-[#D7CCC8]">·</span>}
+              {c.phone && c.email && <span className="text-[var(--border-default)]">·</span>}
               {c.email && <span className="truncate">{c.email}</span>}
               {!c.phone && !c.email && <span>Sin contacto</span>}
             </div>

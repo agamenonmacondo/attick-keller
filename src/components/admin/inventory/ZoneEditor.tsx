@@ -77,7 +77,7 @@ export function ZoneEditor({ zone, onClose, onSave }: ZoneEditorProps) {
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               placeholder="Ej: Terraza, Salon Principal..."
             />
           </div>
@@ -87,7 +87,7 @@ export function ZoneEditor({ zone, onClose, onSave }: ZoneEditorProps) {
               value={description}
               onChange={e => setDescription(e.target.value)}
               rows={2}
-              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               placeholder="Descripcion opcional de la zona"
             />
           </div>
@@ -97,7 +97,7 @@ export function ZoneEditor({ zone, onClose, onSave }: ZoneEditorProps) {
               type="number"
               value={sortOrder}
               onChange={e => setSortOrder(Number(e.target.value))}
-              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               min={0}
             />
           </div>
@@ -113,7 +113,7 @@ export function ZoneEditor({ zone, onClose, onSave }: ZoneEditorProps) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[#EFEBE9] active:scale-[0.97]"
+              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out' }}
             >
               Cancelar

@@ -1,3 +1,7 @@
+'use client'
+
+import { ThemeProvider } from '@/lib/ThemeProvider'
+
 export default function HostLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+  return <ThemeProvider>{children}</ThemeProvider>
 }

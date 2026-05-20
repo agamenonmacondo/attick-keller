@@ -168,55 +168,55 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-[#F5EDE0] rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
+        className="bg-[var(--bg-primary)] rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-['Playfair_Display'] text-xl font-bold text-[#3E2723]">Walk-in</h2>
-          <button onClick={onClose} className="p-1 text-[#8D6E63] hover:text-[#3E2723] transition-colors">
+          <h2 className="font-['Playfair_Display'] text-xl font-bold text-[var(--color-ak-madera)]">Walk-in</h2>
+          <button onClick={onClose} className="p-1 text-[var(--text-secondary)] hover:text-[var(--color-ak-madera)] transition-colors">
             <X size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#3E2723] mb-1">Nombre *</label>
+            <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">Nombre *</label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               required
-              className="w-full px-4 py-2.5 rounded-lg border border-[#D7CCC8] bg-white text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#6B2737]/30"
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-white text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
               placeholder="Nombre del cliente"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#3E2723] mb-1">Telefono</label>
+            <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">Telefono</label>
             <input
               type="tel"
               value={phone}
               onChange={e => setPhone(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-[#D7CCC8] bg-white text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#6B2737]/30"
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-white text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
               placeholder="+57 ..."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#3E2723] mb-1">Personas *</label>
+            <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">Personas *</label>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => { setPartySize(Math.max(1, partySize - 1)); setSelectedTableId(null) }}
-                className="w-10 h-10 rounded-lg border border-[#D7CCC8] bg-white text-[#3E2723] font-bold flex items-center justify-center hover:bg-[#EFEBE9] transition-colors"
+                className="w-10 h-10 rounded-lg border border-[var(--border-default)] bg-white text-[var(--color-ak-madera)] font-bold flex items-center justify-center hover:bg-[var(--bg-input)] transition-colors"
               >
                 -
               </button>
-              <span className="text-xl font-bold text-[#3E2723] min-w-[2rem] text-center">{partySize}</span>
+              <span className="text-xl font-bold text-[var(--color-ak-madera)] min-w-[2rem] text-center">{partySize}</span>
               <button
                 type="button"
                 onClick={() => { setPartySize(partySize + 1); setSelectedTableId(null) }}
-                className="w-10 h-10 rounded-lg border border-[#D7CCC8] bg-white text-[#3E2723] font-bold flex items-center justify-center hover:bg-[#EFEBE9] transition-colors"
+                className="w-10 h-10 rounded-lg border border-[var(--border-default)] bg-white text-[var(--color-ak-madera)] font-bold flex items-center justify-center hover:bg-[var(--bg-input)] transition-colors"
               >
                 +
               </button>
@@ -226,12 +226,12 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
           {/* Available tables dropdown */}
           {partySize > 0 && (
             <div>
-              <label className="block text-sm font-medium text-[#3E2723] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">
                 Mesa sugerida
               </label>
               {availableTables.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[#D7CCC8] p-3 text-center">
-                  <p className="text-xs text-[#8D6E63]">No hay mesas disponibles para {partySize} personas en este horario</p>
+                <div className="bg-white rounded-xl border border-[var(--border-default)] p-3 text-center">
+                  <p className="text-xs text-[var(--text-secondary)]">No hay mesas disponibles para {partySize} personas en este horario</p>
                 </div>
               ) : (
                 <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -242,30 +242,30 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
                       onClick={() => setSelectedTableId(t.id)}
                       className={`w-full text-left p-2.5 rounded-xl border transition-all ${
                         selectedTableId === t.id
-                          ? 'border-[#6B2737] bg-[#6B2737]/5 ring-1 ring-[#6B2737]'
-                          : 'border-[#D7CCC8] bg-white hover:border-[#8D6E63]'
+                          ? 'border-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/5 ring-1 ring-[var(--color-ak-borgona)]'
+                          : 'border-[var(--border-default)] bg-white hover:border-[var(--text-secondary)]'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-sm font-semibold text-[#3E2723]">
+                          <span className="text-sm font-semibold text-[var(--color-ak-madera)]">
                             {t.name_attick || `Mesa ${t.number}`}
                           </span>
-                          <span className="text-xs text-[#8D6E63]">· {t.zoneName}</span>
-                          <span className="text-[10px] text-[#8D6E63] bg-[#F5EDE0] px-1.5 py-0.5 rounded-full">
+                          <span className="text-xs text-[var(--text-secondary)]">· {t.zoneName}</span>
+                          <span className="text-[10px] text-[var(--text-secondary)] bg-[var(--bg-primary)] px-1.5 py-0.5 rounded-full">
                             {t.capacity}p
                           </span>
                           {i === 0 && (
-                            <span className="text-[10px] font-medium text-[#D4922A]">
+                            <span className="text-[10px] font-medium text-[var(--color-ak-ambar)]">
                               ★ Mejor opción
                             </span>
                           )}
                         </div>
                         {selectedTableId === t.id && (
-                          <Check size={14} weight="bold" className="text-[#6B2737] shrink-0" />
+                          <Check size={14} weight="bold" className="text-[var(--color-ak-borgona)] shrink-0" />
                         )}
                       </div>
-                      <p className="text-[10px] text-[#8D6E63] mt-0.5">
+                      <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
                         {t.availableUntil
                           ? `Libre hasta las ${t.availableUntil.slice(0, 5)}`
                           : 'Libre toda la noche'}
@@ -278,11 +278,11 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
           )}
 
           <div>
-            <label className="block text-sm font-medium text-[#3E2723] mb-1">Zona (opcional)</label>
+            <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">Zona (opcional)</label>
             <select
               value={zoneId}
               onChange={e => { setZoneId(e.target.value); setSelectedTableId(null) }}
-              className="w-full px-4 py-2.5 rounded-lg border border-[#D7CCC8] bg-white text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#6B2737]/30"
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-white text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
             >
               <option value="">Sin zona</option>
               {zones.map(z => (
@@ -298,7 +298,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
           <button
             type="submit"
             disabled={submitting || !name.trim()}
-            className="w-full py-3 rounded-xl bg-[#6B2737] text-white font-medium hover:bg-[#5C2230] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] transition-all"
+            className="w-full py-3 rounded-xl bg-[var(--color-ak-borgona)] text-white font-medium hover:bg-[var(--color-ak-borgona)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] transition-all"
           >
             {submitting ? (
               <span className="flex items-center justify-center gap-2">

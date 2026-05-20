@@ -28,12 +28,12 @@ export function TableCard({ table, onToggle, onEdit }: TableCardProps) {
             <span className="text-base font-semibold text-[var(--text-primary)]">{table.number}</span>
           )}
           {table.zone?.name && (
-            <span className="text-[10px] text-[var(--text-secondary)] bg-[#EFEBE9] rounded-full px-2 py-0.5">{table.zone.name}</span>
+            <span className="text-[10px] text-[var(--text-secondary)] bg-[var(--bg-input)] rounded-full px-2 py-0.5">{table.zone.name}</span>
           )}
         </div>
         <div className="flex items-center gap-1">
           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-medium ${
-            table.is_active ? 'bg-[var(--color-success)]/10 text-[var(--color-ak-oliva)]' : 'bg-[var(--color-danger)]/10 text-red-500'
+            table.is_active ? 'bg-[var(--color-success)]/10 text-[var(--color-ak-oliva)]' : 'bg-[var(--color-danger)]/10 text-[var(--color-danger)]'
           }`}>
             {table.is_active ? 'Activa' : 'Inactiva'}
           </span>
@@ -62,7 +62,7 @@ export function TableCard({ table, onToggle, onEdit }: TableCardProps) {
             </span>
           )}
           {table.combine_group && (
-            <span className="rounded-full bg-[#C9A94E]/10 px-2 py-0.5 text-[9px] font-medium text-[#8B7A3A]">
+            <span className="rounded-full bg-[var(--color-ak-dorado)]/10 px-2 py-0.5 text-[9px] font-medium text-[var(--color-ak-ambar)]">
               Grupo {table.combine_group}
             </span>
           )}

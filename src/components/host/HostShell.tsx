@@ -96,8 +96,8 @@ export function HostShell() {
 
   if (authLoading || roleLoading) {
     return (
-      <div className="min-h-[100dvh] bg-[#F5EDE0] flex items-center justify-center">
-        <Spinner size={32} className="animate-spin text-[#8D6E63]" />
+      <div className="min-h-[100dvh] bg-[var(--bg-primary)] flex items-center justify-center">
+        <Spinner size={32} className="animate-spin text-[var(--text-secondary)]" />
       </div>
     )
   }
@@ -115,16 +115,16 @@ export function HostShell() {
   const isLoading = dashLoading || occLoading
 
   return (
-    <div className="min-h-[100dvh] bg-[#F5EDE0] flex flex-col">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)] flex flex-col">
       <HostHeader />
 
       {/* Mobile tab switcher */}
-      <div className="lg:hidden border-b border-[#D7CCC8] bg-white">
+      <div className="lg:hidden border-b border-[var(--border-default)] bg-[var(--bg-card)]">
         <div className="flex">
           <button
             onClick={() => setActiveTab('mesas')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 transition-colors duration-200 ${
-              activeTab === 'mesas' ? 'border-[#6B2737] text-[#3E2723]' : 'border-transparent text-[#8D6E63]'
+              activeTab === 'mesas' ? 'border-[var(--color-ak-borgona)] text-[var(--color-ak-madera)]' : 'border-transparent text-[var(--text-secondary)]'
             }`}
             style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
           >
@@ -134,7 +134,7 @@ export function HostShell() {
           <button
             onClick={() => setActiveTab('reservas')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 transition-colors duration-200 ${
-              activeTab === 'reservas' ? 'border-[#6B2737] text-[#3E2723]' : 'border-transparent text-[#8D6E63]'
+              activeTab === 'reservas' ? 'border-[var(--color-ak-borgona)] text-[var(--color-ak-madera)]' : 'border-transparent text-[var(--text-secondary)]'
             }`}
             style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
           >
@@ -144,7 +144,7 @@ export function HostShell() {
           <button
             onClick={() => setActiveTab('plano')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 transition-colors duration-200 ${
-              activeTab === 'plano' ? 'border-[#6B2737] text-[#3E2723]' : 'border-transparent text-[#8D6E63]'
+              activeTab === 'plano' ? 'border-[var(--color-ak-borgona)] text-[var(--color-ak-madera)]' : 'border-transparent text-[var(--text-secondary)]'
             }`}
             style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
           >
@@ -166,7 +166,7 @@ export function HostShell() {
           <motion.div
             initial={prefersReduced ? false : { opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
+            className="mb-4 rounded-xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 px-4 py-3 text-sm text-[var(--color-danger)]"
           >
             {error}
           </motion.div>
@@ -176,9 +176,9 @@ export function HostShell() {
         {isLoading && !todayStats ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-xl border border-[#D7CCC8] p-3 md:p-4">
-                <div className="mx-auto h-4 w-20 bg-[#D7CCC8]/50 rounded animate-pulse mb-2" />
-                <div className="mx-auto h-8 w-12 bg-[#D7CCC8]/50 rounded animate-pulse" />
+              <div key={i} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3 md:p-4">
+                <div className="mx-auto h-4 w-20 bg-[var(--border-default)]/50 rounded animate-pulse mb-2" />
+                <div className="mx-auto h-8 w-12 bg-[var(--border-default)]/50 rounded animate-pulse" />
               </div>
             ))}
           </div>
@@ -200,8 +200,8 @@ export function HostShell() {
             onClick={() => setActiveTab('mesas')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'mesas' || activeTab === 'reservas'
-                ? 'bg-[#6B2737] text-white'
-                : 'bg-white text-[#8D6E63] border border-[#D7CCC8] hover:border-[#6B2737]'
+                ? 'bg-[var(--color-ak-borgona)] text-white'
+                : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:border-[var(--color-ak-borgona)]'
             }`}
           >
             <Table size={16} />
@@ -211,8 +211,8 @@ export function HostShell() {
             onClick={() => setActiveTab('plano')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'plano'
-                ? 'bg-[#6B2737] text-white'
-                : 'bg-white text-[#8D6E63] border border-[#D7CCC8] hover:border-[#6B2737]'
+                ? 'bg-[var(--color-ak-borgona)] text-white'
+                : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:border-[var(--color-ak-borgona)]'
             }`}
           >
             <MapTrifold size={16} />
@@ -225,11 +225,11 @@ export function HostShell() {
           <div className={`lg:col-span-3 ${activeTab !== 'mesas' ? 'hidden lg:block' : ''}`}>
             {isLoading && zones.length === 0 ? (
               <div className="space-y-4">
-                <div className="h-6 w-32 bg-[#D7CCC8]/50 rounded animate-pulse" />
-                <div className="h-4 w-20 bg-[#D7CCC8]/50 rounded animate-pulse mb-2" />
+                <div className="h-6 w-32 bg-[var(--border-default)]/50 rounded animate-pulse" />
+                <div className="h-4 w-20 bg-[var(--border-default)]/50 rounded animate-pulse mb-2" />
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="h-20 bg-white rounded-xl border border-[#D7CCC8] animate-pulse" />
+                    <div key={i} className="h-20 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] animate-pulse" />
                   ))}
                 </div>
               </div>
@@ -246,10 +246,10 @@ export function HostShell() {
           <div className={`lg:col-span-2 mt-4 lg:mt-0 ${activeTab !== 'reservas' ? 'hidden lg:block' : ''}`}>
             {isLoading && reservations.length === 0 ? (
               <div className="space-y-3">
-                <div className="h-6 w-40 bg-[#D7CCC8]/50 rounded animate-pulse" />
+                <div className="h-6 w-40 bg-[var(--border-default)]/50 rounded animate-pulse" />
                 <div className="space-y-2">
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-24 bg-white rounded-xl border border-[#D7CCC8] animate-pulse" />
+                    <div key={i} className="h-24 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] animate-pulse" />
                   ))}
                 </div>
               </div>
@@ -273,7 +273,7 @@ export function HostShell() {
       {/* Walk-in button */}
       <button
         onClick={() => setShowWalkIn(true)}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-[#6B2737] text-white shadow-lg flex items-center justify-center hover:bg-[#5C2230] active:scale-[0.97]"
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-[var(--color-ak-borgona)] text-white shadow-lg flex items-center justify-center hover:bg-[var(--color-ak-borgona)] active:scale-[0.97]"
         style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         title="Walk-in"
       >

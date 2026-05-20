@@ -16,7 +16,7 @@ export function HostQuickActions({ onSeatNext, confirmedCount }: HostQuickAction
         disabled={confirmedCount === 0}
         className={cn(
           'flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-white active:scale-[0.97]',
-          confirmedCount > 0 ? 'bg-[#5C7A4D] hover:bg-[#4A6640]' : 'bg-[#8D6E63]/50 cursor-not-allowed'
+          confirmedCount > 0 ? 'bg-[var(--color-ak-oliva)] hover:bg-[var(--color-ak-oliva)]' : 'bg-[var(--text-secondary)]/50 cursor-not-allowed'
         )}
         style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
       >

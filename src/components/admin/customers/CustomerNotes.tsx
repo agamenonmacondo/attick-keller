@@ -40,7 +40,7 @@ export function CustomerNotes({ customerId, initialNotes }: CustomerNotesProps) 
         onChange={(e) => setNotes(e.target.value)}
         placeholder="Notas del equipo sobre este cliente..."
         rows={3}
-        className="w-full rounded-lg border border-[var(--border-default)] bg-[#EFEBE9] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none resize-y"
+        className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--color-ak-borgona)] focus:outline-none resize-y"
       />
       <div className="flex items-center gap-2">
         <button

@@ -136,7 +136,7 @@ export function MenuPanel() {
         <button
           type="button"
           onClick={() => { setEditingItem(null); setShowItemForm(true) }}
-          className="flex items-center gap-1.5 rounded-lg border border-[#6B2737] px-4 py-2.5 text-sm font-medium text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
+          className="flex items-center gap-1.5 rounded-lg border border-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         >
           <Plus size={16} weight="bold" />
@@ -153,7 +153,7 @@ export function MenuPanel() {
           <AnimatedCard key={cat.id} delay={ci * 0.06} className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
             {/* Category header */}
             <div
-              className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[#EFEBE9]/50"
+              className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[var(--bg-input)]/50"
               onClick={() => toggleCategory(cat.id)}
               style={{ transition: 'background-color 200ms ease-out' }}
             >
@@ -214,7 +214,7 @@ export function MenuPanel() {
                           >
                             {/* Featured badge */}
                             {item.is_featured && (
-                              <span className="absolute -top-1.5 -right-1.5 rounded-full bg-[#C9A94E] px-1.5 py-0.5 text-[8px] font-bold text-white">★</span>
+                              <span className="absolute -top-1.5 -right-1.5 rounded-full bg-[var(--color-ak-dorado)] px-1.5 py-0.5 text-[8px] font-bold text-white">★</span>
                             )}
 
                             <div className="flex items-start justify-between mb-1">
@@ -272,7 +272,7 @@ export function MenuPanel() {
       {categories.length === 0 && (
         <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] py-12 text-center">
           <p className="text-sm text-[var(--text-secondary)]">No hay categorias de menu</p>
-          <p className="mt-1 text-xs text-[#BCAAA4]">Crea una categoria para empezar a agregar platos</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">Crea una categoria para empezar a agregar platos</p>
         </div>
       )}
 

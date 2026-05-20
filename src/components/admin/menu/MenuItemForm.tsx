@@ -94,20 +94,20 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="mb-1 block text-xs text-[var(--text-secondary)]">Nombre</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none" placeholder="Hummus de garbanzos" />
+            <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none" placeholder="Hummus de garbanzos" />
           </div>
           <div>
             <label className="mb-1 block text-xs text-[var(--text-secondary)]">Descripcion</label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none" placeholder="Descripcion del plato..." />
+            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none" placeholder="Descripcion del plato..." />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-xs text-[var(--text-secondary)]">Precio (COP)</label>
-              <input type="number" min="0" step="500" value={price} onChange={e => setPrice(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none" placeholder="18000" />
+              <input type="number" min="0" step="500" value={price} onChange={e => setPrice(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none" placeholder="18000" />
             </div>
             <div>
               <label className="mb-1 block text-xs text-[var(--text-secondary)]">Categoria</label>
-              <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none">
+              <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none">
                 {categories.filter(c => c.is_active).map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -116,7 +116,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
           </div>
           <div>
             <label className="mb-1 block text-xs text-[var(--text-secondary)]">URL de imagen</label>
-            <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none" placeholder="https://..." />
+            <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none" placeholder="https://..." />
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -124,7 +124,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
               id="featured"
               checked={isFeatured}
               onChange={e => setIsFeatured(e.target.checked)}
-              className="rounded border-[var(--border-default)] text-[var(--color-ak-borgona)] focus:ring-[#6B2737]"
+              className="rounded border-[var(--border-default)] text-[var(--color-ak-borgona)] focus:ring-[var(--color-ak-borgona)]"
             />
             <label htmlFor="featured" className="text-xs text-[var(--text-primary)]">Destacado</label>
           </div>
@@ -132,7 +132,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
             <button type="submit" disabled={saving} className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 disabled:opacity-50 active:scale-[0.97]" style={{ transition: 'transform 160ms ease-out' }}>
               {saving ? 'Guardando...' : isEditing ? 'Guardar' : 'Crear Plato'}
             </button>
-            <button type="button" onClick={onClose} className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[#EFEBE9] active:scale-[0.97]" style={{ transition: 'transform 160ms ease-out' }}>
+            <button type="button" onClick={onClose} className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]" style={{ transition: 'transform 160ms ease-out' }}>
               Cancelar
             </button>
           </div>

@@ -70,7 +70,7 @@ export function Pagination({
         <select
           value={perPage}
           onChange={(e) => onPerPageChange(parseInt(e.target.value, 10))}
-          className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[#6B2737] focus:outline-none"
+          className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
         >
           {PER_PAGE_OPTIONS.map((opt) => (
             <option key={opt} value={opt}>{opt}</option>
@@ -91,14 +91,14 @@ export function Pagination({
             type="button"
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
-            className="flex items-center justify-center h-7 w-7 rounded-lg border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[#EFEBE9] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--bg-input)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             <CaretLeft size={12} />
           </button>
 
           {pageNumbers.map((p, i) =>
             p === 'ellipsis' ? (
-              <span key={`e-${i}`} className="px-1 text-xs text-[#BCAAA4]">...</span>
+              <span key={`e-${i}`} className="px-1 text-xs text-[var(--text-muted)]">...</span>
             ) : (
               <button
                 key={p}
@@ -108,7 +108,7 @@ export function Pagination({
                   'flex items-center justify-center h-7 w-7 rounded-lg text-xs font-medium transition-colors',
                   p === page
                     ? 'bg-[var(--color-ak-borgona)] text-white'
-                    : 'text-[var(--text-secondary)] hover:bg-[#EFEBE9] border border-transparent'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-input)] border border-transparent'
                 )}
               >
                 {p}
@@ -120,7 +120,7 @@ export function Pagination({
             type="button"
             disabled={page >= totalPages}
             onClick={() => onPageChange(page + 1)}
-            className="flex items-center justify-center h-7 w-7 rounded-lg border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[#EFEBE9] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--bg-input)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             <CaretRight size={12} />
           </button>
@@ -135,7 +135,7 @@ export function Pagination({
                 value={gotoInput}
                 onChange={(e) => setGotoInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleGoto()}
-                className="w-12 rounded-lg border border-[var(--border-default)] px-1.5 py-1 text-xs text-[var(--text-primary)] text-center focus:border-[#6B2737] focus:outline-none"
+                className="w-12 rounded-lg border border-[var(--border-default)] px-1.5 py-1 text-xs text-[var(--text-primary)] text-center focus:border-[var(--color-ak-borgona)] focus:outline-none"
               />
             </div>
           )}

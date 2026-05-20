@@ -44,12 +44,12 @@ export function VisitHistory({ visits }: VisitHistoryProps) {
                           key={s}
                           size={12}
                           weight={s <= rating ? 'fill' : 'regular'}
-                          className={s <= rating ? 'text-[#C9A94E]' : 'text-[#D7CCC8]'}
+                          className={s <= rating ? 'text-[var(--color-ak-dorado)]' : 'text-[var(--border-default)]'}
                         />
                       ))}
                     </div>
                   ) : (
-                    <span className="text-[#BCAAA4]">{'\u2014'}</span>
+                    <span className="text-[var(--text-muted)]">{'\u2014'}</span>
                   )}
                 </td>
               </tr>

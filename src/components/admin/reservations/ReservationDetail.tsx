@@ -211,7 +211,7 @@ export function ReservationDetail({
                   className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-[var(--text-primary)] hover:bg-[var(--border-default)]/30 active:scale-[0.97]"
                   style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                 >
-                  <WhatsappLogo size={16} className="text-emerald-600" weight="fill" />
+                  <WhatsappLogo size={16} className="text-[var(--color-success)]" weight="fill" />
                   {reservation.customers.phone}
                 </a>
               )}

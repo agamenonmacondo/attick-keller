@@ -15,7 +15,7 @@ export function NoShowCard({ total, noShows, rate }: NoShowCardProps) {
       </div>
       <p className="text-xs text-[var(--text-secondary)] mt-1">{noShows} no asistieron de {total} completadas</p>
       <div className="flex items-center gap-1 mt-3">
-        <span className="w-2 h-2 rounded-full bg-zinc-700" />
+        <span className="w-2 h-2 rounded-full bg-[var(--text-muted)]" />
         <span className="text-[10px] text-[var(--text-secondary)]">No-show rate — ultimos 30 dias</span>
       </div>
     </div>

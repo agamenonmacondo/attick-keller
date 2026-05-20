@@ -27,8 +27,8 @@ export function CustomerAnalyticsPanel() {
   if (error) {
     return (
       <div className="py-8 text-center">
-        <p className="text-sm text-red-600">{error}</p>
-        <p className="text-xs text-[#8D6E63] mt-1">Verifica que la migración SQL esté aplicada</p>
+        <p className="text-sm text-[#C62828]">{error}</p>
+        <p className="text-xs text-[#8D6E63] mt-1">Verifica que la migracion SQL este aplicada</p>
       </div>
     )
   }

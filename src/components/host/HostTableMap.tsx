@@ -221,13 +221,13 @@ function MiniTimeline({
 
 function StatusDot({ status }: { status: ReservationTimeline['status'] }) {
   const dotMap: Record<string, string> = {
-    confirmed: 'bg-green-600',
-    pre_paid: 'bg-green-600',
-    seated: 'bg-green-600',
+    confirmed: 'bg-[var(--color-success)]',
+    pre_paid: 'bg-[var(--color-success)]',
+    seated: 'bg-[var(--color-success)]',
     pending: 'bg-[var(--color-ak-ambar)]',
-    no_show: 'bg-red-600',
-    cancelled: 'bg-gray-400',
-    completed: 'bg-gray-400',
+    no_show: 'bg-[var(--color-danger)]',
+    cancelled: 'bg-[var(--text-muted)]',
+    completed: 'bg-[var(--text-muted)]',
   }
   const labelMap: Record<string, string> = {
     confirmed: 'Confirmado',
@@ -240,7 +240,7 @@ function StatusDot({ status }: { status: ReservationTimeline['status'] }) {
   }
   return (
     <span className="inline-flex items-center gap-1 text-[10px] text-[var(--text-secondary)] uppercase tracking-wider">
-      <span className={cn('w-1.5 h-1.5 rounded-full', dotMap[status] || 'bg-gray-400')} />
+      <span className={cn('w-1.5 h-1.5 rounded-full', dotMap[status] || 'bg-[var(--text-muted)]')} />
       {labelMap[status] || status}
     </span>
   )
@@ -390,7 +390,7 @@ export function HostTableMap({ zones, reservations, onAction, currentTime, onRea
         <motion.div
           initial={prefersReduced ? false : { opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700"
+          className="rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 px-3 py-2 text-xs text-[var(--color-danger)]"
         >
           {error}
         </motion.div>
@@ -436,7 +436,7 @@ export function HostTableMap({ zones, reservations, onAction, currentTime, onRea
           icon={<Table size={40} weight="duotone" className="text-[var(--border-default)]" />}
           title="No hay zonas configuradas"
           description="Contacta al administrador para configurar mesas y zonas."
-          className="bg-white rounded-xl border border-[var(--border-default)]"
+          className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)]"
         />
       )}
     </div>
@@ -569,7 +569,7 @@ function HostTableCard({
           exit={{ opacity: 0, translateY: 40, transform: 'translateY(40px)' }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className={cn(
-            'fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl overflow-y-auto',
+            'fixed inset-x-0 bottom-0 z-50 bg-[var(--bg-card)] rounded-t-2xl shadow-2xl overflow-y-auto',
             'max-h-[80vh]',
             (reservationsList.length > 0) ? 'p-5' : 'p-4'
           )}
@@ -841,7 +841,7 @@ function AssignmentPopover({
             </div>
           )}
           {suggestion.error && (
-            <p className="text-xs text-red-600">{suggestion.error}</p>
+            <p className="text-xs text-[var(--color-danger)]">{suggestion.error}</p>
           )}
           {suggestion.result && !suggestion.loading && (
             <>
@@ -888,8 +888,8 @@ function AssignmentPopover({
                 </div>
               )}
               {!suggestion.result.suggested_table_id && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-                  <p className="text-xs text-red-700">{suggestion.result.reason}</p>
+                <div className="rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 p-3">
+                  <p className="text-xs text-[var(--color-danger)]">{suggestion.result.reason}</p>
                 </div>
               )}
               {suggestion.result.alternatives.length > 1 && (

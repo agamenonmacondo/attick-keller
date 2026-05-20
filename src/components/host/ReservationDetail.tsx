@@ -23,9 +23,9 @@ const STATUS_CONFIG: Record<
   pre_paid: { label: 'Confirmada', dotClass: 'bg-[var(--color-ak-ambar)]', bgClass: 'bg-[var(--color-ak-ambar)]/5' },
   seated: { label: 'Sentados', dotClass: 'bg-[var(--color-ak-borgona)]', bgClass: 'bg-[var(--color-ak-borgona)]/5' },
   pending: { label: 'Pendiente', dotClass: 'bg-[var(--color-ak-ambar)]', bgClass: 'bg-[var(--color-ak-ambar)]/5' },
-  no_show: { label: 'No asistió', dotClass: 'bg-red-600', bgClass: 'bg-red-50' },
-  cancelled: { label: 'Cancelada', dotClass: 'bg-gray-400', bgClass: 'bg-gray-50' },
-  completed: { label: 'Completado', dotClass: 'bg-gray-400', bgClass: 'bg-gray-50' },
+  no_show: { label: 'No asistió', dotClass: 'bg-[var(--color-danger)]', bgClass: 'bg-[var(--color-danger)]/10' },
+  cancelled: { label: 'Cancelada', dotClass: 'bg-[var(--text-muted)]', bgClass: 'bg-[var(--bg-primary)]' },
+  completed: { label: 'Completado', dotClass: 'bg-[var(--text-muted)]', bgClass: 'bg-[var(--bg-primary)]' },
 }
 
 function getWhatsAppUrl(phone: string): string {

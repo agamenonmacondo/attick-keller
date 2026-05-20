@@ -180,7 +180,7 @@ export function ReassignModal({
 
         <div className="p-6 space-y-4">
           {/* Current reservation info */}
-          <div className="bg-white rounded-xl border border-[var(--border-default)] p-4">
+          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
             <p className="text-sm font-semibold text-[var(--color-ak-madera)]">
               {reservation.customer_name || 'Sin nombre'}
             </p>
@@ -193,7 +193,7 @@ export function ReassignModal({
           </div>
 
           {error && (
-            <p className="text-sm text-red-700 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">{error}</p>
+            <p className="text-sm text-[var(--color-danger)] bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 px-3 py-2 rounded-lg">{error}</p>
           )}
 
           {/* Available tables list */}
@@ -202,7 +202,7 @@ export function ReassignModal({
               Mover a:
             </p>
             {availableTables.length === 0 ? (
-              <div className="bg-white rounded-xl border border-[var(--border-default)] p-4 text-center">
+              <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4 text-center">
                 <p className="text-sm text-[var(--text-secondary)]">No hay mesas disponibles para esta reserva</p>
               </div>
             ) : (
@@ -215,7 +215,7 @@ export function ReassignModal({
                       'w-full text-left p-3 rounded-xl border transition-all',
                       selectedTableId === t.id
                         ? 'border-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/5 ring-1 ring-[var(--color-ak-borgona)]'
-                        : 'border-[var(--border-default)] bg-white hover:border-[var(--text-secondary)]'
+                        : 'border-[var(--border-default)] bg-[var(--bg-card)] hover:border-[var(--text-secondary)]'
                     )}
                   >
                     <div className="flex items-center justify-between">
@@ -224,7 +224,7 @@ export function ReassignModal({
                         <span className="text-xs text-[var(--text-secondary)]">· {t.zoneName}</span>
                         <span className={cn(
                           'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
-                          t.isSameZone ? 'bg-green-100 text-green-700' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)]'
+                          t.isSameZone ? 'bg-[var(--color-success)]/10 text-[var(--color-success)]' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)]'
                         )}>
                           {t.capacity}p
                         </span>
@@ -248,7 +248,7 @@ export function ReassignModal({
           <div className="flex gap-3 pt-2">
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-ak-madera)] bg-white hover:bg-[var(--bg-input)] transition-colors active:scale-[0.97]"
+              className="flex-1 py-2.5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-ak-madera)] bg-[var(--bg-card)] hover:bg-[var(--bg-input)] transition-colors active:scale-[0.97]"
             >
               Cancelar
             </button>

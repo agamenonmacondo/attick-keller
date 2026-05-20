@@ -230,7 +230,7 @@ export function TableActionPopover({
               type="button"
               onClick={() => handleStatusAction('seated')}
               disabled={actionLoading !== null}
-              className="w-full rounded-lg bg-green-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-800 disabled:opacity-50"
+              className="w-full rounded-lg bg-[var(--color-success)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--color-success)]/80 disabled:opacity-50"
             >
               {actionLoading === 'seated' ? '...' : 'Sentar'}
             </button>

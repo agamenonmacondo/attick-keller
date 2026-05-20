@@ -75,7 +75,7 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
       value: total,
       suffix: 'asientos',
       color: 'text-[var(--color-ak-madera)]',
-      bg: 'bg-white',
+      bg: 'bg-[var(--bg-card)]',
       borderColor: 'border-[var(--border-default)]',
       // chip props
       dotColor: 'bg-[var(--text-secondary)]',
@@ -181,7 +181,7 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
           initial={prefersReduced ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', ...SPRING, delay: 0.15 }}
-          className="bg-white rounded-xl border border-[var(--border-default)] p-4"
+          className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4"
         >
           <h3 className="text-sm font-semibold text-[var(--color-ak-madera)] font-['Playfair_Display'] mb-3">
             Resumen por Zona

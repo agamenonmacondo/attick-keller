@@ -186,7 +186,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
               value={name}
               onChange={e => setName(e.target.value)}
               required
-              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-white text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
               placeholder="Nombre del cliente"
             />
           </div>
@@ -197,7 +197,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
               type="tel"
               value={phone}
               onChange={e => setPhone(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-white text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
               placeholder="+57 ..."
             />
           </div>
@@ -208,7 +208,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
               <button
                 type="button"
                 onClick={() => { setPartySize(Math.max(1, partySize - 1)); setSelectedTableId(null) }}
-                className="w-10 h-10 rounded-lg border border-[var(--border-default)] bg-white text-[var(--color-ak-madera)] font-bold flex items-center justify-center hover:bg-[var(--bg-input)] transition-colors"
+                className="w-10 h-10 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--color-ak-madera)] font-bold flex items-center justify-center hover:bg-[var(--bg-input)] transition-colors"
               >
                 -
               </button>
@@ -216,7 +216,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
               <button
                 type="button"
                 onClick={() => { setPartySize(partySize + 1); setSelectedTableId(null) }}
-                className="w-10 h-10 rounded-lg border border-[var(--border-default)] bg-white text-[var(--color-ak-madera)] font-bold flex items-center justify-center hover:bg-[var(--bg-input)] transition-colors"
+                className="w-10 h-10 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--color-ak-madera)] font-bold flex items-center justify-center hover:bg-[var(--bg-input)] transition-colors"
               >
                 +
               </button>
@@ -230,7 +230,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
                 Mesa sugerida
               </label>
               {availableTables.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[var(--border-default)] p-3 text-center">
+                <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3 text-center">
                   <p className="text-xs text-[var(--text-secondary)]">No hay mesas disponibles para {partySize} personas en este horario</p>
                 </div>
               ) : (
@@ -243,7 +243,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
                       className={`w-full text-left p-2.5 rounded-xl border transition-all ${
                         selectedTableId === t.id
                           ? 'border-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/5 ring-1 ring-[var(--color-ak-borgona)]'
-                          : 'border-[var(--border-default)] bg-white hover:border-[var(--text-secondary)]'
+                          : 'border-[var(--border-default)] bg-[var(--bg-card)] hover:border-[var(--text-secondary)]'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -282,7 +282,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
             <select
               value={zoneId}
               onChange={e => { setZoneId(e.target.value); setSelectedTableId(null) }}
-              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-white text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
             >
               <option value="">Sin zona</option>
               {zones.map(z => (
@@ -292,7 +292,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
           </div>
 
           {error && (
-            <p className="text-sm text-red-700 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+            <p className="text-sm text-[var(--color-danger)] bg-red-50 px-3 py-2 rounded-lg">{error}</p>
           )}
 
           <button

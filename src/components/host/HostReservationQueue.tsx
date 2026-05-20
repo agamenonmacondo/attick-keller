@@ -134,7 +134,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
         <motion.div
           initial={prefersReduced ? false : { opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700"
+          className="rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 px-3 py-2 text-xs text-[var(--color-danger)]"
         >
           {error}
         </motion.div>
@@ -145,7 +145,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
           icon={<CalendarX size={40} weight="duotone" className="text-[var(--border-default)]" />}
           title="Sin reservas para hoy"
           description="Las reservas apareceran aqui cuando lleguen."
-          className="bg-white rounded-xl border border-[var(--border-default)]"
+          className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)]"
         />
       ) : (
         <motion.div
@@ -218,7 +218,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                         key={id}
                         variants={prefersReduced ? undefined : itemVariants}
                         className={cn(
-                          'bg-white rounded-xl border p-3 md:p-4',
+                          'bg-[var(--bg-card)] rounded-xl border p-3 md:p-4',
                           isUrgent ? 'border-[var(--color-ak-ambar)]/50 bg-[var(--color-ak-ambar)]/5' : 'border-[var(--border-default)]',
                           status === 'seated' && 'opacity-60',
                         )}
@@ -310,7 +310,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                   'px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium rounded-lg text-white active:scale-[0.97] disabled:opacity-50',
                                   action.variant === 'primary' && 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]',
                                   action.variant === 'warning' && 'bg-[var(--color-ak-ambar)] hover:bg-[var(--color-ak-ambar)]/90',
-                                  action.variant === 'danger' && 'bg-red-600 hover:bg-red-700',
+                                  action.variant === 'danger' && 'bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/80',
                                 )}
                                 style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                               >

@@ -87,7 +87,7 @@ export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
                   <span className="text-xs text-[var(--color-danger)]">Confirmar?</span>
                   <button
                     onClick={() => handleDelete(member.id)}
-                    className="px-3 py-1.5 text-xs rounded-lg bg-red-700 text-white hover:bg-red-800 transition-colors"
+                    className="px-3 py-1.5 text-xs rounded-lg bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger)]/80 transition-colors"
                   >
                     Si, eliminar
                   </button>

@@ -19,11 +19,11 @@ export function ConversionCard({ pending, confirmed, rate }: ConversionCardProps
       <p className="text-xs text-[var(--text-secondary)] mt-1">{confirmed} confirmadas de {total} reservas</p>
       <div className="flex h-2 bg-[var(--bg-input)] rounded-full overflow-hidden mt-3">
         <div className="h-full bg-[var(--color-ak-oliva)] rounded-full" style={{ width: `${confirmedPct}%`, transition: 'width 500ms ease-out' }} />
-        <div className="h-full bg-amber-400" style={{ width: `${100 - confirmedPct}%`, transition: 'width 500ms ease-out' }} />
+        <div className="h-full bg-[var(--color-ak-ambar)]" style={{ width: `${100 - confirmedPct}%`, transition: 'width 500ms ease-out' }} />
       </div>
       <div className="flex justify-between mt-1">
         <span className="text-[9px] text-[var(--color-ak-oliva)]">Confirmadas</span>
-        <span className="text-[9px] text-amber-600">Pendientes</span>
+        <span className="text-[9px] text-[var(--color-ak-ambar)]">Pendientes</span>
       </div>
     </div>
   )

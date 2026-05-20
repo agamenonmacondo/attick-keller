@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" className={`${playfair.variable} ${dmSans.variable} ${caveat.variable}`}>
-      <body className="font-['DM_Sans'] bg-[#F5EDE0] text-[#1E1E1E]">
+      <body className="font-['DM_Sans'] bg-[var(--bg-primary)] text-[var(--text-primary)]">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

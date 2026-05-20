@@ -59,10 +59,10 @@ const itemVariants = {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  pending: { label: 'Pendiente', bg: 'bg-[#D4922A]/10', text: 'text-[#B0781E]', dot: 'bg-[#D4922A]' },
-  confirmed: { label: 'Confirmada', bg: 'bg-[#5C7A4D]/10', text: 'text-[#4A6640]', dot: 'bg-[#5C7A4D]' },
+  pending: { label: 'Pendiente', bg: 'bg-[var(--color-ak-ambar)]/10', text: 'text-[#B0781E]', dot: 'bg-[var(--color-ak-ambar)]' },
+  confirmed: { label: 'Confirmada', bg: 'bg-[var(--color-ak-oliva)]/10', text: 'text-[var(--color-ak-oliva)]', dot: 'bg-[var(--color-ak-oliva)]' },
   cancelled: { label: 'Cancelada', bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-500' },
-  completed: { label: 'Completada', bg: 'bg-[#8D6E63]/10', text: 'text-[#5D4037]', dot: 'bg-[#8D6E63]' },
+  completed: { label: 'Completada', bg: 'bg-[var(--text-secondary)]/10', text: 'text-[var(--text-primary)]', dot: 'bg-[var(--text-secondary)]' },
 }
 
 export default function PerfilPage() {
@@ -164,15 +164,15 @@ export default function PerfilPage() {
 
   if (authLoading || roleLoading) {
     return (
-      <div className="min-h-[100dvh] bg-[#F5EDE0] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#8D6E63] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[100dvh] bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[var(--text-secondary)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
   if (!user) {
     return (
-      <div className="min-h-[100dvh] bg-[#F5EDE0] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#8D6E63] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[100dvh] bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[var(--text-secondary)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -194,24 +194,24 @@ export default function PerfilPage() {
   const pageTitle = isAdminUser ? 'Panel de Administracion' : isHost ? 'Portal de Host' : 'Mi Perfil'
 
   return (
-    <div className="min-h-[100dvh] bg-[#F5EDE0]">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       {/* Sticky nav */}
-      <nav className="sticky top-0 z-40 bg-[#F5EDE0]/80 backdrop-blur-md border-b border-[#D7CCC8]/60">
+      <nav className="sticky top-0 z-40 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border-default)]/60">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-sm font-medium text-[#5D4037] hover:text-[#3E2723] active:scale-[0.97] transition-colors"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-primary)] hover:text-[var(--color-ak-madera)] active:scale-[0.97] transition-colors"
             style={{ transition: 'transform 160ms ease-out, color 200ms ease-out' }}
           >
             <House size={18} weight="fill" />
             <span className="hidden sm:inline">Inicio</span>
           </Link>
-          <span className="font-['Playfair_Display'] text-base font-bold text-[#3E2723]">
+          <span className="font-['Playfair_Display'] text-base font-bold text-[var(--color-ak-madera)]">
             {pageTitle}
           </span>
           <button
             onClick={signOut}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-[#8D6E63] hover:text-[#3E2723] active:scale-[0.97] transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--color-ak-madera)] active:scale-[0.97] transition-colors"
             style={{ transition: 'transform 160ms ease-out, color 200ms ease-out' }}
           >
             <SignOut size={18} />
@@ -228,10 +228,10 @@ export default function PerfilPage() {
       >
         {/* Profile card */}
         <motion.div variants={prefersReduced ? undefined : itemVariants}>
-          <AnimatedCard delay={0} hover className="bg-white rounded-2xl border border-[#D7CCC8]/60 p-6 md:p-8 mb-6">
+          <AnimatedCard delay={0} hover className="bg-white rounded-2xl border border-[var(--border-default)]/60 p-6 md:p-8 mb-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-[#3E2723] flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+                <div className="w-14 h-14 rounded-2xl bg-[var(--color-ak-madera)] flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
                   {(user.user_metadata?.avatar_url || user.user_metadata?.picture) ? (
                     <img
                       src={user.user_metadata.avatar_url || user.user_metadata.picture}
@@ -240,16 +240,16 @@ export default function PerfilPage() {
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <User size={28} weight="fill" className="text-[#C9A94E]" />
+                    <User size={28} weight="fill" className="text-[var(--color-ak-dorado)]" />
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h1 className="font-['Playfair_Display'] text-2xl md:text-3xl font-bold text-[#3E2723] leading-tight">
+                  <h1 className="font-['Playfair_Display'] text-2xl md:text-3xl font-bold text-[var(--color-ak-madera)] leading-tight">
                     {pageTitle}
                   </h1>
-                  <p className="text-[#8D6E63] text-sm mt-0.5 truncate">{user.email}</p>
+                  <p className="text-[var(--text-secondary)] text-sm mt-0.5 truncate">{user.email}</p>
                   {user.user_metadata?.full_name && (
-                    <p className="text-[#3E2723] font-medium text-sm mt-0.5">
+                    <p className="text-[var(--color-ak-madera)] font-medium text-sm mt-0.5">
                       {user.user_metadata.full_name}
                     </p>
                   )}
@@ -261,7 +261,7 @@ export default function PerfilPage() {
               {!isHost && (
                 <Link
                   href="/reservar"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#6B2737] text-white rounded-xl text-sm font-semibold hover:bg-[#5C2230] active:scale-[0.97] transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-ak-borgona)] text-white rounded-xl text-sm font-semibold hover:bg-[var(--color-ak-borgona)] active:scale-[0.97] transition-colors"
                   style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                 >
                   <CalendarBlank size={16} weight="bold" />
@@ -271,7 +271,7 @@ export default function PerfilPage() {
               {isAdminUser && (
                 <Link
                   href="/admin"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#3E2723] text-[#F5EDE0] rounded-xl text-sm font-semibold hover:bg-[#2A1A16] active:scale-[0.97] transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-ak-madera)] text-[var(--bg-primary)] rounded-xl text-sm font-semibold hover:bg-[#2A1A16] active:scale-[0.97] transition-colors"
                   style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                 >
                   <ComputerTower size={16} weight="fill" />
@@ -285,25 +285,25 @@ export default function PerfilPage() {
         {/* Host portal */}
         {isHost && (
           <motion.div variants={prefersReduced ? undefined : itemVariants} className="mb-6">
-            <AnimatedCard delay={0.05} className="relative overflow-hidden rounded-2xl bg-[#3E2723] border border-[#5D4037]">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-[#6B2737]/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+            <AnimatedCard delay={0.05} className="relative overflow-hidden rounded-2xl bg-[var(--color-ak-madera)] border border-[var(--text-primary)]">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-[var(--color-ak-borgona)]/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
               <div className="relative p-6 md:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-[#5D4037]/60 border border-[#8D6E63]/30 flex items-center justify-center shrink-0">
-                    <ComputerTower size={28} weight="fill" className="text-[#C9A94E]" />
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--text-primary)]/60 border border-[var(--text-secondary)]/30 flex items-center justify-center shrink-0">
+                    <ComputerTower size={28} weight="fill" className="text-[var(--color-ak-dorado)]" />
                   </div>
                   <div>
-                    <h2 className="font-['Playfair_Display'] text-xl md:text-2xl font-bold text-[#F5EDE0]">
+                    <h2 className="font-['Playfair_Display'] text-xl md:text-2xl font-bold text-[var(--bg-primary)]">
                       Portal de Host
                     </h2>
-                    <p className="text-sm text-[#D7CCC8]/80 mt-0.5 max-w-[260px]">
+                    <p className="text-sm text-[var(--border-default)]/80 mt-0.5 max-w-[260px]">
                       Gestiona el piso, mesas y reservas del turno en tiempo real.
                     </p>
                   </div>
                 </div>
                 <Link
                   href="/host"
-                  className="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-[#6B2737] text-white rounded-xl text-sm font-semibold hover:bg-[#7A2D40] active:scale-[0.97] transition-colors shadow-lg shadow-black/20"
+                  className="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-ak-borgona)] text-white rounded-xl text-sm font-semibold hover:bg-[#7A2D40] active:scale-[0.97] transition-colors shadow-lg shadow-black/20"
                   style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                 >
                   Abrir Portal
@@ -316,7 +316,7 @@ export default function PerfilPage() {
 
         {/* Reservations */}
         <motion.div variants={prefersReduced ? undefined : itemVariants}>
-          <AnimatedCard delay={0.1} hover={false} className="bg-white rounded-2xl border border-[#D7CCC8]/60 p-6 md:p-8">
+          <AnimatedCard delay={0.1} hover={false} className="bg-white rounded-2xl border border-[var(--border-default)]/60 p-6 md:p-8">
             <SectionHeading className="mb-4">
               {isAdminUser ? 'Todas las Reservas' : isHost ? 'Tus Reservas Personales' : 'Mis Reservas'}
             </SectionHeading>
@@ -324,12 +324,12 @@ export default function PerfilPage() {
             {loading ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-24 bg-[#F5EDE0] rounded-xl animate-pulse" />
+                  <div key={i} className="h-24 bg-[var(--bg-primary)] rounded-xl animate-pulse" />
                 ))}
               </div>
             ) : reservations.length === 0 ? (
               <EmptyState
-                icon={<CalendarBlank size={40} weight="duotone" className="text-[#D7CCC8]" />}
+                icon={<CalendarBlank size={40} weight="duotone" className="text-[var(--border-default)]" />}
                 title="Sin reservas aun"
                 description={isHost ? 'Cuando hagas una reserva personal, aparecera aqui.' : 'Haz tu primera reserva y la veras aqui.'}
               />
@@ -344,13 +344,13 @@ export default function PerfilPage() {
                       key={r.id}
                       className={cn(
                         'rounded-xl border transition-colors',
-                        isEditing ? 'border-[#6B2737]/30 bg-[#6B2737]/[0.02]' : 'border-[#D7CCC8]/80 bg-white hover:border-[#D7CCC8]'
+                        isEditing ? 'border-[var(--color-ak-borgona)]/30 bg-[var(--color-ak-borgona)]/[0.02]' : 'border-[var(--border-default)]/80 bg-white hover:border-[var(--border-default)]'
                       )}
                     >
                       {/* Card header */}
                       <div className="p-4">
                         {isAdminUser && r.customers && (
-                          <p className="text-xs text-[#D4922A] font-semibold mb-2">
+                          <p className="text-xs text-[var(--color-ak-ambar)] font-semibold mb-2">
                             {r.customers.full_name || r.customers.email}
                           </p>
                         )}
@@ -359,50 +359,50 @@ export default function PerfilPage() {
                           <div className="space-y-3">
                             <div className="grid grid-cols-2 gap-3">
                               <div>
-                                <label className="block text-xs font-medium text-[#3E2723] mb-1">Fecha</label>
+                                <label className="block text-xs font-medium text-[var(--color-ak-madera)] mb-1">Fecha</label>
                                 <input
                                   type="date"
                                   value={editData.date}
                                   onChange={e => setEditData({ ...editData, date: e.target.value })}
                                   min={minDate}
-                                  className="w-full px-3 py-2 rounded-lg border border-[#D7CCC8] text-sm bg-[#F5EDE0]/50 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#6B2737]/20"
+                                  className="w-full px-3 py-2 rounded-lg border border-[var(--border-default)] text-sm bg-[var(--bg-primary)]/50 text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/20"
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs font-medium text-[#3E2723] mb-1">Hora</label>
+                                <label className="block text-xs font-medium text-[var(--color-ak-madera)] mb-1">Hora</label>
                                 <select
                                   value={editData.time_start}
                                   onChange={e => setEditData({ ...editData, time_start: e.target.value })}
-                                  className="w-full px-3 py-2 rounded-lg border border-[#D7CCC8] text-sm bg-[#F5EDE0]/50 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#6B2737]/20"
+                                  className="w-full px-3 py-2 rounded-lg border border-[var(--border-default)] text-sm bg-[var(--bg-primary)]/50 text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/20"
                                 >
                                   {timeSlots.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                               </div>
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-[#3E2723] mb-1">Personas</label>
+                              <label className="block text-xs font-medium text-[var(--color-ak-madera)] mb-1">Personas</label>
                               <select
                                 value={editData.party_size}
                                 onChange={e => setEditData({ ...editData, party_size: Number(e.target.value) })}
-                                className="w-full px-3 py-2 rounded-lg border border-[#D7CCC8] text-sm bg-[#F5EDE0]/50 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#6B2737]/20"
+                                className="w-full px-3 py-2 rounded-lg border border-[var(--border-default)] text-sm bg-[var(--bg-primary)]/50 text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/20"
                               >
                                 {Array.from({ length: 50 }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n}</option>)}
                               </select>
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-[#3E2723] mb-1">Peticiones especiales</label>
+                              <label className="block text-xs font-medium text-[var(--color-ak-madera)] mb-1">Peticiones especiales</label>
                               <textarea
                                 value={editData.special_requests}
                                 onChange={e => setEditData({ ...editData, special_requests: e.target.value })}
                                 rows={2}
-                                className="w-full px-3 py-2 rounded-lg border border-[#D7CCC8] text-sm bg-[#F5EDE0]/50 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#6B2737]/20"
+                                className="w-full px-3 py-2 rounded-lg border border-[var(--border-default)] text-sm bg-[var(--bg-primary)]/50 text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/20"
                               />
                             </div>
                             <div className="flex gap-2 pt-1">
                               <button
                                 onClick={() => handleSave(r.id)}
                                 disabled={saving}
-                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#6B2737] text-white rounded-lg text-sm font-semibold hover:bg-[#5C2230] disabled:opacity-50 active:scale-[0.97]"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--color-ak-borgona)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--color-ak-borgona)] disabled:opacity-50 active:scale-[0.97]"
                                 style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                               >
                                 <CheckCircle size={14} weight="bold" />
@@ -410,7 +410,7 @@ export default function PerfilPage() {
                               </button>
                               <button
                                 onClick={() => setEditingId(null)}
-                                className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#D7CCC8] rounded-lg text-sm font-medium text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97]"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 border border-[var(--border-default)] rounded-lg text-sm font-medium text-[var(--color-ak-madera)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
                                 style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                               >
                                 <X size={14} weight="bold" />
@@ -422,7 +422,7 @@ export default function PerfilPage() {
                           <div className="flex items-start justify-between gap-4">
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <p className="font-['Playfair_Display'] text-lg font-bold text-[#3E2723] capitalize">
+                                <p className="font-['Playfair_Display'] text-lg font-bold text-[var(--color-ak-madera)] capitalize">
                                   {formatDate(r.date)}
                                 </p>
                                 <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider', status.bg, status.text)}>
@@ -430,11 +430,11 @@ export default function PerfilPage() {
                                   {status.label}
                                 </span>
                               </div>
-                              <p className="text-sm text-[#8D6E63]">
+                              <p className="text-sm text-[var(--text-secondary)]">
                                 {r.time_start} - {r.time_end} · {r.party_size} personas
                               </p>
                               {r.special_requests && (
-                                <p className="text-sm text-[#8D6E63] mt-1.5 italic">
+                                <p className="text-sm text-[var(--text-secondary)] mt-1.5 italic">
                                   &ldquo;{r.special_requests}&rdquo;
                                 </p>
                               )}
@@ -445,7 +445,7 @@ export default function PerfilPage() {
                                 <div className="flex items-center gap-2">
                                   <button
                                     onClick={() => startEdit(r)}
-                                    className="inline-flex items-center gap-1 text-xs font-medium text-[#6B2737] hover:text-[#8B3747] active:scale-[0.97] px-2 py-1 rounded-md hover:bg-[#6B2737]/5"
+                                    className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-ak-borgona)] hover:text-[var(--color-ak-borgona)] active:scale-[0.97] px-2 py-1 rounded-md hover:bg-[var(--color-ak-borgona)]/5"
                                     style={{ transition: 'transform 160ms ease-out, color 200ms ease-out' }}
                                   >
                                     <PencilSimple size={12} />
@@ -465,7 +465,7 @@ export default function PerfilPage() {
                               {isAdminUser && r.status === 'pending' && (
                                 <button
                                   onClick={() => handleConfirm(r.id)}
-                                  className="inline-flex items-center gap-1 text-xs font-medium text-[#5C7A4D] hover:text-[#4A6640] active:scale-[0.97] px-2 py-1 rounded-md hover:bg-[#5C7A4D]/10"
+                                  className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-ak-oliva)] hover:text-[var(--color-ak-oliva)] active:scale-[0.97] px-2 py-1 rounded-md hover:bg-[var(--color-ak-oliva)]/10"
                                   style={{ transition: 'transform 160ms ease-out, color 200ms ease-out' }}
                                 >
                                   <CheckCircle size={12} />

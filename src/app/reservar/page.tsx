@@ -19,8 +19,8 @@ export default function ReservarPage() {
   const [availableSlots, setAvailableSlots] = useState<Record<string, boolean> | null>(null)
   const [loadingAvailability, setLoadingAvailability] = useState(false)
 
-  if (authLoading) return <div className="min-h-screen bg-[#F5EDE0] flex items-center justify-center">Cargando...</div>
-  if (!user) return <div className="min-h-screen bg-[#F5EDE0] flex items-center justify-center">Cargando...</div>
+  if (authLoading) return <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">Cargando...</div>
+  if (!user) return <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">Cargando...</div>
 
   const timeSlots = [
     '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
@@ -99,9 +99,9 @@ export default function ReservarPage() {
   const minDate = tomorrow.toISOString().split('T')[0]
 
   return (
-    <div className="min-h-screen bg-[#F5EDE0] pt-24 pb-12 px-4">
+    <div className="min-h-screen bg-[var(--bg-primary)] pt-24 pb-12 px-4">
       <div className="max-w-lg mx-auto">
-        <h1 className="font-['Playfair_Display'] text-4xl font-bold text-[#3E2723] text-center mb-8">
+        <h1 className="font-['Playfair_Display'] text-4xl font-bold text-[var(--color-ak-madera)] text-center mb-8">
           Reservar Mesa
         </h1>
 
@@ -111,11 +111,11 @@ export default function ReservarPage() {
             <div key={s} className="flex items-center gap-2">
               <div className={cn(
                 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
-                step >= s ? 'bg-[#6B2737] text-white' : 'bg-[#D7CCC8] text-[#8D6E63]'
+                step >= s ? 'bg-[var(--color-ak-borgona)] text-white' : 'bg-[var(--border-default)] text-[var(--text-secondary)]'
               )}>
                 {s}
               </div>
-              {s < 2 && <div className={cn('w-12 h-0.5', step > s ? 'bg-[#6B2737]' : 'bg-[#D7CCC8]')} />}
+              {s < 2 && <div className={cn('w-12 h-0.5', step > s ? 'bg-[var(--color-ak-borgona)]' : 'bg-[var(--border-default)]')} />}
             </div>
           ))}
         </div>
@@ -125,24 +125,24 @@ export default function ReservarPage() {
         {/* Step 1: Date, Party Size & Time */}
         {step === 1 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
-            <h2 className="text-xl font-semibold text-[#3E2723]">¿Cuándo, cuántos y a qué hora?</h2>
+            <h2 className="text-xl font-semibold text-[var(--color-ak-madera)]">¿Cuándo, cuántos y a qué hora?</h2>
             <div>
-              <label className="block text-sm font-medium text-[#3E2723] mb-1">Fecha</label>
+              <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">Fecha</label>
               <input
                 type="date"
                 value={date}
                 onChange={e => setDate(e.target.value)}
                 min={minDate}
                 required
-                className="w-full px-4 py-3 rounded-lg border border-[#D7CCC8] focus:border-[#6B2737] outline-none"
+                className="w-full px-4 py-3 rounded-lg border border-[var(--border-default)] focus:border-[var(--color-ak-borgona)] outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#3E2723] mb-1">Número de personas</label>
+              <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">Número de personas</label>
               <select
                 value={partySize}
                 onChange={e => setPartySize(Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-lg border border-[#D7CCC8] focus:border-[#6B2737] outline-none"
+                className="w-full px-4 py-3 rounded-lg border border-[var(--border-default)] focus:border-[var(--color-ak-borgona)] outline-none"
               >
                 {Array.from({ length: 50 }, (_, i) => i + 1).map(n => (
                   <option key={n} value={n}>{n} {n === 1 ? 'persona' : 'personas'}</option>
@@ -150,14 +150,14 @@ export default function ReservarPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#3E2723] mb-2">Hora</label>
+              <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-2">Hora</label>
               {loadingAvailability && (
-                <div className="text-sm text-[#8D6E63] text-center py-6">
+                <div className="text-sm text-[var(--text-secondary)] text-center py-6">
                   Verificando disponibilidad...
                 </div>
               )}
               {!loadingAvailability && availableSlots !== null && Object.keys(availableSlots).length === 0 && (
-                <div className="text-sm text-[#8D6E63] text-center py-6">
+                <div className="text-sm text-[var(--text-secondary)] text-center py-6">
                   No hay disponibilidad para esta fecha
                 </div>
               )}
@@ -174,9 +174,9 @@ export default function ReservarPage() {
                         className={cn(
                           'py-2 rounded-lg text-sm font-medium transition-all',
                           isSelected
-                            ? 'bg-[#6B2737] text-white'
+                            ? 'bg-[var(--color-ak-borgona)] text-white'
                             : isAvailable
-                              ? 'bg-[#EFEBE9] text-[#3E2723] hover:bg-[#D7CCC8]'
+                              ? 'bg-[var(--bg-input)] text-[var(--color-ak-madera)] hover:bg-[var(--border-default)]'
                               : 'bg-gray-100 text-gray-300 cursor-not-allowed'
                         )}
                       >
@@ -190,7 +190,7 @@ export default function ReservarPage() {
             <button
               onClick={() => date && timeSlot && setStep(2)}
               disabled={!date || !timeSlot || loadingAvailability || (availableSlots !== null && !availableSlots[timeSlot])}
-              className="w-full py-3 bg-[#6B2737] text-white rounded-lg font-semibold hover:bg-[#8B3747] transition-colors disabled:opacity-50"
+              className="w-full py-3 bg-[var(--color-ak-borgona)] text-white rounded-lg font-semibold hover:bg-[var(--color-ak-borgona)] transition-colors disabled:opacity-50"
             >
               Siguiente
             </button>
@@ -200,43 +200,43 @@ export default function ReservarPage() {
         {/* Step 2: Confirm + Phone + Notes */}
         {step === 2 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
-            <h2 className="text-xl font-semibold text-[#3E2723]">Confirmar reserva</h2>
-            <div className="space-y-3 text-[#3E2723]">
+            <h2 className="text-xl font-semibold text-[var(--color-ak-madera)]">Confirmar reserva</h2>
+            <div className="space-y-3 text-[var(--color-ak-madera)]">
               <p><span className="font-medium">Fecha:</span> {date}</p>
               <p><span className="font-medium">Hora:</span> {timeSlot}</p>
               <p><span className="font-medium">Personas:</span> {partySize}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#3E2723] mb-1">Telefono de contacto</label>
+              <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">Telefono de contacto</label>
               <input
                 type="tel"
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-[#D7CCC8] focus:border-[#6B2737] outline-none"
+                className="w-full px-4 py-3 rounded-lg border border-[var(--border-default)] focus:border-[var(--color-ak-borgona)] outline-none"
                 placeholder="+57 300 123 4567"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#3E2723] mb-1">Peticiones especiales (opcional)</label>
+              <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">Peticiones especiales (opcional)</label>
               <textarea
                 value={specialRequests}
                 onChange={e => setSpecialRequests(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-3 rounded-lg border border-[#D7CCC8] focus:border-[#6B2737] outline-none"
+                className="w-full px-4 py-3 rounded-lg border border-[var(--border-default)] focus:border-[var(--color-ak-borgona)] outline-none"
                 placeholder="Alergias, cumpleaños, etc."
               />
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 py-3 border border-[#D7CCC8] rounded-lg font-medium hover:bg-[#EFEBE9] transition-colors"
+                className="flex-1 py-3 border border-[var(--border-default)] rounded-lg font-medium hover:bg-[var(--bg-input)] transition-colors"
               >
                 Atrás
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="flex-1 py-3 bg-[#6B2737] text-white rounded-lg font-semibold hover:bg-[#8B3747] transition-colors disabled:opacity-50"
+                className="flex-1 py-3 bg-[var(--color-ak-borgona)] text-white rounded-lg font-semibold hover:bg-[var(--color-ak-borgona)] transition-colors disabled:opacity-50"
               >
                 {submitting ? 'Reservando...' : 'Confirmar Reserva'}
               </button>

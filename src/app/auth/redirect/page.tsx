@@ -18,10 +18,10 @@ export default function AuthRedirectPage() {
   }, [router])
 
   return (
-    <div className="min-h-screen bg-[#F5EDE0] flex items-center justify-center">
+    <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
       <div className="text-center">
-        <Spinner size={32} className="animate-spin text-[#8D6E63] mx-auto" />
-        <p className="mt-3 text-sm text-[#8D6E63]">Redirigiendo...</p>
+        <Spinner size={32} className="animate-spin text-[var(--text-secondary)] mx-auto" />
+        <p className="mt-3 text-sm text-[var(--text-secondary)]">Redirigiendo...</p>
       </div>
     </div>
   )

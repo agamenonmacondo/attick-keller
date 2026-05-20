@@ -27,6 +27,9 @@ interface FetchOptions {
   has_email?: string
   min_visits?: number
   last_visit_days?: number
+  visits_range?: string
+  is_recurring?: string
+  loyalty_tier?: string
 }
 
 interface CustomersResponse {
@@ -38,6 +41,30 @@ interface CustomersResponse {
   error?: string
 }
 
+interface SegmentCounts {
+  all: number
+  nuevos: number
+  ocasional: number
+  frecuente: number
+  habitual: number
+  vip: number
+}
+
+interface QuickFilters {
+  isRecurring: string | null
+  tiers: string[]
+  lastActivity: number | null
+  hasEmail: string | null
+}
+
+const SEGMENT_VISITS_RANGES: Record<string, string> = {
+  nuevos: '1-1',
+  ocasional: '2-3',
+  frecuente: '4-5',
+  habitual: '6-10',
+  vip: '11+',
+}
+
 export function useCustomers() {
   const [customers, setCustomers] = useState<CustomerRow[]>([])
   const [total, setTotal] = useState(0)
@@ -46,11 +73,28 @@ export function useCustomers() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentFilters, setCurrentFilters] = useState<FetchOptions>({})
+  const [segmentCounts, setSegmentCounts] = useState<SegmentCounts | null>(null)
+  const [activeSegment, setActiveSegment] = useState<string | null>(null)
+  const [quickFilters, setQuickFilters] = useState<QuickFilters>({
+    isRecurring: null,
+    tiers: [],
+    lastActivity: null,
+    hasEmail: null,
+  })
+  const [perPage, setPerPage] = useState(50)
+
   const abortRef = useRef<AbortController | null>(null)
 
+  const fetchWithAbort = useCallback(async (url: string) => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+    const res = await fetch(url, { signal: controller.signal })
+    return res
+  }, [])
+
   const fetchCustomers = useCallback(async (opts: FetchOptions = {}) => {
-    // Cancel in-flight request
-    if (abortRef.current) abortRef.current.abort()
+    abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
 
@@ -68,14 +112,14 @@ export function useCustomers() {
       if (opts.has_email) params.set('has_email', opts.has_email)
       if (opts.min_visits) params.set('min_visits', String(opts.min_visits))
       if (opts.last_visit_days) params.set('last_visit_days', String(opts.last_visit_days))
+      if (opts.visits_range) params.set('visits_range', opts.visits_range)
+      if (opts.is_recurring) params.set('is_recurring', opts.is_recurring)
+      if (opts.loyalty_tier) params.set('loyalty_tier', opts.loyalty_tier)
 
       const query = params.toString()
       const res = await fetch('/api/admin/customers' + (query ? '?' + query : ''), {
         signal: controller.signal,
       })
-
-      // Ignore if aborted
-      if (controller.signal.aborted) return
 
       if (!res.ok) {
         let msg = `Error ${res.status}`
@@ -105,9 +149,7 @@ export function useCustomers() {
       setError(err instanceof Error ? err.message : 'Error de conexion')
       setCustomers([])
     } finally {
-      if (!controller.signal.aborted) {
-        setLoading(false)
-      }
+      setLoading(false)
     }
   }, [])
 
@@ -119,15 +161,76 @@ export function useCustomers() {
     fetchCustomers({ ...filters, page: 1 })
   }, [fetchCustomers])
 
-  useEffect(() => {
-    fetchCustomers({ page: 1, limit: 25 })
-    return () => {
-      if (abortRef.current) abortRef.current.abort()
+  const handleSetActiveSegment = useCallback((segment: string | null) => {
+    setActiveSegment(segment)
+    if (segment && segment !== 'all') {
+      const visitsRange = SEGMENT_VISITS_RANGES[segment]
+      fetchCustomers({ ...currentFilters, visits_range: visitsRange, page: 1 })
+    } else {
+      const { visits_range: _, ...rest } = currentFilters
+      fetchCustomers({ ...rest, page: 1 })
     }
+  }, [currentFilters, fetchCustomers])
+
+  const handleSetQuickFilters = useCallback((qf: QuickFilters) => {
+    setQuickFilters(qf)
+    const newOpts: FetchOptions = { ...currentFilters, page: 1 }
+
+    if (qf.isRecurring !== null) {
+      newOpts.is_recurring = qf.isRecurring
+    } else {
+      delete newOpts.is_recurring
+    }
+
+    if (qf.tiers.length > 0) {
+      newOpts.loyalty_tier = qf.tiers.join(',')
+    } else {
+      delete newOpts.loyalty_tier
+    }
+
+    if (qf.lastActivity !== null) {
+      newOpts.last_visit_days = qf.lastActivity
+    } else {
+      delete newOpts.last_visit_days
+    }
+
+    if (qf.hasEmail !== null) {
+      newOpts.has_email = qf.hasEmail
+    } else {
+      delete newOpts.has_email
+    }
+
+    fetchCustomers(newOpts)
+  }, [currentFilters, fetchCustomers])
+
+  const handleSetPerPage = useCallback((n: number) => {
+    setPerPage(n)
+    fetchCustomers({ ...currentFilters, limit: n, page: 1 })
+  }, [currentFilters, fetchCustomers])
+
+  // Fetch segment counts on mount
+  useEffect(() => {
+    let cancelled = false
+    fetchWithAbort('/api/admin/customers/segment-counts')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!cancelled && data) setSegmentCounts(data)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [fetchWithAbort])
+
+  // Initial fetch
+  useEffect(() => {
+    fetchCustomers({ page: 1, limit: 50 })
   }, [fetchCustomers])
 
   return {
     customers, total, totalPages, currentPage, loading, error,
-    fetchCustomers, applyFilters, goToPage, currentFilters,
+    segmentCounts, activeSegment, quickFilters, perPage,
+    fetchCustomers, applyFilters, goToPage,
+    setActiveSegment: handleSetActiveSegment,
+    setQuickFilters: handleSetQuickFilters,
+    setPerPage: handleSetPerPage,
   }
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
-import { MagnifyingGlass, Tag, Envelope, CalendarBlank, ChartBar, Funnel, X, SortAscending } from '@phosphor-icons/react'
+import { useState, useCallback, useEffect } from 'react'
+import { MagnifyingGlass, Tag, Envelope, CalendarBlank, ChartBar, Funnel, X } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils/cn'
 
 interface Tag {
@@ -16,19 +16,23 @@ interface FiltersState {
   hasEmail: string
   minVisits: number
   lastVisitDays: number
-  sort: string
-  order: string
 }
 
 interface CustomerFiltersProps {
   tags: Tag[]
   initialFilters?: {
-    q: string; tag_ids: string; has_email: string; min_visits: number; last_visit_days: number; sort?: string; order?: string
+    q: string; tag_ids: string; has_email: string; min_visits: number; last_visit_days: number
   }
   onApply: (filters: {
-    q: string; tag_ids: string; has_email: string; min_visits: number; last_visit_days: number; sort: string; order: string
+    q: string; tag_ids: string; has_email: string; min_visits: number; last_visit_days: number
   }) => void
   onCreateTag: () => void
+  quickFilters?: {
+    isRecurring: string | null
+    tiers: string[]
+    lastActivity: number | null
+    hasEmail: string | null
+  }
 }
 
 const LAST_VISIT_PRESETS = [
@@ -38,28 +42,14 @@ const LAST_VISIT_PRESETS = [
   { label: '90 dias', value: 90 },
 ]
 
-const SORT_OPTIONS = [
-  { label: 'Mas recientes', value: 'created_at', order: 'desc' },
-  { label: 'Mas antiguos', value: 'created_at', order: 'asc' },
-  { label: 'Nombre A-Z', value: 'full_name', order: 'asc' },
-  { label: 'Nombre Z-A', value: 'full_name', order: 'desc' },
-  { label: 'Telefono', value: 'phone', order: 'asc' },
-  { label: 'Email', value: 'email', order: 'asc' },
-]
-
-export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: CustomerFiltersProps) {
+export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag, quickFilters }: CustomerFiltersProps) {
   const [filters, setFilters] = useState<FiltersState>({
     q: initialFilters?.q || '',
     selectedTagIds: initialFilters?.tag_ids ? initialFilters.tag_ids.split(',').filter(Boolean) : [],
     hasEmail: initialFilters?.has_email || '',
     minVisits: initialFilters?.min_visits || 0,
     lastVisitDays: initialFilters?.last_visit_days || 0,
-    sort: initialFilters?.sort || 'created_at',
-    order: initialFilters?.order || 'desc',
   })
-
-  const [searchInput, setSearchInput] = useState(initialFilters?.q || '')
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (initialFilters) {
@@ -69,12 +59,19 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
         hasEmail: initialFilters.has_email || '',
         minVisits: initialFilters.min_visits || 0,
         lastVisitDays: initialFilters.last_visit_days || 0,
-        sort: initialFilters.sort || 'created_at',
-        order: initialFilters.order || 'desc',
       })
-      setSearchInput(initialFilters.q || '')
     }
   }, [initialFilters])
+
+  // Sync quick filter changes into internal state (one-way: quickFilters → filters)
+  useEffect(() => {
+    if (!quickFilters) return
+    setFilters(prev => ({
+      ...prev,
+      hasEmail: quickFilters.hasEmail ?? '',
+      lastVisitDays: quickFilters.lastActivity ?? 0,
+    }))
+  }, [quickFilters?.hasEmail, quickFilters?.lastActivity])
 
   const toggleTag = useCallback((tagId: string) => {
     setFilters(prev => ({
@@ -85,14 +82,6 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
     }))
   }, [])
 
-  const handleSearchInput = useCallback((value: string) => {
-    setSearchInput(value)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      setFilters(prev => ({ ...prev, q: value }))
-    }, 300)
-  }, [])
-
   const apply = useCallback(() => {
     onApply({
       q: filters.q,
@@ -100,22 +89,13 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
       has_email: filters.hasEmail,
       min_visits: filters.minVisits,
       last_visit_days: filters.lastVisitDays,
-      sort: filters.sort,
-      order: filters.order,
     })
   }, [filters, onApply])
 
-  // Auto-apply when sort/order changes
-  useEffect(() => {
-    if (initialFilters) return // skip initial mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.sort, filters.order])
-
   const clear = useCallback(() => {
-    const cleared: FiltersState = { q: '', selectedTagIds: [], hasEmail: '', minVisits: 0, lastVisitDays: 0, sort: 'created_at', order: 'desc' }
+    const cleared: FiltersState = { q: '', selectedTagIds: [], hasEmail: '', minVisits: 0, lastVisitDays: 0 }
     setFilters(cleared)
-    setSearchInput('')
-    onApply({ q: '', tag_ids: '', has_email: '', min_visits: 0, last_visit_days: 0, sort: 'created_at', order: 'desc' })
+    onApply({ q: '', tag_ids: '', has_email: '', min_visits: 0, last_visit_days: 0 })
   }, [onApply])
 
   return (
@@ -126,32 +106,12 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
         </label>
         <input
           type="text"
-          value={searchInput}
-          onChange={(e) => handleSearchInput(e.target.value)}
+          value={filters.q}
+          onChange={(e) => setFilters(prev => ({ ...prev, q: e.target.value }))}
           onKeyDown={(e) => e.key === 'Enter' && apply()}
           placeholder="Nombre, telefono o email..."
           className="w-full rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-2 text-sm text-[#3E2723] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
         />
-      </div>
-
-      <div>
-        <label className="flex items-center gap-1.5 text-xs font-medium text-[#8D6E63] mb-1.5">
-          <SortAscending size={14} /> Ordenar
-        </label>
-        <select
-          value={`${filters.sort}:${filters.order}`}
-          onChange={(e) => {
-            const [sort, order] = e.target.value.split(':')
-            setFilters(prev => ({ ...prev, sort, order }))
-          }}
-          className="w-full rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
-        >
-          {SORT_OPTIONS.map(opt => (
-            <option key={`${opt.value}:${opt.order}`} value={`${opt.value}:${opt.order}`}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
       </div>
 
       <div>

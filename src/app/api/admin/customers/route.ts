@@ -1,19 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
-
-/** Sanitize a PostgREST ilike/like value to prevent injection */
-function sanitizeLike(value: string): string {
-  return value.replace(/[%_\\']/g, '\\$&')
-}
-
-/** Validate sort column whitelist */
-const VALID_SORTS = ['created_at', 'full_name', 'phone', 'email'] as const
-type ValidSort = typeof VALID_SORTS[number]
-
-function validateSort(sort: string | null): ValidSort {
-  if (sort && (VALID_SORTS as readonly string[]).includes(sort)) return sort as ValidSort
-  return 'created_at'
-}
+import { sanitizeLike } from '@/lib/utils/sanitize'
 
 export async function POST(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -61,6 +48,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Step 0: Auth check with detailed logging
     let admin
     try {
       admin = await getAdminUser(request)
@@ -77,6 +65,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const sb = getServiceClient()
 
+    // Log env verification to diagnose truncated keys on Vercel
+    const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    const sbAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+    console.log('[customers] ENV check - URL:', sbUrl, 'SERVICE_KEY length:', sbKey.length, 'ANON_KEY length:', sbAnon.length)
+
     const page = parseInt(searchParams.get('page') || '1', 10)
     const validPage = isNaN(page) || page < 1 ? 1 : page
     const limit = parseInt(searchParams.get('limit') || '25', 10)
@@ -88,10 +82,9 @@ export async function GET(request: NextRequest) {
     const minVisits = parseInt(searchParams.get('min_visits') || '0') || 0
     const lastVisitDays = parseInt(searchParams.get('last_visit_days') || '0') || 0
     const tagIds = searchParams.get('tag_ids') || ''
-
-    // Sort & order
-    const sort = validateSort(searchParams.get('sort'))
-    const order = searchParams.get('order') === 'asc' ? true : false // false = desc (default)
+    const visitsRange = searchParams.get('visits_range') || ''
+    const isRecurring = searchParams.get('is_recurring') || ''
+    const loyaltyTier = searchParams.get('loyalty_tier') || ''
 
     // Step 1: Build base customers query with text/email filters
     let customersQuery = sb
@@ -100,15 +93,17 @@ export async function GET(request: NextRequest) {
       .eq('restaurant_id', RESTAURANT_ID)
 
     if (q) {
-      const safe = sanitizeLike(q)
-      customersQuery = customersQuery.or(`full_name.ilike.%${safe}%,phone.ilike.%${safe}%,email.ilike.%${safe}%`)
+      const safeQ = sanitizeLike(q)
+      customersQuery = customersQuery.or(`full_name.ilike.%${safeQ}%,phone.ilike.%${safeQ}%,email.ilike.%${safeQ}%`)
     }
 
     if (hasEmail === 'true') {
+      // Filter customers that have a non-empty email
       customersQuery = customersQuery
         .not('email', 'is', null)
         .neq('email', '')
     } else if (hasEmail === 'false') {
+      // Filter customers without email (null or empty string)
       customersQuery = customersQuery
         .or('email.is.null,email.eq.""')
     }
@@ -116,12 +111,17 @@ export async function GET(request: NextRequest) {
     // Step 2: If filtering by stats or tags, resolve matching customer IDs first
     let filteredIds: Set<string> | null = null
 
-    if (minVisits > 0 || lastVisitDays > 0) {
+    const hasStatsFilters = minVisits > 0 || lastVisitDays > 0 || visitsRange || isRecurring || loyaltyTier
+
+    if (hasStatsFilters) {
       try {
         let statsQuery = sb
           .from('customer_stats')
           .select('customer_id')
-          .gte('total_visits', minVisits)
+
+        if (minVisits > 0) {
+          statsQuery = statsQuery.gte('total_visits', minVisits)
+        }
 
         if (lastVisitDays > 0) {
           const cutoff = new Date()
@@ -129,12 +129,41 @@ export async function GET(request: NextRequest) {
           statsQuery = statsQuery.gte('last_visit_date', cutoff.toISOString().split('T')[0])
         }
 
+        if (visitsRange) {
+          const parts = visitsRange.split('-')
+          const visitsMin = parseInt(parts[0], 10)
+          if (!isNaN(visitsMin)) {
+            statsQuery = statsQuery.gte('total_visits', visitsMin)
+            if (parts[1] && parts[1] !== '+') {
+              const visitsMax = parseInt(parts[1], 10)
+              if (!isNaN(visitsMax)) {
+                statsQuery = statsQuery.lte('total_visits', visitsMax)
+              }
+            }
+          }
+        }
+
+        if (isRecurring === 'true') {
+          statsQuery = statsQuery.eq('is_recurring', true)
+        } else if (isRecurring === 'false') {
+          statsQuery = statsQuery.eq('is_recurring', false)
+        }
+
+        if (loyaltyTier) {
+          const tiers = loyaltyTier.split(',')
+          if (tiers.length === 1) {
+            statsQuery = statsQuery.eq('loyalty_tier', tiers[0])
+          } else {
+            statsQuery = statsQuery.in('loyalty_tier', tiers)
+          }
+        }
+
         const { data: statsData, error: statsError } = await statsQuery
 
         if (statsError) {
           console.error('[customers] Stats filter error (skipping):', statsError.message, statsError.code)
         } else {
-          const statsIds = new Set<string>((statsData || []).map((s: { customer_id: string }) => s.customer_id))
+          const statsIds = new Set((statsData || []).map((s: { customer_id: string }) => s.customer_id))
           filteredIds = filteredIds ? new Set([...filteredIds].filter(id => statsIds.has(id))) : statsIds
         }
       } catch (statsErr) {
@@ -154,7 +183,7 @@ export async function GET(request: NextRequest) {
           if (tagError) {
             console.error('[customers] Tag filter error (skipping):', tagError.message, tagError.code)
           } else {
-            const tagMatchIds = new Set<string>((tagData || []).map((t: { customer_id: string }) => t.customer_id))
+            const tagMatchIds = new Set((tagData || []).map((t: { customer_id: string }) => t.customer_id))
             filteredIds = filteredIds ? new Set([...filteredIds].filter(id => tagMatchIds.has(id))) : tagMatchIds
           }
         } catch (tagErr) {
@@ -176,44 +205,24 @@ export async function GET(request: NextRequest) {
       customersQuery = customersQuery.in('id', [...filteredIds])
     }
 
-    // Step 3: Paginate and fetch customers — sort on DB for created_at, client-side for name/phone/email
-    let sortedCustomers: any[]
-    let count: number | null
+    // Step 3: Paginate and fetch customers
+    // Sort client-side to avoid PostgREST "customers.created_at.desc" parse error
+    // (SDK adds table prefix to .order() which breaks on some Supabase versions)
+    const { data: customersData, count, error: customersError } = await customersQuery
+      .range(offset, offset + validLimit - 1)
 
-    if (sort === 'created_at') {
-      // DB-level sort (reliable, no PostgREST prefix issue)
-      const { data: customersData, count: dbCount, error: customersError } = await customersQuery
-        .order('created_at', { ascending: order })
-        .range(offset, offset + validLimit - 1)
-
-      if (customersError) {
-        console.error('[customers] Error fetching customers:', customersError.message, customersError.code)
-        return NextResponse.json({ error: customersError.message, code: customersError.code }, { status: 500 })
-      }
-
-      sortedCustomers = customersData || []
-      count = dbCount
-    } else {
-      // Client-side sort for name/phone/email (need all matching IDs, then sort + slice)
-      // But we still paginate — fetch page then sort within it (acceptable for moderate page sizes)
-      const { data: customersData, count: dbCount, error: customersError } = await customersQuery
-        .range(offset, offset + validLimit - 1)
-
-      if (customersError) {
-        console.error('[customers] Error fetching customers:', customersError.message, customersError.code)
-        return NextResponse.json({ error: customersError.message, code: customersError.code }, { status: 500 })
-      }
-
-      count = dbCount
-      sortedCustomers = (customersData || []).sort((a: any, b: any) => {
-        const va = (a[sort] || '').toString().toLowerCase()
-        const vb = (b[sort] || '').toString().toLowerCase()
-        return order ? va.localeCompare(vb) : vb.localeCompare(va)
-      })
+    if (customersError) {
+      console.error('[customers] Error fetching customers:', customersError.message, customersError.code)
+      return NextResponse.json({ error: customersError.message, code: customersError.code }, { status: 500 })
     }
 
-    // Step 4: Fetch stats for the page of customers (non-critical)
-    const customerIds = sortedCustomers.map((c: any) => c.id)
+    // Sort by created_at descending (client-side)
+    const sortedCustomers = (customersData || []).sort((a, b) =>
+      new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    )
+
+    // Step 4: Fetch stats for the page of customers (non-critical, wrap in try-catch)
+    const customerIds = customersData?.map(c => c.id) || []
     let statsData: Record<string, any> = {}
 
     if (customerIds.length > 0) {
@@ -226,14 +235,14 @@ export async function GET(request: NextRequest) {
         if (statsError) {
           console.error('[customers] Stats fetch error (non-critical, using defaults):', statsError.message, statsError.code)
         } else if (stats) {
-          statsData = Object.fromEntries(stats.map((s: Record<string, string | number | boolean | null>) => [s.customer_id as string, s]))
+          statsData = Object.fromEntries(stats.map(s => [s.customer_id, s]))
         }
       } catch (statsErr) {
         console.error('[customers] Stats fetch exception (non-critical, using defaults):', statsErr)
       }
     }
 
-    // Step 5: Fetch tags for the page of customers (non-critical)
+    // Step 5: Fetch tags for the page of customers (non-critical, wrap in try-catch)
     let tagsByCustomer: Record<string, string[]> = {}
     if (customerIds.length > 0) {
       try {
@@ -256,7 +265,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const customers = sortedCustomers.map((c: any) => ({
+    const customers = sortedCustomers.map(c => ({
       id: c.id,
       full_name: c.full_name,
       phone: c.phone,
@@ -265,7 +274,7 @@ export async function GET(request: NextRequest) {
       total_visits: statsData[c.id]?.total_visits || 0,
       total_spent: statsData[c.id]?.total_spent || 0,
       last_visit_date: statsData[c.id]?.last_visit_date || null,
-      loyalty_tier: statsData[c.id]?.loyalty_tier || 'bronze',
+      loyalty_tier: statsData[c.id]?.loyalty_tier || 'none',
       is_recurring: statsData[c.id]?.is_recurring || false,
       tag_ids: tagsByCustomer[c.id] || [],
     }))
@@ -278,6 +287,7 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil((count || 0) / validLimit),
     })
   } catch (err: unknown) {
+    // Enhanced error logging — include full details so Vercel logs show the root cause
     const errorDetails = err instanceof Error
       ? { message: err.message, stack: err.stack, name: err.name }
       : { message: String(err), type: typeof err }

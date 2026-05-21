@@ -175,7 +175,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
               <div key={timeLabel}>
                 {/* Time group header */}
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-bold font-['Playfair_Display'] text-[var(--color-ak-madera)]">{timeLabel}</span>
+                  <span className="text-sm font-bold font-['Playfair_Display'] text-[var(--text-primary)]">{timeLabel}</span>
                   {isNow && (
                     <span className="text-[10px] font-semibold text-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/10 px-2 py-0.5 rounded-full">AHORA</span>
                   )}
@@ -239,7 +239,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm font-medium text-[var(--color-ak-madera)] break-words">{customerName}</p>
+                            <p className="text-sm font-medium text-[var(--text-primary)] break-words">{customerName}</p>
                             <p className="text-xs text-[var(--text-secondary)]">
                               {partySize}p{r.zone_name ? ` · ${r.zone_name}` : ''}
                             </p>

@@ -168,11 +168,11 @@ export function ReassignModal({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ArrowsLeftRight size={18} className="text-[var(--color-ak-borgona)]" />
-              <h2 className="font-['Playfair_Display'] text-lg font-bold text-[var(--color-ak-madera)]">
+              <h2 className="font-['Playfair_Display'] text-lg font-bold text-[var(--text-primary)]">
                 Reasignar Reserva
               </h2>
             </div>
-            <button onClick={onClose} className="p-1 text-[var(--text-secondary)] hover:text-[var(--color-ak-madera)] transition-colors">
+            <button onClick={onClose} className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
               <X size={20} />
             </button>
           </div>
@@ -181,7 +181,7 @@ export function ReassignModal({
         <div className="p-6 space-y-4">
           {/* Current reservation info */}
           <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-            <p className="text-sm font-semibold text-[var(--color-ak-madera)]">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
               {reservation.customer_name || 'Sin nombre'}
             </p>
             <p className="text-xs text-[var(--text-secondary)] mt-0.5">
@@ -198,7 +198,7 @@ export function ReassignModal({
 
           {/* Available tables list */}
           <div>
-            <p className="text-sm font-medium text-[var(--color-ak-madera)] mb-2">
+            <p className="text-sm font-medium text-[var(--text-primary)] mb-2">
               Mover a:
             </p>
             {availableTables.length === 0 ? (
@@ -220,7 +220,7 @@ export function ReassignModal({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-[var(--color-ak-madera)]">{t.name}</span>
+                        <span className="font-semibold text-sm text-[var(--text-primary)]">{t.name}</span>
                         <span className="text-xs text-[var(--text-secondary)]">· {t.zoneName}</span>
                         <span className={cn(
                           'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
@@ -248,7 +248,7 @@ export function ReassignModal({
           <div className="flex gap-3 pt-2">
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-ak-madera)] bg-[var(--bg-card)] hover:bg-[var(--bg-input)] transition-colors active:scale-[0.97]"
+              className="flex-1 py-2.5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--text-primary)] bg-[var(--bg-card)] hover:bg-[var(--bg-input)] transition-colors active:scale-[0.97]"
             >
               Cancelar
             </button>

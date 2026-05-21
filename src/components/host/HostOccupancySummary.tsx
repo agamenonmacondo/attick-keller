@@ -74,7 +74,7 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
       label: 'Capacidad Total',
       value: total,
       suffix: 'asientos',
-      color: 'text-[var(--color-ak-madera)]',
+      color: 'text-[var(--text-primary)]',
       bg: 'bg-[var(--bg-card)]',
       borderColor: 'border-[var(--border-default)]',
       // chip props
@@ -183,15 +183,15 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
           transition={{ type: 'spring', ...SPRING, delay: 0.15 }}
           className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4"
         >
-          <h3 className="text-sm font-semibold text-[var(--color-ak-madera)] font-['Playfair_Display'] mb-3">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] font-['Playfair_Display'] mb-3">
             Resumen por Zona
           </h3>
           <div className="space-y-3">
             {zoneSummaries.map(zone => (
               <div key={zone.id} className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-[var(--color-ak-madera)]">{zone.name}</span>
-                  <span className="text-xs font-bold text-[var(--color-ak-madera)]">{zone.occupancyPercent}%</span>
+                  <span className="text-sm font-medium text-[var(--text-primary)]">{zone.name}</span>
+                  <span className="text-xs font-bold text-[var(--text-primary)]">{zone.occupancyPercent}%</span>
                 </div>
                 {/* Occupancy bar */}
                 <div className="h-2 rounded-full bg-[var(--bg-input)] overflow-hidden flex">
@@ -217,7 +217,7 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
                     <span className="w-2 h-2 rounded-full bg-[var(--color-ak-oliva)]" />
                     Libres: {zone.availableSeats}
                   </span>
-                  <span className="ml-auto font-medium text-[var(--color-ak-madera)]">
+                  <span className="ml-auto font-medium text-[var(--text-primary)]">
                     {zone.totalSeats} total
                   </span>
                 </div>

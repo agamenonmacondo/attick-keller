@@ -172,51 +172,51 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-['Playfair_Display'] text-xl font-bold text-[var(--color-ak-madera)]">Walk-in</h2>
-          <button onClick={onClose} className="p-1 text-[var(--text-secondary)] hover:text-[var(--color-ak-madera)] transition-colors">
+          <h2 className="font-['Playfair_Display'] text-xl font-bold text-[var(--text-primary)]">Walk-in</h2>
+          <button onClick={onClose} className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
             <X size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">Nombre *</label>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Nombre *</label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               required
-              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
               placeholder="Nombre del cliente"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">Telefono</label>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Telefono</label>
             <input
               type="tel"
               value={phone}
               onChange={e => setPhone(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
               placeholder="+57 ..."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">Personas *</label>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Personas *</label>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => { setPartySize(Math.max(1, partySize - 1)); setSelectedTableId(null) }}
-                className="w-10 h-10 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--color-ak-madera)] font-bold flex items-center justify-center hover:bg-[var(--bg-input)] transition-colors"
+                className="w-10 h-10 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] font-bold flex items-center justify-center hover:bg-[var(--bg-input)] transition-colors"
               >
                 -
               </button>
-              <span className="text-xl font-bold text-[var(--color-ak-madera)] min-w-[2rem] text-center">{partySize}</span>
+              <span className="text-xl font-bold text-[var(--text-primary)] min-w-[2rem] text-center">{partySize}</span>
               <button
                 type="button"
                 onClick={() => { setPartySize(partySize + 1); setSelectedTableId(null) }}
-                className="w-10 h-10 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--color-ak-madera)] font-bold flex items-center justify-center hover:bg-[var(--bg-input)] transition-colors"
+                className="w-10 h-10 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] font-bold flex items-center justify-center hover:bg-[var(--bg-input)] transition-colors"
               >
                 +
               </button>
@@ -226,7 +226,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
           {/* Available tables dropdown */}
           {partySize > 0 && (
             <div>
-              <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                 Mesa sugerida
               </label>
               {availableTables.length === 0 ? (
@@ -248,7 +248,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-sm font-semibold text-[var(--color-ak-madera)]">
+                          <span className="text-sm font-semibold text-[var(--text-primary)]">
                             {t.name_attick || `Mesa ${t.number}`}
                           </span>
                           <span className="text-xs text-[var(--text-secondary)]">· {t.zoneName}</span>
@@ -278,11 +278,11 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
           )}
 
           <div>
-            <label className="block text-sm font-medium text-[var(--color-ak-madera)] mb-1">Zona (opcional)</label>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Zona (opcional)</label>
             <select
               value={zoneId}
               onChange={e => { setZoneId(e.target.value); setSelectedTableId(null) }}
-              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--color-ak-madera)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
             >
               <option value="">Sin zona</option>
               {zones.map(z => (

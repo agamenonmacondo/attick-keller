@@ -502,7 +502,7 @@ function HostTableCard({
         {/* Top row: name + urgency badge */}
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-sm md:text-base font-bold text-[var(--color-ak-madera)] truncate">
+            <span className="text-sm md:text-base font-bold text-[var(--text-primary)] truncate">
               {table.name_attick || `Mesa ${table.number}`}
             </span>
             {table.name_attick && (
@@ -522,7 +522,7 @@ function HostTableCard({
         {/* Capacity */}
         <div className="flex items-center gap-1 text-xs text-[var(--text-secondary)]">
           <Users size={12} weight="bold" />
-          <span className="font-semibold text-[var(--color-ak-madera)]">{table.capacity}p</span>
+          <span className="font-semibold text-[var(--text-primary)]">{table.capacity}p</span>
         </div>
 
         {/* Mini-timeline bar */}
@@ -532,7 +532,7 @@ function HostTableCard({
 
         {/* Current/upcoming customer info */}
         {(table.is_occupied || table.reservations?.some(r => r.is_upcoming)) && table.current_customer_name && (
-          <p className="text-xs text-[var(--color-ak-madera)] font-medium truncate mt-1">
+          <p className="text-xs text-[var(--text-primary)] font-medium truncate mt-1">
             {table.current_customer_name}
           </p>
         )}
@@ -583,7 +583,7 @@ function HostTableCard({
           {/* Dismiss */}
           <button
             onClick={(e) => { e.stopPropagation(); onClick(); suggestion.clear() }}
-            className="absolute top-3 right-4 text-[var(--text-secondary)] hover:text-[var(--color-ak-madera)] transition-colors z-10 p-1"
+            className="absolute top-3 right-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors z-10 p-1"
           >
             <X size={16} />
           </button>
@@ -601,7 +601,7 @@ function HostTableCard({
           ) : (table.is_occupied || table.reservations?.some(r => r.is_upcoming)) && table.current_reservation_id ? (
             /* ═══ OCCUPIED (backward compat — old API data without reservations[]) ═══ */
             <div>
-              <p className="text-sm font-medium text-[var(--color-ak-madera)] mb-1">
+              <p className="text-sm font-medium text-[var(--text-primary)] mb-1">
                 {table.current_customer_name || 'Ocupada'}
               </p>
               <p className="text-xs text-[var(--text-secondary)] mb-1">
@@ -674,7 +674,7 @@ function TimelinePopover({
       <div className="flex items-center justify-between mb-3 pr-6">
         <div className="flex items-center gap-2">
           <Armchair size={16} className="text-[var(--color-ak-borgona)]" />
-          <span className="font-bold text-base text-[var(--color-ak-madera)] font-['Playfair_Display']">
+          <span className="font-bold text-base text-[var(--text-primary)] font-['Playfair_Display']">
             {table.name_attick || `Mesa ${table.number}`}
           </span>
           {table.zone_name && (
@@ -715,7 +715,7 @@ function TimelinePopover({
               {onReassign && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onReassign(currentRes, tableInfo) }}
-                  className="py-2.5 px-3 text-xs font-medium rounded-xl border border-[var(--border-default)] text-[var(--color-ak-madera)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-all"
+                  className="py-2.5 px-3 text-xs font-medium rounded-xl border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-all"
                 >
                   <ArrowsLeftRight size={12} />
                 </button>
@@ -755,7 +755,7 @@ function TimelinePopover({
               {onReassign && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onReassign(nextRes, tableInfo) }}
-                  className="py-2.5 px-3 text-xs font-medium rounded-xl border border-[var(--border-default)] text-[var(--color-ak-madera)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-all"
+                  className="py-2.5 px-3 text-xs font-medium rounded-xl border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-all"
                 >
                   <ArrowsLeftRight size={12} />
                 </button>
@@ -779,7 +779,7 @@ function TimelinePopover({
                 {onReassign && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onReassign(r, tableInfo) }}
-                    className="w-full py-1 text-xs font-medium rounded-lg border border-[var(--border-default)] text-[var(--color-ak-madera)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-all mt-1"
+                    className="w-full py-1 text-xs font-medium rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-all mt-1"
                   >
                     <span className="flex items-center justify-center gap-1">
                       <ArrowsLeftRight size={10} />
@@ -826,7 +826,7 @@ function AssignmentPopover({
 }) {
   return (
     <div>
-      <p className="text-sm font-medium text-[var(--color-ak-madera)] mb-2">
+      <p className="text-sm font-medium text-[var(--text-primary)] mb-2">
         Asignar reserva
         {tableId ? ` (Mesa)` : ''}
       </p>
@@ -851,7 +851,7 @@ function AssignmentPopover({
                     <Lightbulb size={14} weight="fill" className="text-[var(--color-ak-ambar)]" />
                     <span className="text-xs font-semibold text-[var(--color-ak-ambar)] uppercase tracking-wider">Sugerencia</span>
                   </div>
-                  <p className="text-sm font-bold text-[var(--color-ak-madera)] mb-1">
+                  <p className="text-sm font-bold text-[var(--text-primary)] mb-1">
                     {suggestion.result.alternatives[0]?.table_numbers.join(' + ')}
                     <span className="font-normal text-[var(--text-secondary)] ml-1.5">
                       {suggestion.result.alternatives[0]?.zone_name}
@@ -905,7 +905,7 @@ function AssignmentPopover({
                         }}
                         className="w-full flex items-center gap-2 text-left p-2 rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--border-default)]/50 text-xs transition-colors active:scale-[0.97]"
                       >
-                        <span className="font-medium text-[var(--color-ak-madera)]">{alt.table_numbers.join(' + ')}</span>
+                        <span className="font-medium text-[var(--text-primary)]">{alt.table_numbers.join(' + ')}</span>
                         <span className="text-[var(--text-secondary)]">{alt.zone_name} · {Math.round(alt.score)}%</span>
                       </button>
                     ))}
@@ -914,7 +914,7 @@ function AssignmentPopover({
               )}
               <button
                 onClick={(e) => { e.stopPropagation(); suggestionClear() }}
-                className="w-full text-xs text-[var(--text-secondary)] hover:text-[var(--color-ak-madera)] py-1 transition-colors"
+                className="w-full text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-1 transition-colors"
               >
                 ← Ver todas las reservas
               </button>
@@ -931,7 +931,7 @@ function AssignmentPopover({
             >
               <div className="flex items-center gap-2">
                 <Sparkle size={12} className="text-[var(--color-ak-ambar)] shrink-0" />
-                <span className="font-medium text-[var(--color-ak-madera)] truncate">{r.customers?.full_name || 'Sin nombre'}</span>
+                <span className="font-medium text-[var(--text-primary)] truncate">{r.customers?.full_name || 'Sin nombre'}</span>
                 <span className="text-[var(--text-secondary)] ml-auto shrink-0">{r.party_size}p · {r.time_start?.slice(0, 5)}</span>
               </div>
               <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 ml-5">Toca para ver sugerencia</p>

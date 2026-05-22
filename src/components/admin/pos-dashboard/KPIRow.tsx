@@ -1,7 +1,7 @@
 'use client'
 
 import { KPICard, formatCOPDisplay } from './KPICard'
-import { CurrencyDollar, Receipt, Ticket, HandCoins, Users, UserPlus } from '@phosphor-icons/react'
+import { CurrencyDollar, Receipt, Ticket, HandCoins, Users, UserPlus, CreditCard, Money, ClockCounterClockwise } from '@phosphor-icons/react'
 
 interface KPIRowProps {
   kpis: {
@@ -14,12 +14,13 @@ interface KPIRowProps {
     partySizePromedio: number
     cardPaidTotal: number
     cashPaidTotal: number
+    avgServiceTime: number
   }
 }
 
 export function KPIRow({ kpis }: KPIRowProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-3">
       <KPICard
         label="Revenue"
         value={kpis.revenue}
@@ -53,6 +54,24 @@ export function KPIRow({ kpis }: KPIRowProps) {
         label="Party Prom."
         value={kpis.partySizePromedio}
         icon={<UserPlus size={16} weight="regular" />}
+      />
+      <KPICard
+        label="Tarjeta"
+        value={kpis.cardPaidTotal}
+        icon={<CreditCard size={16} weight="regular" />}
+        format="currency"
+      />
+      <KPICard
+        label="Efectivo"
+        value={kpis.cashPaidTotal}
+        icon={<Money size={16} weight="regular" />}
+        format="currency"
+      />
+      <KPICard
+        label="Svc Time"
+        value={kpis.avgServiceTime}
+        icon={<ClockCounterClockwise size={16} weight="regular" />}
+        subtext="min prom."
       />
     </div>
   )

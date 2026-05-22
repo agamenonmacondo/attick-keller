@@ -13,6 +13,7 @@ interface KPIs {
   partySizePromedio: number
   cardPaidTotal: number
   cashPaidTotal: number
+  avgServiceTime: number
 }
 
 interface DayKPIBarProps {
@@ -23,6 +24,10 @@ interface DayKPIBarProps {
 
 function formatCompact(n: number, type: string): string {
   if (type === 'cheques' || type === 'personas') return Math.round(n).toLocaleString('es-CO')
+  if (type === 'partySizePromedio' || type === 'avgServiceTime') {
+    if (type === 'avgServiceTime') return `${Math.round(n)} min`
+    return n.toFixed(1)
+  }
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
   if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
   return `$${Math.round(n).toLocaleString('es-CO')}`
@@ -51,9 +56,12 @@ export function DayKPIBar({ kpis, averages, isSingleDay }: DayKPIBarProps) {
     { key: 'cheques', label: 'Cheques', value: kpis.cheques },
     { key: 'ticketPromedio', label: 'Ticket prom.', value: kpis.ticketPromedio },
     { key: 'propinaTotal', label: 'Propinas', value: kpis.propinaTotal },
+    { key: 'propinaPromedio', label: 'Propina prom.', value: kpis.propinaPromedio },
     { key: 'personas', label: 'Personas', value: kpis.personas },
+    { key: 'partySizePromedio', label: 'Party prom.', value: kpis.partySizePromedio },
     { key: 'cardPaidTotal', label: 'Tarjeta', value: kpis.cardPaidTotal },
     { key: 'cashPaidTotal', label: 'Efectivo', value: kpis.cashPaidTotal },
+    { key: 'avgServiceTime', label: 'Svc Time', value: kpis.avgServiceTime },
   ]
 
   return (

@@ -38,7 +38,6 @@ async function fetchAll<T = any>(
     let query = sb.from(table).select(select).range(offset, offset + batchSize - 1)
     for (const [key, value] of Object.entries(filters)) {
       if (key === '_in' && Array.isArray(value)) {
-        // Special: .in() filter, value = { column, values }
         continue
       }
       if (key === '_gte' && Array.isArray(value)) {
@@ -49,7 +48,6 @@ async function fetchAll<T = any>(
       }
       query = query.eq(key, value)
     }
-    // Apply range filters
     if (filters._gte) {
       for (const { column, value } of filters._gte) {
         query = query.gte(column, value)
@@ -123,17 +121,17 @@ export async function GET(request: NextRequest) {
 
     if (catProducts && catProducts.length > 0) {
       const productIds = catProducts.map((p: any) => p.pos_product_id)
-      let allSaleIds: string[] = []
+      let allSaleIdsList: string[] = []
       for (let i = 0; i < productIds.length; i += BATCH) {
         const pidBatch = productIds.slice(i, i + BATCH)
         const { data: items } = await sb
           .from('pos_sale_items')
           .select('pos_sale_id')
           .in('pos_product_id', pidBatch)
-          .range(0, BATCH - 1) // first page only (enough for filtering)
-        if (items) allSaleIds.push(...items.map((it: any) => it.pos_sale_id))
+          .range(0, BATCH - 1)
+        if (items) allSaleIdsList.push(...items.map((it: any) => it.pos_sale_id))
       }
-      categorySaleIds = new Set(allSaleIds)
+      categorySaleIds = new Set(allSaleIdsList)
     } else {
       categorySaleIds = new Set()
     }
@@ -161,19 +159,35 @@ export async function GET(request: NextRequest) {
   const cardPaidTotal = salesForKPIs.reduce((s: number, r: any) => s + (Number(r.card_paid) || 0), 0)
   const cashPaidTotal = salesForKPIs.reduce((s: number, r: any) => s + (Number(r.cash_paid) || 0), 0)
   const cheques = salesForKPIs.length
+
+  // avgServiceTime: only from sales with closed_at
+  const salesWithBothTimestamps = salesForKPIs.filter((s: any) => s.opened_at && s.closed_at)
+  const totalServiceTime = salesWithBothTimestamps.reduce((s: number, r: any) => {
+    const diff = (new Date(r.closed_at).getTime() - new Date(r.opened_at).getTime()) / 60000
+    return s + (diff > 0 ? diff : 0)
+  }, 0)
+  const avgServiceTime = salesWithBothTimestamps.length > 0 ? totalServiceTime / salesWithBothTimestamps.length : 0
+
   const ticketPromedio = cheques > 0 ? totalRevenue / cheques : 0
   const propinaPromedio = cheques > 0 ? totalTip / cheques : 0
   const partySizePromedio = cheques > 0 ? totalParty / cheques : 0
 
-  // ── By Zone ──
-  const zoneMap = new Map<string, { revenue: number; cheques: number; propina: number }>()
+  // ── By Zone (ENRICHED: avgServiceTime) ──
+  const zoneMap = new Map<string, { revenue: number; cheques: number; propina: number; serviceTimeSum: number; serviceTimeCount: number }>()
   for (const s of salesForZone) {
     const z = s.derived_zone_name || 'Desconocido'
-    if (!zoneMap.has(z)) zoneMap.set(z, { revenue: 0, cheques: 0, propina: 0 })
+    if (!zoneMap.has(z)) zoneMap.set(z, { revenue: 0, cheques: 0, propina: 0, serviceTimeSum: 0, serviceTimeCount: 0 })
     const d = zoneMap.get(z)!
     d.revenue += Number(s.total) || 0
     d.cheques += 1
     d.propina += Number(s.tip_amount) || 0
+    if (s.opened_at && s.closed_at) {
+      const diff = (new Date(s.closed_at).getTime() - new Date(s.opened_at).getTime()) / 60000
+      if (diff > 0) {
+        d.serviceTimeSum += diff
+        d.serviceTimeCount += 1
+      }
+    }
   }
   const totalZoneRevenue = [...zoneMap.values()].reduce((s, d) => s + d.revenue, 0)
   const byZone = [...zoneMap.entries()]
@@ -184,22 +198,33 @@ export async function GET(request: NextRequest) {
       ticketPromedio: d.cheques > 0 ? Math.round(d.revenue / d.cheques) : 0,
       propinaTotal: Math.round(d.propina),
       pct: totalZoneRevenue > 0 ? Math.round((d.revenue / totalZoneRevenue) * 100) : 0,
+      avgServiceTime: d.serviceTimeCount > 0 ? Math.round(d.serviceTimeSum / d.serviceTimeCount) : 0,
     }))
     .sort((a, b) => b.revenue - a.revenue)
 
-  // ── Hourly Revenue ──
-  const hourMap = new Map<string, { revenue: number; cheques: number }>()
+  // ── Hourly Revenue (ENRICHED: tipTotal, cardPaidTotal, cashPaidTotal) ──
+  const hourMap = new Map<string, { revenue: number; cheques: number; tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }>()
   for (const s of salesForKPIs) {
     const opened = s.opened_at
     if (!opened) continue
     const hour = new Date(opened).getHours().toString()
-    if (!hourMap.has(hour)) hourMap.set(hour, { revenue: 0, cheques: 0 })
+    if (!hourMap.has(hour)) hourMap.set(hour, { revenue: 0, cheques: 0, tipTotal: 0, cardPaidTotal: 0, cashPaidTotal: 0 })
     const d = hourMap.get(hour)!
     d.revenue += Number(s.total) || 0
     d.cheques += 1
+    d.tipTotal += Number(s.tip_amount) || 0
+    d.cardPaidTotal += Number(s.card_paid) || 0
+    d.cashPaidTotal += Number(s.cash_paid) || 0
   }
   const hourlyRevenue = [...hourMap.entries()]
-    .map(([hour, d]) => ({ hour, revenue: Math.round(d.revenue), cheques: d.cheques }))
+    .map(([hour, d]) => ({
+      hour,
+      revenue: Math.round(d.revenue),
+      cheques: d.cheques,
+      tipTotal: Math.round(d.tipTotal),
+      cardPaidTotal: Math.round(d.cardPaidTotal),
+      cashPaidTotal: Math.round(d.cashPaidTotal),
+    }))
     .sort((a, b) => Number(a.hour) - Number(b.hour))
 
   // ── Daily Trend ──
@@ -294,20 +319,50 @@ export async function GET(request: NextRequest) {
     .slice(0, 15)
     .map(p => ({ ...p, revenue: Math.round(p.revenue) }))
 
-  // ── Top Categories ──
-  const categoryRevenueMap = new Map<string, { categoryName: string; quantity: number; revenue: number; cheques: Set<string> }>()
+  // ── Top Categories (ENRICHED: tipTotal, tipAvg, avgServiceTime, partySizeAvg) ──
+  // First, map each sale to its categories via items, so we can pull sale-level data (tip, party_size, service time)
+  const saleToCategories = new Map<string, Set<string>>()
+  for (const item of allItems) {
+    const info = productInfo.get(item.pos_product_id)
+    if (!info || !info.groupId) continue
+    if (!saleToCategories.has(item.pos_sale_id)) saleToCategories.set(item.pos_sale_id, new Set())
+    saleToCategories.get(item.pos_sale_id)!.add(info.groupId)
+  }
+
+  // Build sale lookup for category enrichment
+  const saleLookup = new Map<string, any>()
+  for (const s of salesForKPIs) saleLookup.set(s.id, s)
+
+  const categoryRevenueMap = new Map<string, { categoryName: string; quantity: number; revenue: number; cheques: Set<string>; tipTotal: number; partySizeSum: number; partySizeCount: number; serviceTimeSum: number; serviceTimeCount: number }>()
   for (const item of allItems) {
     const info = productInfo.get(item.pos_product_id)
     if (!info) continue
     const catName = groupNames.get(info.groupId) || 'Sin categoria'
     const catKey = info.groupId || catName
     if (!categoryRevenueMap.has(catKey)) {
-      categoryRevenueMap.set(catKey, { categoryName: catName, quantity: 0, revenue: 0, cheques: new Set() })
+      categoryRevenueMap.set(catKey, { categoryName: catName, quantity: 0, revenue: 0, cheques: new Set(), tipTotal: 0, partySizeSum: 0, partySizeCount: 0, serviceTimeSum: 0, serviceTimeCount: 0 })
     }
     const d = categoryRevenueMap.get(catKey)!
     d.quantity += Number(item.quantity) || 0
     d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
     d.cheques.add(item.pos_sale_id)
+  }
+  // Enrich categories with sale-level data (tip, party_size, service_time)
+  for (const [catKey, d] of categoryRevenueMap.entries()) {
+    for (const saleId of d.cheques) {
+      const sale = saleLookup.get(saleId)
+      if (!sale) continue
+      d.tipTotal += Number(sale.tip_amount) || 0
+      d.partySizeSum += Number(sale.party_size) || 0
+      d.partySizeCount += 1
+      if (sale.opened_at && sale.closed_at) {
+        const diff = (new Date(sale.closed_at).getTime() - new Date(sale.opened_at).getTime()) / 60000
+        if (diff > 0) {
+          d.serviceTimeSum += diff
+          d.serviceTimeCount += 1
+        }
+      }
+    }
   }
   const topCategories = [...categoryRevenueMap.entries()]
     .map(([categoryId, d]) => ({
@@ -316,26 +371,14 @@ export async function GET(request: NextRequest) {
       quantity: d.quantity,
       revenue: Math.round(d.revenue),
       cheques: d.cheques.size,
+      tipTotal: Math.round(d.tipTotal),
+      tipAvg: d.cheques.size > 0 ? Math.round(d.tipTotal / d.cheques.size) : 0,
+      avgServiceTime: d.serviceTimeCount > 0 ? Math.round(d.serviceTimeSum / d.serviceTimeCount) : 0,
+      partySizeAvg: d.partySizeCount > 0 ? Math.round((d.partySizeSum / d.partySizeCount) * 10) / 10 : 0,
     }))
     .sort((a, b) => b.revenue - a.revenue)
 
   // ── Top Product BY Category (#1 product in each category) ──
-  const catTopProduct = new Map<string, { productId: string; productName: string; quantity: number; revenue: number }>()
-  for (const item of allItems) {
-    const info = productInfo.get(item.pos_product_id)
-    if (!info || !info.groupId) continue
-    const itemRevenue = (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
-    const existing = catTopProduct.get(info.groupId)
-    if (!existing || itemRevenue > existing.revenue) {
-      catTopProduct.set(info.groupId, {
-        productId: item.pos_product_id,
-        productName: info.name,
-        quantity: (existing?.quantity || 0) + (Number(item.quantity) || 0),
-        revenue: (existing?.revenue || 0) + itemRevenue,
-      })
-    }
-  }
-  // Actually need proper aggregation per product per category, then pick #1
   const perCatProduct = new Map<string, Map<string, { quantity: number; revenue: number }>>()
   for (const item of allItems) {
     const info = productInfo.get(item.pos_product_id)
@@ -366,7 +409,7 @@ export async function GET(request: NextRequest) {
     .filter(c => c.categoryName !== 'Sin categoria')
     .sort((a, b) => b.revenue - a.revenue)
 
-  // ── Staff Performance (CORRECT column: pos_staff_id) ──
+  // ── Staff Performance (ENRICHED: staff_type) ──
   const staffMap = new Map<string, { cheques: number; revenue: number; propinaTotal: number }>()
   for (const s of salesForKPIs) {
     const sid = s.pos_staff_id
@@ -379,15 +422,19 @@ export async function GET(request: NextRequest) {
   }
   const staffIds = [...staffMap.keys()]
   const staffNames = new Map<string, string>()
+  const staffTypes = new Map<string, number>()
   if (staffIds.length > 0) {
     for (let i = 0; i < staffIds.length; i += BATCH) {
       const batch = staffIds.slice(i, i + BATCH)
       const { data: staffData } = await sb
         .from('pos_staff')
-        .select('pos_staff_id, name')
+        .select('pos_staff_id, name, staff_type')
         .in('pos_staff_id', batch)
       if (staffData) {
-        for (const st of staffData) staffNames.set(st.pos_staff_id, st.name)
+        for (const st of staffData) {
+          staffNames.set(st.pos_staff_id, st.name)
+          staffTypes.set(st.pos_staff_id, st.staff_type)
+        }
       }
     }
   }
@@ -395,6 +442,7 @@ export async function GET(request: NextRequest) {
     .map(([staffId, d]) => ({
       staffId,
       staffName: staffNames.get(staffId) || 'Desconocido',
+      staffType: staffTypes.get(staffId) || 0,
       cheques: d.cheques,
       revenue: Math.round(d.revenue),
       propinaTotal: Math.round(d.propinaTotal),
@@ -498,6 +546,94 @@ export async function GET(request: NextRequest) {
     .filter((g: any) => g.pos_group_id && !g.pos_group_id.startsWith('SG_'))
     .map((g: any) => ({ id: g.pos_group_id, name: g.name }))
 
+  // ── NEW: Shifts (last 10) ──
+  const { data: shiftData } = await sb
+    .from('pos_shifts')
+    .select('pos_shift_id, station, cashier, cash_total, card_total, credit_total, opened_at, closed_at, is_closed')
+    .gte('opened_at', `${fromParam}T00:00:00`)
+    .lte('opened_at', `${toParam}T23:59:59`)
+    .order('opened_at', { ascending: false })
+    .range(0, 9)
+
+  const shifts = (shiftData || []).map((s: any) => ({
+    shiftId: s.pos_shift_id,
+    station: s.station,
+    cashier: s.cashier,
+    cashTotal: Number(s.cash_total) || 0,
+    cardTotal: Number(s.card_total) || 0,
+    creditTotal: Number(s.credit_total) || 0,
+    openedAt: s.opened_at,
+    closedAt: s.closed_at,
+    isClosed: s.is_closed,
+  }))
+
+  // ── NEW: Category Companions (top 20 cross-category pairs) ──
+  // Find pairs of different categories that appear in the same sale
+  const pairMap = new Map<string, { cat1Id: string; cat1Name: string; cat2Id: string; cat2Name: string; sharedCheques: number }>()
+  for (const [saleId, catSet] of saleToCategories.entries()) {
+    const catIds = [...catSet.values()]
+    if (catIds.length < 2) continue
+    // Sort to create consistent pair keys (lower id first)
+    catIds.sort()
+    for (let i = 0; i < catIds.length; i++) {
+      for (let j = i + 1; j < catIds.length; j++) {
+        const pairKey = `${catIds[i]}|${catIds[j]}`
+        if (!pairMap.has(pairKey)) {
+          pairMap.set(pairKey, {
+            cat1Id: catIds[i],
+            cat1Name: groupNames.get(catIds[i]) || catIds[i],
+            cat2Id: catIds[j],
+            cat2Name: groupNames.get(catIds[j]) || catIds[j],
+            sharedCheques: 0,
+          })
+        }
+        pairMap.get(pairKey)!.sharedCheques += 1
+      }
+    }
+  }
+  const categoryCompanions = [...pairMap.values()]
+    .sort((a, b) => b.sharedCheques - a.sharedCheques)
+    .slice(0, 20)
+
+  // ── NEW: Payment methods by zone ──
+  // Map saleId -> zone from saleLookup
+  const zonePaymentMap = new Map<string, Map<string, { amount: number; count: number }>>()
+  for (const p of allPayments) {
+    const sale = saleLookup.get(p.pos_sale_id)
+    if (!sale) continue
+    const zone = sale.derived_zone_name || 'Desconocido'
+    const mName = methodNames.get(p.pos_payment_method_id) || 'Otro'
+    if (!zonePaymentMap.has(zone)) zonePaymentMap.set(zone, new Map())
+    const zMap = zonePaymentMap.get(zone)!
+    if (!zMap.has(mName)) zMap.set(mName, { amount: 0, count: 0 })
+    const d = zMap.get(mName)!
+    d.amount += Number(p.amount) || 0
+    d.count += 1
+  }
+  const byZonePayment = [...zonePaymentMap.entries()]
+    .map(([zone, methods]) => {
+      const methodsArr = [...methods.entries()]
+        .map(([method, d]) => ({
+          method,
+          amount: Math.round(d.amount),
+          count: d.count,
+        }))
+        .sort((a, b) => b.amount - a.amount)
+      const totalMethodAmount = methodsArr.reduce((s, m) => s + m.amount, 0)
+      return {
+        zone,
+        methods: methodsArr.map(m => ({
+          ...m,
+          pct: totalMethodAmount > 0 ? Math.round((m.amount / totalMethodAmount) * 100) : 0,
+        })),
+      }
+    })
+    .sort((a, b) => {
+      const totalA = a.methods.reduce((s, m) => s + m.amount, 0)
+      const totalB = b.methods.reduce((s, m) => s + m.amount, 0)
+      return totalB - totalA
+    })
+
   // ── Assemble response ──
   return NextResponse.json({
     kpis: {
@@ -510,6 +646,7 @@ export async function GET(request: NextRequest) {
       partySizePromedio: Math.round(partySizePromedio * 10) / 10,
       cardPaidTotal: Math.round(cardPaidTotal),
       cashPaidTotal: Math.round(cashPaidTotal),
+      avgServiceTime: Math.round(avgServiceTime),
     },
     byZone,
     hourlyRevenue,
@@ -522,6 +659,9 @@ export async function GET(request: NextRequest) {
     clientTiers,
     clientSplit,
     categoryList,
+    shifts,
+    categoryCompanions,
+    byZonePayment,
     filters: { zone: zoneParam, category: categoryParam, from: fromParam, to: toParam },
   })
 }

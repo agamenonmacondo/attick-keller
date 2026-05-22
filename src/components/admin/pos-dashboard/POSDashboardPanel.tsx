@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useMemo, useRef } from 'react'
-import { usePOSDashboard, type POSDashboardFilters, type DrillDownType } from '@/lib/hooks/usePOSDashboard'
+import { usePOSDashboard, type POSDashboardFilters } from '@/lib/hooks/usePOSDashboard'
 import { AnimatedCard } from '../shared/AnimatedCard'
 import { Spinner } from '@phosphor-icons/react'
 import { POSFiltersBar } from './POSFiltersBar'
@@ -19,6 +19,8 @@ import { TopProductByCategoryChart } from './TopProductByCategoryChart'
 import { DayPerformanceCard } from './DayPerformanceCard'
 import { DataUploadSection } from './DataUploadSection'
 import { DrillDownPanel } from './DrillDownPanel'
+import { CategoryCompanionsCard } from './CategoryCompanionsCard'
+import { ShiftReconciliation } from './ShiftReconciliation'
 
 type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 
@@ -43,7 +45,7 @@ export function POSDashboardPanel() {
   const periodAverages = useMemo(() => {
     if (!data || data.dailyTrend.length === 0) return undefined
     const days = data.dailyTrend.length
-    const totals = data.dailyTrend.reduce((acc: { revenue: number; cheques: number; propinaTotal: number; personas: number; ticketPromedio: number; propinaPromedio: number; partySizePromedio: number; cardPaidTotal: number; cashPaidTotal: number }, d: { revenue: number; cheques: number; propina: number; personas: number }) => ({
+    const totals = data.dailyTrend.reduce((acc: { revenue: number; cheques: number; propinaTotal: number; personas: number; ticketPromedio: number; propinaPromedio: number; partySizePromedio: number; cardPaidTotal: number; cashPaidTotal: number; avgServiceTime: number }, d: { revenue: number; cheques: number; propina: number; personas: number }) => ({
       revenue: acc.revenue + d.revenue,
       cheques: acc.cheques + d.cheques,
       propinaTotal: acc.propinaTotal + d.propina,
@@ -53,12 +55,14 @@ export function POSDashboardPanel() {
       partySizePromedio: 0,
       cardPaidTotal: 0,
       cashPaidTotal: 0,
-    }), { revenue: 0, cheques: 0, propinaTotal: 0, personas: 0, ticketPromedio: 0, propinaPromedio: 0, partySizePromedio: 0, cardPaidTotal: 0, cashPaidTotal: 0 })
+      avgServiceTime: 0,
+    }), { revenue: 0, cheques: 0, propinaTotal: 0, personas: 0, ticketPromedio: 0, propinaPromedio: 0, partySizePromedio: 0, cardPaidTotal: 0, cashPaidTotal: 0, avgServiceTime: 0 })
     totals.ticketPromedio = totals.cheques > 0 ? totals.revenue / totals.cheques : 0
     totals.propinaPromedio = totals.cheques > 0 ? totals.propinaTotal / totals.cheques : 0
     totals.partySizePromedio = totals.cheques > 0 ? totals.personas / totals.cheques : 0
     totals.cardPaidTotal = data.kpis.cardPaidTotal / days
     totals.cashPaidTotal = data.kpis.cashPaidTotal / days
+    totals.avgServiceTime = data.kpis.avgServiceTime
     return {
       revenue: totals.revenue / days,
       cheques: totals.cheques / days,
@@ -69,6 +73,7 @@ export function POSDashboardPanel() {
       partySizePromedio: totals.partySizePromedio,
       cardPaidTotal: totals.cardPaidTotal,
       cashPaidTotal: totals.cashPaidTotal,
+      avgServiceTime: totals.avgServiceTime,
     }
   }, [data])
 
@@ -212,6 +217,7 @@ export function POSDashboardPanel() {
             </div>
           )}
 
+
           {/* Day Performance — cuando un dia seleccionado */}
           {isSingleDay && (
             <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-5">
@@ -282,6 +288,11 @@ export function POSDashboardPanel() {
             </AnimatedCard>
           </div>
 
+          {/* Category Companions — new */}
+          <AnimatedCard delay={0.44} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <CategoryCompanionsCard data={data.categoryCompanions || []} />
+          </AnimatedCard>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <AnimatedCard delay={0.48} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
               <StaffPerformanceTable
@@ -293,6 +304,11 @@ export function POSDashboardPanel() {
               <PaymentMethodsChart data={data.paymentMethods} />
             </AnimatedCard>
           </div>
+
+          {/* Shift Reconciliation — new */}
+          <AnimatedCard delay={0.56} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <ShiftReconciliation data={data.shifts || []} />
+          </AnimatedCard>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <AnimatedCard delay={0.60} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">

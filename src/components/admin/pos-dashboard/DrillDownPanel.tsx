@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Spinner } from '@phosphor-icons/react'
+import { X, Spinner, Clock, CreditCard, ChartLine, UsersThree, HandCoins } from '@phosphor-icons/react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { formatCOPDisplay } from './KPICard'
 import type { DrillDownState, DrillDownData } from '@/lib/hooks/usePOSDashboard'
@@ -20,15 +20,21 @@ function formatShortDate(d: string): string {
   return `${days[dt.getDay()]} ${dt.getDate()}`
 }
 
+function formatMinutes(min: number): string {
+  if (!min || min === 0) return '-'
+  return `${Math.round(min)} min`
+}
+
 // ── Mini tooltip ────────────────────────────────────────────
 interface TTProps {
   active?: boolean
   payload?: Array<{ value: number; dataKey: string }>
   label?: string | number
   formatLabel?: (l: string | number) => string
+  valueFormat?: (v: number, k: string) => string
 }
 
-function MiniTooltip({ active, payload, label, formatLabel }: TTProps) {
+function MiniTooltip({ active, payload, label, formatLabel, valueFormat }: TTProps) {
   if (!active || !payload || payload.length === 0) return null
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg px-2.5 py-1.5 shadow-lg text-[10px]">
@@ -37,7 +43,17 @@ function MiniTooltip({ active, payload, label, formatLabel }: TTProps) {
       </p>
       {payload.map((p, i) => (
         <p key={i} className="text-[var(--text-secondary)]">
-          {p.dataKey === 'revenue' ? formatCOPDisplay(p.value) : p.dataKey === 'qty' ? `${p.value} uds` : p.dataKey === 'cheques' ? `${p.value} cheques` : p.value}
+          {valueFormat
+            ? valueFormat(p.value, p.dataKey)
+            : p.dataKey === 'revenue'
+              ? formatCOPDisplay(p.value)
+              : p.dataKey === 'qty'
+                ? `${p.value} uds`
+                : p.dataKey === 'cheques'
+                  ? `${p.value} cheques`
+                  : p.dataKey === 'avgServiceTime'
+                    ? formatMinutes(p.value)
+                    : p.value}
         </p>
       ))}
     </div>
@@ -45,16 +61,17 @@ function MiniTooltip({ active, payload, label, formatLabel }: TTProps) {
 }
 
 // ── Tab button ──────────────────────────────────────────────
-function TabBtn({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) {
+function TabBtn({ active, children, icon, onClick }: { active: boolean; children: React.ReactNode; icon?: React.ReactNode; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
         active
           ? 'bg-[var(--color-ak-borgona)] text-white'
           : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]'
       }`}
     >
+      {icon && <span className="text-[10px]">{icon}</span>}
       {children}
     </button>
   )
@@ -99,11 +116,12 @@ function SimpleTable({ rows, columns }: {
 }
 
 // ── Horizontal bars ─────────────────────────────────────────
-function HorizontalBars({ data, labelKey, valueKey, color }: {
+function HorizontalBars({ data, labelKey, valueKey, color, valueFormat }: {
   data: Array<Record<string, unknown>>
   labelKey: string
   valueKey: string
   color?: string
+  valueFormat?: (v: number) => string
 }) {
   const max = Math.max(...data.map(d => Number(d[valueKey]) || 0), 1)
   return (
@@ -126,7 +144,7 @@ function HorizontalBars({ data, labelKey, valueKey, color }: {
               />
             </div>
             <span className="text-[10px] font-mono tabular-nums text-[var(--text-primary)] shrink-0 w-16 text-right">
-              {formatCOPDisplay(val)}
+              {valueFormat ? valueFormat(val) : formatCOPDisplay(val)}
             </span>
           </div>
         )
@@ -137,11 +155,13 @@ function HorizontalBars({ data, labelKey, valueKey, color }: {
 }
 
 // ── Mini bar chart ───────────────────────────────────────────
-function MiniBarChart({ data, xKey, yKey, formatX }: {
+function MiniBarChart({ data, xKey, yKey, formatX, formatY, valueFormat }: {
   data: Array<Record<string, unknown>>
   xKey: string
   yKey: string
   formatX?: (v: string | number) => string
+  formatY?: (v: number) => string
+  valueFormat?: (v: number, k: string) => string
 }) {
   if (data.length === 0) return <p className="text-[10px] text-[var(--text-secondary)] text-center py-4">Sin datos</p>
   return (
@@ -156,7 +176,7 @@ function MiniBarChart({ data, xKey, yKey, formatX }: {
           tickLine={false}
         />
         <YAxis
-          tickFormatter={(v: number) => formatCOPDisplay(v)}
+          tickFormatter={formatY || ((v: number) => formatCOPDisplay(v))}
           tick={{ fontSize: 9, fill: 'var(--text-secondary)' }}
           axisLine={false}
           tickLine={false}
@@ -166,6 +186,7 @@ function MiniBarChart({ data, xKey, yKey, formatX }: {
           content={
             <MiniTooltip
               formatLabel={(l) => formatX ? formatX(l) : String(l)}
+              valueFormat={valueFormat}
             />
           }
         />
@@ -191,9 +212,41 @@ function SummaryRow({ label, value }: { label: string; value: string | number })
   )
 }
 
+// ── Payment methods table (reusable) ─────────────────────────
+function PaymentMethodsTable({ methods }: { methods: Array<{ method: string; amount: number; count: number; pct: number }> }) {
+  if (methods.length === 0) return <p className="text-[10px] text-[var(--text-secondary)] text-center py-4">Sin datos de pago</p>
+  const total = methods.reduce((s, m) => s + m.amount, 0)
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[11px]">
+        <thead>
+          <tr className="border-b border-[var(--border-default)]">
+            <th className="py-1.5 px-2 text-left text-[var(--text-secondary)] font-medium">Metodo</th>
+            <th className="py-1.5 px-2 text-right text-[var(--text-secondary)] font-medium">Txns</th>
+            <th className="py-1.5 px-2 text-right text-[var(--text-secondary)] font-medium">Monto</th>
+            <th className="py-1.5 px-2 text-right text-[var(--text-secondary)] font-medium">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {methods.map((m, i) => (
+            <tr key={i} className="border-b border-[var(--border-default)] last:border-0">
+              <td className="py-1.5 px-2 text-[var(--text-primary)]">{m.method}</td>
+              <td className="py-1.5 px-2 text-right text-[var(--text-primary)] tabular-nums">{m.count}</td>
+              <td className="py-1.5 px-2 text-right text-[var(--text-primary)] tabular-nums">{formatCOPDisplay(m.amount)}</td>
+              <td className="py-1.5 px-2 text-right text-[var(--text-primary)] tabular-nums">{total > 0 ? ((m.amount / total) * 100).toFixed(1) : '0'}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 // ── PRODUCT TABS ─────────────────────────────────────────────
+type ProductTab = 'zona' | 'hora' | 'dias' | 'companantes' | 'servicio' | 'pagos'
+
 function ProductDrillDown({ data }: { data: DrillDownData }) {
-  const [tab, setTab] = useState<'zona' | 'hora' | 'dias' | 'companantes'>('zona')
+  const [tab, setTab] = useState<ProductTab>('zona')
   const summary = data.summary as Record<string, unknown>
 
   return (
@@ -203,6 +256,8 @@ function ProductDrillDown({ data }: { data: DrillDownData }) {
         <TabBtn active={tab === 'hora'} onClick={() => setTab('hora')}>Hora</TabBtn>
         <TabBtn active={tab === 'dias'} onClick={() => setTab('dias')}>Dias</TabBtn>
         <TabBtn active={tab === 'companantes'} onClick={() => setTab('companantes')}>Acompanantes</TabBtn>
+        <TabBtn active={tab === 'servicio'} onClick={() => setTab('servicio')} icon={<Clock size={10} />}>Servicio</TabBtn>
+        <TabBtn active={tab === 'pagos'} onClick={() => setTab('pagos')} icon={<CreditCard size={10} />}>Pagos</TabBtn>
       </div>
 
       <div className="space-y-2">
@@ -210,6 +265,13 @@ function ProductDrillDown({ data }: { data: DrillDownData }) {
         <SummaryRow label="Unidades vendidas" value={`${Number(summary.totalQty) || 0}`} />
         <SummaryRow label="Cheques" value={`${Number(summary.totalCheques) || 0}`} />
         <SummaryRow label="Ticket promedio" value={Number(summary.avgTicket) || 0} />
+        <SummaryRow label="Tiempo servicio" value={formatMinutes(Number(summary.avgServiceTime) || 0)} />
+        <SummaryRow label="Propina total" value={Number(summary.tipTotal) || 0} />
+        <SummaryRow label="Propina/cheque" value={Number(summary.tipAvg) || 0} />
+        <SummaryRow label="Party size prom." value={`${Number(summary.partySizeAvg) || 0}`} />
+        {Number(summary.cancelledCount) > 0 && (
+          <SummaryRow label="Cancelados" value={`${Number(summary.cancelledCount)}`} />
+        )}
       </div>
 
       {tab === 'zona' && data.byZone && (
@@ -247,13 +309,54 @@ function ProductDrillDown({ data }: { data: DrillDownData }) {
           ]}
         />
       )}
+
+      {tab === 'servicio' && (
+        <div className="space-y-3">
+          {summary.avgServiceTime != null && Number(summary.avgServiceTime) > 0 && (
+            <div className="text-xs text-[var(--text-secondary)]">
+              Tiempo promedio general: <span className="font-mono font-medium text-[var(--text-primary)]">{formatMinutes(Number(summary.avgServiceTime))}</span>
+            </div>
+          )}
+          {data.byZone && data.byZone.some(z => z.avgServiceTime && z.avgServiceTime > 0) && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">Por zona</p>
+              <HorizontalBars
+                data={data.byZone.filter(z => z.avgServiceTime && z.avgServiceTime > 0).map(z => ({ label: z.zone, value: z.avgServiceTime || 0 }))}
+                labelKey="label"
+                valueKey="value"
+                color="var(--color-ak-oliva)"
+                valueFormat={(v) => formatMinutes(v)}
+              />
+            </div>
+          )}
+          {data.byHour && data.byHour.some(h => h.avgServiceTime && h.avgServiceTime > 0) && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">Por hora</p>
+              <MiniBarChart
+                data={data.byHour.filter(h => h.avgServiceTime && h.avgServiceTime > 0).map(h => ({ x: h.hour, avgServiceTime: h.avgServiceTime || 0 }))}
+                xKey="x"
+                yKey="avgServiceTime"
+                formatX={(v) => formatHourShort(Number(v))}
+                formatY={(v) => formatMinutes(v)}
+                valueFormat={(v, k) => k === 'avgServiceTime' ? formatMinutes(v) : formatCOPDisplay(v)}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'pagos' && data.paymentMethods && (
+        <PaymentMethodsTable methods={data.paymentMethods} />
+      )}
     </div>
   )
 }
 
 // ── STAFF TABS ───────────────────────────────────────────────
+type StaffTab = 'zona' | 'hora' | 'productos' | 'tendencia' | 'servicio' | 'categorias' | 'pagos'
+
 function StaffDrillDown({ data }: { data: DrillDownData }) {
-  const [tab, setTab] = useState<'zona' | 'hora' | 'productos' | 'tendencia'>('zona')
+  const [tab, setTab] = useState<StaffTab>('zona')
   const summary = data.summary as Record<string, unknown>
 
   return (
@@ -262,7 +365,10 @@ function StaffDrillDown({ data }: { data: DrillDownData }) {
         <TabBtn active={tab === 'zona'} onClick={() => setTab('zona')}>Zona</TabBtn>
         <TabBtn active={tab === 'hora'} onClick={() => setTab('hora')}>Hora</TabBtn>
         <TabBtn active={tab === 'productos'} onClick={() => setTab('productos')}>Productos</TabBtn>
-        <TabBtn active={tab === 'tendencia'} onClick={() => setTab('tendencia')}>Tendencia</TabBtn>
+        <TabBtn active={tab === 'tendencia'} onClick={() => setTab('tendencia')} icon={<ChartLine size={10} />}>Tendencia</TabBtn>
+        <TabBtn active={tab === 'servicio'} onClick={() => setTab('servicio')} icon={<Clock size={10} />}>Servicio</TabBtn>
+        <TabBtn active={tab === 'categorias'} onClick={() => setTab('categorias')} icon={<UsersThree size={10} />}>Categorias</TabBtn>
+        <TabBtn active={tab === 'pagos'} onClick={() => setTab('pagos')} icon={<CreditCard size={10} />}>Pagos</TabBtn>
       </div>
 
       <div className="space-y-2">
@@ -270,6 +376,8 @@ function StaffDrillDown({ data }: { data: DrillDownData }) {
         <SummaryRow label="Cheques" value={`${Number(summary.totalCheques) || 0}`} />
         <SummaryRow label="Propinas" value={Number(summary.totalPropina) || 0} />
         <SummaryRow label="Ticket promedio" value={Number(summary.avgTicket) || 0} />
+        <SummaryRow label="Party size prom." value={`${Number(summary.partySizeAvg) || 0}`} />
+        <SummaryRow label="Tiempo servicio" value={formatMinutes(Number(summary.avgServiceTime) || 0)} />
       </div>
 
       {tab === 'zona' && data.byZone && (
@@ -315,13 +423,65 @@ function StaffDrillDown({ data }: { data: DrillDownData }) {
           yKey="revenue"
         />
       )}
+
+      {tab === 'servicio' && (
+        <div className="space-y-3">
+          {summary.avgServiceTime != null && Number(summary.avgServiceTime) > 0 && (
+            <div className="text-xs text-[var(--text-secondary)]">
+              Tiempo promedio general: <span className="font-mono font-medium text-[var(--text-primary)]">{formatMinutes(Number(summary.avgServiceTime))}</span>
+            </div>
+          )}
+          {data.byZone && data.byZone.some(z => z.avgServiceTime && z.avgServiceTime > 0) && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">Por zona</p>
+              <HorizontalBars
+                data={data.byZone.filter(z => z.avgServiceTime && z.avgServiceTime > 0).map(z => ({ label: z.zone, value: z.avgServiceTime || 0 }))}
+                labelKey="label"
+                valueKey="value"
+                color="var(--color-ak-oliva)"
+                valueFormat={(v) => formatMinutes(v)}
+              />
+            </div>
+          )}
+          {data.byHour && data.byHour.some(h => h.avgServiceTime && h.avgServiceTime > 0) && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">Por hora</p>
+              <MiniBarChart
+                data={data.byHour.filter(h => h.avgServiceTime && h.avgServiceTime > 0).map(h => ({ x: h.hour, avgServiceTime: h.avgServiceTime || 0 }))}
+                xKey="x"
+                yKey="avgServiceTime"
+                formatX={(v) => formatHourShort(Number(v))}
+                formatY={(v) => formatMinutes(v)}
+                valueFormat={(v, k) => k === 'avgServiceTime' ? formatMinutes(v) : formatCOPDisplay(v)}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'categorias' && data.categoryBreakdown && (
+        <SimpleTable
+          rows={data.categoryBreakdown}
+          columns={[
+            { key: 'categoryName', label: 'Categoria' },
+            { key: 'qty', label: 'Qty', align: 'right', format: (v) => String(v) },
+            { key: 'revenue', label: 'Revenue', align: 'right', format: (v) => formatCOPDisplay(Number(v)) },
+          ]}
+        />
+      )}
+
+      {tab === 'pagos' && data.paymentMethods && (
+        <PaymentMethodsTable methods={data.paymentMethods} />
+      )}
     </div>
   )
 }
 
 // ── CATEGORY TABS ───────────────────────────────────────────
+type CategoryTab = 'productos' | 'zona' | 'hora' | 'tendencia' | 'companias' | 'servicio' | 'propina' | 'pagos'
+
 function CategoryDrillDown({ data }: { data: DrillDownData }) {
-  const [tab, setTab] = useState<'productos' | 'zona' | 'hora'>('productos')
+  const [tab, setTab] = useState<CategoryTab>('productos')
   const summary = data.summary as Record<string, unknown>
 
   return (
@@ -330,12 +490,25 @@ function CategoryDrillDown({ data }: { data: DrillDownData }) {
         <TabBtn active={tab === 'productos'} onClick={() => setTab('productos')}>Productos</TabBtn>
         <TabBtn active={tab === 'zona'} onClick={() => setTab('zona')}>Zona</TabBtn>
         <TabBtn active={tab === 'hora'} onClick={() => setTab('hora')}>Hora</TabBtn>
+        <TabBtn active={tab === 'tendencia'} onClick={() => setTab('tendencia')} icon={<ChartLine size={10} />}>Tendencia</TabBtn>
+        <TabBtn active={tab === 'companias'} onClick={() => setTab('companias')} icon={<UsersThree size={10} />}>Companias</TabBtn>
+        <TabBtn active={tab === 'servicio'} onClick={() => setTab('servicio')} icon={<Clock size={10} />}>Servicio</TabBtn>
+        <TabBtn active={tab === 'propina'} onClick={() => setTab('propina')} icon={<HandCoins size={10} />}>Propina</TabBtn>
+        <TabBtn active={tab === 'pagos'} onClick={() => setTab('pagos')} icon={<CreditCard size={10} />}>Pagos</TabBtn>
       </div>
 
       <div className="space-y-2">
         <SummaryRow label="Revenue total" value={Number(summary.totalRevenue) || 0} />
         <SummaryRow label="Unidades vendidas" value={`${Number(summary.totalQty) || 0}`} />
         <SummaryRow label="Cheques" value={`${Number(summary.totalCheques) || 0}`} />
+        <SummaryRow label="Ticket promedio" value={Number(summary.ticketPromedio) || 0} />
+        <SummaryRow label="Propina total" value={Number(summary.tipTotal) || 0} />
+        <SummaryRow label="Propina/cheque" value={Number(summary.tipAvg) || 0} />
+        <SummaryRow label="Tiempo servicio" value={formatMinutes(Number(summary.avgServiceTime) || 0)} />
+        <SummaryRow label="Party size prom." value={`${Number(summary.partySizeAvg) || 0}`} />
+        {Number(summary.cancelledCount) > 0 && (
+          <SummaryRow label="Cancelados" value={`${Number(summary.cancelledCount)} (${((Number(summary.cancelledRatio) || 0) * 100).toFixed(1)}%)`} />
+        )}
       </div>
 
       {tab === 'productos' && data.topProducts && (
@@ -366,13 +539,101 @@ function CategoryDrillDown({ data }: { data: DrillDownData }) {
           formatX={(v) => formatHourShort(Number(v))}
         />
       )}
+
+      {tab === 'tendencia' && data.dailyTrend && (
+        <MiniBarChart
+          data={data.dailyTrend.map(d => ({ x: formatShortDate(d.date), revenue: d.revenue }))}
+          xKey="x"
+          yKey="revenue"
+        />
+      )}
+
+      {tab === 'companias' && data.crossCategoryCompanions && (
+        <SimpleTable
+          rows={data.crossCategoryCompanions}
+          columns={[
+            { key: 'categoryName', label: 'Categoria acompanante' },
+            { key: 'sharedCheques', label: 'Cheques compartidos', align: 'right', format: (v) => String(v) },
+          ]}
+        />
+      )}
+
+      {tab === 'servicio' && (
+        <div className="space-y-3">
+          {summary.avgServiceTime != null && Number(summary.avgServiceTime) > 0 && (
+            <div className="text-xs text-[var(--text-secondary)]">
+              Tiempo promedio general: <span className="font-mono font-medium text-[var(--text-primary)]">{formatMinutes(Number(summary.avgServiceTime))}</span>
+            </div>
+          )}
+          {data.byZone && data.byZone.some(z => z.avgServiceTime && z.avgServiceTime > 0) && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">Por zona</p>
+              <HorizontalBars
+                data={data.byZone.filter(z => z.avgServiceTime && z.avgServiceTime > 0).map(z => ({ label: z.zone, value: z.avgServiceTime || 0 }))}
+                labelKey="label"
+                valueKey="value"
+                color="var(--color-ak-oliva)"
+                valueFormat={(v) => formatMinutes(v)}
+              />
+            </div>
+          )}
+          {data.byHour && data.byHour.some(h => h.avgServiceTime && h.avgServiceTime > 0) && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">Por hora</p>
+              <MiniBarChart
+                data={data.byHour.filter(h => h.avgServiceTime && h.avgServiceTime > 0).map(h => ({ x: h.hour, avgServiceTime: h.avgServiceTime || 0 }))}
+                xKey="x"
+                yKey="avgServiceTime"
+                formatX={(v) => formatHourShort(Number(v))}
+                formatY={(v) => formatMinutes(v)}
+                valueFormat={(v, k) => k === 'avgServiceTime' ? formatMinutes(v) : formatCOPDisplay(v)}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'propina' && (
+        <div className="space-y-3">
+          {data.tipByZone && data.tipByZone.length > 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">Propina por zona</p>
+              <SimpleTable
+                rows={data.tipByZone}
+                columns={[
+                  { key: 'zone', label: 'Zona' },
+                  { key: 'tipTotal', label: 'Total', align: 'right', format: (v) => formatCOPDisplay(Number(v)) },
+                  { key: 'tipAvg', label: 'Prom/cheque', align: 'right', format: (v) => formatCOPDisplay(Number(v)) },
+                ]}
+              />
+            </div>
+          )}
+          {data.tipByHour && data.tipByHour.length > 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">Propina por hora</p>
+              <MiniBarChart
+                data={data.tipByHour.map(h => ({ x: h.hour, tipTotal: h.tipTotal }))}
+                xKey="x"
+                yKey="tipTotal"
+                formatX={(v) => formatHourShort(Number(v))}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'pagos' && data.paymentMethods && (
+        <PaymentMethodsTable methods={data.paymentMethods} />
+      )}
     </div>
   )
 }
 
 // ── HOUR TABS ────────────────────────────────────────────────
+type HourTab = 'productos' | 'meseros' | 'zonas' | 'pagos'
+
 function HourDrillDown({ data }: { data: DrillDownData }) {
-  const [tab, setTab] = useState<'productos' | 'meseros' | 'zonas'>('productos')
+  const [tab, setTab] = useState<HourTab>('productos')
   const summary = data.summary as Record<string, unknown>
 
   return (
@@ -381,12 +642,17 @@ function HourDrillDown({ data }: { data: DrillDownData }) {
         <TabBtn active={tab === 'productos'} onClick={() => setTab('productos')}>Productos</TabBtn>
         <TabBtn active={tab === 'meseros'} onClick={() => setTab('meseros')}>Meseros</TabBtn>
         <TabBtn active={tab === 'zonas'} onClick={() => setTab('zonas')}>Zonas</TabBtn>
+        <TabBtn active={tab === 'pagos'} onClick={() => setTab('pagos')} icon={<CreditCard size={10} />}>Pagos</TabBtn>
       </div>
 
       <div className="space-y-2">
         <SummaryRow label="Hora" value={formatHourShort(Number(summary.hour) || 0)} />
         <SummaryRow label="Revenue total" value={Number(summary.totalRevenue) || 0} />
         <SummaryRow label="Cheques" value={`${Number(summary.totalCheques) || 0}`} />
+        <SummaryRow label="Propina total" value={Number(summary.tipTotal) || 0} />
+        <SummaryRow label="Propina/cheque" value={Number(summary.tipAvg) || 0} />
+        <SummaryRow label="Party size prom." value={`${Number(summary.partySizeAvg) || 0}`} />
+        <SummaryRow label="Tiempo servicio" value={formatMinutes(Number(summary.avgServiceTime) || 0)} />
       </div>
 
       {tab === 'productos' && data.topProducts && (
@@ -418,13 +684,19 @@ function HourDrillDown({ data }: { data: DrillDownData }) {
           valueKey="value"
         />
       )}
+
+      {tab === 'pagos' && data.paymentMethods && (
+        <PaymentMethodsTable methods={data.paymentMethods} />
+      )}
     </div>
   )
 }
 
 // ── ZONE TABS ────────────────────────────────────────────────
+type ZoneTab = 'productos' | 'hora' | 'meseros' | 'tendencia' | 'categorias' | 'servicio' | 'pagos'
+
 function ZoneDrillDown({ data }: { data: DrillDownData }) {
-  const [tab, setTab] = useState<'productos' | 'hora' | 'meseros' | 'tendencia'>('productos')
+  const [tab, setTab] = useState<ZoneTab>('productos')
   const summary = data.summary as Record<string, unknown>
 
   return (
@@ -433,7 +705,10 @@ function ZoneDrillDown({ data }: { data: DrillDownData }) {
         <TabBtn active={tab === 'productos'} onClick={() => setTab('productos')}>Productos</TabBtn>
         <TabBtn active={tab === 'hora'} onClick={() => setTab('hora')}>Hora</TabBtn>
         <TabBtn active={tab === 'meseros'} onClick={() => setTab('meseros')}>Meseros</TabBtn>
-        <TabBtn active={tab === 'tendencia'} onClick={() => setTab('tendencia')}>Tendencia</TabBtn>
+        <TabBtn active={tab === 'tendencia'} onClick={() => setTab('tendencia')} icon={<ChartLine size={10} />}>Tendencia</TabBtn>
+        <TabBtn active={tab === 'categorias'} onClick={() => setTab('categorias')} icon={<UsersThree size={10} />}>Categorias</TabBtn>
+        <TabBtn active={tab === 'servicio'} onClick={() => setTab('servicio')} icon={<Clock size={10} />}>Servicio</TabBtn>
+        <TabBtn active={tab === 'pagos'} onClick={() => setTab('pagos')} icon={<CreditCard size={10} />}>Pagos</TabBtn>
       </div>
 
       <div className="space-y-2">
@@ -441,6 +716,8 @@ function ZoneDrillDown({ data }: { data: DrillDownData }) {
         <SummaryRow label="Revenue total" value={Number(summary.totalRevenue) || 0} />
         <SummaryRow label="Cheques" value={`${Number(summary.totalCheques) || 0}`} />
         <SummaryRow label="Propinas" value={Number(summary.totalPropina) || 0} />
+        <SummaryRow label="Party size prom." value={`${Number(summary.partySizeAvg) || 0}`} />
+        <SummaryRow label="Tiempo servicio" value={formatMinutes(Number(summary.avgServiceTime) || 0)} />
       </div>
 
       {tab === 'productos' && data.topProducts && (
@@ -480,6 +757,44 @@ function ZoneDrillDown({ data }: { data: DrillDownData }) {
           xKey="x"
           yKey="revenue"
         />
+      )}
+
+      {tab === 'categorias' && data.categoryBreakdown && (
+        <SimpleTable
+          rows={data.categoryBreakdown}
+          columns={[
+            { key: 'categoryName', label: 'Categoria' },
+            { key: 'qty', label: 'Qty', align: 'right', format: (v) => String(v) },
+            { key: 'revenue', label: 'Revenue', align: 'right', format: (v) => formatCOPDisplay(Number(v)) },
+          ]}
+        />
+      )}
+
+      {tab === 'servicio' && (
+        <div className="space-y-3">
+          {summary.avgServiceTime != null && Number(summary.avgServiceTime) > 0 && (
+            <div className="text-xs text-[var(--text-secondary)]">
+              Tiempo promedio general: <span className="font-mono font-medium text-[var(--text-primary)]">{formatMinutes(Number(summary.avgServiceTime))}</span>
+            </div>
+          )}
+          {data.byHour && data.byHour.some(h => h.avgServiceTime && h.avgServiceTime > 0) && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">Por hora</p>
+              <MiniBarChart
+                data={data.byHour.filter(h => h.avgServiceTime && h.avgServiceTime > 0).map(h => ({ x: h.hour, avgServiceTime: h.avgServiceTime || 0 }))}
+                xKey="x"
+                yKey="avgServiceTime"
+                formatX={(v) => formatHourShort(Number(v))}
+                formatY={(v) => formatMinutes(v)}
+                valueFormat={(v, k) => k === 'avgServiceTime' ? formatMinutes(v) : formatCOPDisplay(v)}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'pagos' && data.paymentMethods && (
+        <PaymentMethodsTable methods={data.paymentMethods} />
       )}
     </div>
   )

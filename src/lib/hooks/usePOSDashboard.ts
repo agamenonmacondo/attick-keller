@@ -20,18 +20,24 @@ export interface DrillDownState {
 export interface DrillDownData {
   type: string
   summary: Record<string, unknown>
-  // Product
-  byZone?: Array<{ zone: string; qty: number; revenue: number; cheques: number }>
-  byHour?: Array<{ hour: number; qty: number; revenue: number; cheques: number }>
+  // Product / Staff / Category / Zone
+  byZone?: Array<{ zone: string; qty?: number; revenue: number; cheques: number; propina?: number; avgServiceTime?: number }>
+  byHour?: Array<{ hour: number; qty?: number; revenue: number; cheques?: number; propina?: number; avgServiceTime?: number }>
   byDay?: Array<{ date: string; qty: number; revenue: number }>
+  // Product
   companions?: Array<{ name: string; qty: number; revenue: number }>
-  // Staff
+  // Staff / Zone
   topProducts?: Array<{ product: string; qty: number; revenue: number }> | Array<{ productId: string; name: string; qty: number; revenue: number; cheques: number }>
+  // Staff / Category / Zone
   dailyTrend?: Array<{ date: string; cheques: number; revenue: number; propina: number }>
-  // Hour
+  // Hour / Zone
   topStaff?: Array<{ name: string; cheques: number; revenue: number }>
-  // Zone
-  // (uses byHour, topProducts, topStaff, dailyTrend already defined)
+  // New enriched fields
+  paymentMethods?: Array<{ method: string; amount: number; count: number; pct: number }>
+  categoryBreakdown?: Array<{ categoryId: string; categoryName: string; qty: number; revenue: number }>
+  crossCategoryCompanions?: Array<{ categoryId: string; categoryName: string; sharedCheques: number }>
+  tipByZone?: Array<{ zone: string; tipTotal: number; tipAvg: number }>
+  tipByHour?: Array<{ hour: number; tipTotal: number; tipAvg: number }>
 }
 
 export interface POSDashboardData {
@@ -45,6 +51,7 @@ export interface POSDashboardData {
     partySizePromedio: number
     cardPaidTotal: number
     cashPaidTotal: number
+    avgServiceTime: number
   }
   byZone: Array<{
     zone: string
@@ -53,11 +60,15 @@ export interface POSDashboardData {
     ticketPromedio: number
     propinaTotal: number
     pct: number
+    avgServiceTime: number
   }>
   hourlyRevenue: Array<{
     hour: string
     revenue: number
     cheques: number
+    tipTotal: number
+    cardPaidTotal: number
+    cashPaidTotal: number
   }>
   dailyTrend: Array<{
     date: string
@@ -79,6 +90,10 @@ export interface POSDashboardData {
     quantity: number
     revenue: number
     cheques: number
+    tipTotal: number
+    tipAvg: number
+    avgServiceTime: number
+    partySizeAvg: number
   }>
   topProductByCategory: Array<{
     categoryId: string
@@ -91,6 +106,7 @@ export interface POSDashboardData {
   staffPerformance: Array<{
     staffId: string
     staffName: string
+    staffType: number
     cheques: number
     revenue: number
     propinaTotal: number
@@ -112,6 +128,28 @@ export interface POSDashboardData {
     identificados: { cheques: number; revenue: number }
   }
   categoryList: Array<{ id: string; name: string }>
+  shifts: Array<{
+    shiftId: string
+    station: string
+    cashier: string
+    cashTotal: number
+    cardTotal: number
+    creditTotal: number
+    openedAt: string
+    closedAt: string | null
+    isClosed: boolean
+  }>
+  categoryCompanions: Array<{
+    cat1Id: string
+    cat1Name: string
+    cat2Id: string
+    cat2Name: string
+    sharedCheques: number
+  }>
+  byZonePayment: Array<{
+    zone: string
+    methods: Array<{ method: string; amount: number; count: number; pct: number }>
+  }>
   filters: { zone: string; category: string; from: string; to: string }
 }
 

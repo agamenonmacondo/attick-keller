@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+import { CaretDown } from '@phosphor-icons/react'
 import { SectionHeading } from '../shared/SectionHeading'
 import { formatCOPDisplay } from './KPICard'
 
@@ -11,9 +13,14 @@ interface TopProductsTableProps {
     quantity: number
     revenue: number
   }>
+  initialLimit?: number
+  expandedLimit?: number
+  onProductDrillDown?: (productId: string, productName: string) => void
 }
 
-export function TopProductsTable({ data }: TopProductsTableProps) {
+export function TopProductsTable({ data, initialLimit = 10, expandedLimit = 15, onProductDrillDown }: TopProductsTableProps) {
+  const [expanded, setExpanded] = useState(false)
+
   if (data.length === 0) {
     return (
       <div>
@@ -22,6 +29,9 @@ export function TopProductsTable({ data }: TopProductsTableProps) {
       </div>
     )
   }
+
+  const visibleData = expanded ? data.slice(0, expandedLimit) : data.slice(0, initialLimit)
+  const canExpand = data.length > initialLimit
 
   return (
     <div>
@@ -38,8 +48,14 @@ export function TopProductsTable({ data }: TopProductsTableProps) {
             </tr>
           </thead>
           <tbody>
-            {data.map((p, i) => (
-              <tr key={p.productId} className="border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-input)]" style={{ transition: 'background 150ms ease-out' }}>
+            {visibleData.map((p, i) => (
+              <tr
+                key={p.productId}
+                className={`border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-input)] ${onProductDrillDown ? 'cursor-pointer' : ''}`}
+                style={{ transition: 'background 150ms ease-out' }}
+                onClick={onProductDrillDown ? () => onProductDrillDown(p.productId, p.productName) : undefined}
+                title={onProductDrillDown ? 'Ver detalle del producto' : undefined}
+              >
                 <td className="py-2 pr-3 text-[var(--text-secondary)] tabular-nums">{i + 1}</td>
                 <td className="py-2 pr-3 text-[var(--text-primary)] font-medium max-w-[180px] truncate">{p.productName}</td>
                 <td className="py-2 pr-3 text-[var(--text-secondary)] max-w-[120px] truncate">{p.category}</td>
@@ -50,6 +66,15 @@ export function TopProductsTable({ data }: TopProductsTableProps) {
           </tbody>
         </table>
       </div>
+      {canExpand && (
+        <button
+          onClick={() => setExpanded(prev => !prev)}
+          className="mt-2 flex items-center gap-1 text-[10px] text-[var(--color-ak-borgona)] hover:underline font-medium"
+        >
+          <CaretDown size={10} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          {expanded ? 'Ver menos' : `Ver mas (${data.length - initialLimit} mas)`}
+        </button>
+      )}
     </div>
   )
 }

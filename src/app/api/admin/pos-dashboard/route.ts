@@ -158,6 +158,8 @@ export async function GET(request: NextRequest) {
   const totalRevenue = salesForKPIs.reduce((s: number, r: any) => s + (Number(r.total) || 0), 0)
   const totalTip = salesForKPIs.reduce((s: number, r: any) => s + (Number(r.tip_amount) || 0), 0)
   const totalParty = salesForKPIs.reduce((s: number, r: any) => s + (Number(r.party_size) || 0), 0)
+  const cardPaidTotal = salesForKPIs.reduce((s: number, r: any) => s + (Number(r.card_paid) || 0), 0)
+  const cashPaidTotal = salesForKPIs.reduce((s: number, r: any) => s + (Number(r.cash_paid) || 0), 0)
   const cheques = salesForKPIs.length
   const ticketPromedio = cheques > 0 ? totalRevenue / cheques : 0
   const propinaPromedio = cheques > 0 ? totalTip / cheques : 0
@@ -506,6 +508,8 @@ export async function GET(request: NextRequest) {
       propinaPromedio: Math.round(propinaPromedio),
       personas: totalParty,
       partySizePromedio: Math.round(partySizePromedio * 10) / 10,
+      cardPaidTotal: Math.round(cardPaidTotal),
+      cashPaidTotal: Math.round(cashPaidTotal),
     },
     byZone,
     hourlyRevenue,

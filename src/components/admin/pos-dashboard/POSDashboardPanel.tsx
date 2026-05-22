@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
-import { usePOSDashboard, type POSDashboardFilters } from '@/lib/hooks/usePOSDashboard'
+import { useState, useCallback, useMemo, useRef } from 'react'
+import { usePOSDashboard, type POSDashboardFilters, type DrillDownType } from '@/lib/hooks/usePOSDashboard'
 import { AnimatedCard } from '../shared/AnimatedCard'
 import { Spinner } from '@phosphor-icons/react'
 import { POSFiltersBar } from './POSFiltersBar'
-import { KPIRow } from './KPIRow'
 import { RevenueHeatmapCalendar } from './RevenueHeatmapCalendar'
 import { DayKPIBar } from './DayKPIBar'
 import { ZoneRevenueChart } from './ZoneRevenueChart'
@@ -19,6 +18,7 @@ import { ClientSplitCard } from './ClientSplitCard'
 import { TopProductByCategoryChart } from './TopProductByCategoryChart'
 import { DayPerformanceCard } from './DayPerformanceCard'
 import { DataUploadSection } from './DataUploadSection'
+import { DrillDownPanel } from './DrillDownPanel'
 
 type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 
@@ -32,7 +32,8 @@ const DEFAULT_FILTERS: POSDashboardFilters = {
 export function POSDashboardPanel() {
   const [filters, setFilters] = useState<POSDashboardFilters>(DEFAULT_FILTERS)
   const [heatmapMetric, setHeatmapMetric] = useState<HeatmapMetric>('revenue')
-  const { data, loading, error, refetch } = usePOSDashboard(filters)
+  const { data, loading, error, refetch, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown } = usePOSDashboard(filters)
+  const drillDownRef = useRef<HTMLDivElement>(null)
 
   const isSingleDay = useMemo(() => {
     return filters.from === filters.to && !!filters.from
@@ -42,7 +43,7 @@ export function POSDashboardPanel() {
   const periodAverages = useMemo(() => {
     if (!data || data.dailyTrend.length === 0) return undefined
     const days = data.dailyTrend.length
-    const totals = data.dailyTrend.reduce((acc: { revenue: number; cheques: number; propinaTotal: number; personas: number; ticketPromedio: number; propinaPromedio: number; partySizePromedio: number }, d: { revenue: number; cheques: number; propina: number; personas: number }) => ({
+    const totals = data.dailyTrend.reduce((acc: { revenue: number; cheques: number; propinaTotal: number; personas: number; ticketPromedio: number; propinaPromedio: number; partySizePromedio: number; cardPaidTotal: number; cashPaidTotal: number }, d: { revenue: number; cheques: number; propina: number; personas: number }) => ({
       revenue: acc.revenue + d.revenue,
       cheques: acc.cheques + d.cheques,
       propinaTotal: acc.propinaTotal + d.propina,
@@ -50,10 +51,14 @@ export function POSDashboardPanel() {
       ticketPromedio: 0,
       propinaPromedio: 0,
       partySizePromedio: 0,
-    }), { revenue: 0, cheques: 0, propinaTotal: 0, personas: 0, ticketPromedio: 0, propinaPromedio: 0, partySizePromedio: 0 })
+      cardPaidTotal: 0,
+      cashPaidTotal: 0,
+    }), { revenue: 0, cheques: 0, propinaTotal: 0, personas: 0, ticketPromedio: 0, propinaPromedio: 0, partySizePromedio: 0, cardPaidTotal: 0, cashPaidTotal: 0 })
     totals.ticketPromedio = totals.cheques > 0 ? totals.revenue / totals.cheques : 0
     totals.propinaPromedio = totals.cheques > 0 ? totals.propinaTotal / totals.cheques : 0
     totals.partySizePromedio = totals.cheques > 0 ? totals.personas / totals.cheques : 0
+    totals.cardPaidTotal = data.kpis.cardPaidTotal / days
+    totals.cashPaidTotal = data.kpis.cashPaidTotal / days
     return {
       revenue: totals.revenue / days,
       cheques: totals.cheques / days,
@@ -62,6 +67,8 @@ export function POSDashboardPanel() {
       propinaPromedio: totals.propinaPromedio,
       personas: totals.personas / days,
       partySizePromedio: totals.partySizePromedio,
+      cardPaidTotal: totals.cardPaidTotal,
+      cashPaidTotal: totals.cashPaidTotal,
     }
   }, [data])
 
@@ -84,6 +91,49 @@ export function POSDashboardPanel() {
   const handleFilterChange = useCallback((newFilters: POSDashboardFilters) => {
     setFilters(newFilters)
   }, [])
+
+  // ── Drill-down handlers ──
+  const scrollToDrillDown = useCallback(() => {
+    setTimeout(() => {
+      drillDownRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }, [])
+
+  const handleProductDrillDown = useCallback((productId: string, productName: string) => {
+    fetchDrillDown('product', productId, productName)
+    scrollToDrillDown()
+  }, [fetchDrillDown, scrollToDrillDown])
+
+  const handleStaffDrillDown = useCallback((staffId: string, staffName: string) => {
+    fetchDrillDown('staff', staffId, staffName)
+    scrollToDrillDown()
+  }, [fetchDrillDown, scrollToDrillDown])
+
+  const handleCategoryDrillDown = useCallback((categoryId: string, categoryName: string) => {
+    fetchDrillDown('category', categoryId, categoryName)
+    scrollToDrillDown()
+  }, [fetchDrillDown, scrollToDrillDown])
+
+  const handleHourDrillDown = useCallback((hour: string) => {
+    const hourNum = parseInt(hour, 10)
+    const label = `${hourNum === 0 ? '12' : hourNum <= 12 ? hourNum : hourNum - 12}${hourNum < 12 ? 'am' : 'pm'}`
+    fetchDrillDown('hour', hour, label)
+    scrollToDrillDown()
+  }, [fetchDrillDown, scrollToDrillDown])
+
+  const handleZoneDrillDown = useCallback((zoneName: string) => {
+    fetchDrillDown('zone', zoneName, zoneName)
+    scrollToDrillDown()
+  }, [fetchDrillDown, scrollToDrillDown])
+
+  const zoneListForFilter = useMemo(() => {
+    if (!data) return undefined
+    const zones = data.byZone.map(z => z.zone)
+    return [
+      { value: 'all', label: 'Todas las zonas' },
+      ...zones.map(z => ({ value: z, label: z })),
+    ]
+  }, [data])
 
   if (error) {
     return (
@@ -124,6 +174,7 @@ export function POSDashboardPanel() {
             filters={filters}
             onChange={handleFilterChange}
             categoryList={data?.categoryList || []}
+            zoneList={zoneListForFilter}
           />
         </div>
       </div>
@@ -148,6 +199,19 @@ export function POSDashboardPanel() {
             />
           </AnimatedCard>
 
+          {/* Drill-down panel */}
+          {drillDown && (
+            <div ref={drillDownRef}>
+              <DrillDownPanel
+                drillDown={drillDown}
+                data={drillDownData}
+                loading={drillDownLoading}
+                error={drillDownError}
+                onClose={closeDrillDown}
+              />
+            </div>
+          )}
+
           {/* Day Performance — cuando un dia seleccionado */}
           {isSingleDay && (
             <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-5">
@@ -158,6 +222,9 @@ export function POSDashboardPanel() {
                 topProducts={data.topProducts}
                 hourlyRevenue={data.hourlyRevenue}
                 staffPerformance={data.staffPerformance}
+                onProductDrillDown={handleProductDrillDown}
+                onStaffDrillDown={handleStaffDrillDown}
+                onZoneDrillDown={handleZoneDrillDown}
               />
             </AnimatedCard>
           )}
@@ -180,13 +247,20 @@ export function POSDashboardPanel() {
                 data={data.byZone}
                 selectedZone={filters.zone}
                 onZoneClick={handleZoneClick}
+                onZoneDrillDown={handleZoneDrillDown}
               />
             </AnimatedCard>
             <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <HourlyRevenueChart data={data.hourlyRevenue} />
+              <HourlyRevenueChart
+                data={data.hourlyRevenue}
+                onHourDrillDown={handleHourDrillDown}
+              />
             </AnimatedCard>
             <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <TopProductsTable data={data.topProducts.slice(0, 8)} />
+              <TopProductsTable
+                data={data.topProducts}
+                onProductDrillDown={handleProductDrillDown}
+              />
             </AnimatedCard>
           </div>
 
@@ -197,16 +271,23 @@ export function POSDashboardPanel() {
                 data={data.topCategories}
                 selectedCategory={filters.category}
                 onCategoryClick={handleCategoryClick}
+                onCategoryDrillDown={handleCategoryDrillDown}
               />
             </AnimatedCard>
             <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <TopProductByCategoryChart data={data.topProductByCategory || []} />
+              <TopProductByCategoryChart
+                data={data.topProductByCategory || []}
+                onProductDrillDown={handleProductDrillDown}
+              />
             </AnimatedCard>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <AnimatedCard delay={0.48} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <StaffPerformanceTable data={data.staffPerformance} />
+              <StaffPerformanceTable
+                data={data.staffPerformance}
+                onStaffDrillDown={handleStaffDrillDown}
+              />
             </AnimatedCard>
             <AnimatedCard delay={0.54} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
               <PaymentMethodsChart data={data.paymentMethods} />

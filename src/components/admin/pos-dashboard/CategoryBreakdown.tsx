@@ -15,9 +15,10 @@ interface CategoryBreakdownProps {
   }>
   selectedCategory: string
   onCategoryClick: (categoryId: string) => void
+  onCategoryDrillDown?: (categoryId: string, categoryName: string) => void
 }
 
-export function CategoryBreakdown({ data, selectedCategory, onCategoryClick }: CategoryBreakdownProps) {
+export function CategoryBreakdown({ data, selectedCategory, onCategoryClick, onCategoryDrillDown }: CategoryBreakdownProps) {
   const maxRevenue = Math.max(...data.map(d => d.revenue), 1)
   const top15 = data.slice(0, 15)
 
@@ -33,22 +34,34 @@ export function CategoryBreakdown({ data, selectedCategory, onCategoryClick }: C
           const opacity = isAllSelected || isSelected ? 1 : 0.35
 
           return (
-            <button
-              key={d.categoryId}
-              onClick={() => onCategoryClick(isSelected ? 'all' : d.categoryId)}
-              className="w-full text-left group"
-            >
+            <div key={d.categoryId} className="w-full group">
               <div className="flex items-center gap-2 mb-0.5">
+                <button
+                  onClick={() => onCategoryClick(isSelected ? 'all' : d.categoryId)}
+                  className="flex items-center gap-2"
+                >
+                  <span
+                    className="w-2 h-2 rounded-sm shrink-0"
+                    style={{ backgroundColor: color, opacity }}
+                  />
+                  <span className={`text-[11px] truncate ${isSelected ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`} style={{ transition: 'color 150ms ease-out' }}>
+                    {d.categoryName}
+                  </span>
+                </button>
                 <span
-                  className="w-2 h-2 rounded-sm shrink-0"
-                  style={{ backgroundColor: color, opacity }}
-                />
-                <span className={`text-[11px] truncate ${isSelected ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`} style={{ transition: 'color 150ms ease-out' }}>
-                  {d.categoryName}
+                  className={`ml-auto text-[11px] font-mono tabular-nums ${onCategoryDrillDown ? 'text-[var(--text-primary)] cursor-pointer hover:text-[var(--color-ak-borgona)]' : 'text-[var(--text-primary)]'}`}
+                  style={{ transition: 'color 150ms ease-out' }}
+                  onClick={onCategoryDrillDown ? () => onCategoryDrillDown(d.categoryId, d.categoryName) : undefined}
+                  title={onCategoryDrillDown ? 'Ver detalle de categoria' : undefined}
+                >
+                  {formatCOPDisplay(d.revenue)}
                 </span>
-                <span className="ml-auto text-[11px] font-mono tabular-nums text-[var(--text-primary)]">{formatCOPDisplay(d.revenue)}</span>
               </div>
-              <div className="h-2.5 bg-[var(--bg-input)] rounded overflow-hidden ml-4">
+              <div
+                className={`h-2.5 bg-[var(--bg-input)] rounded overflow-hidden ml-4 ${onCategoryDrillDown ? 'cursor-pointer' : ''}`}
+                onClick={onCategoryDrillDown ? () => onCategoryDrillDown(d.categoryId, d.categoryName) : undefined}
+                title={onCategoryDrillDown ? 'Ver detalle de categoria' : undefined}
+              >
                 <div
                   className="h-full rounded"
                   style={{
@@ -63,7 +76,7 @@ export function CategoryBreakdown({ data, selectedCategory, onCategoryClick }: C
                 <span className="text-[9px] text-[var(--text-secondary)]">{d.quantity.toLocaleString('es-CO')} uds</span>
                 <span className="text-[9px] text-[var(--text-secondary)]">{d.cheques} cheques</span>
               </div>
-            </button>
+            </div>
           )
         })}
         {top15.length === 0 && (

@@ -27,7 +27,12 @@ function formatCOP(n: number): string {
   return `$${abs.toLocaleString('es-CO')}`
 }
 
-export function TopProductByCategoryChart({ data }: { data: TopProductByCategory[] }) {
+interface TopProductByCategoryChartProps {
+  data: TopProductByCategory[]
+  onProductDrillDown?: (productId: string, productName: string) => void
+}
+
+export function TopProductByCategoryChart({ data, onProductDrillDown }: TopProductByCategoryChartProps) {
   if (!data || data.length === 0) return null
 
   const chartData = data.slice(0, 12).map(d => ({
@@ -50,7 +55,12 @@ export function TopProductByCategoryChart({ data }: { data: TopProductByCategory
           const color = PALETTE[i % PALETTE.length]
 
           return (
-            <div key={item.categoryId} className="group">
+            <div
+              key={item.categoryId}
+              className={`group ${onProductDrillDown ? 'cursor-pointer' : ''}`}
+              onClick={onProductDrillDown ? () => onProductDrillDown(item.productId, item.productName) : undefined}
+              title={onProductDrillDown ? 'Ver detalle del producto' : undefined}
+            >
               <div className="flex items-center gap-2 mb-1">
                 <span
                   className="text-xs font-semibold uppercase tracking-wider shrink-0"

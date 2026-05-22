@@ -12,9 +12,10 @@ interface StaffPerformanceTableProps {
     propinaTotal: number
     ticketPromedio: number
   }>
+  onStaffDrillDown?: (staffId: string, staffName: string) => void
 }
 
-export function StaffPerformanceTable({ data }: StaffPerformanceTableProps) {
+export function StaffPerformanceTable({ data, onStaffDrillDown }: StaffPerformanceTableProps) {
   if (data.length === 0) {
     return (
       <div>
@@ -40,7 +41,13 @@ export function StaffPerformanceTable({ data }: StaffPerformanceTableProps) {
           </thead>
           <tbody>
             {data.map(s => (
-              <tr key={s.staffId} className="border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-input)]" style={{ transition: 'background 150ms ease-out' }}>
+              <tr
+                key={s.staffId}
+                className={`border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-input)] ${onStaffDrillDown ? 'cursor-pointer' : ''}`}
+                style={{ transition: 'background 150ms ease-out' }}
+                onClick={onStaffDrillDown ? () => onStaffDrillDown(s.staffId, s.staffName) : undefined}
+                title={onStaffDrillDown ? 'Ver detalle del mesero' : undefined}
+              >
                 <td className="py-2 pr-3 text-[var(--text-primary)] font-medium">{s.staffName}</td>
                 <td className="py-2 pr-3 text-right text-[var(--text-primary)] tabular-nums">{s.cheques}</td>
                 <td className="py-2 pr-3 text-right text-[var(--text-primary)] tabular-nums font-medium">{formatCOPDisplay(s.revenue)}</td>

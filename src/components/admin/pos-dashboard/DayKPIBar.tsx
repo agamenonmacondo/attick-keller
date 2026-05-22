@@ -11,6 +11,8 @@ interface KPIs {
   propinaPromedio: number
   personas: number
   partySizePromedio: number
+  cardPaidTotal: number
+  cashPaidTotal: number
 }
 
 interface DayKPIBarProps {
@@ -50,6 +52,8 @@ export function DayKPIBar({ kpis, averages, isSingleDay }: DayKPIBarProps) {
     { key: 'ticketPromedio', label: 'Ticket prom.', value: kpis.ticketPromedio },
     { key: 'propinaTotal', label: 'Propinas', value: kpis.propinaTotal },
     { key: 'personas', label: 'Personas', value: kpis.personas },
+    { key: 'cardPaidTotal', label: 'Tarjeta', value: kpis.cardPaidTotal },
+    { key: 'cashPaidTotal', label: 'Efectivo', value: kpis.cashPaidTotal },
   ]
 
   return (

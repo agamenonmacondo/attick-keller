@@ -12,6 +12,8 @@ interface KPIRowProps {
     propinaPromedio: number
     personas: number
     partySizePromedio: number
+    cardPaidTotal: number
+    cashPaidTotal: number
   }
 }
 

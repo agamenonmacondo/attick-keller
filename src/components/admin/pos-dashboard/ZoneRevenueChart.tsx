@@ -24,9 +24,10 @@ interface ZoneRevenueChartProps {
   }>
   selectedZone: string
   onZoneClick: (zone: string) => void
+  onZoneDrillDown?: (zoneName: string) => void
 }
 
-export function ZoneRevenueChart({ data, selectedZone, onZoneClick }: ZoneRevenueChartProps) {
+export function ZoneRevenueChart({ data, selectedZone, onZoneClick, onZoneDrillDown }: ZoneRevenueChartProps) {
   const maxRevenue = Math.max(...data.map(d => d.revenue), 1)
 
   return (
@@ -41,19 +42,30 @@ export function ZoneRevenueChart({ data, selectedZone, onZoneClick }: ZoneRevenu
           const opacity = isAllSelected || isSelected ? 1 : 0.35
 
           return (
-            <button
-              key={d.zone}
-              onClick={() => onZoneClick(isSelected ? 'all' : d.zone)}
-              className="w-full text-left group"
-            >
+            <div key={d.zone} className="w-full group">
               <div className="flex items-center gap-2 mb-0.5">
-                <span className={`text-xs font-medium ${isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`} style={{ transition: 'color 150ms ease-out' }}>
+                <button
+                  onClick={() => onZoneClick(isSelected ? 'all' : d.zone)}
+                  className={`text-xs font-medium ${isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}
+                  style={{ transition: 'color 150ms ease-out' }}
+                >
                   {d.zone}
-                </span>
+                </button>
                 <span className="text-[9px] text-[var(--text-secondary)]">{d.pct}%</span>
-                <span className="ml-auto text-xs font-mono tabular-nums text-[var(--text-primary)]">{formatCOPDisplay(d.revenue)}</span>
+                <span
+                  className={`ml-auto text-xs font-mono tabular-nums ${onZoneDrillDown ? 'cursor-pointer hover:text-[var(--color-ak-borgona)]' : 'text-[var(--text-primary)]'}`}
+                  style={{ transition: 'color 150ms ease-out' }}
+                  onClick={onZoneDrillDown ? () => onZoneDrillDown(d.zone) : undefined}
+                  title={onZoneDrillDown ? 'Ver detalle de zona' : undefined}
+                >
+                  {formatCOPDisplay(d.revenue)}
+                </span>
               </div>
-              <div className="h-4 bg-[var(--bg-input)] rounded overflow-hidden">
+              <div
+                className={`h-4 bg-[var(--bg-input)] rounded overflow-hidden ${onZoneDrillDown ? 'cursor-pointer' : ''}`}
+                onClick={onZoneDrillDown ? () => onZoneDrillDown(d.zone) : undefined}
+                title={onZoneDrillDown ? 'Ver detalle de zona' : undefined}
+              >
                 <div
                   className="h-full rounded"
                   style={{
@@ -67,8 +79,9 @@ export function ZoneRevenueChart({ data, selectedZone, onZoneClick }: ZoneRevenu
               <div className="flex items-center gap-3 mt-0.5">
                 <span className="text-[9px] text-[var(--text-secondary)]">{d.cheques} cheques</span>
                 <span className="text-[9px] text-[var(--text-secondary)]">Ticket: {formatCOPDisplay(d.ticketPromedio)}</span>
+                <span className="text-[9px] text-[var(--text-secondary)]">Propina: {formatCOPDisplay(d.propinaTotal)}</span>
               </div>
-            </button>
+            </div>
           )
         })}
         {data.length === 0 && (

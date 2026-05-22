@@ -9,6 +9,31 @@ export interface POSDashboardFilters {
   to?: string         // override fecha fin (default: 2026-04-30)
 }
 
+export type DrillDownType = 'product' | 'staff' | 'category' | 'hour' | 'zone'
+
+export interface DrillDownState {
+  type: DrillDownType
+  id: string
+  label: string
+}
+
+export interface DrillDownData {
+  type: string
+  summary: Record<string, unknown>
+  // Product
+  byZone?: Array<{ zone: string; qty: number; revenue: number; cheques: number }>
+  byHour?: Array<{ hour: number; qty: number; revenue: number; cheques: number }>
+  byDay?: Array<{ date: string; qty: number; revenue: number }>
+  companions?: Array<{ name: string; qty: number; revenue: number }>
+  // Staff
+  topProducts?: Array<{ product: string; qty: number; revenue: number }> | Array<{ productId: string; name: string; qty: number; revenue: number; cheques: number }>
+  dailyTrend?: Array<{ date: string; cheques: number; revenue: number; propina: number }>
+  // Hour
+  topStaff?: Array<{ name: string; cheques: number; revenue: number }>
+  // Zone
+  // (uses byHour, topProducts, topStaff, dailyTrend already defined)
+}
+
 export interface POSDashboardData {
   kpis: {
     revenue: number
@@ -18,6 +43,8 @@ export interface POSDashboardData {
     propinaPromedio: number
     personas: number
     partySizePromedio: number
+    cardPaidTotal: number
+    cashPaidTotal: number
   }
   byZone: Array<{
     zone: string
@@ -93,6 +120,12 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Drill-down state
+  const [drillDown, setDrillDown] = useState<DrillDownState | null>(null)
+  const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null)
+  const [drillDownLoading, setDrillDownLoading] = useState(false)
+  const [drillDownError, setDrillDownError] = useState<string | null>(null)
+
   const params = useMemo(() => {
     const p = new URLSearchParams()
     p.set('zone', filters.zone || 'all')
@@ -126,5 +159,39 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
     fetchData()
   }, [fetchData])
 
-  return { data, loading, error, refetch: fetchData }
+  const fetchDrillDown = useCallback(async (type: DrillDownType, id: string, label: string) => {
+    const from = filters.from || '2026-04-01'
+    const to = filters.to || '2026-04-30'
+    setDrillDown({ type, id, label })
+    setDrillDownLoading(true)
+    setDrillDownError(null)
+    setDrillDownData(null)
+    try {
+      const p = new URLSearchParams()
+      p.set('type', type)
+      p.set('id', id)
+      p.set('from', from)
+      p.set('to', to)
+      const res = await fetch(`/api/admin/pos-dashboard/detail?${p.toString()}`)
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setDrillDownError(d.error || 'Error cargando detalle')
+        return
+      }
+      const d = await res.json()
+      setDrillDownData(d)
+    } catch {
+      setDrillDownError('Error de conexion')
+    } finally {
+      setDrillDownLoading(false)
+    }
+  }, [filters.from, filters.to])
+
+  const closeDrillDown = useCallback(() => {
+    setDrillDown(null)
+    setDrillDownData(null)
+    setDrillDownError(null)
+  }, [])
+
+  return { data, loading, error, refetch: fetchData, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown }
 }

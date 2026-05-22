@@ -22,6 +22,7 @@ interface DayPerformanceProps {
     pct: number
   }>
   topProducts: Array<{
+    productId?: string
     productName: string
     category: string
     quantity: number
@@ -33,6 +34,7 @@ interface DayPerformanceProps {
     cheques: number
   }>
   staffPerformance: Array<{
+    staffId?: string
     staffName: string
     cheques: number
     revenue: number
@@ -45,6 +47,9 @@ interface DayPerformanceProps {
     personas: number
     ticketPromedio: number
   }
+  onProductDrillDown?: (productId: string, productName: string) => void
+  onStaffDrillDown?: (staffId: string, staffName: string) => void
+  onZoneDrillDown?: (zoneName: string) => void
 }
 
 const ZONE_COLORS: Record<string, string> = {
@@ -74,7 +79,7 @@ function formatDateLabel(dateStr: string): string {
   return `${DAYS_ES[d.getDay()]} ${d.getDate()} de ${MONTHS_ES[d.getMonth()]}`
 }
 
-export function DayPerformanceCard({ date, kpis, byZone, topProducts, hourlyRevenue, staffPerformance, periodAverages }: DayPerformanceProps) {
+export function DayPerformanceCard({ date, kpis, byZone, topProducts, hourlyRevenue, staffPerformance, periodAverages, onProductDrillDown, onStaffDrillDown, onZoneDrillDown }: DayPerformanceProps) {
   const maxHourRevenue = Math.max(...hourlyRevenue.map(h => h.revenue), 1)
   const top5 = topProducts.slice(0, 5)
   const top5Staff = staffPerformance.slice(0, 5)
@@ -112,7 +117,13 @@ export function DayPerformanceCard({ date, kpis, byZone, topProducts, hourlyReve
             {byZone.map(z => {
               const color = ZONE_COLORS[z.zone] || '#C9A94E'
               return (
-                <div key={z.zone} className="flex items-center gap-2">
+                <div
+                  key={z.zone}
+                  className={`flex items-center gap-2 ${onZoneDrillDown ? 'cursor-pointer hover:opacity-80' : ''}`}
+                  style={{ transition: 'opacity 150ms ease-out' }}
+                  onClick={onZoneDrillDown ? () => onZoneDrillDown(z.zone) : undefined}
+                  title={onZoneDrillDown ? 'Ver detalle de zona' : undefined}
+                >
                   <div
                     className="h-6 rounded-md flex items-center px-2 text-[11px] font-medium text-white shrink-0"
                     style={{ backgroundColor: color, minWidth: '60px' }}
@@ -135,7 +146,13 @@ export function DayPerformanceCard({ date, kpis, byZone, topProducts, hourlyReve
           <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Top productos</h4>
           <div className="space-y-1.5">
             {top5.map((p, i) => (
-              <div key={i} className="flex items-center gap-2 text-[11px]">
+              <div
+                key={i}
+                className={`flex items-center gap-2 text-[11px] ${onProductDrillDown && p.productId ? 'cursor-pointer hover:opacity-80' : ''}`}
+                style={{ transition: 'opacity 150ms ease-out' }}
+                onClick={onProductDrillDown && p.productId ? () => onProductDrillDown(p.productId!, p.productName) : undefined}
+                title={onProductDrillDown && p.productId ? 'Ver detalle del producto' : undefined}
+              >
                 <span className="w-4 text-[var(--text-secondary)] text-right shrink-0">{i + 1}.</span>
                 <span className="text-[var(--text-primary)] font-medium truncate flex-1">{p.productName}</span>
                 <span className="text-[var(--text-secondary)] shrink-0">{Math.round(Number(p.quantity))} uds</span>
@@ -150,7 +167,13 @@ export function DayPerformanceCard({ date, kpis, byZone, topProducts, hourlyReve
           <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Meseros</h4>
           <div className="space-y-1.5">
             {top5Staff.map((s, i) => (
-              <div key={i} className="flex items-center gap-2 text-[11px]">
+              <div
+                key={i}
+                className={`flex items-center gap-2 text-[11px] ${onStaffDrillDown && s.staffId ? 'cursor-pointer hover:opacity-80' : ''}`}
+                style={{ transition: 'opacity 150ms ease-out' }}
+                onClick={onStaffDrillDown && s.staffId ? () => onStaffDrillDown(s.staffId!, s.staffName) : undefined}
+                title={onStaffDrillDown && s.staffId ? 'Ver detalle del mesero' : undefined}
+              >
                 <span className="w-4 text-[var(--text-secondary)] text-right shrink-0">{i + 1}.</span>
                 <span className="text-[var(--text-primary)] font-medium truncate flex-1">{s.staffName}</span>
                 <span className="text-[var(--text-secondary)] shrink-0">{s.cheques}</span>

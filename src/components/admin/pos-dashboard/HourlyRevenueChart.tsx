@@ -6,6 +6,7 @@ import { formatCOPDisplay } from './KPICard'
 
 interface HourlyRevenueChartProps {
   data: Array<{ hour: string; revenue: number; cheques: number }>
+  onHourDrillDown?: (hour: string) => void
 }
 
 function formatHour(h: string): string {
@@ -36,7 +37,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   )
 }
 
-export function HourlyRevenueChart({ data }: HourlyRevenueChartProps) {
+export function HourlyRevenueChart({ data, onHourDrillDown }: HourlyRevenueChartProps) {
   if (data.length === 0) {
     return (
       <div>
@@ -71,10 +72,17 @@ export function HourlyRevenueChart({ data }: HourlyRevenueChartProps) {
             dataKey="revenue"
             fill="var(--color-ak-borgona)"
             radius={[4, 4, 0, 0]}
-            style={{ transition: 'all 300ms ease-out' }}
+            style={{ transition: 'all 300ms ease-out', cursor: onHourDrillDown ? 'pointer' : 'default' }}
+            onClick={onHourDrillDown ? (_data: unknown, index: number) => {
+              const item = data[index]
+              if (item) onHourDrillDown(item.hour)
+            } : undefined}
           />
         </BarChart>
       </ResponsiveContainer>
+      {onHourDrillDown && (
+        <p className="text-[9px] text-[var(--text-secondary)] text-center mt-1">Click en barra para ver detalle</p>
+      )}
     </div>
   )
 }

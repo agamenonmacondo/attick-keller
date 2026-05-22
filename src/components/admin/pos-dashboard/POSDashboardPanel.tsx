@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { usePOSDashboard, type POSDashboardFilters } from '@/lib/hooks/usePOSDashboard'
 import { AnimatedCard } from '../shared/AnimatedCard'
 import { Spinner } from '@phosphor-icons/react'
@@ -16,6 +16,7 @@ import { PaymentMethodsChart } from './PaymentMethodsChart'
 import { ClientTiersCard } from './ClientTiersCard'
 import { ClientSplitCard } from './ClientSplitCard'
 import { TopProductByCategoryChart } from './TopProductByCategoryChart'
+import { DayPerformanceCard } from './DayPerformanceCard'
 import { DataUploadSection } from './DataUploadSection'
 
 const DEFAULT_FILTERS: POSDashboardFilters = {
@@ -29,6 +30,10 @@ export function POSDashboardPanel() {
   const [filters, setFilters] = useState<POSDashboardFilters>(DEFAULT_FILTERS)
   const { data, loading, error, refetch } = usePOSDashboard(filters)
 
+  const isSingleDay = useMemo(() => {
+    return filters.from === filters.to && !!filters.from
+  }, [filters.from, filters.to])
+
   const handleZoneClick = useCallback((zone: string) => {
     setFilters(prev => ({ ...prev, zone }))
   }, [])
@@ -39,6 +44,10 @@ export function POSDashboardPanel() {
 
   const handleFilterChange = useCallback((newFilters: POSDashboardFilters) => {
     setFilters(newFilters)
+  }, [])
+
+  const handleDayClick = useCallback((date: string) => {
+    setFilters(prev => ({ ...prev, from: date, to: date }))
   }, [])
 
   if (error) {
@@ -59,9 +68,13 @@ export function POSDashboardPanel() {
         <div>
           <h2 className="text-lg font-bold text-[var(--text-primary)]">Operacion POS</h2>
           <p className="text-xs text-[var(--text-secondary)]">
-            Datos de abril 2026 · {filters.from} a {filters.to}
+            {isSingleDay
+              ? `${filters.from}`
+              : `${filters.from} a ${filters.to}`
+            }
             {filters.zone !== 'all' && ` · Zona: ${filters.zone}`}
             {filters.category !== 'all' && ` · Categoria filtrada`}
+            {isSingleDay && ` · Vista por dia`}
           </p>
         </div>
         <POSFiltersBar
@@ -80,6 +93,20 @@ export function POSDashboardPanel() {
 
       {data && (
         <>
+          {/* Day Performance Card - only when single day selected */}
+          {isSingleDay && (
+            <AnimatedCard delay={0} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-5">
+              <DayPerformanceCard
+                date={filters.from!}
+                kpis={data.kpis}
+                byZone={data.byZone}
+                topProducts={data.topProducts}
+                hourlyRevenue={data.hourlyRevenue}
+                staffPerformance={data.staffPerformance}
+              />
+            </AnimatedCard>
+          )}
+
           {/* KPIs */}
           <AnimatedCard delay={0} className="p-0 overflow-visible">
             <div className="p-4">
@@ -101,10 +128,15 @@ export function POSDashboardPanel() {
             </AnimatedCard>
           </div>
 
-          {/* Daily Trend */}
-          <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-5">
-            <POSDailyTrendChart data={data.dailyTrend} />
-          </AnimatedCard>
+          {/* Daily Trend - only when NOT single day (clickable bars) */}
+          {!isSingleDay && (
+            <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-5">
+              <POSDailyTrendChart
+                data={data.dailyTrend}
+                onDayClick={handleDayClick}
+              />
+            </AnimatedCard>
+          )}
 
           {/* Category + Products + Top by Category */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

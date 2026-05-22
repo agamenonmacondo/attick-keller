@@ -8,6 +8,7 @@ import { AdminTabBar, type AdminTab } from './AdminTabBar'
 import { ReservationsPanel } from './reservations/ReservationsPanel'
 import { OccupancyPanel } from './occupancy/OccupancyPanel'
 import { MetricsPanel } from './metrics/MetricsPanel'
+import { POSDashboardPanel } from './pos-dashboard/POSDashboardPanel'
 import { CustomersPanel } from './customers/CustomersPanel'
 import { MenuPanel } from './menu/MenuPanel'
 import { TeamPanel } from './team/TeamPanel'
@@ -56,6 +57,7 @@ export function AdminShell() {
         {activeTab === 'mesas' && <TablesPanel />}
         {activeTab === 'plano' && <FloorPlanMap />}
         {activeTab === 'metricas' && <MetricsPanel />}
+        {activeTab === 'operacion' && <POSDashboardPanel />}
         {activeTab === 'clientes' && <CustomersPanel />}
         {activeTab === 'menu' && <MenuPanel />}
         {activeTab === 'equipo' && <TeamPanel />}

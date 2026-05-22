@@ -1,9 +1,9 @@
 'use client'
 
 import { cn } from '@/lib/utils/cn'
-import { CalendarDots, Table, ChartBar, Users, ForkKnife, IdentificationBadge, Coffee, MapTrifold } from '@phosphor-icons/react'
+import { CalendarDots, Table, ChartBar, ChartPieSlice, Users, ForkKnife, IdentificationBadge, Coffee, MapTrifold } from '@phosphor-icons/react'
 
-export type AdminTab = 'reservas' | 'ocupacion' | 'mesas' | 'plano' | 'metricas' | 'clientes' | 'menu' | 'equipo'
+export type AdminTab = 'reservas' | 'ocupacion' | 'mesas' | 'plano' | 'metricas' | 'operacion' | 'clientes' | 'menu' | 'equipo'
 
 const TABS: { key: AdminTab; label: string; icon: React.ReactNode }[] = [
   { key: 'reservas', label: 'Reservas', icon: <CalendarDots size={18} weight="regular" /> },
@@ -11,6 +11,7 @@ const TABS: { key: AdminTab; label: string; icon: React.ReactNode }[] = [
   { key: 'mesas', label: 'Mesas', icon: <Coffee size={18} weight="regular" /> },
   { key: 'plano', label: 'Plano', icon: <MapTrifold size={18} weight="regular" /> },
   { key: 'metricas', label: 'Metricas', icon: <ChartBar size={18} weight="regular" /> },
+  { key: 'operacion', label: 'Operacion', icon: <ChartPieSlice size={18} weight="regular" /> },
   { key: 'clientes', label: 'Clientes', icon: <Users size={18} weight="regular" /> },
   { key: 'menu', label: 'Menu', icon: <ForkKnife size={18} weight="regular" /> },
   { key: 'equipo', label: 'Equipo', icon: <IdentificationBadge size={18} weight="regular" /> },

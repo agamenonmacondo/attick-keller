@@ -37,6 +37,7 @@ export interface POSDashboardData {
     revenue: number
     cheques: number
     propina: number
+    personas: number
   }>
   topProducts: Array<{
     productId: string

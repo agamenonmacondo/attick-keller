@@ -38,6 +38,13 @@ interface DayPerformanceProps {
     revenue: number
     propinaTotal: number
   }>
+  periodAverages?: {
+    revenue: number
+    cheques: number
+    propinaTotal: number
+    personas: number
+    ticketPromedio: number
+  }
 }
 
 const ZONE_COLORS: Record<string, string> = {
@@ -67,7 +74,7 @@ function formatDateLabel(dateStr: string): string {
   return `${DAYS_ES[d.getDay()]} ${d.getDate()} de ${MONTHS_ES[d.getMonth()]}`
 }
 
-export function DayPerformanceCard({ date, kpis, byZone, topProducts, hourlyRevenue, staffPerformance }: DayPerformanceProps) {
+export function DayPerformanceCard({ date, kpis, byZone, topProducts, hourlyRevenue, staffPerformance, periodAverages }: DayPerformanceProps) {
   const maxHourRevenue = Math.max(...hourlyRevenue.map(h => h.revenue), 1)
   const top5 = topProducts.slice(0, 5)
   const top5Staff = staffPerformance.slice(0, 5)

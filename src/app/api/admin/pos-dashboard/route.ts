@@ -201,16 +201,17 @@ export async function GET(request: NextRequest) {
     .sort((a, b) => Number(a.hour) - Number(b.hour))
 
   // ── Daily Trend ──
-  const dayMap = new Map<string, { revenue: number; cheques: number; propina: number }>()
+  const dayMap = new Map<string, { revenue: number; cheques: number; propina: number; personas: number }>()
   for (const s of salesForKPIs) {
     const opened = s.opened_at
     if (!opened) continue
     const date = opened.slice(0, 10)
-    if (!dayMap.has(date)) dayMap.set(date, { revenue: 0, cheques: 0, propina: 0 })
+    if (!dayMap.has(date)) dayMap.set(date, { revenue: 0, cheques: 0, propina: 0, personas: 0 })
     const d = dayMap.get(date)!
     d.revenue += Number(s.total) || 0
     d.cheques += 1
     d.propina += Number(s.tip_amount) || 0
+    d.personas += Number(s.party_size) || 0
   }
   const dailyTrend = [...dayMap.entries()]
     .map(([date, d]) => ({
@@ -218,6 +219,7 @@ export async function GET(request: NextRequest) {
       revenue: Math.round(d.revenue),
       cheques: d.cheques,
       propina: Math.round(d.propina),
+      personas: Math.round(d.personas),
     }))
     .sort((a, b) => a.date.localeCompare(b.date))
 

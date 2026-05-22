@@ -542,8 +542,10 @@ export async function GET(request: NextRequest) {
     .from('pos_product_groups')
     .select('pos_group_id, name')
     .order('pos_group_id')
+  // Only include categories that have at least one product assigned
+  const categoriesWithProducts = new Set(Array.from(productInfo.values()).map((v: any) => v.groupId).filter(Boolean))
   const categoryList = (allGroups || [])
-    .filter((g: any) => g.pos_group_id && !g.pos_group_id.startsWith('SG_'))
+    .filter((g: any) => g.pos_group_id && !g.pos_group_id.startsWith('SG_') && categoriesWithProducts.has(g.pos_group_id))
     .map((g: any) => ({ id: g.pos_group_id, name: g.name }))
 
   // ── NEW: Shifts (last 10) ──

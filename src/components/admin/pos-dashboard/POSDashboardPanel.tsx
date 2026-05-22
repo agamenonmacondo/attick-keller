@@ -15,6 +15,7 @@ import { StaffPerformanceTable } from './StaffPerformanceTable'
 import { PaymentMethodsChart } from './PaymentMethodsChart'
 import { ClientTiersCard } from './ClientTiersCard'
 import { ClientSplitCard } from './ClientSplitCard'
+import { TopProductByCategoryChart } from './TopProductByCategoryChart'
 import { DataUploadSection } from './DataUploadSection'
 
 const DEFAULT_FILTERS: POSDashboardFilters = {
@@ -105,7 +106,7 @@ export function POSDashboardPanel() {
             <POSDailyTrendChart data={data.dailyTrend} />
           </AnimatedCard>
 
-          {/* Category + Products */}
+          {/* Category + Products + Top by Category */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-5">
               <CategoryBreakdown
@@ -118,6 +119,11 @@ export function POSDashboardPanel() {
               <TopProductsTable data={data.topProducts} />
             </AnimatedCard>
           </div>
+
+          {/* Producto estrella por categoria */}
+          <AnimatedCard delay={0.33} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-5">
+            <TopProductByCategoryChart data={data.topProductByCategory || []} />
+          </AnimatedCard>
 
           {/* Staff + Payments */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

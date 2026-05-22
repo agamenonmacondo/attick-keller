@@ -52,6 +52,14 @@ export interface POSDashboardData {
     revenue: number
     cheques: number
   }>
+  topProductByCategory: Array<{
+    categoryId: string
+    categoryName: string
+    productId: string
+    productName: string
+    quantity: number
+    revenue: number
+  }>
   staffPerformance: Array<{
     staffId: string
     staffName: string

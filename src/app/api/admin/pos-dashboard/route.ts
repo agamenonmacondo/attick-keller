@@ -189,8 +189,17 @@ export async function GET(request: NextRequest) {
       }
     }
   }
-  const totalZoneRevenue = [...zoneMap.values()].reduce((s, d) => s + d.revenue, 0)
-  const byZone = [...zoneMap.entries()]
+  // ── BUG-03 FIX: Separate "Desconocido" from regular zones ──
+  const unknownZoneData = zoneMap.get('Desconocido')
+  const unknownZone = unknownZoneData ? {
+    revenue: Math.round(unknownZoneData.revenue),
+    cheques: unknownZoneData.cheques,
+    pct: totalRevenue > 0 ? Math.round((unknownZoneData.revenue / totalRevenue) * 100) : 0,
+  } : { revenue: 0, cheques: 0, pct: 0 }
+
+  const knownZoneEntries = [...zoneMap.entries()].filter(([zone]) => zone !== 'Desconocido')
+  const totalZoneRevenue = knownZoneEntries.reduce((s, [, d]) => s + d.revenue, 0)
+  const byZone = knownZoneEntries
     .map(([zone, d]) => ({
       zone,
       revenue: Math.round(d.revenue),
@@ -298,6 +307,16 @@ export async function GET(request: NextRequest) {
         }
       }
     }
+  }
+
+  // ── BUG-01 FIX: Filter items by selected category ──
+  if (categoryParam && categoryParam !== 'all') {
+    const categoryProductIds = new Set(
+      [...productInfo.entries()]
+        .filter(([, info]) => info.groupId === categoryParam)
+        .map(([pid]) => pid)
+    )
+    allItems = allItems.filter((item: any) => categoryProductIds.has(String(item.pos_product_id)))
   }
 
   // ── Top Products (revenue = quantity * unit_price, NO 'total' column) ──
@@ -681,6 +700,7 @@ export async function GET(request: NextRequest) {
       avgServiceTime: Math.round(avgServiceTime),
     },
     byZone,
+    unknownZone,
     hourlyRevenue,
     dailyTrend,
     topProducts,

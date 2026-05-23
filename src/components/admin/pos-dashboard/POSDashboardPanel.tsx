@@ -254,6 +254,7 @@ export function POSDashboardPanel() {
                 selectedZone={filters.zone}
                 onZoneClick={handleZoneClick}
                 onZoneDrillDown={handleZoneDrillDown}
+                unknownZone={data.unknownZone}
               />
             </AnimatedCard>
             <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">

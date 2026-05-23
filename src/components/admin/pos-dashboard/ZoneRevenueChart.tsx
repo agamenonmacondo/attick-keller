@@ -10,7 +10,6 @@ const ZONE_COLORS: Record<string, string> = {
   'Llevar': 'var(--color-ak-oliva)',
   'Interno': 'var(--color-ak-dorado)',
   'Keller': 'var(--color-ak-cal)',
-  'Desconocido': 'var(--text-secondary)',
 }
 
 interface ZoneRevenueChartProps {
@@ -25,9 +24,10 @@ interface ZoneRevenueChartProps {
   selectedZone: string
   onZoneClick: (zone: string) => void
   onZoneDrillDown?: (zoneName: string) => void
+  unknownZone?: { revenue: number; cheques: number; pct: number }
 }
 
-export function ZoneRevenueChart({ data, selectedZone, onZoneClick, onZoneDrillDown }: ZoneRevenueChartProps) {
+export function ZoneRevenueChart({ data, selectedZone, onZoneClick, onZoneDrillDown, unknownZone }: ZoneRevenueChartProps) {
   const maxRevenue = Math.max(...data.map(d => d.revenue), 1)
 
   return (
@@ -86,6 +86,13 @@ export function ZoneRevenueChart({ data, selectedZone, onZoneClick, onZoneDrillD
         })}
         {data.length === 0 && (
           <p className="text-xs text-[var(--text-secondary)] text-center py-4">Sin datos</p>
+        )}
+        {unknownZone && unknownZone.revenue > 0 && (
+          <div className="mt-2 px-2 py-1.5 rounded bg-[var(--bg-input)] border border-[var(--border-default)]">
+            <p className="text-[10px] text-[var(--text-secondary)]">
+              <span className="font-medium text-[var(--text-primary)]">{unknownZone.pct}%</span> de ventas sin zona asignada: <span className="font-mono tabular-nums">{formatCOPDisplay(unknownZone.revenue)}</span> ({unknownZone.cheques} cheques)
+            </p>
+          </div>
         )}
       </div>
     </div>

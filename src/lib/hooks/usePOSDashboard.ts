@@ -62,6 +62,11 @@ export interface POSDashboardData {
     pct: number
     avgServiceTime: number
   }>
+  unknownZone: {
+    revenue: number
+    cheques: number
+    pct: number
+  }
   hourlyRevenue: Array<{
     hour: string
     revenue: number

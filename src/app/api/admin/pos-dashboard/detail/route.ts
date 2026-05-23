@@ -580,14 +580,14 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
 
   const categoryName = groupData?.name || 'Desconocido'
 
-  // ── Get product IDs in this category ──
+  // ── Get product IDs in this category (BUG-02 FIX: include price for left-join) ──
   let catProducts: any[] = []
   let prodOffset = 0
   let prodHasMore = true
   while (prodHasMore) {
     const { data, error } = await sb
       .from('pos_products')
-      .select('pos_product_id, name')
+      .select('pos_product_id, name, price')
       .eq('pos_group_id', groupId)
       .range(prodOffset, prodOffset + BATCH - 1)
     if (error || !data || data.length === 0) { prodHasMore = false; break }
@@ -598,7 +598,11 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
 
   const productIdsInCat = catProducts.map((p: any) => p.pos_product_id)
   const productNameMap = new Map<string, string>()
-  for (const p of catProducts) productNameMap.set(p.pos_product_id, p.name)
+  const productPriceMap = new Map<string, number>()
+  for (const p of catProducts) {
+    productNameMap.set(p.pos_product_id, p.name)
+    productPriceMap.set(p.pos_product_id, Number(p.price) || 0)
+  }
 
   // ── Get all items for these products ──
   let allItems: any[] = []
@@ -632,7 +636,7 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
   const saleMap = new Map<string, any>()
   for (const s of activeSales) saleMap.set(s.id, s)
 
-  // ── topProducts ──
+  // ── BUG-02 FIX: topProducts as LEFT-JOIN (ALL category products, even with 0 sales) ──
   const topProductMap = new Map<string, { productId: string; name: string; qty: number; revenue: number; cheques: Set<string> }>()
   for (const item of validItems) {
     const name = productNameMap.get(item.pos_product_id) || 'Desconocido'
@@ -644,10 +648,20 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
     d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
     d.cheques.add(item.pos_sale_id)
   }
-  const topProducts = [...topProductMap.values()]
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 15)
-    .map(p => ({ productId: p.productId, name: p.name, qty: p.qty, revenue: Math.round(p.revenue), cheques: p.cheques.size }))
+  // Left-join: include products with no sales in the period
+  const topProducts = catProducts.map((p: any) => {
+    const d = topProductMap.get(p.pos_product_id)
+    const name = p.name || 'Desconocido'
+    const price = productPriceMap.get(p.pos_product_id) || 0
+    return {
+      productId: String(p.pos_product_id),
+      name,
+      qty: d?.qty || 0,
+      revenue: d ? Math.round(d.revenue) : 0,
+      avgPrice: d && d.qty > 0 ? Math.round(d.revenue / d.qty) : Math.round(price),
+      cheques: d?.cheques.size || 0,
+    }
+  }).sort((a: any, b: any) => b.revenue - a.revenue)
 
   // ── byZone (ENRICHED: propina, avgServiceTime) ──
   const zoneMap = new Map<string, { revenue: number; cheques: Set<string>; propina: number; serviceTimeSum: number; serviceTimeCount: number }>()

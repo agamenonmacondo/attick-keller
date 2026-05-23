@@ -36,6 +36,11 @@ export function TopProductsTable({ data, initialLimit = 10, expandedLimit = 15, 
   const isCategoryFiltered = selectedCategory && selectedCategory !== 'all' && productsByCategory
   const categoryProducts = isCategoryFiltered ? (productsByCategory[selectedCategory] || []) : null
 
+  // DEBUG
+  if (typeof window !== 'undefined' && selectedCategory && selectedCategory !== 'all') {
+    console.log('[TopProductsTable] debug:', { selectedCategory, productsByCategoryKeys: productsByCategory ? Object.keys(productsByCategory) : 'undefined', categoryProductsCount: categoryProducts?.length })
+  }
+
   // Build display data based on category filter
   const displayData: Array<{ productId: string; productName: string; label: string; quantity: number; revenue: number }> = categoryProducts
     ? categoryProducts.map(p => ({

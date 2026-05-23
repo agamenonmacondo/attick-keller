@@ -3,7 +3,6 @@
 import { useMemo } from 'react'
 import { ActivityCalendar } from 'react-activity-calendar'
 import { SectionHeading } from '../shared/SectionHeading'
-import 'react-activity-calendar/build/tooltips.css'
 
 type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 

@@ -1,6 +1,5 @@
 'use client'
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts'
 import { SectionHeading } from '../shared/SectionHeading'
 
 interface TopProductByCategory {
@@ -30,23 +29,46 @@ function formatCOP(n: number): string {
 interface TopProductByCategoryChartProps {
   data: TopProductByCategory[]
   onProductDrillDown?: (productId: string, productName: string) => void
+  selectedCategory?: string
+  onCategoryDrillDown?: (categoryId: string, categoryName: string) => void
 }
 
-export function TopProductByCategoryChart({ data, onProductDrillDown }: TopProductByCategoryChartProps) {
+export function TopProductByCategoryChart({ data, onProductDrillDown, selectedCategory, onCategoryDrillDown }: TopProductByCategoryChartProps) {
   if (!data || data.length === 0) return null
 
-  const chartData = data.slice(0, 12).map(d => ({
+  // Filter to selected category if one is selected
+  const isFiltered = selectedCategory && selectedCategory !== 'all'
+  const filteredData = isFiltered
+    ? data.filter(d => d.categoryId === selectedCategory)
+    : data
+
+  const chartData = filteredData.slice(0, 12).map(d => ({
     ...d,
     label: `${d.productName}`,
     shortCat: d.categoryName.length > 14 ? d.categoryName.slice(0, 12) + '..' : d.categoryName,
   }))
 
+  if (chartData.length === 0) {
+    return (
+      <div>
+        <SectionHeading>Producto estrella por categoria</SectionHeading>
+        <p className="text-xs text-[var(--text-secondary)] text-center py-8">Sin datos para esta categoria</p>
+      </div>
+    )
+  }
+
+  const heading = isFiltered
+    ? `Producto estrella`
+    : 'Producto estrella por categoria'
+
   return (
     <div>
-      <SectionHeading>Producto estrella por categoria</SectionHeading>
-      <p className="text-xs text-[var(--text-secondary)] mb-4">
-        El producto mas vendido en cada linea
-      </p>
+      <SectionHeading>{heading}</SectionHeading>
+      {!isFiltered && (
+        <p className="text-xs text-[var(--text-secondary)] mb-4">
+          El producto mas vendido en cada linea
+        </p>
+      )}
 
       <div className="space-y-3">
         {chartData.map((item, i) => {

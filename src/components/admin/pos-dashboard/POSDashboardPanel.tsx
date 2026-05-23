@@ -266,6 +266,9 @@ export function POSDashboardPanel() {
               <TopProductsTable
                 data={data.topProducts}
                 onProductDrillDown={handleProductDrillDown}
+                selectedCategory={filters.category}
+                productsByCategory={data.productsByCategory}
+                selectedCategoryName={data.topCategories?.find(c => c.categoryId === filters.category)?.categoryName}
               />
             </AnimatedCard>
           </div>
@@ -286,6 +289,8 @@ export function POSDashboardPanel() {
               <TopProductByCategoryChart
                 data={data.topProductByCategory || []}
                 onProductDrillDown={handleProductDrillDown}
+                selectedCategory={filters.category}
+                onCategoryDrillDown={handleCategoryDrillDown}
               />
             </AnimatedCard>
           </div>

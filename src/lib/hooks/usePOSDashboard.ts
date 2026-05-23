@@ -189,16 +189,27 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/admin/pos-dashboard?${params}`)
+      const url = `/api/admin/pos-dashboard?${params}`
+      console.log('[POSDashboard] Fetching:', url)
+      const res = await fetch(url)
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
+        console.error('[POSDashboard] API error:', res.status, d)
         setError(d.error || 'Error cargando datos')
         return
       }
       const d = await res.json()
+      console.log('[POSDashboard] Data received:', {
+        topProducts: d.topProducts?.length,
+        topCategories: d.topCategories?.length,
+        productsByCategoryKeys: Object.keys(d.productsByCategory || {}),
+        categoryListLength: d.categoryList?.length,
+        filters: d.filters,
+      })
       setData(d)
       setError(null)
-    } catch {
+    } catch (err) {
+      console.error('[POSDashboard] Fetch error:', err)
       setError('Error de conexion')
     } finally {
       setLoading(false)

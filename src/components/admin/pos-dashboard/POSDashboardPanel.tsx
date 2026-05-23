@@ -278,6 +278,8 @@ export function POSDashboardPanel() {
                 selectedCategory={filters.category}
                 onCategoryClick={handleCategoryClick}
                 onCategoryDrillDown={handleCategoryDrillDown}
+                onProductDrillDown={handleProductDrillDown}
+                productsByCategory={data.productsByCategory}
               />
             </AnimatedCard>
             <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">

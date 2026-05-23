@@ -103,6 +103,13 @@ export interface POSDashboardData {
     quantity: number
     revenue: number
   }>
+  productsByCategory: Record<string, Array<{
+    productId: string
+    productName: string
+    quantity: number
+    revenue: number
+    cheques: number
+  }>>
   staffPerformance: Array<{
     staffId: string
     staffName: string

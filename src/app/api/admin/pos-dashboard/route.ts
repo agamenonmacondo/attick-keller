@@ -409,6 +409,36 @@ export async function GET(request: NextRequest) {
     .filter(c => c.categoryName !== 'Sin categoria')
     .sort((a, b) => b.revenue - a.revenue)
 
+  // ── Products by Category (ALL products, not just top 1, for inline expand) ──
+  // Also need cheques per product: count unique sale IDs
+  const productSaleIds = new Map<string, Set<string>>()
+  for (const item of allItems) {
+    const pid = item.pos_product_id
+    if (!productSaleIds.has(pid)) productSaleIds.set(pid, new Set())
+    productSaleIds.get(pid)!.add(item.pos_sale_id)
+  }
+
+  // Build productsByCategory only for the top 15 categories (from topCategories)
+  const top15CategoryIds = topCategories.slice(0, 15).map(c => c.categoryId)
+  const productsByCategory: Record<string, Array<{ productId: string; productName: string; quantity: number; revenue: number; cheques: number }>> = {}
+  for (const catId of top15CategoryIds) {
+    const prodMap = perCatProduct.get(catId)
+    if (!prodMap) continue
+    const products = [...prodMap.entries()]
+      .map(([prodId, stats]) => {
+        const info = productInfo.get(prodId)
+        return {
+          productId: prodId,
+          productName: info?.name || 'Desconocido',
+          quantity: stats.quantity,
+          revenue: Math.round(stats.revenue),
+          cheques: productSaleIds.get(prodId)?.size || 0,
+        }
+      })
+      .sort((a, b) => b.revenue - a.revenue)
+    productsByCategory[catId] = products
+  }
+
   // ── Staff Performance (ENRICHED: staff_type) ──
   const staffMap = new Map<string, { cheques: number; revenue: number; propinaTotal: number }>()
   for (const s of salesForKPIs) {
@@ -656,6 +686,7 @@ export async function GET(request: NextRequest) {
     topProducts,
     topCategories,
     topProductByCategory,
+    productsByCategory,
     staffPerformance,
     paymentMethods,
     clientTiers,

@@ -299,6 +299,64 @@ export async function GET(request: NextRequest) {
     ? ((grandTotal.hed + grandTotal.hen) / grandTotal.total * 100)
     : 0
 
+  // ── Daily breakdown: people count and avg hours per day ──
+  const dailyBreakdown: Record<string, { fecha: string; diaSemana: string; personas: number; horasTotal: number; horasPromedio: number }> = {}
+  const weekDayNames = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
+
+  for (const d of dailyData) {
+    if (!dailyBreakdown[d.fecha]) {
+      const dayIdx = new Date(d.fecha + 'T12:00:00').getDay()
+      dailyBreakdown[d.fecha] = {
+        fecha: d.fecha,
+        diaSemana: weekDayNames[dayIdx],
+        personas: 0,
+        horasTotal: 0,
+        horasPromedio: 0,
+      }
+    }
+  }
+
+  // Count unique staff per date
+  const staffPerDate = new Map<string, Set<string>>()
+  const hoursPerDate = new Map<string, number>()
+  for (const d of dailyData) {
+    if (!staffPerDate.has(d.fecha)) {
+      staffPerDate.set(d.fecha, new Set())
+      hoursPerDate.set(d.fecha, 0)
+    }
+    staffPerDate.get(d.fecha)!.add(d.staff_id)
+    hoursPerDate.set(d.fecha, (hoursPerDate.get(d.fecha) || 0) + intervalToMinutes(d.total_horas))
+  }
+
+  const dailyBreakdownList = Object.keys(dailyBreakdown).sort().map(fecha => {
+    const personas = staffPerDate.get(fecha)?.size || 0
+    const horasTotal = hoursPerDate.get(fecha) || 0
+    return {
+      ...dailyBreakdown[fecha],
+      personas,
+      horasTotal: Math.round(horasTotal / 60 * 10) / 10,
+      horasPromedio: personas > 0 ? Math.round((horasTotal / personas / 60) * 10) / 10 : 0,
+    }
+  })
+
+  // Weekday aggregation
+  const weekdayAvg: Record<string, { dia: string; avgPersonas: number; avgHoras: number; count: number }> = {}
+  for (const db of dailyBreakdownList) {
+    const dia = db.diaSemana
+    if (!weekdayAvg[dia]) weekdayAvg[dia] = { dia, avgPersonas: 0, avgHoras: 0, count: 0 }
+    weekdayAvg[dia].avgPersonas += db.personas
+    weekdayAvg[dia].avgHoras += db.horasPromedio
+    weekdayAvg[dia].count++
+  }
+  const weekdayAvgList = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom']
+    .filter(d => weekdayAvg[d])
+    .map(d => ({
+      dia: d,
+      avgPersonas: Math.round(weekdayAvg[d].avgPersonas / weekdayAvg[d].count * 10) / 10,
+      avgHoras: Math.round(weekdayAvg[d].avgHoras / weekdayAvg[d].count * 10) / 10,
+      count: weekdayAvg[d].count,
+    }))
+
   return NextResponse.json({
     periodo: { from, to },
     resumen: {
@@ -321,5 +379,7 @@ export async function GET(request: NextRequest) {
       rnMins: grandTotal.rn,
     },
     staff: result,
+    dailyBreakdown: dailyBreakdownList,
+    weekdayAvg: weekdayAvgList,
   })
 }

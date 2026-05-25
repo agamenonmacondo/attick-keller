@@ -71,6 +71,21 @@ export interface NominaPeriodo {
   to: string
 }
 
+export interface DailyBreakdown {
+  fecha: string
+  diaSemana: string
+  personas: number
+  horasTotal: number
+  horasPromedio: number
+}
+
+export interface WeekdayAvg {
+  dia: string
+  avgPersonas: number
+  avgHoras: number
+  count: number
+}
+
 export type NominaView = 'summary' | 'detail'
 
 export function useNomina(from: string, to: string) {
@@ -78,6 +93,8 @@ export function useNomina(from: string, to: string) {
     periodo: NominaPeriodo
     resumen: NominaResumen
     staff: NominaStaffSummary[]
+    dailyBreakdown: DailyBreakdown[]
+    weekdayAvg: WeekdayAvg[]
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

@@ -46,7 +46,7 @@ function HoursBarChart({ resumen }: { resumen: NominaResumen }) {
   )
 }
 
-import type { NominaResumen, NominaStaffSummary, NominaStaffDetail, NominaStaffPosData } from '@/lib/hooks/useNomina'
+import type { NominaResumen, NominaStaffSummary, NominaStaffDetail, NominaStaffPosData, DailyBreakdown, WeekdayAvg } from '@/lib/hooks/useNomina'
 
 function StaffDetailPanel({
   staff,
@@ -357,6 +357,84 @@ export function NominaPanel() {
           </AnimatedCard>
         </div>
       </div>
+
+      {/* Personal por dia - calendar heatmap */}
+      <AnimatedCard className="p-4">
+        <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Personal por dia</h4>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-[var(--border-default)]">
+                <th className="text-left py-1.5 px-1 text-[var(--text-secondary)]">Fecha</th>
+                <th className="text-left py-1.5 px-1 text-[var(--text-secondary)]">Dia</th>
+                <th className="text-right py-1.5 px-1 text-[var(--text-secondary)]">Personas</th>
+                <th className="text-right py-1.5 px-1 text-[var(--text-secondary)]">Horas total</th>
+                <th className="text-right py-1.5 px-1 text-[var(--text-secondary)]">Prom/_persona</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.dailyBreakdown?.map((d: DailyBreakdown) => {
+                const isWeekend = d.diaSemana === 'Dom' || d.diaSemana === 'Sab'
+                const maxPersons = Math.max(...(data.dailyBreakdown?.map((x: DailyBreakdown) => x.personas) || [1]))
+                const barWidth = maxPersons > 0 ? (d.personas / maxPersons) * 100 : 0
+                const minPersons = Math.min(...(data.dailyBreakdown?.map((x: DailyBreakdown) => x.personas) || [1]))
+                const isMinDay = d.personas === minPersons && minPersons !== maxPersons
+                return (
+                  <tr key={d.fecha} className={`border-b border-[var(--border-default)]/50 ${isWeekend ? 'bg-[var(--color-ak-borgona)]/5' : ''} ${isMinDay ? 'bg-red-500/10' : ''}`}>
+                    <td className="py-1.5 px-1 text-[var(--text-primary)]">{d.fecha.slice(5)}</td>
+                    <td className="py-1.5 px-1 text-[var(--text-secondary)]">{d.diaSemana}</td>
+                    <td className="py-1.5 px-1">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-16 h-3 bg-[var(--bg-secondary)] rounded overflow-hidden">
+                          <div className="h-full rounded" style={{ width: `${barWidth}%`, backgroundColor: isMinDay ? '#ef4444' : 'var(--color-ak-borgona)', transition: 'width 0.3s' }} />
+                        </div>
+                        <span className={`font-medium ${isMinDay ? 'text-red-400' : 'text-[var(--text-primary)]'}`}>{d.personas}</span>
+                      </div>
+                    </td>
+                    <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{d.horasTotal}h</td>
+                    <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{d.horasPromedio}h</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        {data.dailyBreakdown && data.dailyBreakdown.length > 0 && (
+          <div className="mt-2 flex items-center gap-3 text-[10px] text-[var(--text-secondary)]">
+            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)]"></span> Normal</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-red-500"></span> Menos personal</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)]/20"></span> Fin de semana</span>
+          </div>
+        )}
+      </AnimatedCard>
+
+      {/* Promedio por dia de la semana */}
+      <AnimatedCard className="p-4">
+        <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Promedio por dia de la semana</h4>
+        <div className="space-y-2">
+          {data.weekdayAvg?.map((w: WeekdayAvg) => {
+            const maxP = Math.max(...(data.weekdayAvg?.map((x: WeekdayAvg) => x.avgPersonas) || [1]))
+            const barP = maxP > 0 ? (w.avgPersonas / maxP) * 100 : 0
+            const minP = Math.min(...(data.weekdayAvg?.map((x: WeekdayAvg) => x.avgPersonas) || [1]))
+            const isMin = w.avgPersonas === minP
+            return (
+              <div key={w.dia} className="flex items-center gap-2">
+                <span className="text-xs text-[var(--text-secondary)] w-8 shrink-0">{w.dia}</span>
+                <div className="flex-1 h-5 bg-[var(--bg-secondary)] rounded overflow-hidden">
+                  <div
+                    className="h-full rounded flex items-center pl-1.5 text-[10px] font-medium text-white"
+                    style={{ width: `${Math.max(barP, 12)}%`, backgroundColor: isMin ? '#ef4444' : 'var(--color-ak-borgona)', transition: 'width 0.5s' }}
+                  >
+                    {w.avgPersonas}
+                  </div>
+                </div>
+                <span className="text-xs text-[var(--text-secondary)] w-20 text-right">{w.avgHoras}h prom</span>
+                <span className="text-[10px] text-[var(--text-secondary)]">({w.count}d)</span>
+              </div>
+            )
+          })}
+        </div>
+      </AnimatedCard>
 
       {/* Staff table */}
       <AnimatedCard className="p-4">

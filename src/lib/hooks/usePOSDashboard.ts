@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 
 export interface POSDashboardFilters {
   zone: string        // 'all' | 'Tipi' | 'Attic' | 'Chispas'
@@ -190,6 +190,9 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
   const [drillDownLoading, setDrillDownLoading] = useState(false)
   const [drillDownError, setDrillDownError] = useState<string | null>(null)
 
+  // Ref to cancel stale fetches (fixes React StrictMode double-render race condition)
+  const abortRef = useRef<AbortController | null>(null)
+
   const params = useMemo(() => {
     const p = new URLSearchParams()
     p.set('zone', filters.zone || 'all')
@@ -199,40 +202,89 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
     return p.toString()
   }, [filters.zone, filters.category, filters.from, filters.to])
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const url = `/api/admin/pos-dashboard?${params}`
-      console.log('[POSDashboard] Fetching:', url)
-      const res = await fetch(url)
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        console.error('[POSDashboard] API error:', res.status, d)
-        setError(d.error || 'Error cargando datos')
-        return
-      }
-      const d = await res.json()
-      console.log('[POSDashboard] Data received:', {
-        topProducts: d.topProducts?.length,
-        topCategories: d.topCategories?.length,
-        productsByCategoryKeys: Object.keys(d.productsByCategory || {}),
-        categoryListLength: d.categoryList?.length,
-        filters: d.filters,
-      })
-      setData(d)
+  useEffect(() => {
+    // Cancel any in-flight request from previous render (StrictMode fix)
+    if (abortRef.current) {
+      abortRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortRef.current = controller
+    const signal = controller.signal
+
+    let cancelled = false
+
+    async function fetchDashboard() {
+      setLoading(true)
       setError(null)
-    } catch (err) {
-      console.error('[POSDashboard] Fetch error:', err)
-      setError('Error de conexion')
-    } finally {
-      setLoading(false)
+      try {
+        const url = `/api/admin/pos-dashboard?${params}`
+        console.log('[POSDashboard] Fetching:', url)
+        const res = await fetch(url, { signal })
+        if (signal.aborted) return
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}))
+          if (signal.aborted) return
+          console.error('[POSDashboard] API error:', res.status, d)
+          if (!cancelled) setError(d.error || 'Error cargando datos')
+          return
+        }
+        const d = await res.json()
+        if (signal.aborted) return
+        console.log('[POSDashboard] Data received:', {
+          topProducts: d.topProducts?.length,
+          topCategories: d.topCategories?.length,
+          productsByCategoryKeys: Object.keys(d.productsByCategory || {}),
+          categoryListLength: d.categoryList?.length,
+          selectedCategory: d.filters?.category,
+        })
+        if (!cancelled) {
+          setData(d)
+          setError(null)
+        }
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return // Stale request cancelled
+        console.error('[POSDashboard] Fetch error:', err)
+        if (!cancelled) setError('Error de conexion')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    fetchDashboard()
+
+    return () => {
+      cancelled = true
+      controller.abort()
     }
   }, [params])
 
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
+  const refetch = useCallback(() => {
+    // Trigger a re-fetch by incrementing a no-op state in the parent,
+    // or just call the API directly. Since params is the dependency,
+    // we can't force a re-fetch without changing params.
+    // Instead, we do a manual fetch here:
+    async function manualFetch() {
+      setLoading(true)
+      setError(null)
+      try {
+        const url = `/api/admin/pos-dashboard?${params}`
+        const res = await fetch(url)
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}))
+          setError(d.error || 'Error cargando datos')
+          return
+        }
+        const d = await res.json()
+        setData(d)
+        setError(null)
+      } catch {
+        setError('Error de conexion')
+      } finally {
+        setLoading(false)
+      }
+    }
+    manualFetch()
+  }, [params])
 
   const fetchDrillDown = useCallback(async (type: DrillDownType, id: string, label: string) => {
     const from = filters.from || '2026-04-01'
@@ -268,5 +320,5 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
     setDrillDownError(null)
   }, [])
 
-  return { data, loading, error, refetch: fetchData, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown }
+  return { data, loading, error, refetch, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown }
 }

@@ -260,11 +260,13 @@ export async function GET(request: NextRequest) {
     .sort((a, b) => a.date.localeCompare(b.date))
 
   // ── Sale items for products/categories ──
-  const saleIds = salesForKPIs.map((s: any) => s.id)
+  // CRITICAL: Use ALL sales (not filtered) so topCategories/productsByCategory
+  // always include every category in the date range, regardless of the selected filter.
+  const allSaleIds = allSales.map((s: any) => s.id)
   let allItems: any[] = []
-  if (saleIds.length > 0) {
-    for (let i = 0; i < saleIds.length; i += BATCH) {
-      const batch = saleIds.slice(i, i + BATCH)
+  if (allSaleIds.length > 0) {
+    for (let i = 0; i < allSaleIds.length; i += BATCH) {
+      const batch = allSaleIds.slice(i, i + BATCH)
       const { data: itemsData } = await sb
         .from('pos_sale_items')
         .select('pos_sale_id, pos_product_id, quantity, unit_price')
@@ -566,9 +568,9 @@ export async function GET(request: NextRequest) {
 
   // ── Payment Methods (CORRECT columns: pos_sale_id, pos_payment_method_id) ──
   let allPayments: any[] = []
-  if (saleIds.length > 0) {
-    for (let i = 0; i < saleIds.length; i += BATCH) {
-      const batch = saleIds.slice(i, i + BATCH)
+  if (allSaleIds.length > 0) {
+    for (let i = 0; i < allSaleIds.length; i += BATCH) {
+      const batch = allSaleIds.slice(i, i + BATCH)
       const { data: payData } = await sb
         .from('pos_sale_payments')
         .select('pos_sale_id, pos_payment_method_id, amount, tip')

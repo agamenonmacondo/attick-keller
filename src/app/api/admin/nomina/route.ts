@@ -287,9 +287,12 @@ export async function GET(request: NextRequest) {
       totalHours: formatHours(s.totalMins),
     }))
 
+  // Count unique dates for accurate "dias trabajados" count
+  const uniqueDates = new Set(daily.map((d: any) => d.fecha))
+
   // Average shift length
-  const totalShifts = daily.length
-  const avgShiftMins = totalShifts > 0 ? grandTotal.total / totalShifts : 0
+  const totalShifts = staffList.reduce((s, st) => s + st.dias_trabajados, 0)
+  const avgShiftMins = grandTotal.total > 0 ? grandTotal.total / totalShifts : 0
 
   // % extras
   const pctExtras = grandTotal.total > 0
@@ -300,7 +303,7 @@ export async function GET(request: NextRequest) {
     periodo: { from, to },
     resumen: {
       totalEmpleados: staffList.length,
-      totalDiasRegistros: totalShifts,
+      totalDiasRegistros: uniqueDates.size,
       totalHorasOrdinarias: formatHours(grandTotal.ho),
       totalHorasExtras: formatHours(grandTotal.hed + grandTotal.hen),
       totalHorasDominicales: formatHours(grandTotal.hdd + grandTotal.hdn),

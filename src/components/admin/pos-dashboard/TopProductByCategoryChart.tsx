@@ -82,7 +82,7 @@ export function TopProductByCategoryChart({
     : 'Producto estrella por categoria'
 
   return (
-    <div>
+    <div className="min-h-[180px] sm:min-h-[220px]">
       <SectionHeading>{heading}</SectionHeading>
       {!isFiltered && (
         <p className="text-[10px] sm:text-xs text-[var(--text-secondary)] mb-4">

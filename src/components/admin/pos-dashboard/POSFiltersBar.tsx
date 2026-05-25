@@ -32,7 +32,7 @@ export function POSFiltersBar({ filters, onChange, categoryList, zoneList }: POS
         <select
           value={filters.zone}
           onChange={e => onChange({ ...filters, zone: e.target.value })}
-          className="appearance-none bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg px-2.5 py-1 pr-7 text-[11px] text-[var(--text-primary)] cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--color-ak-borgona)]"
+          className="appearance-none bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg px-2.5 py-1 pr-7 text-[11px] sm:text-xs text-[var(--text-primary)] cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--color-ak-borgona)] min-w-[120px]"
         >
           {zones.map(z => (
             <option key={z.value} value={z.value}>{z.label}</option>
@@ -46,7 +46,7 @@ export function POSFiltersBar({ filters, onChange, categoryList, zoneList }: POS
         <select
           value={filters.category}
           onChange={e => onChange({ ...filters, category: e.target.value })}
-          className="appearance-none bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg px-2.5 py-1 pr-7 text-[11px] text-[var(--text-primary)] cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--color-ak-borgona)] max-w-[180px]"
+          className="appearance-none bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg px-2.5 py-1 pr-7 text-[11px] sm:text-xs text-[var(--text-primary)] cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--color-ak-borgona)] min-w-[120px] max-w-[180px]"
         >
           <option value="all">Todas las categorias</option>
           {categoryList.map(c => (

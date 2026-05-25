@@ -65,11 +65,11 @@ export function DayKPIBar({ kpis, averages, isSingleDay }: DayKPIBarProps) {
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
       {items.map(item => (
         <div
           key={item.key}
-          className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg px-3 py-2.5 text-center"
+          className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg p-2 sm:p-3 text-center"
         >
           <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] mb-0.5">
             {item.label}

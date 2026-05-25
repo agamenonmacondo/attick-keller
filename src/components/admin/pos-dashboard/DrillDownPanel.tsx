@@ -65,7 +65,7 @@ function TabBtn({ active, children, icon, onClick }: { active: boolean; children
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+      className={`flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-medium transition-colors ${
         active
           ? 'bg-[var(--color-ak-borgona)] text-white'
           : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]'

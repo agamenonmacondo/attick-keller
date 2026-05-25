@@ -104,7 +104,7 @@ export function CategoryPerformersCard({
                 ) : (
                   <CaretRight size={12} className="text-[var(--text-secondary)] shrink-0" weight="bold" />
                 )}
-                <span className="text-[11px] sm:text-xs font-medium text-[var(--text-primary)] truncate flex-1">
+                <span className="text-[10px] sm:text-[11px] font-medium text-[var(--text-primary)] truncate flex-1">
                   {cat.name}
                 </span>
                 <span className="text-[10px] sm:text-[11px] font-mono tabular-nums text-[var(--text-secondary)] shrink-0">

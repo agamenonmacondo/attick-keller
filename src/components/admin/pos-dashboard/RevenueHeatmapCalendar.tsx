@@ -128,7 +128,7 @@ export function RevenueHeatmapCalendar({
           data={activities}
           theme={BORGONA_THEME}
           colorScheme="dark"
-          blockSize={14}
+          blockSize={12}
           blockMargin={4}
           blockRadius={3}
           fontSize={11}

@@ -309,15 +309,9 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // ── BUG-01 FIX: Filter items by selected category ──
-  if (categoryParam && categoryParam !== 'all') {
-    const categoryProductIds = new Set(
-      [...productInfo.entries()]
-        .filter(([, info]) => info.groupId === categoryParam)
-        .map(([pid]) => pid)
-    )
-    allItems = allItems.filter((item: any) => categoryProductIds.has(String(item.pos_product_id)))
-  }
+  // ── BUG FIX: Build ALL category/product data BEFORE applying category filter ──
+  // This ensures topCategories, topProductByCategory, productsByCategory, etc.
+  // always show ALL categories regardless of the selected category filter.
 
   // ── Top Products (revenue = quantity * unit_price, NO 'total' column) ──
   const productRevenueMap = new Map<string, { name: string; category: string; quantity: number; revenue: number }>()
@@ -333,12 +327,9 @@ export async function GET(request: NextRequest) {
     d.quantity += Number(item.quantity) || 0
     d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
   }
-  const topProducts = [...productRevenueMap.values()]
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 15)
-    .map(p => ({ ...p, revenue: Math.round(p.revenue) }))
+  // ── Note: topProducts will be recomputed AFTER category filter (see below) ──
 
-  // ── Top Categories (ENRICHED: tipTotal, tipAvg, avgServiceTime, partySizeAvg) ──
+  // ── Top Categories (UNFILTERED — always shows ALL categories)
   // First, map each sale to its categories via items, so we can pull sale-level data (tip, party_size, service time)
   const saleToCategories = new Map<string, Set<string>>()
   for (const item of allItems) {
@@ -475,6 +466,62 @@ export async function GET(request: NextRequest) {
     topPerformersByCategory[key] = allProds.slice(0, 2)
     bottomPerformersByCategory[key] = allProds.length > 2 ? allProds.slice(-2).reverse() : []
   }
+
+  // ── Category Companions (built from UNFILTERED data) ──
+  const pairMap = new Map<string, { cat1Id: string; cat1Name: string; cat2Id: string; cat2Name: string; sharedCheques: number }>()
+  for (const [saleId, catSet] of saleToCategories.entries()) {
+    const catIds = [...catSet.values()]
+    if (catIds.length < 2) continue
+    // Sort to create consistent pair keys (lower id first)
+    catIds.sort()
+    for (let i = 0; i < catIds.length; i++) {
+      for (let j = i + 1; j < catIds.length; j++) {
+        const pairKey = `${catIds[i]}|${catIds[j]}`
+        if (!pairMap.has(pairKey)) {
+          pairMap.set(pairKey, {
+            cat1Id: catIds[i],
+            cat1Name: groupNames.get(catIds[i]) || catIds[i],
+            cat2Id: catIds[j],
+            cat2Name: groupNames.get(catIds[j]) || catIds[j],
+            sharedCheques: 0,
+          })
+        }
+        pairMap.get(pairKey)!.sharedCheques += 1
+      }
+    }
+  }
+  const categoryCompanions = [...pairMap.values()]
+    .sort((a, b) => b.sharedCheques - a.sharedCheques)
+    .slice(0, 20)
+
+  // ── NOW filter items by selected category (only affects KPIs, byZone, hourlyRevenue, dailyTrend, staffPerformance, topProducts, etc.) ──
+  if (categoryParam && categoryParam !== 'all') {
+    const categoryProductIds = new Set(
+      [...productInfo.entries()]
+        .filter(([, info]) => info.groupId === categoryParam)
+        .map(([pid]) => pid)
+    )
+    allItems = allItems.filter((item: any) => categoryProductIds.has(String(item.pos_product_id)))
+  }
+
+  // ── Top Products (FILTERED by category — recomputed after category filter) ──
+  const filteredProductRevenueMap = new Map<string, { name: string; category: string; quantity: number; revenue: number }>()
+  for (const item of allItems) {
+    const info = productInfo.get(item.pos_product_id)
+    if (!info) continue
+    const cat = groupNames.get(info.groupId) || 'Sin categoria'
+    const key = item.pos_product_id
+    if (!filteredProductRevenueMap.has(key)) {
+      filteredProductRevenueMap.set(key, { name: info.name, category: cat, quantity: 0, revenue: 0 })
+    }
+    const d = filteredProductRevenueMap.get(key)!
+    d.quantity += Number(item.quantity) || 0
+    d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
+  }
+  const topProducts = [...filteredProductRevenueMap.values()]
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 15)
+    .map(p => ({ ...p, revenue: Math.round(p.revenue) }))
 
   // ── Staff Performance (ENRICHED: staff_type) ──
   const staffMap = new Map<string, { cheques: number; revenue: number; propinaTotal: number }>()
@@ -635,34 +682,6 @@ export async function GET(request: NextRequest) {
     closedAt: s.closed_at,
     isClosed: s.is_closed,
   }))
-
-  // ── NEW: Category Companions (top 20 cross-category pairs) ──
-  // Find pairs of different categories that appear in the same sale
-  const pairMap = new Map<string, { cat1Id: string; cat1Name: string; cat2Id: string; cat2Name: string; sharedCheques: number }>()
-  for (const [saleId, catSet] of saleToCategories.entries()) {
-    const catIds = [...catSet.values()]
-    if (catIds.length < 2) continue
-    // Sort to create consistent pair keys (lower id first)
-    catIds.sort()
-    for (let i = 0; i < catIds.length; i++) {
-      for (let j = i + 1; j < catIds.length; j++) {
-        const pairKey = `${catIds[i]}|${catIds[j]}`
-        if (!pairMap.has(pairKey)) {
-          pairMap.set(pairKey, {
-            cat1Id: catIds[i],
-            cat1Name: groupNames.get(catIds[i]) || catIds[i],
-            cat2Id: catIds[j],
-            cat2Name: groupNames.get(catIds[j]) || catIds[j],
-            sharedCheques: 0,
-          })
-        }
-        pairMap.get(pairKey)!.sharedCheques += 1
-      }
-    }
-  }
-  const categoryCompanions = [...pairMap.values()]
-    .sort((a, b) => b.sharedCheques - a.sharedCheques)
-    .slice(0, 20)
 
   // ── NEW: Payment methods by zone ──
   // Map saleId -> zone from saleLookup

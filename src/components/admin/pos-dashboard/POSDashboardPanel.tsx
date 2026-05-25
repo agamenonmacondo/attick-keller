@@ -153,7 +153,7 @@ export function POSDashboardPanel() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 px-3 sm:px-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
@@ -248,7 +248,7 @@ export function POSDashboardPanel() {
           </AnimatedCard>
 
           {/* Desglose 3 columnas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
               <ZoneRevenueChart
                 data={data.byZone}
@@ -276,8 +276,8 @@ export function POSDashboardPanel() {
           </div>
 
           {/* Detalle expandido — 2 columnas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <AnimatedCard delay={0.36} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+            <AnimatedCard delay={0.36} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3 sm:p-4">
               <CategoryBreakdown
                 data={data.topCategories}
                 selectedCategory={filters.category}
@@ -317,7 +317,7 @@ export function POSDashboardPanel() {
             />
           </AnimatedCard>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
             <AnimatedCard delay={0.48} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
               <StaffPerformanceTable
                 data={data.staffPerformance}
@@ -334,7 +334,7 @@ export function POSDashboardPanel() {
             <ShiftReconciliation data={data.shifts || []} />
           </AnimatedCard>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
             <AnimatedCard delay={0.60} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
               <ClientTiersCard data={data.clientTiers} />
             </AnimatedCard>

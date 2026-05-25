@@ -43,7 +43,7 @@ export function ShiftReconciliation({ data }: ShiftReconciliationProps) {
       <SectionHeading>Cierre de Turnos</SectionHeading>
       <p className="text-[10px] text-[var(--text-secondary)] mb-2">Ultimos 10 turnos registrados</p>
       <div className="overflow-x-auto mt-1">
-        <table className="w-full text-[11px]">
+        <table className="w-full text-[10px] sm:text-[11px] min-w-[600px]">
           <thead>
             <tr className="border-b border-[var(--border-default)]">
               <th className="text-left py-1.5 pr-2 text-[var(--text-secondary)] font-medium">Station</th>

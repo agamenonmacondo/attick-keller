@@ -48,9 +48,9 @@ export function HourlyRevenueChart({ data, onHourDrillDown }: HourlyRevenueChart
   }
 
   return (
-    <div>
+    <div className="min-h-[200px]">
       <SectionHeading>Revenue por Hora</SectionHeading>
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={280} minHeight={200}>
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" vertical={false} />
           <XAxis

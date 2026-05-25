@@ -75,7 +75,7 @@ export function TopProductsTable({ data, initialLimit = 10, expandedLimit = 15, 
     <div>
       <SectionHeading>{headerTitle}</SectionHeading>
       <div className="overflow-x-auto mt-2">
-        <table className="w-full text-xs">
+        <table className="w-full text-xs min-w-[500px]">
           <thead>
             <tr className="border-b border-[var(--border-default)]">
               <th className="text-left py-2 pr-3 text-[var(--text-secondary)] font-medium">#</th>

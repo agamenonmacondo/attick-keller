@@ -437,12 +437,9 @@ export async function GET(request: NextRequest) {
     productSaleIds.get(pid)!.add(item.pos_sale_id)
   }
 
-  // Build productsByCategory only for the top 15 categories (from topCategories)
-  const top15CategoryIds = topCategories.slice(0, 15).map(c => c.categoryId)
+  // Build productsByCategory for ALL categories (not just top 15)
   const productsByCategory: Record<string, Array<{ productId: string; productName: string; quantity: number; revenue: number; cheques: number }>> = {}
-  for (const catId of top15CategoryIds) {
-    const prodMap = perCatProduct.get(catId)
-    if (!prodMap) continue
+  for (const [catId, prodMap] of perCatProduct.entries()) {
     const products = [...prodMap.entries()]
       .map(([prodId, stats]) => {
         const info = productInfo.get(prodId)
@@ -455,7 +452,28 @@ export async function GET(request: NextRequest) {
         }
       })
       .sort((a, b) => b.revenue - a.revenue)
-    productsByCategory[catId] = products
+    productsByCategory[String(catId)] = products
+  }
+
+  // ── Top & Bottom Performers per Category ──
+  const topPerformersByCategory: Record<string, Array<{ productId: string; productName: string; quantity: number; revenue: number; cheques: number }>> = {}
+  const bottomPerformersByCategory: Record<string, Array<{ productId: string; productName: string; quantity: number; revenue: number; cheques: number }>> = {}
+  for (const [catId, prodMap] of perCatProduct.entries()) {
+    const allProds = [...prodMap.entries()]
+      .map(([prodId, stats]) => {
+        const info = productInfo.get(prodId)
+        return {
+          productId: prodId,
+          productName: info?.name || 'Desconocido',
+          quantity: stats.quantity,
+          revenue: Math.round(stats.revenue),
+          cheques: productSaleIds.get(prodId)?.size || 0,
+        }
+      })
+      .sort((a, b) => b.revenue - a.revenue)
+    const key = String(catId)
+    topPerformersByCategory[key] = allProds.slice(0, 2)
+    bottomPerformersByCategory[key] = allProds.length > 2 ? allProds.slice(-2).reverse() : []
   }
 
   // ── Staff Performance (ENRICHED: staff_type) ──
@@ -715,6 +733,8 @@ export async function GET(request: NextRequest) {
     shifts,
     categoryCompanions,
     byZonePayment,
+    topPerformersByCategory,
+    bottomPerformersByCategory,
     filters: { zone: zoneParam, category: categoryParam, from: fromParam, to: toParam },
   })
 }

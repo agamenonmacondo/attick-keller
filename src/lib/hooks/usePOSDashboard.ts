@@ -139,6 +139,20 @@ export interface POSDashboardData {
     consumidorFinal: { cheques: number; revenue: number }
     identificados: { cheques: number; revenue: number }
   }
+  topPerformersByCategory: Record<string, Array<{
+    productId: string
+    productName: string
+    quantity: number
+    revenue: number
+    cheques: number
+  }>>
+  bottomPerformersByCategory: Record<string, Array<{
+    productId: string
+    productName: string
+    quantity: number
+    revenue: number
+    cheques: number
+  }>>
   categoryList: Array<{ id: string; name: string }>
   shifts: Array<{
     shiftId: string

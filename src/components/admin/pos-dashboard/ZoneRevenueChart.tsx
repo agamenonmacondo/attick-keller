@@ -31,7 +31,7 @@ export function ZoneRevenueChart({ data, selectedZone, onZoneClick, onZoneDrillD
   const maxRevenue = Math.max(...data.map(d => d.revenue), 1)
 
   return (
-    <div>
+    <div className="min-h-[200px]">
       <SectionHeading>Revenue por Zona</SectionHeading>
       <div className="space-y-2.5 mt-3">
         {data.map(d => {

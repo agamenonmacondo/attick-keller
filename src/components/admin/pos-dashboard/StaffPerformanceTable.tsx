@@ -70,7 +70,7 @@ export function StaffPerformanceTable({ data, onStaffDrillDown }: StaffPerforman
         <p className="text-xs text-[var(--text-secondary)] text-center py-6">Sin resultados para este filtro</p>
       ) : (
         <div className="overflow-x-auto mt-1">
-          <table className="w-full text-xs">
+          <table className="w-full text-xs min-w-[500px]">
             <thead>
               <tr className="border-b border-[var(--border-default)]">
                 <th className="text-left py-2 pr-3 text-[var(--text-secondary)] font-medium">Staff</th>

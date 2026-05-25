@@ -72,7 +72,7 @@ export function CategoryBreakdown({ data, selectedCategory, onCategoryClick, onC
                     <CaretRight size={10} className="text-[var(--text-secondary)] shrink-0 opacity-0 group-hover:opacity-60" weight="bold" />
                   )}
                   <span
-                    className={`text-[11px] truncate ${isSelected ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}
+                    className={`text-[10px] sm:text-[11px] truncate ${isSelected ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}
                     style={{ transition: 'color 150ms ease-out' }}
                   >
                     {d.categoryName}
@@ -80,7 +80,7 @@ export function CategoryBreakdown({ data, selectedCategory, onCategoryClick, onC
                 </button>
                 {/* Revenue */}
                 <span
-                  className="ml-auto text-[11px] font-mono tabular-nums text-[var(--text-primary)]"
+                  className="ml-auto text-[10px] sm:text-[11px] font-mono tabular-nums text-[var(--text-primary)]"
                   style={{ transition: 'color 150ms ease-out' }}
                 >
                   {formatCOPDisplay(d.revenue)}
@@ -108,8 +108,8 @@ export function CategoryBreakdown({ data, selectedCategory, onCategoryClick, onC
                 />
               </div>
               <div className="flex items-center gap-3 mt-0.5 ml-4">
-                <span className="text-[9px] text-[var(--text-secondary)]">{d.quantity.toLocaleString('es-CO')} uds</span>
-                <span className="text-[9px] text-[var(--text-secondary)]">{d.cheques} cheques</span>
+                <span className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">{d.quantity.toLocaleString('es-CO')} uds</span>
+                <span className="text-[9px] sm:text-[10px] text-[var(--text-secondary)]">{d.cheques} cheques</span>
               </div>
 
               {/* Inline expandible: products list for selected category */}
@@ -127,10 +127,10 @@ export function CategoryBreakdown({ data, selectedCategory, onCategoryClick, onC
                       >
                         <div className="flex items-center gap-1.5">
                           <CaretRight size={8} className="text-[var(--text-secondary)] shrink-0 opacity-0 group-hover/prod:opacity-60" weight="bold" />
-                          <span className="text-[10px] text-[var(--text-primary)] truncate flex-1" title={p.productName}>
+                          <span className="text-[10px] sm:text-[11px] text-[var(--text-primary)] truncate flex-1" title={p.productName}>
                             {p.productName}
                           </span>
-                          <span className="text-[10px] font-mono tabular-nums text-[var(--text-primary)] shrink-0">
+                          <span className="text-[10px] sm:text-[11px] font-mono tabular-nums text-[var(--text-primary)] shrink-0">
                             {formatCOPDisplay(p.revenue)}
                           </span>
                         </div>
@@ -147,8 +147,8 @@ export function CategoryBreakdown({ data, selectedCategory, onCategoryClick, onC
                           />
                         </div>
                         <div className="flex items-center gap-2.5 ml-3.5 mt-0.5">
-                          <span className="text-[8px] text-[var(--text-secondary)]">{p.quantity.toLocaleString('es-CO')} uds</span>
-                          <span className="text-[8px] text-[var(--text-secondary)]">{p.cheques} chq</span>
+                          <span className="text-[8px] sm:text-[9px] text-[var(--text-secondary)]">{p.quantity.toLocaleString('es-CO')} uds</span>
+                          <span className="text-[8px] sm:text-[9px] text-[var(--text-secondary)]">{p.cheques} chq</span>
                         </div>
                       </div>
                     )

@@ -21,6 +21,7 @@ import { DataUploadSection } from './DataUploadSection'
 import { DrillDownPanel } from './DrillDownPanel'
 import { CategoryCompanionsCard } from './CategoryCompanionsCard'
 import { ShiftReconciliation } from './ShiftReconciliation'
+import { CategoryPerformersCard } from './CategoryPerformersCard'
 
 type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 
@@ -247,7 +248,7 @@ export function POSDashboardPanel() {
           </AnimatedCard>
 
           {/* Desglose 3 columnas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
               <ZoneRevenueChart
                 data={data.byZone}
@@ -292,6 +293,8 @@ export function POSDashboardPanel() {
                 onProductDrillDown={handleProductDrillDown}
                 selectedCategory={filters.category}
                 onCategoryDrillDown={handleCategoryDrillDown}
+                topPerformersByCategory={data.topPerformersByCategory}
+                bottomPerformersByCategory={data.bottomPerformersByCategory}
               />
             </AnimatedCard>
           </div>
@@ -299,6 +302,19 @@ export function POSDashboardPanel() {
           {/* Category Companions — new */}
           <AnimatedCard delay={0.44} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
             <CategoryCompanionsCard data={data.categoryCompanions || []} />
+          </AnimatedCard>
+
+          {/* Category Performers — Top 2 / Bottom 2 per category */}
+          <AnimatedCard delay={0.45} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <CategoryPerformersCard
+              topPerformersByCat={data.topPerformersByCategory || {}}
+              bottomPerformersByCat={data.bottomPerformersByCategory || {}}
+              categoryNames={Object.fromEntries((data.topCategories || []).map(c => [c.categoryId, c.categoryName]))}
+              categoryList={data.categoryList || []}
+              selectedCategory={filters.category}
+              onCategoryClick={handleCategoryClick}
+              onProductDrillDown={handleProductDrillDown}
+            />
           </AnimatedCard>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

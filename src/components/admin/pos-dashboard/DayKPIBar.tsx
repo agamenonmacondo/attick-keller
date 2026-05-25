@@ -65,7 +65,7 @@ export function DayKPIBar({ kpis, averages, isSingleDay }: DayKPIBarProps) {
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2">
       {items.map(item => (
         <div
           key={item.key}

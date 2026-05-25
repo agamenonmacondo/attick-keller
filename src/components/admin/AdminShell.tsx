@@ -14,6 +14,7 @@ import { MenuPanel } from './menu/MenuPanel'
 import { TeamPanel } from './team/TeamPanel'
 import { TablesPanel } from './inventory/TablesPanel'
 import { FloorPlanMap } from './floorplan/FloorPlanMap'
+import { NominaPanel } from './nomina/NominaPanel'
 import { Spinner } from '@phosphor-icons/react'
 
 export function AdminShell() {
@@ -61,6 +62,7 @@ export function AdminShell() {
         {activeTab === 'clientes' && <CustomersPanel />}
         {activeTab === 'menu' && <MenuPanel />}
         {activeTab === 'equipo' && <TeamPanel />}
+        {activeTab === 'nomina' && <NominaPanel />}
       </main>
     </div>
   )

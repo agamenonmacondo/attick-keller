@@ -9,7 +9,6 @@ function qparam(request: NextRequest, key: string): string | null {
 /** Parse interval string "HH:MM:SS" or "D days, HH:MM:SS" to total minutes */
 function intervalToMinutes(val: string | null | undefined): number {
   if (!val) return 0
-  // Handle "D days, HH:MM:SS" or just "HH:MM:SS"
   let days = 0
   let timePart = val
   const dayMatch = val.match(/(\d+)\s*days?/i)
@@ -47,56 +46,30 @@ export async function GET(request: NextRequest) {
 
   const sb = getServiceClient()
   const action = qparam(request, 'action') || 'summary'
-
-  // ── Get all staff ──
-  const { data: staff, error: staffError } = await sb
-    .from('pos_nomina_staff')
-    .select('id, cedula, nombre_completo, pos_staff_id, es_medio_tiempo')
-    .order('nombre_completo')
-
-  if (staffError) {
-    return NextResponse.json({ error: staffError.message }, { status: 500 })
-  }
-
-  // ── Get date range ──
   const from = qparam(request, 'from') || '2026-04-01'
-  const to = qparam(request, 'from') ? (qparam(request, 'to') || from) : '2026-04-30'
-  const staffId = qparam(request, 'staff_id')
+  const to = qparam(request, 'to') || '2026-04-30'
 
-  // ── Fetch daily records ──
-  let dailyQuery = sb
-    .from('pos_nomina_daily')
-    .select('id, staff_id, fecha, hora_entrada, hora_salida, total_horas, ho, hed, hen, hdd, hdn, rn, recargo_dominical, horas_extras, cl75, es_dominical, shift_number')
-    .gte('fecha', from)
-    .lte('fecha', to)
-    .order('fecha')
+  // ── Action: staff_detail ──
+  if (action === 'staff_detail') {
+    const staffId = qparam(request, 'staff_id')
+    if (!staffId) return NextResponse.json({ error: 'staff_id requerido' }, { status: 400 })
 
-  if (staffId) {
-    dailyQuery = dailyQuery.eq('staff_id', staffId)
-  }
+    const [staffMember, staffDays] = await Promise.all([
+      sb.from('pos_nomina_staff').select('*').eq('id', staffId).single(),
+      sb.from('pos_nomina_daily').select('*').eq('staff_id', staffId).gte('fecha', from).lte('fecha', to).order('fecha'),
+    ])
 
-  const { data: daily, error: dailyError } = await dailyQuery
-  if (dailyError) {
-    return NextResponse.json({ error: dailyError.message }, { status: 500 })
-  }
+    if (staffMember.error) return NextResponse.json({ error: staffMember.error.message }, { status: 404 })
 
-  // ── Action: staff detail ──
-  if (action === 'staff_detail' && staffId) {
-    const staffMember = staff.find((s: any) => s.id === staffId)
-    if (!staffMember) {
-      return NextResponse.json({ error: 'Staff not found' }, { status: 404 })
-    }
+    const daily = staffDays.data || []
 
-    const staffDays = daily.filter((d: any) => d.staff_id === staffId)
-
-    // Calculate totals per type
+    // Aggregate totals for this staff member
     const totals = {
       ho: 0, hed: 0, hen: 0, hdd: 0, hdn: 0, rn: 0,
-      totalHoras: 0, horasExtras: 0, diasTrabajados: new Set<string>().size,
-      dominicales: 0,
+      totalHoras: 0, horasExtras: 0, dominicales: 0,
     }
 
-    const dailyDetails = staffDays.map((d: any) => {
+    const dailyDetails = daily.map((d: any) => {
       const hoMins = intervalToMinutes(d.ho)
       const hedMins = intervalToMinutes(d.hed)
       const henMins = intervalToMinutes(d.hen)
@@ -113,7 +86,6 @@ export async function GET(request: NextRequest) {
       totals.rn += rnMins
       totals.totalHoras += totalMins
       totals.horasExtras += (d.horas_extras || 0)
-      if (d.es_dominical || d.cl75) totals.dominicales++
       if (d.es_dominical) totals.dominicales++
 
       return {
@@ -134,29 +106,39 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Group by week
+    // Group by weekday — use unique dates to avoid counting double shifts twice for "count"
     const weekDays = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado']
-    const byWeekDay = staffDays.reduce((acc: Record<string, { count: number; hoMins: number; totalMins: number }>, d: any) => {
+    const byWeekDay: Record<string, { count: number; hoMins: number; totalMins: number }> = {}
+    const seenDates = new Set<string>()
+
+    for (const d of daily) {
       const dayName = weekDays[new Date(d.fecha + 'T12:00:00').getDay()]
-      if (!acc[dayName]) acc[dayName] = { count: 0, hoMins: 0, totalMins: 0 }
-      acc[dayName].count++
-      acc[dayName].hoMins += intervalToMinutes(d.ho)
-      acc[dayName].totalMins += intervalToMinutes(d.total_horas)
-      return acc
-    }, {})
+      if (!byWeekDay[dayName]) byWeekDay[dayName] = { count: 0, hoMins: 0, totalMins: 0 }
+
+      // Count unique dates only (not double shifts)
+      const dateKey = d.fecha
+      if (!seenDates.has(dateKey)) {
+        seenDates.add(dateKey)
+        byWeekDay[dayName].count++
+      }
+
+      // But sum ALL hours (including double shifts)
+      byWeekDay[dayName].hoMins += intervalToMinutes(d.ho)
+      byWeekDay[dayName].totalMins += intervalToMinutes(d.total_horas)
+    }
 
     // Get POS staff data if linked
     let posData = null
-    if (staffMember.pos_staff_id) {
+    if (staffMember.data.pos_staff_id) {
       const { data: posSales } = await sb
         .from('pos_sales')
-        .select('revenue, propina, personas, pos_staff_id, sold_at')
-        .eq('pos_staff_id', staffMember.pos_staff_id)
-        .gte('sold_at', `${from}T00:00:00`)
-        .lte('sold_at', `${to}T23:59:59`)
+        .select('total,propina,pos_staff_id')
+        .eq('pos_staff_id', staffMember.data.pos_staff_id)
+        .gte('fecha', from)
+        .lte('fecha', to)
 
       if (posSales && posSales.length > 0) {
-        const totalRevenue = posSales.reduce((s: number, r: any) => s + (r.revenue || 0), 0)
+        const totalRevenue = posSales.reduce((s: number, r: any) => s + (r.total || 0), 0)
         const totalPropina = posSales.reduce((s: number, r: any) => s + (r.propina || 0), 0)
         const totalCheques = posSales.length
         posData = {
@@ -170,9 +152,15 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      staff: staffMember,
+      staff: {
+        id: staffMember.data.id,
+        cedula: staffMember.data.cedula,
+        nombre_completo: staffMember.data.nombre_completo,
+        pos_staff_id: staffMember.data.pos_staff_id,
+        es_medio_tiempo: staffMember.data.es_medio_tiempo,
+      },
       totals: {
-        diasTrabajados: new Set(staffDays.map((d: any) => d.fecha)).size,
+        diasTrabajados: seenDates.size,
         ho: formatMinutes(totals.ho),
         hed: formatMinutes(totals.hed),
         hen: formatMinutes(totals.hen),
@@ -197,6 +185,16 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Action: summary (default) ──
+  const [staff, daily] = await Promise.all([
+    sb.from('pos_nomina_staff').select('*').order('nombre_completo'),
+    sb.from('pos_nomina_daily').select('*').gte('fecha', from).lte('fecha', to).order('fecha'),
+  ])
+
+  if (staff.error) return NextResponse.json({ error: staff.error.message }, { status: 500 })
+
+  const staffList = staff.data || []
+  const dailyData = daily.data || []
+
   // Group by staff
   const staffMap = new Map<string, {
     id: string
@@ -216,7 +214,7 @@ export async function GET(request: NextRequest) {
     dominicales: number
   }>()
 
-  for (const s of staff) {
+  for (const s of staffList) {
     staffMap.set(s.id, {
       id: s.id,
       cedula: s.cedula,
@@ -231,7 +229,7 @@ export async function GET(request: NextRequest) {
 
   let grandTotal = { ho: 0, hed: 0, hen: 0, hdd: 0, hdn: 0, rn: 0, total: 0, horasExtras: 0 }
 
-  for (const d of daily) {
+  for (const d of dailyData) {
     const entry = staffMap.get(d.staff_id)
     if (!entry) continue
 
@@ -254,6 +252,8 @@ export async function GET(request: NextRequest) {
     entry.horasExtras += (d.horas_extras || 0)
     if (d.es_dominical) entry.dominicales++
 
+    // Note: for grand totals, double-shift hours ARE counted because
+    // the person worked those hours. But "dias trabajados" uses unique dates.
     grandTotal.ho += hoMins
     grandTotal.hed += hedMins
     grandTotal.hen += henMins
@@ -264,7 +264,7 @@ export async function GET(request: NextRequest) {
     grandTotal.horasExtras += (d.horas_extras || 0)
   }
 
-  const staffList = Array.from(staffMap.values())
+  const result = Array.from(staffMap.values())
     .filter(s => s.diasTrabajados.size > 0)
     .sort((a, b) => b.totalMins - a.totalMins)
     .map(s => ({
@@ -287,11 +287,11 @@ export async function GET(request: NextRequest) {
       totalHours: formatHours(s.totalMins),
     }))
 
-  // Count unique dates for accurate "dias trabajados" count
-  const uniqueDates = new Set(daily.map((d: any) => d.fecha))
+  // Count unique dates for accurate "dias trabajados" in resumen
+  const uniqueDates = new Set(dailyData.map((d: any) => d.fecha))
 
-  // Average shift length
-  const totalShifts = staffList.reduce((s, st) => s + st.dias_trabajados, 0)
+  // Average shift length = total hours / total unique (staff, date) pairs
+  const totalShifts = result.reduce((s, st) => s + st.dias_trabajados, 0)
   const avgShiftMins = grandTotal.total > 0 ? grandTotal.total / totalShifts : 0
 
   // % extras
@@ -302,7 +302,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     periodo: { from, to },
     resumen: {
-      totalEmpleados: staffList.length,
+      totalEmpleados: result.length,
       totalDiasRegistros: uniqueDates.size,
       totalHorasOrdinarias: formatHours(grandTotal.ho),
       totalHorasExtras: formatHours(grandTotal.hed + grandTotal.hen),
@@ -320,6 +320,6 @@ export async function GET(request: NextRequest) {
       hdnMins: grandTotal.hdn,
       rnMins: grandTotal.rn,
     },
-    staff: staffList,
+    staff: result,
   })
 }

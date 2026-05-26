@@ -46,13 +46,94 @@ export async function GET(request: NextRequest) {
 
   const sb = getServiceClient()
   const action = qparam(request, 'action') || 'summary'
-  const from = qparam(request, 'from') || '2026-04-01'
-  const to = qparam(request, 'to') || '2026-04-30'
 
-  // ── Action: staff_detail ──
+  // ── Action: contable (new nómina contable) ──
+  if (action === 'contable') {
+    const periodo = qparam(request, 'periodo')
+    const sede = qparam(request, 'sede')
+
+    // Build query for periodos
+    let periodoQuery = sb.from('nomina_periodos').select('*').order('fecha_inicio', { ascending: false })
+    if (periodo) periodoQuery = periodoQuery.ilike('periodo', periodo)
+    if (sede) periodoQuery = periodoQuery.eq('sede', sede)
+
+    const { data: periodos, error: periodosError } = await periodoQuery
+    if (periodosError) return NextResponse.json({ error: periodosError.message }, { status: 500 })
+
+    if (!periodos || periodos.length === 0) {
+      return NextResponse.json({ periodos: [], detalle: [], resumen: null })
+    }
+
+    // If specific periodo+sede requested, get detalle for that periodo
+    if (periodo && sede) {
+      const periodoObj = periodos[0]
+      if (!periodoObj) return NextResponse.json({ error: 'Periodo no encontrado' }, { status: 404 })
+
+      // Get detalle with staff names
+      const { data: detalle, error: detalleError } = await sb
+        .from('nomina_detalle')
+        .select('*, pos_nomina_staff(nombre_completo, cargo, cedula)')
+        .eq('periodo_id', periodoObj.id)
+        .eq('sede', sede)
+        .order('neto_a_pagar', { ascending: false })
+
+      if (detalleError) return NextResponse.json({ error: detalleError.message }, { status: 500 })
+
+      // Flatten staff name into each row
+      const flatDetalle = (detalle || []).map((d: any) => ({
+        ...d,
+        nombre_completo: d.pos_nomina_staff?.nombre_completo || 'Desconocido',
+        cargo: d.pos_nomina_staff?.cargo || '',
+        cedula: d.pos_nomina_staff?.cedula || '',
+      }))
+
+      // Calculated totals
+      const resumen = {
+        total_devengado: flatDetalle.reduce((s: number, d: any) => s + (Number(d.total_devengado) || 0), 0),
+        total_deducciones: flatDetalle.reduce((s: number, d: any) => s + (Number(d.total_deducciones) || 0), 0),
+        total_neto: flatDetalle.reduce((s: number, d: any) => s + (Number(d.neto_a_pagar) || 0), 0),
+        total_propinas: flatDetalle.reduce((s: number, d: any) => s + (Number(d.propinas) || 0), 0),
+        total_salario_devengado: flatDetalle.reduce((s: number, d: any) => s + (Number(d.salario_devengado) || 0), 0),
+        total_salud: flatDetalle.reduce((s: number, d: any) => s + (Number(d.salud_empleado) || 0), 0),
+        total_pension: flatDetalle.reduce((s: number, d: any) => s + (Number(d.pension_empleado) || 0), 0),
+        total_auxilio_transporte: flatDetalle.reduce((s: number, d: any) => s + (Number(d.auxilio_transporte) || 0), 0),
+        total_recargos: flatDetalle.reduce((s: number, d: any) => s + (Number(d.recargos_he_rn_rd) || 0), 0),
+        total_pagos_realizados: flatDetalle.reduce((s: number, d: any) => s + (Number(d.pagos_realizados) || 0), 0),
+        total_prestamos: flatDetalle.reduce((s: number, d: any) => s + (Number(d.prestamos_consumos) || 0), 0),
+        empleados: flatDetalle.length,
+      }
+
+      // Get propinas summary for this periodo+sede
+      const { data: propinasData } = await sb
+        .from('nomina_propinas')
+        .select('*')
+        .eq('periodo_id', periodoObj.id)
+        .eq('sede', sede)
+        .single()
+
+      return NextResponse.json({
+        periodos,
+        periodoSeleccionado: periodoObj,
+        detalle: flatDetalle,
+        resumen,
+        propinas: propinasData,
+      })
+    }
+
+    // If only periodo (no sede), return list of periodos for selection
+    return NextResponse.json({
+      periodos,
+      detalle: [],
+      resumen: null,
+    })
+  }
+
+  // ── Action: staff_detail (original) ──
   if (action === 'staff_detail') {
     const staffId = qparam(request, 'staff_id')
     if (!staffId) return NextResponse.json({ error: 'staff_id requerido' }, { status: 400 })
+    const from = qparam(request, 'from') || '2026-04-01'
+    const to = qparam(request, 'to') || '2026-04-30'
 
     const [staffMember, staffDays] = await Promise.all([
       sb.from('pos_nomina_staff').select('*').eq('id', staffId).single(),
@@ -106,7 +187,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Group by weekday — use unique dates to avoid counting double shifts twice for "count"
+    // Group by weekday
     const weekDays = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado']
     const byWeekDay: Record<string, { count: number; hoMins: number; totalMins: number }> = {}
     const seenDates = new Set<string>()
@@ -115,14 +196,12 @@ export async function GET(request: NextRequest) {
       const dayName = weekDays[new Date(d.fecha + 'T12:00:00').getDay()]
       if (!byWeekDay[dayName]) byWeekDay[dayName] = { count: 0, hoMins: 0, totalMins: 0 }
 
-      // Count unique dates only (not double shifts)
       const dateKey = d.fecha
       if (!seenDates.has(dateKey)) {
         seenDates.add(dateKey)
         byWeekDay[dayName].count++
       }
 
-      // But sum ALL hours (including double shifts)
       byWeekDay[dayName].hoMins += intervalToMinutes(d.ho)
       byWeekDay[dayName].totalMins += intervalToMinutes(d.total_horas)
     }
@@ -184,7 +263,10 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  // ── Action: summary (default) ──
+  // ── Action: summary (default, original biometric) ──
+  const from = qparam(request, 'from') || '2026-04-01'
+  const to = qparam(request, 'to') || '2026-04-30'
+
   const [staff, daily] = await Promise.all([
     sb.from('pos_nomina_staff').select('*').order('nombre_completo'),
     sb.from('pos_nomina_daily').select('*').gte('fecha', from).lte('fecha', to).order('fecha'),
@@ -252,8 +334,6 @@ export async function GET(request: NextRequest) {
     entry.horasExtras += (d.horas_extras || 0)
     if (d.es_dominical) entry.dominicales++
 
-    // Note: for grand totals, double-shift hours ARE counted because
-    // the person worked those hours. But "dias trabajados" uses unique dates.
     grandTotal.ho += hoMins
     grandTotal.hed += hedMins
     grandTotal.hen += henMins
@@ -287,19 +367,14 @@ export async function GET(request: NextRequest) {
       totalHours: formatHours(s.totalMins),
     }))
 
-  // Count unique dates for accurate "dias trabajados" in resumen
   const uniqueDates = new Set(dailyData.map((d: any) => d.fecha))
-
-  // Average shift length = total hours / total unique (staff, date) pairs
   const totalShifts = result.reduce((s, st) => s + st.dias_trabajados, 0)
   const avgShiftMins = grandTotal.total > 0 ? grandTotal.total / totalShifts : 0
-
-  // % extras
   const pctExtras = grandTotal.total > 0
     ? ((grandTotal.hed + grandTotal.hen) / grandTotal.total * 100)
     : 0
 
-  // ── Daily breakdown: people count and avg hours per day ──
+  // Daily breakdown
   const dailyBreakdown: Record<string, { fecha: string; diaSemana: string; personas: number; horasTotal: number; horasPromedio: number }> = {}
   const weekDayNames = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
 
@@ -316,7 +391,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Count unique staff per date
   const staffPerDate = new Map<string, Set<string>>()
   const hoursPerDate = new Map<string, number>()
   for (const d of dailyData) {
@@ -370,7 +444,6 @@ export async function GET(request: NextRequest) {
       totalHorasExtrasCount: grandTotal.horasExtras,
       promedioTurno: formatMinutes(avgShiftMins),
       pctExtras: pctExtras.toFixed(1),
-      // Raw minutes for chart data
       hoMins: grandTotal.ho,
       hedMins: grandTotal.hed,
       henMins: grandTotal.hen,

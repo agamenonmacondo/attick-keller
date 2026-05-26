@@ -1,9 +1,9 @@
 'use client'
 
 import { cn } from '@/lib/utils/cn'
-import { CalendarDots, Table, ChartBar, ChartPieSlice, Users, ForkKnife, IdentificationBadge, Coffee, MapTrifold, ClockCounterClockwise } from '@phosphor-icons/react'
+import { CalendarDots, Table, ChartBar, ChartPieSlice, Users, ForkKnife, IdentificationBadge, Coffee, MapTrifold, ClockCounterClockwise, Buildings, Money } from '@phosphor-icons/react'
 
-export type AdminTab = 'reservas' | 'ocupacion' | 'mesas' | 'plano' | 'metricas' | 'operacion' | 'clientes' | 'menu' | 'equipo' | 'nomina'
+export type AdminTab = 'reservas' | 'ocupacion' | 'mesas' | 'plano' | 'metricas' | 'operacion' | 'clientes' | 'menu' | 'equipo' | 'nomina' | 'nomina-contable' | 'app-rodri'
 
 const TABS: { key: AdminTab; label: string; icon: React.ReactNode }[] = [
   { key: 'reservas', label: 'Reservas', icon: <CalendarDots size={18} weight="regular" /> },
@@ -16,6 +16,8 @@ const TABS: { key: AdminTab; label: string; icon: React.ReactNode }[] = [
   { key: 'menu', label: 'Menu', icon: <ForkKnife size={18} weight="regular" /> },
   { key: 'equipo', label: 'Equipo', icon: <IdentificationBadge size={18} weight="regular" /> },
   { key: 'nomina', label: 'Nomina', icon: <ClockCounterClockwise size={18} weight="regular" /> },
+  { key: 'nomina-contable', label: 'Contable', icon: <Money size={18} weight="regular" /> },
+  { key: 'app-rodri', label: 'App Rodri', icon: <Buildings size={18} weight="regular" /> },
 ]
 
 interface AdminTabBarProps {

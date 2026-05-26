@@ -22,7 +22,6 @@ import { DrillDownPanel } from './DrillDownPanel'
 import { CategoryCompanionsCard } from './CategoryCompanionsCard'
 import { ShiftReconciliation } from './ShiftReconciliation'
 import { CategoryPerformersCard } from './CategoryPerformersCard'
-import { NominaCostSection } from './NominaCostSection'
 
 type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 
@@ -343,11 +342,6 @@ export function POSDashboardPanel() {
               <ClientSplitCard data={data.clientSplit} />
             </AnimatedCard>
           </div>
-
-          {/* Nomina Cost Section — C75 */}
-          <AnimatedCard delay={0.70} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-            <NominaCostSection />
-          </AnimatedCard>
 
           {/* Upload */}
           <AnimatedCard delay={0.72} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">

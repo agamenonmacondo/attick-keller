@@ -87,7 +87,7 @@ export interface OpsCostData {
   }
 }
 
-export function useNominaOpsCosts(periodo: string = 'ABRIL 2026') {
+export function useNominaOpsCosts(periodo: string = 'ABRIL 2026', sede: string = 'C75') {
   const [data, setData] = useState<OpsCostData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -97,7 +97,7 @@ export function useNominaOpsCosts(periodo: string = 'ABRIL 2026') {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(`/api/admin/nomina/ops-costs?periodo=${encodeURIComponent(periodo)}`)
+        const res = await fetch(`/api/admin/nomina/ops-costs?periodo=${encodeURIComponent(periodo)}&sede=${encodeURIComponent(sede)}`)
         if (!res.ok) throw new Error(`Error ${res.status}`)
         const json = await res.json()
         setData(json)
@@ -108,7 +108,7 @@ export function useNominaOpsCosts(periodo: string = 'ABRIL 2026') {
       }
     }
     load()
-  }, [periodo])
+  }, [periodo, sede])
 
   return { data, loading, error }
 }

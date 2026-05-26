@@ -238,8 +238,19 @@ export interface NominaContableNovedad {
   cedula: string
 }
 
+function currentMonthRange(): { from: string; to: string } {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const lastDay = new Date(y, now.getMonth() + 1, 0).getDate()
+  return { from: `${y}-${m}-01`, to: `${y}-${m}-${String(lastDay).padStart(2, '0')}` }
+}
+
 // ── Original hook ──
-export function useNomina(from: string, to: string) {
+export function useNomina(from?: string, to?: string) {
+  const range = currentMonthRange()
+  const f = from ?? range.from
+  const t = to ?? range.to
   const [data, setData] = useState<{
     periodo: NominaPeriodo
     resumen: NominaResumen
@@ -264,7 +275,7 @@ export function useNomina(from: string, to: string) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/admin/nomina?from=${from}&to=${to}`)
+      const res = await fetch(`/api/admin/nomina?from=${f}&to=${t}`)
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error || `Error ${res.status}`)
@@ -276,14 +287,14 @@ export function useNomina(from: string, to: string) {
     } finally {
       setLoading(false)
     }
-  }, [from, to])
+  }, [f, t])
 
   const fetchStaffDetail = useCallback(async (staffId: string) => {
     setDetailLoading(true)
     setDetailError(null)
     setSelectedStaffId(staffId)
     try {
-      const res = await fetch(`/api/admin/nomina?from=${from}&to=${to}&action=staff_detail&staff_id=${staffId}`)
+      const res = await fetch(`/api/admin/nomina?from=${f}&to=${t}&action=staff_detail&staff_id=${staffId}`)
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error || `Error ${res.status}`)
@@ -295,7 +306,7 @@ export function useNomina(from: string, to: string) {
     } finally {
       setDetailLoading(false)
     }
-  }, [from, to])
+  }, [f, t])
 
   useEffect(() => {
     fetchSummary()

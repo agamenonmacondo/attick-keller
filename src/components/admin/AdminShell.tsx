@@ -14,8 +14,7 @@ import { MenuPanel } from './menu/MenuPanel'
 import { TeamPanel } from './team/TeamPanel'
 import { TablesPanel } from './inventory/TablesPanel'
 import { FloorPlanMap } from './floorplan/FloorPlanMap'
-import { NominaPanel } from './nomina/NominaPanel'
-import { NominaContablePanel } from './nomina/NominaContablePanel'
+import { NominaUnifiedPanel } from './nomina/NominaUnifiedPanel'
 import { RodriPanel } from './rodri/RodriPanel'
 import { Spinner } from '@phosphor-icons/react'
 
@@ -64,8 +63,7 @@ export function AdminShell() {
         {activeTab === 'clientes' && <CustomersPanel />}
         {activeTab === 'menu' && <MenuPanel />}
         {activeTab === 'equipo' && <TeamPanel />}
-        {activeTab === 'nomina' && <NominaPanel />}
-        {activeTab === 'nomina-contable' && <NominaContablePanel />}
+        {activeTab === 'nomina' && <NominaUnifiedPanel />}
         {activeTab === 'app-rodri' && <RodriPanel />}
       </main>
     </div>

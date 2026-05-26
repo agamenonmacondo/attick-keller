@@ -5,8 +5,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 export interface POSDashboardFilters {
   zone: string        // 'all' | 'Tipi' | 'Attic' | 'Chispas'
   category: string    // 'all' | pos_product_group_id
-  from?: string       // override fecha inicio (default: 2026-04-01)
-  to?: string         // override fecha fin (default: 2026-04-30)
+  from?: string       // override fecha inicio (empty = auto-detect latest month)
+  to?: string         // override fecha fin (empty = auto-detect latest month)
 }
 
 export type DrillDownType = 'product' | 'staff' | 'category' | 'hour' | 'zone'
@@ -177,6 +177,7 @@ export interface POSDashboardData {
     methods: Array<{ method: string; amount: number; count: number; pct: number }>
   }>
   filters: { zone: string; category: string; from: string; to: string }
+  availableMonths: string[]
 }
 
 export function usePOSDashboard(filters: POSDashboardFilters) {
@@ -287,8 +288,8 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
   }, [params])
 
   const fetchDrillDown = useCallback(async (type: DrillDownType, id: string, label: string) => {
-    const from = filters.from || '2026-04-01'
-    const to = filters.to || '2026-04-30'
+    const from = filters.from || ''
+    const to = filters.to || ''
     setDrillDown({ type, id, label })
     setDrillDownLoading(true)
     setDrillDownError(null)

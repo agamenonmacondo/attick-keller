@@ -110,14 +110,38 @@ export async function GET(request: NextRequest) {
   // ── Parse params ──
   const type = qparam(request, 'type') as 'product' | 'staff' | 'category' | 'hour' | 'zone' | null
   const id = qparam(request, 'id')
-  const fromParam = qparam(request, 'from')
-  const toParam = qparam(request, 'to')
+  const fromParam = qparam(request, 'from') || ''
+  const toParam = qparam(request, 'to') || ''
 
-  if (!type || !id || !fromParam || !toParam) {
+  if (!type || !id) {
     return NextResponse.json(
-      { error: 'Faltan parámetros requeridos: type, id, from, to' },
+      { error: 'Faltan parámetros requeridos: type, id' },
       { status: 400 }
     )
+  }
+
+  // ── Auto-detect date range if not provided ──
+  let from = fromParam
+  let to = toParam
+  if (!from || !to) {
+    const { data: dateRange } = await sb
+      .from('pos_sales')
+      .select('opened_at')
+      .eq('is_paid', true)
+      .eq('is_cancelled', false)
+      .order('opened_at', { ascending: false })
+      .limit(1)
+    if (dateRange && dateRange.length > 0) {
+      const latest = new Date(dateRange[0].opened_at)
+      const y = latest.getFullYear()
+      const m = latest.getMonth()
+      from = from || `${y}-${String(m + 1).padStart(2, '0')}-01`
+      const lastDay = new Date(y, m + 1, 0).getDate()
+      to = to || `${y}-${String(m + 1).padStart(2, '0')}-${lastDay}`
+    } else {
+      from = from || '2026-01-01'
+      to = to || '2026-12-31'
+    }
   }
 
   const validTypes = ['product', 'staff', 'category', 'hour', 'zone']
@@ -128,8 +152,8 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const fromDate = `${fromParam}T00:00:00`
-  const toDate = `${toParam}T23:59:59`
+  const fromDate = `${from}T00:00:00`
+  const toDate = `${to}T23:59:59`
 
   // ── Route by type ──
   switch (type) {

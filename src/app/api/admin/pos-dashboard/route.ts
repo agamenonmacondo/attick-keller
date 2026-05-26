@@ -82,8 +82,50 @@ export async function GET(request: NextRequest) {
   // ── Parse filters ──
   const zoneParam = qparam(request, 'zone') || 'all'
   const categoryParam = qparam(request, 'category') || 'all'
-  const fromParam = qparam(request, 'from') || '2026-04-01'
-  const toParam = qparam(request, 'to') || '2026-04-30'
+  const fromParam = qparam(request, 'from') || ''
+  const toParam = qparam(request, 'to') || ''
+
+  // ── Auto-detect date range when not specified ──
+  let from = fromParam
+  let to = toParam
+
+  // ── Fetch available months for period selector ──
+  const { data: monthData } = await sb
+    .from('pos_sales')
+    .select('opened_at')
+    .eq('is_paid', true)
+    .eq('is_cancelled', false)
+    .order('opened_at', { ascending: true })
+    .limit(2000)
+
+  const availableMonths: string[] = []
+  if (monthData && monthData.length > 0) {
+    const seen = new Set<string>()
+    for (const row of monthData) {
+      const d = new Date(row.opened_at)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      if (!seen.has(key)) {
+        seen.add(key)
+        availableMonths.push(key)
+      }
+    }
+  }
+
+  if (!from || !to) {
+    if (monthData && monthData.length > 0) {
+      const latest = new Date(monthData[monthData.length - 1].opened_at)
+      // Default to the month of the latest data point
+      const y = latest.getFullYear()
+      const m = latest.getMonth() // 0-indexed
+      from = from || `${y}-${String(m + 1).padStart(2, '0')}-01`
+      // End of month
+      const lastDay = new Date(y, m + 1, 0).getDate()
+      to = to || `${y}-${String(m + 1).padStart(2, '0')}-${lastDay}`
+    } else {
+      from = from || '2026-01-01'
+      to = to || '2026-12-31'
+    }
+  }
 
   // ── Fetch ALL sales (paginated) ──
   let allSales: any[] = []
@@ -93,8 +135,8 @@ export async function GET(request: NextRequest) {
     const { data: batch, error } = await sb
       .from('pos_sales')
       .select('id, total, tip_amount, subtotal, tax_amount, item_count, party_size, opened_at, closed_at, derived_zone_name, is_cancelled, pos_staff_id, pos_customer_id, customer_id, card_paid, cash_paid')
-      .gte('opened_at', `${fromParam}T00:00:00`)
-      .lte('opened_at', `${toParam}T23:59:59`)
+      .gte('opened_at', `${from}T00:00:00`)
+      .lte('opened_at', `${to}T23:59:59`)
       .eq('is_cancelled', false)
       .range(salesOffset, salesOffset + BATCH - 1)
       .order('opened_at', { ascending: true })
@@ -668,8 +710,8 @@ export async function GET(request: NextRequest) {
   const { data: shiftData } = await sb
     .from('pos_shifts')
     .select('pos_shift_id, station, cashier, cash_total, card_total, credit_total, opened_at, closed_at, is_closed')
-    .gte('opened_at', `${fromParam}T00:00:00`)
-    .lte('opened_at', `${toParam}T23:59:59`)
+    .gte('opened_at', `${from}T00:00:00`)
+    .lte('opened_at', `${to}T23:59:59`)
     .order('opened_at', { ascending: false })
     .range(0, 9)
 
@@ -756,6 +798,7 @@ export async function GET(request: NextRequest) {
     byZonePayment,
     topPerformersByCategory,
     bottomPerformersByCategory,
-    filters: { zone: zoneParam, category: categoryParam, from: fromParam, to: toParam },
+    filters: { zone: zoneParam, category: categoryParam, from, to },
+    availableMonths,
   })
 }

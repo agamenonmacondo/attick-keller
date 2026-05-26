@@ -28,8 +28,7 @@ type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 const DEFAULT_FILTERS: POSDashboardFilters = {
   zone: 'all',
   category: 'all',
-  from: '2026-04-01',
-  to: '2026-04-30',
+  // from/to left empty — server auto-detects latest month with data
 }
 
 export function POSDashboardPanel() {
@@ -83,7 +82,8 @@ export function POSDashboardPanel() {
   }, [])
 
   const handleBackToPeriod = useCallback(() => {
-    setFilters(prev => ({ ...prev, from: '2026-04-01', to: '2026-04-30' }))
+    // Clear date filters — server auto-detects latest month
+    setFilters(prev => ({ ...prev, from: undefined, to: undefined }))
   }, [])
 
   const handleZoneClick = useCallback((zone: string) => {
@@ -181,6 +181,7 @@ export function POSDashboardPanel() {
             onChange={handleFilterChange}
             categoryList={data?.categoryList || []}
             zoneList={zoneListForFilter}
+            availableMonths={data?.availableMonths}
           />
         </div>
       </div>

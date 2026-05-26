@@ -248,11 +248,11 @@ function currentMonthRange(): { from: string; to: string } {
 
 // ── Original hook ──
 export function useNomina(from?: string, to?: string) {
-  const range = currentMonthRange()
-  const f = from ?? range.from
-  const t = to ?? range.to
+  const f = from
+  const t = to
   const [data, setData] = useState<{
     periodo: NominaPeriodo
+    periodosDisponibles: { id: string; periodo: string; sede: string; fecha_inicio: string; fecha_fin: string }[]
     resumen: NominaResumen
     staff: NominaStaffSummary[]
     dailyBreakdown: DailyBreakdown[]
@@ -275,7 +275,10 @@ export function useNomina(from?: string, to?: string) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/admin/nomina?from=${f}&to=${t}`)
+      const params = new URLSearchParams()
+      if (f) params.set('from', f)
+      if (t) params.set('to', t)
+      const res = await fetch(`/api/admin/nomina?${params.toString()}`)
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error || `Error ${res.status}`)
@@ -294,7 +297,12 @@ export function useNomina(from?: string, to?: string) {
     setDetailError(null)
     setSelectedStaffId(staffId)
     try {
-      const res = await fetch(`/api/admin/nomina?from=${f}&to=${t}&action=staff_detail&staff_id=${staffId}`)
+      const params = new URLSearchParams()
+      if (f) params.set('from', f)
+      if (t) params.set('to', t)
+      params.set('action', 'staff_detail')
+      params.set('staff_id', staffId)
+      const res = await fetch(`/api/admin/nomina?${params.toString()}`)
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error || `Error ${res.status}`)

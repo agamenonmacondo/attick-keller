@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNomina } from '@/lib/hooks/useNomina'
 import { useNominaOpsCosts } from '@/lib/hooks/useNominaOpsCosts'
 import { NominaContablePanel } from './NominaContablePanel'
@@ -262,11 +262,26 @@ const SUB_TABS: { key: UnifiedSubTab; label: string; icon: React.ReactNode }[] =
 
 // ── Operativo tab ──
 function OperativoTab() {
-  const range = currentMonthRange()
-  const [from, setFrom] = useState(range.from)
-  const [to, setTo] = useState(range.to)
-  const { data, loading, error, refetch, selectedStaffId, staffDetail, detailLoading, detailError, fetchStaffDetail, closeDetail } = useNomina(from, to)
+  const [initialized, setInitialized] = useState(false)
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const { data, loading, error, refetch, selectedStaffId, staffDetail, detailLoading, detailError, fetchStaffDetail, closeDetail } = useNomina(
+    initialized ? from : undefined,
+    initialized ? to : undefined
+  )
   const [search, setSearch] = useState('')
+
+  // On mount: fetch available periodos and default to most recent
+  useEffect(() => {
+    if (!initialized && data?.periodosDisponibles?.length) {
+      const mostRecent = data.periodosDisponibles[0]
+      if (mostRecent?.fecha_inicio && mostRecent?.fecha_fin) {
+        setFrom(mostRecent.fecha_inicio.slice(0, 10))
+        setTo(mostRecent.fecha_fin.slice(0, 10))
+        setInitialized(true)
+      }
+    }
+  }, [data?.periodosDisponibles, initialized])
 
   if (loading) {
     return (

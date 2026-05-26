@@ -264,6 +264,12 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Action: summary (default, original biometric) ──
+  // Get available periodos from nomina_periodos for selector
+  const { data: periodosDisponibles } = await sb
+    .from('nomina_periodos')
+    .select('id, periodo, sede, fecha_inicio, fecha_fin')
+    .order('fecha_inicio', { ascending: false })
+
   const from = qparam(request, 'from') || '2026-04-01'
   const to = qparam(request, 'to') || '2026-04-30'
 
@@ -433,6 +439,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     periodo: { from, to },
+    periodosDisponibles: periodosDisponibles || [],
     resumen: {
       totalEmpleados: result.length,
       totalDiasRegistros: uniqueDates.size,

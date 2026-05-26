@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useRef } from 'react'
 import { usePOSDashboard, type POSDashboardFilters } from '@/lib/hooks/usePOSDashboard'
+import { usePOSCalendar } from '@/lib/hooks/usePOSCalendar'
 import { AnimatedCard } from '../shared/AnimatedCard'
 import { Spinner } from '@phosphor-icons/react'
 import { POSFiltersBar } from './POSFiltersBar'
@@ -35,6 +36,8 @@ export function POSDashboardPanel() {
   const [filters, setFilters] = useState<POSDashboardFilters>(DEFAULT_FILTERS)
   const [heatmapMetric, setHeatmapMetric] = useState<HeatmapMetric>('revenue')
   const { data, loading, error, refetch, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown } = usePOSDashboard(filters)
+  // Calendar shows ALL days regardless of month filter
+  const { dailyTrend: calendarTrend, availableMonths: calendarMonths } = usePOSCalendar(filters.zone)
   const drillDownRef = useRef<HTMLDivElement>(null)
 
   const isSingleDay = useMemo(() => {
@@ -181,7 +184,7 @@ export function POSDashboardPanel() {
             onChange={handleFilterChange}
             categoryList={data?.categoryList || []}
             zoneList={zoneListForFilter}
-            availableMonths={data?.availableMonths}
+            availableMonths={calendarMonths}
           />
         </div>
       </div>
@@ -198,7 +201,7 @@ export function POSDashboardPanel() {
           {/* HEATMAP CALENDAR — eje central */}
           <AnimatedCard delay={0} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
             <RevenueHeatmapCalendar
-              dailyData={data.dailyTrend}
+              dailyData={calendarTrend}
               selectedDate={isSingleDay ? filters.from : undefined}
               onDayClick={handleDayClick}
               metric={heatmapMetric}

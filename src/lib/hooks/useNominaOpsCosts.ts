@@ -9,10 +9,8 @@ export interface OpsCostData {
     sede: string
     fecha_inicio: string
     fecha_fin: string
-    total_devengado: number
-    total_deducciones: number
-    total_neto: number
   }
+  periodosDisponibles: { id: string; periodo: string; sede: string }[]
   empleados: number
   resumen: {
     totalDevengado: number
@@ -87,27 +85,21 @@ export interface OpsCostData {
   }
 }
 
-export function useNominaOpsCosts(periodo: string = 'ABRIL 2026', sede: string = 'C75') {
+export function useNominaOpsCosts(periodo?: string, sede = 'C75') {
   const [data, setData] = useState<OpsCostData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const res = await fetch(`/api/admin/nomina/ops-costs?periodo=${encodeURIComponent(periodo)}&sede=${encodeURIComponent(sede)}`)
-        if (!res.ok) throw new Error(`Error ${res.status}`)
-        const json = await res.json()
-        setData(json)
-      } catch (e: any) {
-        setError(e.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
+    setLoading(true)
+    setError(null)
+    const params = new URLSearchParams()
+    if (periodo) params.set('periodo', periodo)
+    params.set('sede', sede)
+    fetch(`/api/admin/nomina/ops-costs?${params.toString()}`)
+      .then(r => r.ok ? r.json() : r.json().then(d => { throw new Error(d.error || 'Error cargando datos') }))
+      .then(d => { setData(d); setLoading(false) })
+      .catch(e => { setError(e.message); setLoading(false) })
   }, [periodo, sede])
 
   return { data, loading, error }

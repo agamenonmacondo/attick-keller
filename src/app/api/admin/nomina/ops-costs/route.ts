@@ -6,68 +6,107 @@ export async function GET(request: NextRequest) {
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()
-  const periodo = request.nextUrl.searchParams.get('periodo') || 'ABRIL 2026'
+  const periodo = request.nextUrl.searchParams.get('periodo')
+  const sede = request.nextUrl.searchParams.get('sede') || 'C75'
 
   try {
-    // 1. Nomina periodo C75
-    const { data: periodoData, error: pErr } = await sb
-      .from('nomina_periodos')
-      .select('*')
-      .eq('periodo', periodo)
-      .eq('sede', 'C75')
-      .single()
-    if (pErr) throw pErr
+    // 1. Resolve periodo — if not provided, get the most recent one for this sede
+    let periodoData: any
+    let periodoId: string
 
-    const periodoId = periodoData.id
+    if (periodo) {
+      const { data, error: pErr } = await sb
+        .from('nomina_periodos')
+        .select('*')
+        .eq('periodo', periodo)
+        .eq('sede', sede)
+        .single()
+      if (pErr) {
+        // Periodo not found — fall back to most recent for this sede
+        const { data: fallback, error: fbErr } = await sb
+          .from('nomina_periodos')
+          .select('*')
+          .eq('sede', sede)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+        if (fbErr) throw fbErr
+        periodoData = fallback
+        periodoId = fallback.id
+      } else {
+        periodoData = data
+        periodoId = data.id
+      }
+    } else {
+      // Get most recent periodo for this sede
+      const { data, error: pErr } = await sb
+        .from('nomina_periodos')
+        .select('*')
+        .eq('sede', sede)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+      if (pErr) throw pErr
+      periodoData = data
+      periodoId = data.id
+    }
 
-    // 2. Detalle C75
+    // 2. Detalle
     const { data: detalle, error: dErr } = await sb
       .from('nomina_detalle')
       .select('*')
       .eq('periodo_id', periodoId)
-      .eq('sede', 'C75')
+      .eq('sede', sede)
     if (dErr) throw dErr
 
-    // 3. Provisiones C75
+    // 3. Provisiones
     const { data: provisiones, error: provErr } = await sb
       .from('nomina_provisiones')
       .select('*')
       .eq('periodo_id', periodoId)
-      .eq('sede', 'C75')
+      .eq('sede', sede)
     if (provErr) throw provErr
 
-    // 4. HE y Recargos C75
+    // 4. HE y Recargos
     const { data: heRecargos, error: heErr } = await sb
       .from('nomina_he_recargos')
       .select('*')
       .eq('periodo_id', periodoId)
-      .eq('sede', 'C75')
+      .eq('sede', sede)
     if (heErr) throw heErr
 
-    // 5. Novedades C75
+    // 5. Novedades
     const { data: novedades, error: nErr } = await sb
       .from('nomina_novedades')
       .select('*, staff:pos_nomina_staff(nombre_completo, cargo)')
       .eq('periodo_id', periodoId)
-      .eq('sede', 'C75')
+      .eq('sede', sede)
     if (nErr) throw nErr
 
-    // 6. Propinas C75
+    // 6. Propinas
     const { data: propinas, error: propErr } = await sb
       .from('nomina_propinas')
       .select('*')
       .eq('periodo_id', periodoId)
-      .eq('sede', 'C75')
+      .eq('sede', sede)
       .single()
     if (propErr && propErr.code !== 'PGRST116') throw propErr
 
     // 7. POS Revenue for the period's month
-    // periodo: "ABRIL 2026" → dates: 2026-04-01 to 2026-04-30
     const periodoDateMap: Record<string, { from: string; to: string }> = {
       'ABRIL 2026': { from: '2026-04-01', to: '2026-04-30' },
       'MAYO 2026': { from: '2026-05-01', to: '2026-05-31' },
+      'JUNIO 2026': { from: '2026-06-01', to: '2026-06-30' },
     }
-    const dateRange = periodoDateMap[periodo] || { from: '2026-05-01', to: '2026-05-31' }
+    const dateRange = periodoDateMap[periodoData.periodo] || (() => {
+      // Parse "MONTH YEAR" format to generate date range
+      const months: Record<string, number> = { ENERO: 1, FEBRERO: 2, MARZO: 3, ABRIL: 4, MAYO: 5, JUNIO: 6, JULIO: 7, AGOSTO: 8, SEPTIEMBRE: 9, OCTUBRE: 10, NOVIEMBRE: 11, DICIEMBRE: 12 }
+      const parts = periodoData.periodo.split(' ')
+      const m = months[(parts[0] || '').toUpperCase()] || new Date().getMonth() + 1
+      const y = parseInt(parts[1]) || new Date().getFullYear()
+      const lastDay = new Date(y, m, 0).getDate()
+      return { from: `${y}-${String(m).padStart(2, '0')}-01`, to: `${y}-${String(m).padStart(2, '0')}-${lastDay}` }
+    })()
 
     const { data: posData, error: posErr } = await sb
       .from('pos_sales')
@@ -130,8 +169,16 @@ export async function GET(request: NextRequest) {
       margenBruto: posRevenue > 0 ? ((posRevenue - costoReal) / posRevenue) * 100 : null,
     }
 
+    // Available periodos for the selector
+    const { data: periodosList } = await sb
+      .from('nomina_periodos')
+      .select('id, periodo, sede')
+      .eq('sede', sede)
+      .order('created_at', { ascending: false })
+
     return NextResponse.json({
       periodo: periodoData,
+      periodosDisponibles: periodosList || [],
       empleados,
       resumen: {
         totalDevengado,

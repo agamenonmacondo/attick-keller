@@ -2,8 +2,8 @@
 
 ## Current State
 
-**Last Updated:** 2026-05-23
-**Active Feature:** feat-010 — Bug fix "sin datos al seleccionar categoria"
+**Last Updated:** 2026-05-27
+**Active Feature:** feat-011 — Drill-Down Filter Propagation
 
 ## Status
 
@@ -11,61 +11,74 @@
 
 - [x] feat-001: Analytics Insights Dashboard — deployado en produccion
 - [x] feat-005: Data Coverage Audit — auditoria completada
-- [x] feat-002 P1 fixes: Top Products filtra por categoria, drill-down muestra todos los productos, zona Desconocido fuera del grafico
-- [x] Harness setup: AGENTS.md, feature_list.json, init.sh creados
+- [x] feat-002 P1 fixes: Top Products filtra por categoria, zona Desconocido fuera del grafico
+- [x] FIX: `pos_product_id` faltaba en SELECT de `handleProduct` — causaba drill-down vacío para todos los productos
+- [x] feat-011 SPEC: Documentacion completa del bug de filtros no propagados en drill-downs
 
 ### What's In Progress
 
 - [ ] feat-010: Bug "sin datos al seleccionar categoria" — debug logs activos, esperando revision de consola
-- [ ] feat-002: POS Dashboard — funcional pero con bug pendiente
-- [ ] feat-003: Heatmap — funcional sin tooltips CSS
-- [ ] feat-004: Drill-Down — funcional, afectado por bug de categoria
-- [ ] feat-006: Improvement plan — P1 done, P2-P4 pendientes
+- [ ] feat-004: Drill-Down — funciona pero NO respeta filtros de zona/categoria
+- [ ] feat-011: Drill-Down Filter Propagation — spec creado, implementacion pendiente
 
-### What's Next
+### What's Next (prioridad)
 
-1. Resolver bug feat-010 (revision de consola del navegador)
-2. Implementar P2: fix datos incorrectos (unit_price, avgTicket, party_size, formato moneda)
-3. Implementar P3: UX improvements
-4. Implementar feat-009: columnas no presentadas
+1. **feat-011 Implementacion:** Modificar 3 capas (hook, API route, handlers)
+2. **feat-010:** Resolver bug de "sin datos" (revision de consola)
+3. **feat-007:** P2 - Fix datos incorrectos
 
-## Blockers / Risks
+## Root Cause Analysis: feat-011
 
-- [ ] feat-010: Bug "sin datos" necesita revision de consola en browser de Alejandro. Debug logs deployados.
-- [ ] Vercel token requiere renovacion periodica. Alejandro provee tokens nuevos cuando expiran.
+Los drill-downs no respetan los filtros activos del dashboard (zona, categoria, fecha).
 
-## Decisions Made
+**3 capas afectadas:**
 
-- **Heatmap CSS**: Se removio `import 'react-activity-calendar/build/tooltips.css'` porque falla en Vercel build. Tooltips funcionan sin el.
-- **Formato moneda**: Siempre COP con `$` y puntos para miles, comas para decimales.
-- **Sin emojis**: Usar iconos Phosphor en toda la UI.
-- **Dark mode**: CSS vars con ThemeProvider, toggle Sun/Moon.
-- **Deployment**: `master` branch directo a Vercel. Commit = deploy.
+1. **Hook `usePOSDashboard.ts`** — `fetchDrillDown()` no envía `zone` ni `category` como parámetros URL
+2. **API `detail/route.ts`** — GET handler no parsea `zone` ni `category`
+3. **Handlers** — Cada handler (product, staff, category, hour, zone) no aplica filtros de zona/categoría
+
+**Detalle del fix:**
+- `fetchDrillDown`: agregar `p.set('zone', ...)` y `p.set('category', ...)`
+- API: parsear `zoneParam` y `categoryParam`, pasarlos a cada handler
+- Handlers: filtrar `allSales` por zona, filtrar `validItems` por categoría
+
+Ver spec completo: `specs/drill-down-filter-propagation/spec.md`
+
+## Bug Fixed This Session
+
+**pos_product_id missing in SELECT (commit eac4ac0)**
+
+En `detail/route.ts` línea 209, la query a `pos_sale_items` en `handleProduct()` hacía:
+```ts
+.select('pos_sale_id, quantity, unit_price')  // FALTABA pos_product_id
+```
+
+Pero luego en línea 218 filtraba client-side:
+```ts
+items.filter((i: any) => (i.pos_product_id || '').trim() === trimmedProductId)
+```
+
+Como `pos_product_id` no estaba en el SELECT, siempre era `undefined`, y el filtro eliminaba TODOS los items. Resultado: drill-down vacío.
+
+**Fix:** Agregar `pos_product_id` al SELECT.
 
 ## Files Modified This Session
 
-- `src/lib/hooks/usePOSDashboard.ts` — debug console.log para rastrear bug
-- `src/components/admin/pos-dashboard/TopProductsTable.tsx` — filtro por categoria seleccionada
-- `src/components/admin/pos-dashboard/TopProductByCategoryChart.tsx` — filtro por categoria seleccionada
-- `src/components/admin/pos-dashboard/POSDashboardPanel.tsx` — props de categoria pasada a componentes
-- `src/components/admin/pos-dashboard/ZoneRevenueChart.tsx` — zona Desconocido separada como nota
-- `src/app/api/admin/pos-dashboard/route.ts` — BUG-01: allItems filtrado por categoria, BUG-03: zona Desconocido separada
-- `src/components/admin/pos-dashboard/RevenueHeatmapCalendar.tsx` — CSS import roto removido
-- `AGENTS.md` — reescrito con estructura de harness completo
-- `feature_list.json` — creado con 10 features
-- `init.sh` — creado con verificacion idempotente
+- `src/app/api/admin/pos-dashboard/detail/route.ts` — fix pos_product_id en SELECT de handleProduct
+- `specs/drill-down-filter-propagation/spec.md` — spec completo del bug de filtros
+- `feature_list.json` — actualizado con feat-011
 - `progress.md` — este archivo
-- `session-handoff.md` — creado
 
-## Evidence of Completion
+## Blockers / Risks
 
-- [x] TypeScript: `npx tsc --noEmit` pasa sin errores
-- [x] Build: `npm run build` exitoso
-- [x] Deploy: Vercel deploy exitoso (commit 864aa48 + debug commit)
+- [ ] feat-010: Bug "sin datos" necesita revision de consola en browser de Alejandro
+- [ ] Vercel token requiere renovacion periodica
+- [ ] feat-011: Cambio de 3 capas simultáneas — riesgo de regresión si no se prueba bien
 
 ## Notes for Next Session
 
-- Alejandro reporta que al seleccionar "Pizzas" funciona un segundo y luego sale "sin datos". Necesita revisar consola del navegador filtrando por `[POSDashboard]` para ver que datos llegan de la API.
-- El sitio esta deployado en https://web-rosy-nine-64.vercel.app
-- Token de Vercel: preguntar a Alejandro cuando expire (se renueva periodicamente)
-- Supabase project: pbllaipsdfypelnwrvpy
+- El fix de pos_product_id ya está deployado en master. Vercel deployó automáticamente.
+- Para implementar feat-011, seguir el spec en `specs/drill-down-filter-propagation/spec.md`
+- Orden recomendado: T1 (hook) → T2 (API parse) → T3a (product) → T3b (staff) → T3c-d-e (cat, hour, zone)
+- Cada T debe verificarse en browser antes de continuar al siguiente
+- El sitio esta deployado en https://web-rosy-nine-64.vercel.app/admin

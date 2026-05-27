@@ -14,7 +14,7 @@
       "description": "Dashboard operativo con datos POS: filtros por fecha/zona/categoria, heatmap de ingresos, tabla de top productos, desglose por categorias, rendimiento de personal, metodos de pago, y zonas.",
       "dependencies": ["feat-001"],
       "status": "in-progress",
-      "evidence": "Deployado con 34+ tablas Supabase. Bug pendiente: 'sin datos al seleccionar categoria' - debug logs activos. P1 fixes deployados (Top Products filtra por categoria, drill-down muestra todos los productos, zona Desconocido fuera del grafico)."
+      "evidence": "Deployado con 34+ tablas Supabase. Bug pendiente: 'sin datos al seleccionar categoria' - debug logs activos. P1 fixes deployados (Top Products filtra por categoria, drill-down muestra todos los productos, zona Desconocido fuera del grafico). FIX: pos_product_id faltaba en SELECT de handleProduct."
     },
     {
       "id": "feat-003",
@@ -30,7 +30,7 @@
       "description": "Panel de drill-down con tabs por tipo (Producto, Mesero, Categoria, Hora, Zona). Breadcrumb navigation. Detalle con estadisticas completas.",
       "dependencies": ["feat-001", "feat-002"],
       "status": "in-progress",
-      "evidence": "API /detail implementada con tipos: product, category, waiter, zone. DrillDownPanel con tabs y breadcrumb. Pendiente: bug de datos al seleccionar categoria afecta drill-down."
+      "evidence": "API /detail implementada. DrillDownPanel con tabs y breadcrumb. BUG: drill-downs NO respetan filtros de zona/categoria del dashboard. Spec en specs/drill-down-filter-propagation/spec.md"
     },
     {
       "id": "feat-005",
@@ -38,15 +38,15 @@
       "description": "Auditoria completa de coverage de datos DB vs UI. Identificar columnas no utilizadas, datos faltantes, y gaps en la presentacion.",
       "dependencies": ["feat-001"],
       "status": "done",
-      "evidence": "Auditoria completada en specs/006-dashboard-audit/audit.md. 3 bugs criticos, 4 medios, 15+ columnas no utilizadas, 8 problemas UX."
+      "evidence": "Auditoria completada en specs/006-dashboard-audit/audit.md."
     },
     {
       "id": "feat-006",
       "name": "Dashboard Improvement Plan",
-      "description": "Plan de mejora en 4 niveles de prioridad basado en la auditoria. P1 bugs criticos, P2 datos incorrectos, P3 UX, P4 datos no utilizados.",
+      "description": "Plan de mejora en 4 niveles de prioridad basado en la auditoria.",
       "dependencies": ["feat-001", "feat-005"],
       "status": "in-progress",
-      "evidence": "Plan generado en specs/006-dashboard-audit/improvement-plan.md. P1 implementado y deployado. P2-P4 pendientes."
+      "evidence": "Plan en specs/006-dashboard-audit/improvement-plan.md. P1 implementado. P2-P4 pendientes."
     },
     {
       "id": "feat-007",
@@ -67,7 +67,7 @@
     {
       "id": "feat-009",
       "name": "P4 - Utilizar columnas no presentadas",
-      "description": "Integrar las 15+ columnas de DB no utilizadas en el dashboard: tax_amount, cover_count, table_number, is_cancelled en items, etc.",
+      "description": "Integrar las 15+ columnas de DB no utilizadas en el dashboard.",
       "dependencies": ["feat-006"],
       "status": "not-started",
       "evidence": ""
@@ -75,10 +75,18 @@
     {
       "id": "feat-010",
       "name": "Bug fix - Sin datos al seleccionar categoria",
-      "description": "Al seleccionar una categoria en el filtro, el dashboard muestra datos correctamente por ~1 segundo y luego muestra 'sin datos'. Debug logs activos. Pendiente revision en consola del navegador.",
+      "description": "Al seleccionar una categoria en el filtro, el dashboard muestra datos correctamente por ~1 segundo y luego muestra 'sin datos'.",
       "dependencies": ["feat-002"],
       "status": "in-progress",
-      "evidence": "Console.log en usePOSDashboard.ts deployado. Alejandro revisara [POSDashboard] en consola del browser."
+      "evidence": "Console.log en usePOSDashboard.ts deployado. Pendiente revision en consola del navegador."
+    },
+    {
+      "id": "feat-011",
+      "name": "Drill-Down Filter Propagation",
+      "description": "Los drill-downs (producto, mesero, categoria, hora, zona) deben respetar los filtros activos del dashboard (zona, categoria, fecha). Actualmente muestran datos consolidados sin filtrar. Ver specs/drill-down-filter-propagation/spec.md",
+      "dependencies": ["feat-002", "feat-004"],
+      "status": "not-started",
+      "evidence": "Spec creado en specs/drill-down-filter-propagation/spec.md. 3 capas a modificar: hook (enviar zone/category), API (parsear), handlers (aplicar filtros)."
     }
   ]
 }

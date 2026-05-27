@@ -6,7 +6,18 @@ function qparam(request: NextRequest, key: string): string | null {
   return request.nextUrl.searchParams.get(key)
 }
 
-const BATCH = 1000
+const BATCH = 200  // Supabase .in() with UUIDs fails silently beyond ~200 IDs
+
+// BUG-FIX: pos_sale_items can contain pos_product_id values padded with trailing spaces (up to 15 chars).
+// Normalizing (trimming) product IDs before any comparison or lookup.
+function normalizeItems(items: any[]): any[] {
+  for (const item of items) {
+    if (item.pos_product_id && typeof item.pos_product_id === 'string') {
+      item.pos_product_id = item.pos_product_id.trim()
+    }
+  }
+  return items
+}
 
 /** Paginated fetch for Supabase queries with range */
 async function fetchPaginated(
@@ -186,21 +197,26 @@ async function handleProduct(sb: any, productId: string, from: string, to: strin
   const productName = productData?.name || 'Desconocido'
 
   // ── Get all items for this product, then join with sales ──
+  // Use ilike with trimmed productId to match pos_sale_items rows where
+  // pos_product_id may be padded with trailing spaces (POS system artifact).
+  const trimmedProductId = productId.trim()
   let allItems: any[] = []
   let itemsOffset = 0
   let itemsHasMore = true
   while (itemsHasMore) {
     const { data: items, error } = await sb
       .from('pos_sale_items')
-      .select('pos_sale_id, quantity, unit_price')
-      .eq('pos_product_id', productId)
+      .select('pos_sale_id, pos_product_id, quantity, unit_price')
+      .ilike('pos_product_id', `${trimmedProductId}%`)
       .range(itemsOffset, itemsOffset + BATCH - 1)
 
     if (error || !items || items.length === 0) {
       itemsHasMore = false
       break
     }
-    allItems.push(...items)
+    // Also filter client-side to exclude false ilike matches (e.g., "ABC" matching "ABCD")
+    const exactItems = items.filter((i: any) => (i.pos_product_id || '').trim() === trimmedProductId)
+    allItems.push(...normalizeItems(exactItems))
     itemsOffset += BATCH
     itemsHasMore = items.length === BATCH
   }
@@ -313,22 +329,28 @@ async function handleProduct(sb: any, productId: string, from: string, to: strin
 
   companionItems = companionItems.filter((i: any) => validSaleIds.has(i.pos_sale_id))
 
-  const companionProductIds = [...new Set(companionItems.map((i: any) => i.pos_product_id))]
+  // Save original padded IDs before trimming, query DB with originals, trim BOTH sides
+  const companionRawIds = companionItems.map((i: any) => i.pos_product_id)
+  const companionProductIdsTrimmed = [...new Set(companionItems.map((i: any) => i.pos_product_id?.trim()).filter(Boolean))]
   const companionNames = new Map<string, string>()
-  for (let i = 0; i < companionProductIds.length; i += BATCH) {
-    const batch = companionProductIds.slice(i, i + BATCH)
-    const { data: prods } = await sb
-      .from('pos_products')
-      .select('pos_product_id, name')
-      .in('pos_product_id', batch)
-    if (prods) {
-      for (const p of prods) companionNames.set(p.pos_product_id, p.name)
+  if (companionRawIds.length > 0) {
+    const rawUnique = [...new Set(companionRawIds.filter(Boolean))]
+    for (let i = 0; i < rawUnique.length; i += BATCH) {
+      const batch = rawUnique.slice(i, i + BATCH)
+      const { data: prods } = await sb
+        .from('pos_products')
+        .select('pos_product_id, name')
+        .in('pos_product_id', batch)
+      if (prods) {
+        for (const p of prods) companionNames.set((p.pos_product_id || '').trim(), p.name)
+      }
     }
   }
 
   const companionMap = new Map<string, { name: string; qty: number; revenue: number }>()
   for (const item of companionItems) {
-    const name = companionNames.get(item.pos_product_id) || 'Desconocido'
+    const trimmedId = (item.pos_product_id || '').trim()
+    const name = companionNames.get(trimmedId) || 'Desconocido'
     if (!companionMap.has(item.pos_product_id)) {
       companionMap.set(item.pos_product_id, { name, qty: 0, revenue: 0 })
     }
@@ -469,28 +491,37 @@ async function handleStaff(sb: any, staffId: string, from: string, to: string) {
   // ── topProducts ──
   const saleIds = allSales.map((s: any) => s.id)
   let allItems: any[] = []
+  const staffOrigProductIds: string[] = []
   for (let i = 0; i < saleIds.length; i += BATCH) {
     const batch = saleIds.slice(i, i + BATCH)
     const { data: items } = await sb
       .from('pos_sale_items')
       .select('pos_product_id, quantity, unit_price')
       .in('pos_sale_id', batch)
-    if (items) allItems.push(...items)
+    if (items) {
+      // Save original (padded) IDs before normalizing for DB query
+      for (const item of items) {
+        if (item.pos_product_id) staffOrigProductIds.push(item.pos_product_id)
+      }
+      allItems.push(...normalizeItems(items))
+    }
   }
 
-  const productIds = [...new Set(allItems.map((i: any) => i.pos_product_id))]
+  // Use original padded IDs for DB query so .in() matches
+  const productIdsForQuery = [...new Set(staffOrigProductIds.filter(Boolean))]
   const productNames = new Map<string, string>()
   const productGroups = new Map<string, string>()
-  for (let i = 0; i < productIds.length; i += BATCH) {
-    const batch = productIds.slice(i, i + BATCH)
+  for (let i = 0; i < productIdsForQuery.length; i += BATCH) {
+    const batch = productIdsForQuery.slice(i, i + BATCH)
     const { data: prods } = await sb
       .from('pos_products')
       .select('pos_product_id, name, pos_group_id')
       .in('pos_product_id', batch)
     if (prods) {
       for (const p of prods) {
-        productNames.set(p.pos_product_id, p.name)
-        productGroups.set(p.pos_product_id, p.pos_group_id || '')
+        const cleanId = (p.pos_product_id || '').trim()
+        productNames.set(cleanId, p.name)
+        productGroups.set(cleanId, p.pos_group_id || '')
       }
     }
   }
@@ -624,8 +655,10 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
   const productNameMap = new Map<string, string>()
   const productPriceMap = new Map<string, number>()
   for (const p of catProducts) {
-    productNameMap.set(p.pos_product_id, p.name)
-    productPriceMap.set(p.pos_product_id, Number(p.price) || 0)
+    // Trim keys so lookups with normalized item IDs match
+    const cleanId = (p.pos_product_id || '').trim()
+    productNameMap.set(cleanId, p.name)
+    productPriceMap.set(cleanId, Number(p.price) || 0)
   }
 
   // ── Get all items for these products ──
@@ -636,7 +669,7 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
       .from('pos_sale_items')
       .select('pos_sale_id, pos_product_id, quantity, unit_price')
       .in('pos_product_id', pidBatch)
-    if (items) allItems.push(...items)
+    if (items) allItems.push(...normalizeItems(items))
   }
 
   // Get sale IDs and filter by date (include cancelled for counting)
@@ -919,19 +952,22 @@ async function handleHour(sb: any, hourStr: string, from: string, to: string) {
       .from('pos_sale_items')
       .select('pos_product_id, quantity, unit_price')
       .in('pos_sale_id', batch)
-    if (items) allItems.push(...items)
+    if (items) {
+      allItems.push(...normalizeItems(items))
+    }
   }
 
-  const productIds = [...new Set(allItems.map((i: any) => i.pos_product_id))]
+  // Get unique product IDs from all items (already normalized/trimmed by normalizeItems)
+  const productIdsForQuery = [...new Set(allItems.map((i: any) => i.pos_product_id).filter(Boolean))]
   const productNames = new Map<string, string>()
-  for (let i = 0; i < productIds.length; i += BATCH) {
-    const batch = productIds.slice(i, i + BATCH)
+  for (let i = 0; i < productIdsForQuery.length; i += BATCH) {
+    const batch = productIdsForQuery.slice(i, i + BATCH)
     const { data: prods } = await sb
       .from('pos_products')
       .select('pos_product_id, name')
       .in('pos_product_id', batch)
     if (prods) {
-      for (const p of prods) productNames.set(p.pos_product_id, p.name)
+      for (const p of prods) productNames.set((p.pos_product_id || '').trim(), p.name)
     }
   }
 
@@ -1060,22 +1096,26 @@ async function handleZone(sb: any, zoneName: string, from: string, to: string) {
       .from('pos_sale_items')
       .select('pos_product_id, quantity, unit_price')
       .in('pos_sale_id', batch)
-    if (items) allItems.push(...items)
+    if (items) {
+      allItems.push(...normalizeItems(items))
+    }
   }
 
-  const productIds = [...new Set(allItems.map((i: any) => i.pos_product_id))]
+  // Get unique product IDs from all items (already normalized/trimmed by normalizeItems)
+  const productIdsForQuery = [...new Set(allItems.map((i: any) => i.pos_product_id).filter(Boolean))]
   const productNames = new Map<string, string>()
   const productGroups = new Map<string, string>()
-  for (let i = 0; i < productIds.length; i += BATCH) {
-    const batch = productIds.slice(i, i + BATCH)
+  for (let i = 0; i < productIdsForQuery.length; i += BATCH) {
+    const batch = productIdsForQuery.slice(i, i + BATCH)
     const { data: prods } = await sb
       .from('pos_products')
       .select('pos_product_id, name, pos_group_id')
       .in('pos_product_id', batch)
     if (prods) {
       for (const p of prods) {
-        productNames.set(p.pos_product_id, p.name)
-        productGroups.set(p.pos_product_id, p.pos_group_id || '')
+        const cleanId = (p.pos_product_id || '').trim()
+        productNames.set(cleanId, p.name)
+        productGroups.set(cleanId, p.pos_group_id || '')
       }
     }
   }

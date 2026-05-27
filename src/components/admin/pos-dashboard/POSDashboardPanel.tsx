@@ -33,16 +33,39 @@ const DEFAULT_FILTERS: POSDashboardFilters = {
 }
 
 export function POSDashboardPanel() {
+  const [viewMode, setViewMode] = useState<'day' | 'month'>('day')
   const [filters, setFilters] = useState<POSDashboardFilters>(DEFAULT_FILTERS)
   const [heatmapMetric, setHeatmapMetric] = useState<HeatmapMetric>('revenue')
-  const { data, loading, error, refetch, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown } = usePOSDashboard(filters)
+  const [calendarMonth, setCalendarMonth] = useState<string | undefined>(undefined) // 'YYYY-MM' for calendar view month
+
+  // When in month mode, clear date filters so data covers the full month
+  const effectiveFilters = useMemo<POSDashboardFilters>(() => {
+    if (viewMode === 'month') {
+      return { ...filters, from: undefined, to: undefined }
+    }
+    return filters
+  }, [viewMode, filters])
+
+  const { data, loading, error, refetch, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown } = usePOSDashboard(effectiveFilters)
   // Calendar shows ALL days regardless of month filter
   const { dailyTrend: calendarTrend, availableMonths: calendarMonths } = usePOSCalendar(filters.zone)
   const drillDownRef = useRef<HTMLDivElement>(null)
 
   const isSingleDay = useMemo(() => {
+    if (viewMode === 'month') return false
     return filters.from === filters.to && !!filters.from
-  }, [filters.from, filters.to])
+  }, [viewMode, filters.from, filters.to])
+
+  const handleToggleViewMode = useCallback(() => {
+    if (viewMode === 'day') {
+      // Switching to month mode — clear date selection
+      setFilters(f => ({ ...f, from: undefined, to: undefined }))
+      setViewMode('month')
+    } else {
+      // Back to day mode — server auto-detects latest month
+      setViewMode('day')
+    }
+  }, [viewMode])
 
   // Calculate period averages for day comparison
   const periodAverages = useMemo(() => {
@@ -81,6 +104,8 @@ export function POSDashboardPanel() {
   }, [data])
 
   const handleDayClick = useCallback((date: string) => {
+    // If clicking a date, always switch to day mode
+    setViewMode('day')
     setFilters(prev => ({ ...prev, from: date, to: date }))
   }, [])
 
@@ -162,15 +187,27 @@ export function POSDashboardPanel() {
         <div>
           <h2 className="text-lg font-bold text-[var(--text-primary)]">Operacion POS</h2>
           <p className="text-xs text-[var(--text-secondary)]">
-            {isSingleDay
-              ? <>Vista por dia: <span className="font-semibold text-[var(--color-ak-borgona)]">{filters.from}</span></>
-              : `${filters.from} a ${filters.to}`
+            {viewMode === 'month'
+              ? <>Vista consolidada: <span className="font-semibold text-[var(--color-ak-borgona)]">Mes completo</span></>
+              : isSingleDay
+                ? <>Vista por dia: <span className="font-semibold text-[var(--color-ak-borgona)]">{filters.from}</span></>
+                : `${filters.from} a ${filters.to}`
             }
             {filters.zone !== 'all' && ` · Zona: ${filters.zone}`}
             {filters.category !== 'all' && ` · Categoria filtrada`}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleToggleViewMode}
+            className={`text-[10px] font-medium px-3 py-1.5 rounded-full border transition-colors ${
+              viewMode === 'month'
+                ? 'bg-[var(--color-ak-borgona)] text-white border-[var(--color-ak-borgona)]'
+                : 'text-[var(--color-ak-borgona)] border-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10'
+            }`}
+          >
+            Consolidado
+          </button>
           {isSingleDay && (
             <button
               onClick={handleBackToPeriod}
@@ -180,7 +217,7 @@ export function POSDashboardPanel() {
             </button>
           )}
           <POSFiltersBar
-            filters={filters}
+            filters={effectiveFilters}
             onChange={handleFilterChange}
             categoryList={data?.categoryList || []}
             zoneList={zoneListForFilter}
@@ -189,7 +226,15 @@ export function POSDashboardPanel() {
         </div>
       </div>
 
-      {/* Loading */}
+      {/* Loading overlay */}
+      {loading && data && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-[var(--color-ak-borgona)] text-white px-3 py-1.5 rounded-lg shadow-lg text-xs font-medium animate-pulse">
+          <Spinner size={14} className="animate-spin" />
+          Actualizando...
+        </div>
+      )}
+
+      {/* Full-page spinner when no data yet */}
       {loading && !data && (
         <div className="py-16 flex items-center justify-center">
           <Spinner size={32} className="animate-spin text-[var(--text-secondary)]" />
@@ -198,12 +243,14 @@ export function POSDashboardPanel() {
 
       {data && (
         <>
-          {/* HEATMAP CALENDAR — eje central */}
+          {/* CALENDAR — calendar grid with day-by-day navigation */}
           <AnimatedCard delay={0} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
             <RevenueHeatmapCalendar
               dailyData={calendarTrend}
               selectedDate={isSingleDay ? filters.from : undefined}
               onDayClick={handleDayClick}
+              viewMonth={calendarMonth}
+              onMonthChange={setCalendarMonth}
               metric={heatmapMetric}
               onMetricChange={setHeatmapMetric}
             />
@@ -223,8 +270,8 @@ export function POSDashboardPanel() {
           )}
 
 
-          {/* Day Performance — cuando un dia seleccionado */}
-          {isSingleDay && (
+          {/* Day Performance — cuando un dia seleccionado y NO en modo consolidado */}
+          {isSingleDay && viewMode === 'day' && (
             <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-5">
               <DayPerformanceCard
                 date={filters.from!}
@@ -289,6 +336,7 @@ export function POSDashboardPanel() {
                 onCategoryDrillDown={handleCategoryDrillDown}
                 onProductDrillDown={handleProductDrillDown}
                 productsByCategory={data.productsByCategory}
+                totalKpiRevenue={data.kpis.revenue}
               />
             </AnimatedCard>
             <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
@@ -299,6 +347,7 @@ export function POSDashboardPanel() {
                 onCategoryDrillDown={handleCategoryDrillDown}
                 topPerformersByCategory={data.topPerformersByCategory}
                 bottomPerformersByCategory={data.bottomPerformersByCategory}
+                totalKpiRevenue={data.kpis.revenue}
               />
             </AnimatedCard>
           </div>

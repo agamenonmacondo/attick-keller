@@ -23,61 +23,13 @@ function formatCOPDisplay(n: number): string {
   return `${sign}$${abs.toLocaleString('es-CO')}`
 }
 
-// ── Pagination helper ──
-async function fetchAll<T = any>(
-  sb: any,
-  table: string,
-  select: string,
-  filters: Record<string, any>,
-  batchSize = 1000
-): Promise<T[]> {
-  const results: T[] = []
-  let offset = 0
-  let hasMore = true
-  while (hasMore) {
-    let query = sb.from(table).select(select).range(offset, offset + batchSize - 1)
-    for (const [key, value] of Object.entries(filters)) {
-      if (key === '_in' && Array.isArray(value)) {
-        continue
-      }
-      if (key === '_gte' && Array.isArray(value)) {
-        continue
-      }
-      if (key === '_lte' && Array.isArray(value)) {
-        continue
-      }
-      query = query.eq(key, value)
-    }
-    if (filters._gte) {
-      for (const { column, value } of filters._gte) {
-        query = query.gte(column, value)
-      }
-    }
-    if (filters._lte) {
-      for (const { column, value } of filters._lte) {
-        query = query.lte(column, value)
-      }
-    }
-    const { data, error } = await query
-    if (error) break
-    if (data && data.length > 0) {
-      results.push(...data)
-      offset += batchSize
-      hasMore = data.length === batchSize
-    } else {
-      hasMore = false
-    }
-  }
-  return results
-}
-
 // ── Main handler ─────────────────────────────────────────
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()
-  const BATCH = 1000
+  const BATCH = 200  // Supabase .in() with UUIDs fails silently beyond ~200 IDs
 
   // ── Parse filters ──
   const zoneParam = qparam(request, 'zone') || 'all'
@@ -166,12 +118,22 @@ export async function GET(request: NextRequest) {
       let allSaleIdsList: string[] = []
       for (let i = 0; i < productIds.length; i += BATCH) {
         const pidBatch = productIds.slice(i, i + BATCH)
-        const { data: items } = await sb
-          .from('pos_sale_items')
-          .select('pos_sale_id')
-          .in('pos_product_id', pidBatch)
-          .range(0, BATCH - 1)
-        if (items) allSaleIdsList.push(...items.map((it: any) => it.pos_sale_id))
+        let offset = 0
+        let hasMore = true
+        while (hasMore) {
+          const { data: items } = await sb
+            .from('pos_sale_items')
+            .select('pos_sale_id')
+            .in('pos_product_id', pidBatch)
+            .range(offset, offset + BATCH - 1)
+          if (items && items.length > 0) {
+            allSaleIdsList.push(...items.map((it: any) => it.pos_sale_id))
+            offset += BATCH
+            hasMore = items.length === BATCH
+          } else {
+            hasMore = false
+          }
+        }
       }
       categorySaleIds = new Set(allSaleIdsList)
     } else {
@@ -302,34 +264,58 @@ export async function GET(request: NextRequest) {
     .sort((a, b) => a.date.localeCompare(b.date))
 
   // ── Sale items for products/categories ──
-  // CRITICAL: Use ALL sales (not filtered) so topCategories/productsByCategory
-  // always include every category in the date range, regardless of the selected filter.
+  // CRITICAL: Supabase returns max 1000 rows per query.
+  // Previous bug: .in('pos_sale_id', batch) without .range() silently truncated at 1000 rows,
+  // so only ~1000 items were fetched instead of ~17000.
+  // Fix: paginate items within each sale batch using .range().
   const allSaleIds = allSales.map((s: any) => s.id)
   let allItems: any[] = []
   if (allSaleIds.length > 0) {
     for (let i = 0; i < allSaleIds.length; i += BATCH) {
       const batch = allSaleIds.slice(i, i + BATCH)
-      const { data: itemsData } = await sb
-        .from('pos_sale_items')
-        .select('pos_sale_id, pos_product_id, quantity, unit_price')
-        .in('pos_sale_id', batch)
-      if (itemsData) allItems.push(...itemsData)
+      let itemOffset = 0
+      let itemsHasMore = true
+      while (itemsHasMore) {
+        const { data: itemsData } = await sb
+          .from('pos_sale_items')
+          .select('pos_sale_id, pos_product_id, quantity, unit_price')
+          .in('pos_sale_id', batch)
+          .range(itemOffset, itemOffset + BATCH - 1)
+        if (itemsData && itemsData.length > 0) {
+          allItems.push(...itemsData)
+          itemOffset += BATCH
+          itemsHasMore = itemsData.length === BATCH
+        } else {
+          itemsHasMore = false
+        }
+      }
     }
   }
 
   // ── Product info (CORRECT column: pos_group_id) ──
-  const productIdsInItems = [...new Set(allItems.map((i: any) => i.pos_product_id))]
+  // CRITICAL: pos_sale_items AND pos_products BOTH have pos_product_id padded with
+  // trailing spaces (POS system artifact, up to 15 chars). We must query the DB with
+  // original (padded) IDs so .in() matches, then trim BOTH sides for the in-memory map.
+  const originalProductIds = allItems.map((i: any) => i.pos_product_id)
+  for (const item of allItems) {
+    if (item.pos_product_id && typeof item.pos_product_id === 'string') {
+      item.pos_product_id = item.pos_product_id.trim()
+    }
+  }
+  // Query DB with ORIGINAL (padded) IDs so .in() matches padded DB values
+  const productIdsForQuery = [...new Set(originalProductIds.filter(Boolean))]
   const productInfo = new Map<string, { name: string; groupId: string }>()
-  if (productIdsInItems.length > 0) {
-    for (let i = 0; i < productIdsInItems.length; i += BATCH) {
-      const batch = productIdsInItems.slice(i, i + BATCH)
+  if (productIdsForQuery.length > 0) {
+    for (let i = 0; i < productIdsForQuery.length; i += BATCH) {
+      const batch = productIdsForQuery.slice(i, i + BATCH)
       const { data: prods } = await sb
         .from('pos_products')
         .select('pos_product_id, name, pos_group_id')
         .in('pos_product_id', batch)
       if (prods) {
         for (const p of prods) {
-          productInfo.set(p.pos_product_id, { name: p.name, groupId: p.pos_group_id || '' })
+          // Trim DB key so lookups with trimmed item IDs match
+          productInfo.set((p.pos_product_id || '').trim(), { name: p.name, groupId: p.pos_group_id || '' })
         }
       }
     }
@@ -371,6 +357,8 @@ export async function GET(request: NextRequest) {
     d.quantity += Number(item.quantity) || 0
     d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
   }
+  // ── Items-based revenue total (for transparency: differs from KPI cheque-based total) ──
+  const itemsRevenueTotal = Math.round([...productRevenueMap.values()].reduce((s, d) => s + d.revenue, 0))
   // ── Note: topProducts will be recomputed AFTER category filter (see below) ──
 
   // ── Top Categories (UNFILTERED — always shows ALL categories)
@@ -562,10 +550,10 @@ export async function GET(request: NextRequest) {
     d.quantity += Number(item.quantity) || 0
     d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
   }
-  const topProducts = [...filteredProductRevenueMap.values()]
-    .sort((a, b) => b.revenue - a.revenue)
+  const topProducts = [...filteredProductRevenueMap.entries()]
+    .sort(([,a], [,b]) => b.revenue - a.revenue)
     .slice(0, 15)
-    .map(p => ({ ...p, revenue: Math.round(p.revenue) }))
+    .map(([productId, p]) => ({ productId, productName: p.name || 'Sin nombre', category: p.category, quantity: p.quantity, revenue: Math.round(p.revenue) }))
 
   // ── Staff Performance (ENRICHED: staff_type) ──
   const staffMap = new Map<string, { cheques: number; revenue: number; propinaTotal: number }>()
@@ -655,20 +643,29 @@ export async function GET(request: NextRequest) {
     .sort((a, b) => b.amount - a.amount)
 
   // ── Client Tiers ──
-  const { data: tierData } = await sb
-    .from('customer_stats')
-    .select('loyalty_tier, total_spent')
-    .not('loyalty_tier', 'is', null)
-
+  // Filter by customer_ids from the period's sales to avoid all-time data
+  const periodCustomerIds = [...new Set(
+    allSales.map((s: any) => s.customer_id || s.pos_customer_id).filter(Boolean)
+  )]
   const tierMap = new Map<string, { count: number; totalSpent: number }>()
-  if (tierData) {
-    for (const t of tierData) {
-      const tier = t.loyalty_tier
-      if (!tier) continue
-      if (!tierMap.has(tier)) tierMap.set(tier, { count: 0, totalSpent: 0 })
-      const d = tierMap.get(tier)!
-      d.count += 1
-      d.totalSpent += Number(t.total_spent) || 0
+  if (periodCustomerIds.length > 0) {
+    for (let i = 0; i < periodCustomerIds.length; i += BATCH) {
+      const batch = periodCustomerIds.slice(i, i + BATCH)
+      const { data: tierData } = await sb
+        .from('customer_stats')
+        .select('loyalty_tier, total_spent')
+        .in('customer_id', batch)
+        .not('loyalty_tier', 'is', null)
+      if (tierData) {
+        for (const t of tierData) {
+          const tier = t.loyalty_tier
+          if (!tier) continue
+          if (!tierMap.has(tier)) tierMap.set(tier, { count: 0, totalSpent: 0 })
+          const d = tierMap.get(tier)!
+          d.count += 1
+          d.totalSpent += Number(t.total_spent) || 0
+        }
+      }
     }
   }
   const clientTiers = [...tierMap.entries()]
@@ -766,7 +763,6 @@ export async function GET(request: NextRequest) {
       return totalB - totalA
     })
 
-  // ── Assemble response ──
   return NextResponse.json({
     kpis: {
       revenue: Math.round(totalRevenue),
@@ -780,6 +776,7 @@ export async function GET(request: NextRequest) {
       cashPaidTotal: Math.round(cashPaidTotal),
       avgServiceTime: Math.round(avgServiceTime),
     },
+    itemsRevenueTotal,
     byZone,
     unknownZone,
     hourlyRevenue,

@@ -27,9 +27,10 @@ interface CategoryBreakdownProps {
   onCategoryDrillDown?: (categoryId: string, categoryName: string) => void
   onProductDrillDown?: (productId: string, productName: string) => void
   productsByCategory?: Record<string, ProductInCategory[]>
+  totalKpiRevenue?: number
 }
 
-export function CategoryBreakdown({ data, selectedCategory, onCategoryClick, onCategoryDrillDown, onProductDrillDown, productsByCategory }: CategoryBreakdownProps) {
+export function CategoryBreakdown({ data, selectedCategory, onCategoryClick, onCategoryDrillDown, onProductDrillDown, productsByCategory, totalKpiRevenue }: CategoryBreakdownProps) {
   const maxRevenue = Math.max(...data.map(d => d.revenue), 1)
   const top15 = data.slice(0, 15)
 
@@ -160,6 +161,13 @@ export function CategoryBreakdown({ data, selectedCategory, onCategoryClick, onC
         })}
         {top15.length === 0 && (
           <p className="text-xs text-[var(--text-secondary)] text-center py-4">Sin datos</p>
+        )}
+        {/* Transparency note: category revenue is items-based (qty * unit_price), KPIs are cheque-based (sales.total) */}
+        {totalKpiRevenue && totalKpiRevenue > 0 && top15.length > 0 && (
+          <p className="text-[9px] text-[var(--text-secondary)] mt-3 pt-2 border-t border-[var(--border-default)] leading-relaxed">
+            Totales sobre items vendidos (qty x precio). El total de cheques es {formatCOPDisplay(totalKpiRevenue)}.
+            Diferencias por IVA, items sin precio o propinas como producto.
+          </p>
         )}
       </div>
     </div>

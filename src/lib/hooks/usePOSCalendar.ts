@@ -34,7 +34,7 @@ export function usePOSCalendar(zone: string = 'all') {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(`/api/admin/pos-calendar?${params}`, { signal })
+        const res = await fetch(`/api/admin/pos-calendar?${params}&_t=${Date.now()}`, { signal, cache: 'no-store' })
         if (signal.aborted) return
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))

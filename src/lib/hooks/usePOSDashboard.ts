@@ -53,6 +53,7 @@ export interface POSDashboardData {
     cashPaidTotal: number
     avgServiceTime: number
   }
+  itemsRevenueTotal: number
   byZone: Array<{
     zone: string
     revenue: number
@@ -217,10 +218,11 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
     async function fetchDashboard() {
       setLoading(true)
       setError(null)
+      // DON'T setData(null) — it hides ALL components during re-fetch, causing the "empty" flash.
+      // Instead, show a loading overlay over existing data.
       try {
-        const url = `/api/admin/pos-dashboard?${params}`
-        console.log('[POSDashboard] Fetching:', url)
-        const res = await fetch(url, { signal })
+        const url = `/api/admin/pos-dashboard?${params}&_t=${Date.now()}`
+        const res = await fetch(url, { signal, cache: 'no-store' })
         if (signal.aborted) return
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))
@@ -231,13 +233,6 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
         }
         const d = await res.json()
         if (signal.aborted) return
-        console.log('[POSDashboard] Data received:', {
-          topProducts: d.topProducts?.length,
-          topCategories: d.topCategories?.length,
-          productsByCategoryKeys: Object.keys(d.productsByCategory || {}),
-          categoryListLength: d.categoryList?.length,
-          selectedCategory: d.filters?.category,
-        })
         if (!cancelled) {
           setData(d)
           setError(null)
@@ -268,8 +263,8 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
       setLoading(true)
       setError(null)
       try {
-        const url = `/api/admin/pos-dashboard?${params}`
-        const res = await fetch(url)
+        const url = `/api/admin/pos-dashboard?${params}&_t=${Date.now()}`
+        const res = await fetch(url, { cache: 'no-store' })
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))
           setError(d.error || 'Error cargando datos')
@@ -300,7 +295,7 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
       p.set('id', id)
       p.set('from', from)
       p.set('to', to)
-      const res = await fetch(`/api/admin/pos-dashboard/detail?${p.toString()}`)
+      const res = await fetch(`/api/admin/pos-dashboard/detail?${p.toString()}&_t=${Date.now()}`, { cache: 'no-store' })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
         setDrillDownError(d.error || 'Error cargando detalle')

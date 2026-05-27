@@ -26,6 +26,7 @@ interface TopProductByCategoryChartProps {
   onCategoryDrillDown?: (categoryId: string, categoryName: string) => void
   topPerformersByCategory?: Record<string, Array<PerformerProduct>>
   bottomPerformersByCategory?: Record<string, Array<PerformerProduct>>
+  totalKpiRevenue?: number
 }
 
 const PALETTE = ['#6B2737', '#5C7A4D', '#D4922A', '#C9A94E', '#3E2723', '#8B5E3C', '#2C5530', '#7B3F00']
@@ -50,8 +51,19 @@ export function TopProductByCategoryChart({
   onCategoryDrillDown,
   topPerformersByCategory,
   bottomPerformersByCategory,
+  totalKpiRevenue,
 }: TopProductByCategoryChartProps) {
-  if (!data || data.length === 0) return null
+  if (!data || data.length === 0) {
+    return (
+      <div className="min-h-[180px] sm:min-h-[220px]">
+        <SectionHeading>Producto estrella por categoria</SectionHeading>
+        <p className="text-[10px] sm:text-xs text-[var(--text-secondary)] mb-4">
+          El producto mas vendido en cada linea
+        </p>
+        <p className="text-xs text-[var(--text-secondary)] text-center py-8">Sin datos</p>
+      </div>
+    )
+  }
 
   const isFiltered = selectedCategory && selectedCategory !== 'all'
   const filteredData = isFiltered
@@ -186,6 +198,13 @@ export function TopProductByCategoryChart({
             ))}
           </div>
         </div>
+      )}
+      {/* Transparency note */}
+      {totalKpiRevenue && totalKpiRevenue > 0 && (
+        <p className="text-[9px] text-[var(--text-secondary)] mt-3 pt-2 border-t border-[var(--border-default)] leading-relaxed">
+          Totales sobre items vendidos (qty x precio). El total de cheques es {formatCOP(totalKpiRevenue)}.
+          Diferencias por IVA, items sin precio o propinas como producto.
+        </p>
       )}
     </div>
   )

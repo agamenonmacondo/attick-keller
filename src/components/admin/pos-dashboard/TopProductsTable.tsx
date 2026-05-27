@@ -36,6 +36,14 @@ export function TopProductsTable({ data, initialLimit = 10, expandedLimit = 15, 
   const isCategoryFiltered = selectedCategory && selectedCategory !== 'all' && productsByCategory
   const categoryProducts = isCategoryFiltered ? (productsByCategory[selectedCategory] || []) : null
 
+  // Diagnostic: warn if category selected but no products found (key mismatch)
+  if (isCategoryFiltered && productsByCategory && categoryProducts && categoryProducts.length === 0) {
+    console.warn('[TopProductsTable] Category selected but no products found:', {
+      selectedCategory,
+      availableKeys: Object.keys(productsByCategory),
+    })
+  }
+
   // Build display data based on category filter
   const displayData: Array<{ productId: string; productName: string; label: string; quantity: number; revenue: number }> = categoryProducts
     ? categoryProducts.map(p => ({
@@ -48,7 +56,7 @@ export function TopProductsTable({ data, initialLimit = 10, expandedLimit = 15, 
     : data.map(p => ({
         productId: p.productId,
         productName: p.productName,
-        label: p.productName,
+        label: p.category,
         quantity: p.quantity,
         revenue: p.revenue,
       }))

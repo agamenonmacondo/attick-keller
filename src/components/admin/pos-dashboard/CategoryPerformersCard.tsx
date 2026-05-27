@@ -78,7 +78,15 @@ export function CategoryPerformersCard({
   }
 
   if (categoriesWithPerformers.length === 0) {
-    return null
+    return (
+      <div>
+        <SectionHeading>Mejores y Peores por Categoria</SectionHeading>
+        <p className="text-[10px] sm:text-xs text-[var(--text-secondary)] mb-3">
+          Top 2 y Bottom 2 productos por categoria
+        </p>
+        <p className="text-xs text-[var(--text-secondary)] text-center py-8">Sin datos</p>
+      </div>
+    )
   }
 
   return (
@@ -161,6 +169,10 @@ export function CategoryPerformersCard({
           )
         })}
       </div>
+      <p className="text-[9px] text-[var(--text-secondary)] mt-3 pt-2 border-t border-[var(--border-default)] leading-relaxed">
+        Totales sobre items vendidos (qty x precio). Pueden diferir del total de cheques (sales.total)
+        por IVA, items sin precio o propinas como producto.
+      </p>
     </div>
   )
 }

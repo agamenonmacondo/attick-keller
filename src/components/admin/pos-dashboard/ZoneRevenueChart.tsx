@@ -20,6 +20,7 @@ interface ZoneRevenueChartProps {
     ticketPromedio: number
     propinaTotal: number
     pct: number
+    avgServiceTime: number
   }>
   selectedZone: string
   onZoneClick: (zone: string) => void
@@ -80,6 +81,9 @@ export function ZoneRevenueChart({ data, selectedZone, onZoneClick, onZoneDrillD
                 <span className="text-[9px] text-[var(--text-secondary)]">{d.cheques} cheques</span>
                 <span className="text-[9px] text-[var(--text-secondary)]">Ticket: {formatCOPDisplay(d.ticketPromedio)}</span>
                 <span className="text-[9px] text-[var(--text-secondary)]">Propina: {formatCOPDisplay(d.propinaTotal)}</span>
+                {d.avgServiceTime > 0 && (
+                  <span className="text-[9px] text-[var(--text-secondary)]">{d.avgServiceTime} min</span>
+                )}
               </div>
             </div>
           )

@@ -123,6 +123,8 @@ export async function GET(request: NextRequest) {
   const id = qparam(request, 'id')
   const fromParam = qparam(request, 'from') || ''
   const toParam = qparam(request, 'to') || ''
+  const zoneParam = qparam(request, 'zone') || 'all'
+  const categoryParam = qparam(request, 'category') || 'all'
 
   if (!type || !id) {
     return NextResponse.json(
@@ -169,15 +171,15 @@ export async function GET(request: NextRequest) {
   // ── Route by type ──
   switch (type) {
     case 'product':
-      return handleProduct(sb, id, fromDate, toDate)
+      return handleProduct(sb, id, fromDate, toDate, zoneParam, categoryParam)
     case 'staff':
-      return handleStaff(sb, id, fromDate, toDate)
+      return handleStaff(sb, id, fromDate, toDate, zoneParam, categoryParam)
     case 'category':
-      return handleCategory(sb, id, fromDate, toDate)
+      return handleCategory(sb, id, fromDate, toDate, zoneParam)
     case 'hour':
-      return handleHour(sb, id, fromDate, toDate)
+      return handleHour(sb, id, fromDate, toDate, zoneParam, categoryParam)
     case 'zone':
-      return handleZone(sb, id, fromDate, toDate)
+      return handleZone(sb, id, fromDate, toDate, categoryParam)
     default:
       return NextResponse.json({ error: 'Tipo no implementado' }, { status: 400 })
   }
@@ -186,7 +188,7 @@ export async function GET(request: NextRequest) {
 // ════════════════════════════════════════════════════════════
 // PRODUCT DETAIL (ENRICHED: tipTotal, tipAvg, partySizeAvg, avgServiceTime, cancelledCount, service by zone/hour, payment methods)
 // ════════════════════════════════════════════════════════════
-async function handleProduct(sb: any, productId: string, from: string, to: string) {
+async function handleProduct(sb: any, productId: string, from: string, to: string, zoneParam: string, categoryParam: string) {
   // ── Product info ──
   const { data: productData } = await sb
     .from('pos_products')
@@ -239,12 +241,18 @@ async function handleProduct(sb: any, productId: string, from: string, to: strin
   const activeSales = allSales.filter((s: any) => !s.is_cancelled)
   const cancelledSales = allSales.filter((s: any) => s.is_cancelled)
 
-  const validSaleIds = new Set(activeSales.map((s: any) => s.id))
+  // ── Apply zone filter ──
+  let filteredActiveSales = activeSales
+  if (zoneParam && zoneParam !== 'all') {
+    filteredActiveSales = activeSales.filter((s: any) => (s.derived_zone_name || 'Desconocido') === zoneParam)
+  }
+
+  const validSaleIds = new Set(filteredActiveSales.map((s: any) => s.id))
   const validItems = allItems.filter((i: any) => validSaleIds.has(i.pos_sale_id))
 
   // Build sale lookup
   const saleMap = new Map<string, any>()
-  for (const s of activeSales) saleMap.set(s.id, s)
+  for (const s of filteredActiveSales) saleMap.set(s.id, s)
 
   // ── byZone (ENRICHED: avgServiceTime) ──
   const zoneMap = new Map<string, { qty: number; revenue: number; cheques: Set<string>; serviceTimeSum: number; serviceTimeCount: number }>()
@@ -374,11 +382,11 @@ async function handleProduct(sb: any, productId: string, from: string, to: strin
   const totalCheques = validSaleIds.size
   const avgTicket = totalCheques > 0 ? totalRevenue / totalCheques : 0
 
-  const tipTotal = activeSales.reduce((s: number, r: any) => s + (Number(r.tip_amount) || 0), 0)
+  const tipTotal = filteredActiveSales.reduce((s: number, r: any) => s + (Number(r.tip_amount) || 0), 0)
   const tipAvg = totalCheques > 0 ? tipTotal / totalCheques : 0
-  const partySizeTotal = activeSales.reduce((s: number, r: any) => s + (Number(r.party_size) || 0), 0)
+  const partySizeTotal = filteredActiveSales.reduce((s: number, r: any) => s + (Number(r.party_size) || 0), 0)
   const partySizeAvg = totalCheques > 0 ? partySizeTotal / totalCheques : 0
-  const { avgServiceTime } = computeServiceTime(activeSales)
+  const { avgServiceTime } = computeServiceTime(filteredActiveSales)
 
   return NextResponse.json({
     type: 'product',
@@ -405,7 +413,7 @@ async function handleProduct(sb: any, productId: string, from: string, to: strin
 // ════════════════════════════════════════════════════════════
 // STAFF DETAIL (ENRICHED: partySizeAvg, avgServiceTime, service by zone/hour, payment methods, category breakdown)
 // ════════════════════════════════════════════════════════════
-async function handleStaff(sb: any, staffId: string, from: string, to: string) {
+async function handleStaff(sb: any, staffId: string, from: string, to: string, zoneParam: string, categoryParam: string) {
   // ── Staff info (ENRICHED: staff_type) ──
   const { data: staffData } = await sb
     .from('pos_staff')
@@ -435,6 +443,11 @@ async function handleStaff(sb: any, staffId: string, from: string, to: string) {
     allSales.push(...batch)
     offset += BATCH
     hasMore = batch.length === BATCH
+  }
+
+  // ── Apply zone filter ──
+  if (zoneParam && zoneParam !== 'all') {
+    allSales = allSales.filter((s: any) => (s.derived_zone_name || 'Desconocido') === zoneParam)
   }
 
   // ── byZone (ENRICHED: avgServiceTime) ──
@@ -526,8 +539,17 @@ async function handleStaff(sb: any, staffId: string, from: string, to: string) {
     }
   }
 
+  // ── Apply category filter to items ──
+  let staffFilteredItems = allItems
+  if (categoryParam && categoryParam !== 'all') {
+    staffFilteredItems = allItems.filter((item: any) => {
+      const groupId = productGroups.get(item.pos_product_id)
+      return groupId === categoryParam.trim()
+    })
+  }
+
   const topProductMap = new Map<string, { product: string; qty: number; revenue: number }>()
-  for (const item of allItems) {
+  for (const item of staffFilteredItems) {
     const name = productNames.get(item.pos_product_id) || 'Desconocido'
     if (!topProductMap.has(item.pos_product_id)) {
       topProductMap.set(item.pos_product_id, { product: name, qty: 0, revenue: 0 })
@@ -556,7 +578,7 @@ async function handleStaff(sb: any, staffId: string, from: string, to: string) {
   }
 
   const categoryBreakdownMap = new Map<string, { categoryId: string; categoryName: string; qty: number; revenue: number }>()
-  for (const item of allItems) {
+  for (const item of staffFilteredItems) {
     const groupId = productGroups.get(item.pos_product_id)
     if (!groupId) continue
     const catName = groupNames.get(groupId) || groupId
@@ -625,7 +647,7 @@ async function handleStaff(sb: any, staffId: string, from: string, to: string) {
 // ════════════════════════════════════════════════════════════
 // CATEGORY DETAIL (ENRICHED: tipTotal, tipAvg, partySizeAvg, avgServiceTime, ticketPromedio, cancelledCount, cancelledRatio, dailyTrend, cross-category companions, service by zone/hour, payment methods, tip by zone/hour)
 // ════════════════════════════════════════════════════════════
-async function handleCategory(sb: any, groupId: string, from: string, to: string) {
+async function handleCategory(sb: any, groupId: string, from: string, to: string, zoneParam: string) {
   // ── Category info ──
   const { data: groupData } = await sb
     .from('pos_product_groups')
@@ -688,10 +710,17 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
 
   const activeSales = allSales.filter((s: any) => !s.is_cancelled)
   const cancelledCount = allSales.filter((s: any) => s.is_cancelled).length
-  const validSaleIds = new Set(activeSales.map((s: any) => s.id))
+
+  // ── Apply zone filter ──
+  let filteredActiveSales = activeSales
+  if (zoneParam && zoneParam !== 'all') {
+    filteredActiveSales = activeSales.filter((s: any) => (s.derived_zone_name || 'Desconocido') === zoneParam)
+  }
+
+  const validSaleIds = new Set(filteredActiveSales.map((s: any) => s.id))
   const validItems = allItems.filter((i: any) => validSaleIds.has(i.pos_sale_id))
   const saleMap = new Map<string, any>()
-  for (const s of activeSales) saleMap.set(s.id, s)
+  for (const s of filteredActiveSales) saleMap.set(s.id, s)
 
   // ── BUG-02 FIX: topProducts as LEFT-JOIN (ALL category products, even with 0 sales) ──
   const topProductMap = new Map<string, { productId: string; name: string; qty: number; revenue: number; cheques: Set<string> }>()
@@ -874,11 +903,11 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
   const totalCheques = validSaleIds.size
   const ticketPromedio = totalCheques > 0 ? totalRevenue / totalCheques : 0
 
-  const tipTotal = activeSales.reduce((s: number, r: any) => s + (Number(r.tip_amount) || 0), 0)
+  const tipTotal = filteredActiveSales.reduce((s: number, r: any) => s + (Number(r.tip_amount) || 0), 0)
   const tipAvg = totalCheques > 0 ? tipTotal / totalCheques : 0
-  const partySizeTotal = activeSales.reduce((s: number, r: any) => s + (Number(r.party_size) || 0), 0)
+  const partySizeTotal = filteredActiveSales.reduce((s: number, r: any) => s + (Number(r.party_size) || 0), 0)
   const partySizeAvg = totalCheques > 0 ? partySizeTotal / totalCheques : 0
-  const { avgServiceTime } = computeServiceTime(activeSales)
+  const { avgServiceTime } = computeServiceTime(filteredActiveSales)
   const totalSalesCount = allSales.length
   const cancelledRatio = totalSalesCount > 0 ? cancelledCount / totalSalesCount : 0
 
@@ -911,7 +940,7 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
 // ════════════════════════════════════════════════════════════
 // HOUR DETAIL (ENRICHED: tipTotal, tipAvg, partySizeAvg, avgServiceTime, payment methods)
 // ════════════════════════════════════════════════════════════
-async function handleHour(sb: any, hourStr: string, from: string, to: string) {
+async function handleHour(sb: any, hourStr: string, from: string, to: string, zoneParam: string, categoryParam: string) {
   const hour = parseInt(hourStr, 10)
   if (isNaN(hour) || hour < 0 || hour > 23) {
     return NextResponse.json({ error: 'Hora inválida. Debe ser 0-23' }, { status: 400 })
@@ -937,10 +966,15 @@ async function handleHour(sb: any, hourStr: string, from: string, to: string) {
   }
 
   // Filter by hour
-  const hourSales = allSales.filter((s: any) => {
+  let hourSales = allSales.filter((s: any) => {
     if (!s.opened_at) return false
     return new Date(s.opened_at).getHours() === hour
   })
+
+  // ── Apply zone filter ──
+  if (zoneParam && zoneParam !== 'all') {
+    hourSales = hourSales.filter((s: any) => (s.derived_zone_name || 'Desconocido') === zoneParam)
+  }
 
   const saleIds = hourSales.map((s: any) => s.id)
 
@@ -960,19 +994,32 @@ async function handleHour(sb: any, hourStr: string, from: string, to: string) {
   // Get unique product IDs from all items (already normalized/trimmed by normalizeItems)
   const productIdsForQuery = [...new Set(allItems.map((i: any) => i.pos_product_id).filter(Boolean))]
   const productNames = new Map<string, string>()
+  const productGroups = new Map<string, string>()
   for (let i = 0; i < productIdsForQuery.length; i += BATCH) {
     const batch = productIdsForQuery.slice(i, i + BATCH)
     const { data: prods } = await sb
       .from('pos_products')
-      .select('pos_product_id, name')
+      .select('pos_product_id, name, pos_group_id')
       .in('pos_product_id', batch)
     if (prods) {
-      for (const p of prods) productNames.set((p.pos_product_id || '').trim(), p.name)
+      for (const p of prods) {
+        productNames.set((p.pos_product_id || '').trim(), p.name)
+        productGroups.set((p.pos_product_id || '').trim(), p.pos_group_id || '')
+      }
     }
   }
 
+  // ── Apply category filter to items ──
+  let hourFilteredItems = allItems
+  if (categoryParam && categoryParam !== 'all') {
+    hourFilteredItems = allItems.filter((item: any) => {
+      const groupId = productGroups.get(item.pos_product_id)
+      return groupId === categoryParam.trim()
+    })
+  }
+
   const topProductMap = new Map<string, { product: string; qty: number; revenue: number }>()
-  for (const item of allItems) {
+  for (const item of hourFilteredItems) {
     const name = productNames.get(item.pos_product_id) || 'Desconocido'
     if (!topProductMap.has(item.pos_product_id)) {
       topProductMap.set(item.pos_product_id, { product: name, qty: 0, revenue: 0 })
@@ -1064,7 +1111,7 @@ async function handleHour(sb: any, hourStr: string, from: string, to: string) {
 // ════════════════════════════════════════════════════════════
 // ZONE DETAIL (ENRICHED: partySizeAvg, avgServiceTime, service by hour, payment methods, category breakdown)
 // ════════════════════════════════════════════════════════════
-async function handleZone(sb: any, zoneName: string, from: string, to: string) {
+async function handleZone(sb: any, zoneName: string, from: string, to: string, categoryParam: string) {
   // ── Fetch sales for this zone (ENRICHED: closed_at, party_size) ──
   let allSales: any[] = []
   let offset = 0
@@ -1120,8 +1167,17 @@ async function handleZone(sb: any, zoneName: string, from: string, to: string) {
     }
   }
 
+  // ── Apply category filter to items ──
+  let zoneFilteredItems = allItems
+  if (categoryParam && categoryParam !== 'all') {
+    zoneFilteredItems = allItems.filter((item: any) => {
+      const groupId = productGroups.get(item.pos_product_id)
+      return groupId === categoryParam.trim()
+    })
+  }
+
   const topProductMap = new Map<string, { product: string; qty: number; revenue: number }>()
-  for (const item of allItems) {
+  for (const item of zoneFilteredItems) {
     const name = productNames.get(item.pos_product_id) || 'Desconocido'
     if (!topProductMap.has(item.pos_product_id)) {
       topProductMap.set(item.pos_product_id, { product: name, qty: 0, revenue: 0 })
@@ -1224,7 +1280,7 @@ async function handleZone(sb: any, zoneName: string, from: string, to: string) {
   }
 
   const categoryBreakdownMap = new Map<string, { categoryId: string; categoryName: string; qty: number; revenue: number }>()
-  for (const item of allItems) {
+  for (const item of zoneFilteredItems) {
     const gId = productGroups.get(item.pos_product_id)
     if (!gId) continue
     const catName = groupNames.get(gId) || gId

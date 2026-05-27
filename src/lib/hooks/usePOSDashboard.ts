@@ -295,6 +295,8 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
       p.set('id', id)
       p.set('from', from)
       p.set('to', to)
+      p.set('zone', filters.zone || 'all')
+      p.set('category', filters.category || 'all')
       const res = await fetch(`/api/admin/pos-dashboard/detail?${p.toString()}&_t=${Date.now()}`, { cache: 'no-store' })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
@@ -308,7 +310,7 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
     } finally {
       setDrillDownLoading(false)
     }
-  }, [filters.from, filters.to])
+  }, [filters.from, filters.to, filters.zone, filters.category])
 
   const closeDrillDown = useCallback(() => {
     setDrillDown(null)

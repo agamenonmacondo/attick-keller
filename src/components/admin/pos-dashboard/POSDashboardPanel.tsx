@@ -282,7 +282,18 @@ export function POSDashboardPanel() {
 
       {/* Cost panel */}
       {activeTab === 'costs' && (
-        <POSCostPanel data={costsData} loading={costsLoading} error={costsError} />
+        <POSCostPanel
+          data={costsData}
+          loading={costsLoading}
+          error={costsError}
+          calendarData={calendarTrend}
+          selectedDate={isSingleDay ? filters.from : undefined}
+          onDayClick={handleDayClick}
+          calendarMonth={calendarMonth}
+          onCalendarMonthChange={setCalendarMonth}
+          heatmapMetric={heatmapMetric}
+          onHeatmapMetricChange={setHeatmapMetric}
+        />
       )}
 
       {data && activeTab === 'operation' && (

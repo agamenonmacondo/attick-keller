@@ -5,49 +5,56 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 export interface POSCostsFilters {
   from?: string
   to?: string
-  group?: string
 }
 
 export interface POSCostsData {
   summary: {
-    totalCOGS: number
     totalPurchases: number
-    grossMargin: number
-    grossMarginPct: number
+    avgMonthlyPurchases: number
     purchaseCount: number
+    cancelledCount: number
+    avgMarginPct: number
+    productsWithRecipe: number
+    productsTotal: number
+    topSupplier: string
   }
-  dailyCOGS: Array<{ date: string; total: number; count: number }>
-  monthlyCOGS: Array<{ month: string; total: number; count: number }>
+  dailyPurchases: Array<{
+    date: string
+    total: number
+    count: number
+  }>
+  monthlyPurchases: Array<{
+    month: string
+    total: number
+    count: number
+  }>
   costByCategory: Array<{
     categoryId: string
     categoryName: string
-    totalCost: number
-    ingredientCount: number
-  }>
-  topLowMarginProducts: Array<{
-    productId: string
-    productName: string
-    groupName: string
-    salePrice: number
-    recipeCost: number
-    margin: number
-    marginPct: number
-  }>
-  topHighMarginProducts: Array<{
-    productId: string
-    productName: string
-    groupName: string
-    salePrice: number
-    recipeCost: number
-    margin: number
-    marginPct: number
+    total: number
+    count: number
+    pct: number
   }>
   purchasesBySupplier: Array<{
     supplierId: string
     supplierName: string
     total: number
     count: number
+    pct: number
   }>
+  productMargins: Array<{
+    productId: string
+    productName: string
+    categoryId: string
+    categoryName: string
+    salePrice: number
+    recipeCost: number
+    margin: number
+    marginPct: number
+  }>
+  categoryList: Array<{ id: string; name: string }>
+  availableMonths: string[]
+  filters: { from: string; to: string }
 }
 
 export function usePOSCosts(filters: POSCostsFilters) {
@@ -60,15 +67,16 @@ export function usePOSCosts(filters: POSCostsFilters) {
     const p = new URLSearchParams()
     if (filters.from) p.set('from', filters.from)
     if (filters.to) p.set('to', filters.to)
-    if (filters.group && filters.group !== 'all') p.set('group', filters.group)
     return p.toString()
-  }, [filters.from, filters.to, filters.group])
+  }, [filters.from, filters.to])
 
   useEffect(() => {
-    if (abortRef.current) abortRef.current.abort()
+    if (abortRef.current) {
+      abortRef.current.abort()
+    }
     const controller = new AbortController()
     abortRef.current = controller
-    const signal = controller.signal
+    const { signal } = controller
 
     let cancelled = false
 
@@ -82,8 +90,7 @@ export function usePOSCosts(filters: POSCostsFilters) {
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))
           if (signal.aborted) return
-          console.error('[POSCosts] API error:', res.status, d)
-          if (!cancelled) setError(d.error || 'Error cargando costos')
+          if (!cancelled) setError(d.error || 'Error cargando datos de costos')
           return
         }
         const d = await res.json()
@@ -94,7 +101,6 @@ export function usePOSCosts(filters: POSCostsFilters) {
         }
       } catch (err: any) {
         if (err?.name === 'AbortError') return
-        console.error('[POSCosts] Fetch error:', err)
         if (!cancelled) setError('Error de conexion')
       } finally {
         if (!cancelled) setLoading(false)
@@ -118,7 +124,7 @@ export function usePOSCosts(filters: POSCostsFilters) {
         const res = await fetch(url, { cache: 'no-store' })
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))
-          setError(d.error || 'Error cargando costos')
+          setError(d.error || 'Error cargando datos de costos')
           return
         }
         const d = await res.json()

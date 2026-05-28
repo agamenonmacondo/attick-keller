@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils/cn'
 import { useTheme } from '@/lib/ThemeProvider'
 import { SectionHeading } from '../shared/SectionHeading'
 
-type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
+export type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 
 interface OperationCalendarProps {
   dailyData: Array<{
@@ -22,6 +22,8 @@ interface OperationCalendarProps {
   onMonthChange?: (month: string) => void // called when user navigates months
   metric: HeatmapMetric
   onMetricChange: (metric: HeatmapMetric) => void
+  title?: string // Override heading text (default: 'Calendario de operacion')
+  metricLabels?: Record<HeatmapMetric, string> // Override metric button labels
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom']
@@ -96,6 +98,8 @@ export function RevenueHeatmapCalendar({
   onMonthChange,
   metric,
   onMetricChange,
+  title,
+  metricLabels,
 }: OperationCalendarProps) {
   const { theme } = useTheme()
   const isDark = theme === 'dark'
@@ -209,7 +213,7 @@ export function RevenueHeatmapCalendar({
   if (dailyData.length === 0) {
     return (
       <div>
-        <SectionHeading>Calendario de operacion</SectionHeading>
+        <SectionHeading>{title || 'Calendario de operacion'}</SectionHeading>
         <p className="text-xs text-[var(--text-secondary)] text-center py-8">Sin datos para el periodo</p>
       </div>
     )
@@ -219,9 +223,9 @@ export function RevenueHeatmapCalendar({
     <div>
       {/* Header: title + metric selector */}
       <div className="flex items-center justify-between mb-3">
-        <SectionHeading>Calendario de operacion</SectionHeading>
+        <SectionHeading>{title || 'Calendario de operacion'}</SectionHeading>
         <div className="flex items-center gap-1">
-          {(Object.keys(METRIC_LABELS) as HeatmapMetric[]).map(m => (
+          {(Object.keys(metricLabels || METRIC_LABELS) as HeatmapMetric[]).map(m => (
             <button
               key={m}
               onClick={() => onMetricChange(m)}
@@ -231,7 +235,7 @@ export function RevenueHeatmapCalendar({
                   : 'bg-[var(--bg-card)] border border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
-              {METRIC_LABELS[m]}
+              {(metricLabels || METRIC_LABELS)[m]}
             </button>
           ))}
         </div>

@@ -1,11 +1,12 @@
 'use client'
 
 import { useMemo } from 'react'
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from 'recharts'
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import { AnimatedCard } from '../shared/AnimatedCard'
 import { SectionHeading } from '../shared/SectionHeading'
 import { formatCOPDisplay } from './KPICard'
-import { Spinner, Money, TrendUp, TrendDown, ShoppingCart, Package, ChartBar, Warning, Trophy, Truck } from '@phosphor-icons/react'
+import { RevenueHeatmapCalendar, type HeatmapMetric } from './RevenueHeatmapCalendar'
+import { Spinner, Money, TrendUp, ShoppingCart, ChartBar, Warning, Trophy, Truck, Package, CalendarDots } from '@phosphor-icons/react'
 import type { POSCostsData } from '@/lib/hooks/usePOSCosts'
 
 // ── COP full format (with dots for thousands) ──
@@ -25,6 +26,14 @@ interface POSCostPanelProps {
   data: POSCostsData | null
   loading: boolean
   error: string | null
+  // Calendar heatmap props
+  calendarData?: Array<{ date: string; revenue: number; cheques: number; propina: number; personas: number }>
+  selectedDate?: string
+  onDayClick?: (date: string) => void
+  calendarMonth?: string
+  onCalendarMonthChange?: (month: string) => void
+  heatmapMetric?: HeatmapMetric
+  onHeatmapMetricChange?: (metric: HeatmapMetric) => void
 }
 
 // ── Tooltip for charts ──
@@ -48,13 +57,13 @@ function PurchaseTrendTooltip({ active, payload, label }: { active?: boolean; pa
   )
 }
 
-function CategoryTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { categoryName: string; totalCost: number } }> }) {
+function CategoryTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { categoryName: string; total: number } }> }) {
   if (!active || !payload || !payload[0]) return null
   const d = payload[0].payload
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg px-3 py-2 shadow-lg text-xs">
       <p className="font-medium text-[var(--text-primary)]">{d.categoryName}</p>
-      <p className="text-[var(--text-secondary)]">{formatCOPFull(d.totalCost)}</p>
+      <p className="text-[var(--text-secondary)]">{formatCOPFull(d.total)}</p>
     </div>
   )
 }
@@ -69,11 +78,30 @@ const CATEGORY_COLORS = [
   '#7C2D12', '#C2410C', '#EA580C', '#F97316',
 ]
 
-export function POSCostPanel({ data, loading, error }: POSCostPanelProps) {
+// ── Cost-specific metric labels for calendar ──
+const COST_METRIC_LABELS: Record<HeatmapMetric, string> = {
+  revenue: 'Compras',
+  propina: 'Propinas',
+  cheques: 'Compras #',
+  personas: 'Items #',
+}
+
+export function POSCostPanel({
+  data,
+  loading,
+  error,
+  calendarData,
+  selectedDate,
+  onDayClick,
+  calendarMonth,
+  onCalendarMonthChange,
+  heatmapMetric = 'revenue',
+  onHeatmapMetricChange,
+}: POSCostPanelProps) {
   // ── Monthly trend data for chart ──
   const monthlyChartData = useMemo(() => {
     if (!data) return []
-    return data.monthlyCOGS.map(m => ({
+    return data.monthlyPurchases.map(m => ({
       ...m,
       label: m.month, // YYYY-MM
     }))
@@ -82,13 +110,30 @@ export function POSCostPanel({ data, loading, error }: POSCostPanelProps) {
   // ── Daily trend data (last 60 days max for readability) ──
   const dailyChartData = useMemo(() => {
     if (!data) return []
-    return data.dailyCOGS.slice(-60)
+    return data.dailyPurchases.slice(-60)
   }, [data])
 
   // ── Category bar chart data ──
   const categoryChartData = useMemo(() => {
     if (!data) return []
     return data.costByCategory.slice(0, 10)
+  }, [data])
+
+  // ── Low & high margin products from productMargins ──
+  const topLowMarginProducts = useMemo(() => {
+    if (!data) return []
+    return [...data.productMargins]
+      .filter(p => p.salePrice > 0)
+      .sort((a, b) => a.marginPct - b.marginPct)
+      .slice(0, 10)
+  }, [data])
+
+  const topHighMarginProducts = useMemo(() => {
+    if (!data) return []
+    return [...data.productMargins]
+      .filter(p => p.salePrice > 0)
+      .sort((a, b) => b.marginPct - a.marginPct)
+      .slice(0, 10)
   }, [data])
 
   if (error) {
@@ -118,10 +163,10 @@ export function POSCostPanel({ data, loading, error }: POSCostPanelProps) {
         <AnimatedCard delay={0} className="p-4">
           <div className="flex items-center gap-1.5 mb-1">
             <Money size={16} className="text-[var(--color-ak-borgona)]" />
-            <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Costo Ventas</span>
+            <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Total Compras</span>
           </div>
           <div className="text-xl font-bold text-[var(--text-primary)] tabular-nums">
-            {formatCOPShort(summary.totalCOGS)}
+            {formatCOPShort(summary.totalPurchases)}
           </div>
           <span className="text-[10px] text-[var(--text-secondary)]">
             {summary.purchaseCount} compras
@@ -131,42 +176,59 @@ export function POSCostPanel({ data, loading, error }: POSCostPanelProps) {
         <AnimatedCard delay={0.05} className="p-4">
           <div className="flex items-center gap-1.5 mb-1">
             <ShoppingCart size={16} className="text-[var(--color-ak-borgona)]" />
-            <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Compras Periodo</span>
+            <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Promedio Mensual</span>
           </div>
           <div className="text-xl font-bold text-[var(--text-primary)] tabular-nums">
-            {formatCOPShort(summary.totalPurchases)}
+            {formatCOPShort(summary.avgMonthlyPurchases)}
           </div>
           <span className="text-[10px] text-[var(--text-secondary)]">
-            Total compras
+            {summary.cancelledCount} canceladas
           </span>
         </AnimatedCard>
 
         <AnimatedCard delay={0.10} className="p-4">
           <div className="flex items-center gap-1.5 mb-1">
-            <TrendDown size={16} className="text-red-400" />
-            <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Margen Bruto</span>
+            <TrendUp size={16} className="text-green-400" />
+            <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Margen Promedio</span>
           </div>
           <div className="text-xl font-bold text-[var(--text-primary)] tabular-nums">
-            {formatCOPShort(summary.grossMargin)}
+            {summary.avgMarginPct.toFixed(1)}%
           </div>
           <span className="text-[10px] text-[var(--text-secondary)]">
-            Ingresos - COGS
+            {summary.productsWithRecipe} de {summary.productsTotal} productos
           </span>
         </AnimatedCard>
 
         <AnimatedCard delay={0.15} className="p-4">
           <div className="flex items-center gap-1.5 mb-1">
-            <ChartBar size={16} className="text-[var(--color-ak-borgona)]" />
-            <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Margen %</span>
+            <Package size={16} className="text-[var(--color-ak-borgona)]" />
+            <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Proveedor Top</span>
           </div>
-          <div className="text-xl font-bold text-[var(--text-primary)] tabular-nums">
-            {summary.grossMarginPct.toFixed(1)}%
+          <div className="text-xl font-bold text-[var(--text-primary)] truncate" title={summary.topSupplier}>
+            {summary.topSupplier || '-'}
           </div>
           <span className="text-[10px] text-[var(--text-secondary)]">
-            Margen bruto
+            Mayor volumen compras
           </span>
         </AnimatedCard>
       </div>
+
+      {/* ── Cost Calendar Heatmap ── */}
+      {calendarData && calendarData.length > 0 && (
+        <AnimatedCard delay={0.05} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+          <RevenueHeatmapCalendar
+            dailyData={calendarData}
+            selectedDate={selectedDate}
+            onDayClick={onDayClick || (() => {})}
+            viewMonth={calendarMonth}
+            onMonthChange={onCalendarMonthChange || (() => {})}
+            metric={heatmapMetric}
+            onMetricChange={onHeatmapMetricChange || (() => {})}
+            title="Calendario de Compras"
+            metricLabels={COST_METRIC_LABELS}
+          />
+        </AnimatedCard>
+      )}
 
       {/* ── Purchase Trend Chart ── */}
       <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
@@ -220,8 +282,8 @@ export function POSCostPanel({ data, loading, error }: POSCostPanelProps) {
           <>
             <div className="space-y-2">
               {categoryChartData.map((cat, i) => {
-                const maxCost = categoryChartData[0]?.totalCost || 1
-                const pct = (cat.totalCost / maxCost) * 100
+                const maxCost = categoryChartData[0]?.total || 1
+                const pct = (cat.total / maxCost) * 100
                 return (
                   <div key={cat.categoryId} className="flex items-center gap-3">
                     <div className="w-28 sm:w-36 text-[11px] text-[var(--text-secondary)] truncate" title={cat.categoryName}>
@@ -238,7 +300,7 @@ export function POSCostPanel({ data, loading, error }: POSCostPanelProps) {
                       />
                     </div>
                     <div className="w-24 text-right text-[11px] font-medium text-[var(--text-primary)] tabular-nums">
-                      {formatCOPShort(cat.totalCost)}
+                      {formatCOPShort(cat.total)}
                     </div>
                   </div>
                 )
@@ -263,7 +325,7 @@ export function POSCostPanel({ data, loading, error }: POSCostPanelProps) {
             <Warning size={16} className="text-red-400" />
             <SectionHeading className="mb-0">Menor Margen</SectionHeading>
           </div>
-          {data.topLowMarginProducts.length > 0 ? (
+          {topLowMarginProducts.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-[11px]">
                 <thead>
@@ -275,7 +337,7 @@ export function POSCostPanel({ data, loading, error }: POSCostPanelProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.topLowMarginProducts.map((p, i) => (
+                  {topLowMarginProducts.map((p, i) => (
                     <tr key={i} className="border-b border-[var(--border-default)]/50 last:border-0">
                       <td className="py-1.5 pr-2 text-[var(--text-primary)] max-w-[120px] truncate" title={p.productName}>
                         {p.productName}
@@ -305,7 +367,7 @@ export function POSCostPanel({ data, loading, error }: POSCostPanelProps) {
             <Trophy size={16} className="text-green-400" />
             <SectionHeading className="mb-0">Mayor Margen</SectionHeading>
           </div>
-          {data.topHighMarginProducts.length > 0 ? (
+          {topHighMarginProducts.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-[11px]">
                 <thead>
@@ -317,7 +379,7 @@ export function POSCostPanel({ data, loading, error }: POSCostPanelProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.topHighMarginProducts.map((p, i) => (
+                  {topHighMarginProducts.map((p, i) => (
                     <tr key={i} className="border-b border-[var(--border-default)]/50 last:border-0">
                       <td className="py-1.5 pr-2 text-[var(--text-primary)] max-w-[120px] truncate" title={p.productName}>
                         {p.productName}

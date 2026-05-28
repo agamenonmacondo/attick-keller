@@ -1,19 +1,18 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, ChartBar, PencilSimple, IdentificationBadge, Trash, Clock } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, ChartBar, PencilSimple, IdentificationBadge, Trash } from '@phosphor-icons/react';
 import { SectionHeading } from '../shared/SectionHeading';
 import { supabase } from '@/lib/supabase/client';
 import type { ShiftType, StaffMemberForShift, ShiftAssignment } from '@/lib/types/shifts';
 import { getWeekStr, getWeekDates, calcularCostoTurno } from '@/lib/utils/costCalculator';
 import ShiftGrid from './ShiftGrid';
 import CostEstimationBar from './CostEstimationBar';
-import PerformanceDashboard from './PerformanceDashboard';
 import StaffPanel from './StaffPanel';
 import ShiftTimelineView from './ShiftTimelineView';
 
 type Area = 'cocina' | 'barra' | 'servicio';
-type Tab = 'cronograma' | 'costos' | 'performance' | 'horarios' | 'personal';
+type Tab = 'cronograma' | 'costos' | 'horarios' | 'personal';
 
 const AREAS: { value: Area; label: string }[] = [
   { value: 'cocina', label: 'Cocina' },
@@ -236,7 +235,6 @@ export default function ShiftSchedulePanel() {
           {[
             { id: 'cronograma' as Tab, icon: <ClockClockwise size={14} />, label: 'Cronograma' },
             { id: 'costos' as Tab, icon: <ChartBar size={14} />, label: 'Costos' },
-            { id: 'performance' as Tab, icon: <ChartBar size={14} />, label: 'Performance' },
             { id: 'horarios' as Tab, icon: <PencilSimple size={14} />, label: 'Horarios' },
             { id: 'personal' as Tab, icon: <IdentificationBadge size={14} />, label: 'Personal' },
           ].map((t) => (
@@ -303,13 +301,6 @@ export default function ShiftSchedulePanel() {
         />
       )}
 
-      {tab === 'performance' && (
-        <PerformanceDashboard
-          area={area}
-          weekStr={weekStr}
-        />
-      )}
-
       {tab === 'horarios' && (
         <ShiftTypeEditor
           shiftTypes={shiftTypes}
@@ -336,7 +327,6 @@ function ShiftTypeEditor({
   onRefresh: () => void;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
-  const [timelineMode, setTimelineMode] = useState(false);
   const [form, setForm] = useState({
     code: '',
     name: '',
@@ -432,18 +422,6 @@ function ShiftTypeEditor({
         </h3>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setTimelineMode(!timelineMode)}
-            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors
-              ${timelineMode
-                ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)]'
-                : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-default)] hover:bg-[var(--bg-hover)]'
-              }`}
-            title={timelineMode ? 'Vista lista' : 'Vista simultanea'}
-          >
-            <Clock size={14} />
-            {timelineMode ? 'Lista' : 'Simultanea'}
-          </button>
-          <button
             onClick={() => {
               setForm({ code: '', name: '', entrada: '', salida: '', ordinarias: 0, nocturnas: 0, area });
               setEditing('new');
@@ -456,9 +434,7 @@ function ShiftTypeEditor({
       </div>
 
       {/* Timeline view */}
-      {timelineMode && (
-        <ShiftTimelineView shiftTypes={initialTypes} area={area} />
-      )}
+      <ShiftTimelineView shiftTypes={initialTypes} area={area} />
 
       {/* Lista de tipos de turno */}
       <div className="space-y-2">

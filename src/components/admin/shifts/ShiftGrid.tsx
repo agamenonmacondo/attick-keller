@@ -26,7 +26,8 @@ export default function ShiftGrid({
   readOnly = false,
 }: ShiftGridProps) {
   // Estado local de la grilla: employee_id -> day_index (BD) -> shift_code
-  const [grid, setGrid] = useState<Record<string, Record<number, string>>>(() => {
+  // Se inicializa desde assignments y se sincroniza cuando assignments cambia
+  const [localGrid, setLocalGrid] = useState<Record<string, Record<number, string>>>(() => {
     const initial: Record<string, Record<number, string>> = {};
     for (const s of staff) {
       initial[s.id] = {};
@@ -37,6 +38,37 @@ export default function ShiftGrid({
     }
     return initial;
   });
+
+  // Sincronizar cuando assignments cambia externamente (ej: loadData)
+  const [prevAssignments, setPrevAssignments] = useState(assignments);
+  if (assignments !== prevAssignments) {
+    setPrevAssignments(assignments);
+    const newGrid: Record<string, Record<number, string>> = {};
+    for (const s of staff) {
+      newGrid[s.id] = {};
+    }
+    for (const a of assignments) {
+      if (!newGrid[a.employee_id]) newGrid[a.employee_id] = {};
+      newGrid[a.employee_id][a.day_index] = a.shift_code;
+    }
+    setLocalGrid(newGrid);
+    onAssignmentsChange(newGrid);
+  }
+
+  // Tambien sincronizar cuando staff cambia (nuevos empleados)
+  const [prevStaff, setPrevStaff] = useState(staff);
+  if (staff !== prevStaff) {
+    setPrevStaff(staff);
+    setLocalGrid((prev) => {
+      const newGrid = { ...prev };
+      for (const s of staff) {
+        if (!newGrid[s.id]) newGrid[s.id] = {};
+      }
+      return newGrid;
+    });
+  }
+
+  const grid = localGrid;
 
   const weekDates = useMemo(() => getWeekDates(weekStr), [weekStr]);
 
@@ -162,7 +194,7 @@ export default function ShiftGrid({
   // Cambiar turno en celda
   const handleCellChange = useCallback(
     (employeeId: string, dayIndex: number, shiftCode: string) => {
-      setGrid((prev) => {
+      setLocalGrid((prev) => {
         const newGrid = { ...prev };
         if (!newGrid[employeeId]) newGrid[employeeId] = {};
         newGrid[employeeId] = { ...newGrid[employeeId] };

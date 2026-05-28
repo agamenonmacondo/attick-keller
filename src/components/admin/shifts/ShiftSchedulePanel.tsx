@@ -72,32 +72,41 @@ export default function ShiftSchedulePanel() {
 
   // Guardar asignaciones
   const handleSave = async () => {
-    if (!scheduleId) {
-      // Crear cronograma primero
-      try {
-        const res = await fetch('/api/admin/shift-schedules', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ area, week_str: weekStr }),
-        });
-        if (!res.ok) throw new Error('Error creando cronograma');
-        const data = await res.json();
-        setScheduleId(data.id);
-        setScheduleStatus('draft');
-
-        // Ahora guardar asignaciones
-        await saveAssignments(data.id);
-      } catch (err) {
-        console.error('Error creating schedule:', err);
-      }
-    } else {
-      await saveAssignments(scheduleId);
+    // Verificar si hay turnos en la grilla
+    const hasAssignments = Object.values(grid).some(days => Object.keys(days).length > 0);
+    if (!hasAssignments) {
+      alert('No hay turnos asignados para guardar.');
+      return;
     }
-  };
 
-  const saveAssignments = async (schedId: string) => {
     setSaving(true);
     try {
+      let schedId = scheduleId;
+
+      // Crear cronograma si no existe
+      if (!schedId) {
+        try {
+          const res = await fetch('/api/admin/shift-schedules', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ area, week_str: weekStr }),
+          });
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Error creando cronograma (${res.status})`);
+          }
+          const data = await res.json();
+          schedId = data.id;
+          setScheduleId(data.id);
+          setScheduleStatus('draft');
+        } catch (err) {
+          console.error('Error creating schedule:', err);
+          alert(`Error creando cronograma: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+          return;
+        }
+      }
+
+      // Guardar asignaciones
       const payload: { employee_id: string; day_index: number; shift_code: string; estimated_hours: number | null; estimated_cost: number | null }[] = [];
 
       for (const [empId, days] of Object.entries(grid)) {
@@ -121,17 +130,28 @@ export default function ShiftSchedulePanel() {
         }
       }
 
+      if (payload.length === 0) {
+        alert('No hay turnos asignados para guardar.');
+        return;
+      }
+
       const res = await fetch('/api/admin/shift-assignments', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ schedule_id: schedId, assignments: payload }),
       });
 
-      if (!res.ok) throw new Error('Error guardando asignaciones');
-      alert('Asignaciones guardadas');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Error guardando asignaciones (${res.status})`);
+      }
+
+      // Recargar datos para sincronizar
+      await loadData();
+      alert('Asignaciones guardadas correctamente');
     } catch (err) {
       console.error('Error saving:', err);
-      alert('Error guardando asignaciones');
+      alert(`Error guardando: ${err instanceof Error ? err.message : 'Error desconocido'}`);
     } finally {
       setSaving(false);
     }

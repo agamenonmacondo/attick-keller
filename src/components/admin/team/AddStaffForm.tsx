@@ -3,71 +3,58 @@
 import { useState, useEffect } from 'react'
 import { Plus, Warning } from '@phosphor-icons/react'
 
-interface StaffOption {
+interface StaffMember {
   id: string
   nombre_completo: string
-  cargo: string | null
-  area: string | null
+  area: string
+  cargo: string
 }
 
 interface AddStaffFormProps {
-  onAdd: (data: { email: string; role: string; pos_nomina_staff_id?: string; area?: string }) => Promise<void>
+  onAdd: (email: string, role: string, posNominaStaffId?: string, area?: string) => Promise<void>
 }
 
 export function AddStaffForm({ onAdd }: AddStaffFormProps) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('host')
-  const [staffId, setStaffId] = useState('')
-  const [area, setArea] = useState('')
-  const [staffOptions, setStaffOptions] = useState<StaffOption[]>([])
+  const [posNominaStaffId, setPosNominaStaffId] = useState('')
+  const [staffOptions, setStaffOptions] = useState<StaffMember[]>([])
+  const [loadingStaff, setLoadingStaff] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const showEmployeeFields = role === 'lider_area' || role === 'colaborador'
+  const needsEmployeeId = role === 'lider_area' || role === 'colaborador'
 
   useEffect(() => {
-    if (showEmployeeFields) {
-      fetch('/api/admin/staff/list-employees')
-        .then(res => res.ok ? res.json() : { employees: [] })
-        .then(data => setStaffOptions(data.employees || []))
+    if (needsEmployeeId) {
+      setLoadingStaff(true)
+      fetch('/api/admin/pos-nomina-staff?activo=true')
+        .then(res => res.ok ? res.json() : { staff: [] })
+        .then(data => setStaffOptions(data.staff || []))
         .catch(() => setStaffOptions([]))
+        .finally(() => setLoadingStaff(false))
+    } else {
+      setStaffOptions([])
+      setPosNominaStaffId('')
     }
-  }, [showEmployeeFields])
+  }, [role, needsEmployeeId])
 
-  // Auto-fill area when staff is selected
-  useEffect(() => {
-    if (staffId) {
-      const selected = staffOptions.find(s => s.id === staffId)
-      if (selected?.area) {
-        setArea(selected.area)
-      }
-    }
-  }, [staffId, staffOptions])
+  const selectedStaff = staffOptions.find(s => s.id === posNominaStaffId)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email.trim()) return
-
-    if (showEmployeeFields && !staffId) {
-      setError('Selecciona el empleado de nomina')
+    if (needsEmployeeId && !posNominaStaffId) {
+      setError('Selecciona un empleado de nomina para este rol')
       return
     }
 
     setSubmitting(true)
     setError(null)
     try {
-      const payload: { email: string; role: string; pos_nomina_staff_id?: string; area?: string } = {
-        email: email.trim(),
-        role,
-      }
-      if (showEmployeeFields) {
-        payload.pos_nomina_staff_id = staffId
-        payload.area = area
-      }
-      await onAdd(payload)
+      await onAdd(email.trim(), role, posNominaStaffId || undefined, selectedStaff?.area || undefined)
       setEmail('')
-      setStaffId('')
-      setArea('')
+      setPosNominaStaffId('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error')
     } finally {
@@ -88,12 +75,12 @@ export function AddStaffForm({ onAdd }: AddStaffFormProps) {
             onChange={e => setEmail(e.target.value)}
             placeholder="correo@ejemplo.com"
             required
-            className="flex-1 min-h-[44px] px-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
           />
           <select
             value={role}
-            onChange={e => { setRole(e.target.value); setStaffId(''); setArea('') }}
-            className="min-h-[44px] px-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+            onChange={e => setRole(e.target.value)}
+            className="px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
           >
             <option value="host">Host</option>
             <option value="store_admin">Administrador</option>
@@ -101,50 +88,53 @@ export function AddStaffForm({ onAdd }: AddStaffFormProps) {
             <option value="lider_area">Lider de Area</option>
             <option value="colaborador">Colaborador</option>
           </select>
+          <button
+            type="submit"
+            disabled={submitting || !email.trim()}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--color-ak-borgona)] text-[var(--bg-primary)] font-medium hover:bg-[var(--color-ak-borgona)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <Plus size={18} />
+            {submitting ? 'Agregando...' : 'Invitar'}
+          </button>
         </div>
 
-        {showEmployeeFields && (
-          <div className="flex flex-col sm:flex-row gap-3">
-            <select
-              value={staffId}
-              onChange={e => setStaffId(e.target.value)}
-              className="flex-1 min-h-[44px] px-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
-            >
-              <option value="">Seleccionar empleado...</option>
-              {staffOptions.map(s => (
-                <option key={s.id} value={s.id}>
-                  {s.nombre_completo}{s.cargo ? ` — ${s.cargo}` : ''}{s.area ? ` (${s.area})` : ''}
-                </option>
-              ))}
-            </select>
-            <select
-              value={area}
-              onChange={e => setArea(e.target.value)}
-              className="min-h-[44px] px-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
-            >
-              <option value="">Sin area</option>
-              <option value="cocina">Cocina</option>
-              <option value="barra">Barra</option>
-              <option value="servicio">Servicio</option>
-            </select>
+        {needsEmployeeId && (
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+              Vincular a empleado de nomina
+            </label>
+            {loadingStaff ? (
+              <div className="text-sm text-[var(--text-secondary)]">Cargando empleados...</div>
+            ) : (
+              <select
+                value={posNominaStaffId}
+                onChange={e => setPosNominaStaffId(e.target.value)}
+                required={needsEmployeeId}
+                className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+              >
+                <option value="">-- Seleccionar empleado --</option>
+                {staffOptions.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.nombre_completo} — {s.area} ({s.cargo})
+                  </option>
+                ))}
+              </select>
+            )}
+            {selectedStaff && (
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
+                Area automatica: {selectedStaff.area}
+              </p>
+            )}
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={submitting || !email.trim()}
-          className="flex items-center justify-center gap-2 min-h-[44px] px-5 rounded-lg bg-[var(--color-ak-borgona)] text-[var(--bg-primary)] font-medium hover:bg-[var(--color-ak-borgona)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          <Plus size={18} />
-          {submitting ? 'Agregando...' : 'Invitar'}
-        </button>
+        {error && (
+          <p className="flex items-center gap-2 text-sm text-[var(--color-danger)]">
+            <Warning size={16} />
+            {error}
+          </p>
+        )}
       </form>
-      {error && (
-        <p className="mt-3 flex items-center gap-2 text-sm text-[var(--color-danger)]">
-          <Warning size={16} />
-          {error}
-        </p>
-      )}
     </div>
   )
 }

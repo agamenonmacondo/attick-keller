@@ -10,6 +10,8 @@ interface StaffMember {
   role: string
   is_active: boolean
   created_at: string
+  pos_nomina_staff_id?: string | null
+  area?: string | null
 }
 
 interface StaffListProps {
@@ -22,6 +24,16 @@ const ROLE_LABELS: Record<string, string> = {
   host: 'Host',
   store_admin: 'Administrador',
   super_admin: 'Super Admin',
+  lider_area: 'Lider de Area',
+  colaborador: 'Colaborador',
+}
+
+const ROLE_COLORS: Record<string, string> = {
+  super_admin: 'bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)]',
+  store_admin: 'bg-[var(--color-ak-ambar)]/15 text-[var(--color-ak-ambar)]',
+  lider_area: 'bg-emerald-500/10 text-emerald-400',
+  colaborador: 'bg-sky-500/10 text-sky-400',
+  host: 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)]',
 }
 
 export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
@@ -57,13 +69,14 @@ export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
               <div>
                 <p className="text-sm font-medium text-[var(--text-primary)]">{member.email || 'Sin email'}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    member.role === 'super_admin' ? 'bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)]' :
-                    member.role === 'store_admin' ? 'bg-[var(--color-ak-ambar)]/15 text-[var(--color-ak-ambar)]' :
-                    'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)]'
-                  }`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[member.role] || 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)]'}`}>
                     {ROLE_LABELS[member.role] || member.role}
                   </span>
+                  {member.area && (
+                    <span className="text-xs text-[var(--text-secondary)]">
+                      {member.area}
+                    </span>
+                  )}
                   {!member.is_active && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-danger)]/10 text-[var(--color-danger)] font-medium">
                       Inactivo

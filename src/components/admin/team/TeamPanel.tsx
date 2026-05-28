@@ -36,11 +36,11 @@ export function TeamPanel() {
 
   useEffect(() => { fetchStaff() }, [fetchStaff])
 
-  const handleAddStaff = async (data: { email: string; role: string; pos_nomina_staff_id?: string; area?: string }) => {
+  const handleAddStaff = async (email: string, role: string, posNominaStaffId?: string, area?: string) => {
     const res = await fetch('/api/admin/staff', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ email, role, pos_nomina_staff_id: posNominaStaffId, area }),
     })
     if (res.ok) {
       fetchStaff()

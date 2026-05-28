@@ -233,7 +233,9 @@ export default function MiTurnoPage() {
               DAY_NAMES.map((day, i) => {
                 const assignment = assignmentMap.get(i)
                 const st = assignment ? shiftTypes.find(t => t.code === assignment.shift_code) : null
-                const date = weekDates[i]
+                // weekDates is ISO: [0]=Mon..[6]=Sun. day_index: 0=Sun..6=Sat
+                // Map: day_index 0(Sun)->weekDates[6], 1(Mon)->weekDates[0], ..6(Sat)->weekDates[5]
+                const date = i === 0 ? weekDates[6] : weekDates[i - 1]
                 const isToday = date && new Date().toDateString() === date.toDateString()
                 const hasNovedad = assignment?.novedad
 

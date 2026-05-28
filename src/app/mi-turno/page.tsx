@@ -18,7 +18,7 @@ import {
   Megaphone,
 } from '@phosphor-icons/react'
 import { DAY_NAMES } from '@/lib/types/shifts'
-import { getWeekDates } from '@/lib/utils/costCalculator'
+import { getWeekStr, getWeekDates } from '@/lib/utils/costCalculator'
 import CheckInOut from '@/components/admin/shifts/CheckInOut'
 import ContingencyReport from '@/components/admin/shifts/ContingencyReport'
 
@@ -51,28 +51,12 @@ interface DailyHour {
   description?: string
 }
 
-function getCurrentWeekStr(): string {
-  const now = new Date()
-  const startOfWeek = new Date(now)
-  const day = startOfWeek.getDay()
-  const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1)
-  startOfWeek.setDate(diff)
-  startOfWeek.setHours(0, 0, 0, 0)
-
-  const jan4 = new Date(startOfWeek.getFullYear(), 0, 4)
-  const oneDay = 86400000
-  const dayNum = (jan4.getDay() + 6) % 7
-  const thursday = jan4.getTime() - dayNum * oneDay
-  const weekNum = Math.ceil((startOfWeek.getTime() - thursday) / (7 * oneDay))
-  return `${startOfWeek.getFullYear()}-W${String(weekNum).padStart(2, '0')}`
-}
-
 type Tab = 'horario' | 'checkin' | 'novedad' | 'horas'
 
 export default function MiTurnoPage() {
   const { user, signOut, roleLoading } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('horario')
-  const [weekStr, setWeekStr] = useState(getCurrentWeekStr)
+  const [weekStr, setWeekStr] = useState(() => getWeekStr(new Date()))
   const [employee, setEmployee] = useState<{ nombre_completo: string; alias: string; cargo: string; area: string } | null>(null)
   const [schedule, setSchedule] = useState<{ id: string; week_str: string; status: string } | null>(null)
   const [assignments, setAssignments] = useState<Assignment[]>([])
@@ -121,12 +105,19 @@ export default function MiTurnoPage() {
 
   const goToPrevWeek = () => {
     const [y, w] = weekStr.split('-W').map(Number)
-    setWeekStr(`${y}-W${String(Math.max(1, w - 1)).padStart(2, '0')}`)
+    if (w === 1) {
+      setWeekStr(`${y - 1}-W52`)
+    } else {
+      setWeekStr(`${y}-W${String(w - 1).padStart(2, '0')}`)
+    }
   }
   const goToNextWeek = () => {
     const [y, w] = weekStr.split('-W').map(Number)
-    const maxWeek = 52
-    setWeekStr(`${y}-W${String(Math.min(maxWeek, w + 1)).padStart(2, '0')}`)
+    if (w === 52) {
+      setWeekStr(`${y + 1}-W01`)
+    } else {
+      setWeekStr(`${y}-W${String(w + 1).padStart(2, '0')}`)
+    }
   }
 
   if (roleLoading) {

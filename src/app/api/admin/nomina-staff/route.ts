@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   let query = sb
     .from('pos_nomina_staff')
-    .select('id, nombre_completo, cargo, area, secondary_areas, salario, sede, cedula, correo, contrato, activo')
+    .select('id, nombre_completo, cargo, area, secondary_areas, salario, sede, cedula, correo, contrato, activo, aplica_propinas, auxilio_no_salarial, modalidad, es_medio_tiempo')
     .eq('sede', 'C75')
     .order('nombre_completo')
 
@@ -49,6 +49,10 @@ export async function GET(request: NextRequest) {
     correo: s.correo || null,
     contrato: s.contrato || 'fijo',
     activo: s.activo !== false,
+    aplica_propinas: s.aplica_propinas !== false,
+    auxilio_no_salarial: s.auxilio_no_salarial || 0,
+    modalidad: s.modalidad || 'COMPLETO',
+    es_medio_tiempo: s.es_medio_tiempo === true,
     alias: aliasMap.get(s.id as string) || (s.nombre_completo as string).split(' ')[0],
   }))
 

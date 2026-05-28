@@ -188,6 +188,95 @@ export function calcularCostoSemanal(
 }
 
 /**
+ * Calcula el costo total para la empresa (salario + prestaciones + aportes de ley)
+ * segun normativa colombiana 2026:
+ * - Prima de servicios: 1 mes/12 = 8.33%
+ * - Cesantias: 1 mes/12 = 8.33%
+ * - Intereses sobre cesantias: 12% anual = 1% mensual
+ * - Vacaciones: 15 dias/12 = 4.17%
+ * - Aportes patronales:
+ *   - Salud (EPS): 8.5% (12.5% total - 4% trabajador)
+ *   - Pension: 12% (16% total - 4% trabajador)
+ *   - ARL: ~0.522% (depende riesgo, comercio=0.522%)
+ *   - Caja de compensacion: 4% (2% antiguedad + 2% ICBF)
+ *   - Sena: 2%
+ *   - ICBF: 3%
+ *   - Auxilio de transporte: solo si gana <= 2 SMLV
+ */
+export function calcularCostoEmpresa(salarioMensual: number): {
+  salarioMensual: number;
+  primaServicios: number;
+  cesantias: number;
+  interesesCesantias: number;
+  vacaciones: number;
+  aporteSalud: number;
+  aportePension: number;
+  aporteARL: number;
+  aporteCaja: number;
+  aporteSena: number;
+  aporteICBF: number;
+  auxilioTransporte: number;
+  costoMensualTotal: number;
+  costoDiario: number;
+  valorHoraOrdinaria: number;
+  valorHoraExtraDiurna: number;
+  valorHoraExtraNocturna: number;
+  valorHoraNocturna: number;
+} {
+  const LEGAL_PARAMS_LOCAL = {
+    SMMLV: 1750905,
+    TRANSPORT_ALLOWANCE: 249095,
+    ARL_RATE: 0.00522, // comercio
+  };
+
+  const primaServicios = salarioMensual * 8.33 / 100;
+  const cesantias = salarioMensual * 8.33 / 100;
+  const interesesCesantias = salarioMensual * 1 / 100; // 12% anual = 1% mensual
+  const vacaciones = salarioMensual * 4.17 / 100;
+  const aporteSalud = salarioMensual * 8.5 / 100;
+  const aportePension = salarioMensual * 12 / 100;
+  const aporteARL = salarioMensual * LEGAL_PARAMS_LOCAL.ARL_RATE;
+  const aporteCaja = salarioMensual * 4 / 100;
+  const aporteSena = salarioMensual * 2 / 100;
+  const aporteICBF = salarioMensual * 3 / 100;
+
+  // Auxilio de transporte solo si gana <= 2 SMLV
+  const auxilioTransporte = salarioMensual <= LEGAL_PARAMS_LOCAL.SMMLV * 2
+    ? LEGAL_PARAMS_LOCAL.TRANSPORT_ALLOWANCE
+    : 0;
+
+  const prestaciones = primaServicios + cesantias + interesesCesantias + vacaciones;
+  const aportesPatronales = aporteSalud + aportePension + aporteARL + aporteCaja + aporteSena + aporteICBF;
+  const costoMensualTotal = salarioMensual + auxilioTransporte + prestaciones + aportesPatronales;
+
+  const valorHoraOrdinaria = costoMensualTotal / 30 / 8;
+  const valorHoraExtraDiurna = valorHoraOrdinaria * 1.25;
+  const valorHoraExtraNocturna = valorHoraOrdinaria * 1.75;
+  const valorHoraNocturna = valorHoraOrdinaria * 1.35;
+
+  return {
+    salarioMensual,
+    primaServicios: Math.round(primaServicios),
+    cesantias: Math.round(cesantias),
+    interesesCesantias: Math.round(interesesCesantias),
+    vacaciones: Math.round(vacaciones),
+    aporteSalud: Math.round(aporteSalud),
+    aportePension: Math.round(aportePension),
+    aporteARL: Math.round(aporteARL),
+    aporteCaja: Math.round(aporteCaja),
+    aporteSena: Math.round(aporteSena),
+    aporteICBF: Math.round(aporteICBF),
+    auxilioTransporte,
+    costoMensualTotal: Math.round(costoMensualTotal),
+    costoDiario: Math.round(costoMensualTotal / 30),
+    valorHoraOrdinaria: Math.round(valorHoraOrdinaria),
+    valorHoraExtraDiurna: Math.round(valorHoraExtraDiurna),
+    valorHoraExtraNocturna: Math.round(valorHoraExtraNocturna),
+    valorHoraNocturna: Math.round(valorHoraNocturna),
+  };
+}
+
+/**
  * Formatea un valor en COP
  */
 export function formatCOP(value: number): string {

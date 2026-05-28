@@ -25,6 +25,10 @@ export interface StaffMember {
   secondary_areas: string[];
   sede: string;
   activo: boolean;
+  aplica_propinas: boolean;
+  auxilio_no_salarial: number;
+  modalidad: string;
+  es_medio_tiempo: boolean;
 }
 
 export interface ShiftType {

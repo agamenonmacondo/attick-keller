@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   // Get all user_roles for this restaurant
   const { data: roles, error } = await sb
     .from('user_roles')
-    .select('id, auth_user_id, role, is_active, created_at')
+    .select('id, auth_user_id, role, is_active, created_at, pos_nomina_staff_id, area')
     .eq('restaurant_id', RESTAURANT_ID)
     .in('role', ['host', 'store_admin', 'super_admin', 'lider_area', 'colaborador'])
     .order('created_at', { ascending: true })
@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
     role: r.role,
     is_active: r.is_active,
     created_at: r.created_at,
+    pos_nomina_staff_id: r.pos_nomina_staff_id,
+    area: r.area,
   }))
 
   return NextResponse.json({ staff })
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
 
   const sb = getServiceClient()
   const body = await request.json()
-  const { email, role } = body
+  const { email, role, pos_nomina_staff_id, area } = body
 
   if (!email || !role) {
     return NextResponse.json({ error: 'Email y rol son requeridos' }, { status: 400 })
@@ -49,6 +51,11 @@ export async function POST(request: NextRequest) {
 
   if (!['host', 'store_admin', 'lider_area', 'colaborador'].includes(role)) {
     return NextResponse.json({ error: 'Rol invalido. Use host, store_admin, lider_area o colaborador' }, { status: 400 })
+  }
+
+  // For lider_area/colaborador, pos_nomina_staff_id is required
+  if ((role === 'lider_area' || role === 'colaborador') && !pos_nomina_staff_id) {
+    return NextResponse.json({ error: 'Empleado de nomina es requerido para este rol' }, { status: 400 })
   }
 
   // Look up user by email via Supabase admin API
@@ -71,11 +78,15 @@ export async function POST(request: NextRequest) {
   if (existing) {
     // Reactivate if inactive
     if (!existing.is_active) {
+      const updateData: Record<string, unknown> = { is_active: true }
+      if (pos_nomina_staff_id) updateData.pos_nomina_staff_id = pos_nomina_staff_id
+      if (area) updateData.area = area
+
       const { data, error } = await sb
         .from('user_roles')
-        .update({ is_active: true })
+        .update(updateData)
         .eq('id', existing.id)
-        .select('id, auth_user_id, role, is_active, created_at')
+        .select('id, auth_user_id, role, is_active, created_at, pos_nomina_staff_id, area')
         .single()
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
       return NextResponse.json({ staff: { ...data, email: user.email } })
@@ -84,15 +95,19 @@ export async function POST(request: NextRequest) {
   }
 
   // Create new role
+  const insertData: Record<string, unknown> = {
+    auth_user_id: user.id,
+    restaurant_id: RESTAURANT_ID,
+    role,
+    is_active: true,
+  }
+  if (pos_nomina_staff_id) insertData.pos_nomina_staff_id = pos_nomina_staff_id
+  if (area) insertData.area = area
+
   const { data, error } = await sb
     .from('user_roles')
-    .insert({
-      auth_user_id: user.id,
-      restaurant_id: RESTAURANT_ID,
-      role,
-      is_active: true,
-    })
-    .select('id, auth_user_id, role, is_active, created_at')
+    .insert(insertData)
+    .select('id, auth_user_id, role, is_active, created_at, pos_nomina_staff_id, area')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

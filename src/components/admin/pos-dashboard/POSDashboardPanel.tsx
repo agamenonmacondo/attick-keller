@@ -4,8 +4,9 @@ import { useState, useCallback, useMemo, useRef } from 'react'
 import { usePOSDashboard, type POSDashboardFilters } from '@/lib/hooks/usePOSDashboard'
 import { usePOSCosts } from '@/lib/hooks/usePOSCosts'
 import { usePOSCalendar } from '@/lib/hooks/usePOSCalendar'
+import { useProductCostCatalog, type ProductCostItem } from '@/lib/hooks/useProductCostCatalog'
 import { AnimatedCard } from '../shared/AnimatedCard'
-import { Spinner, ChartBar, ChartLine } from '@phosphor-icons/react'
+import { Spinner, ChartBar, ChartLine, Receipt } from '@phosphor-icons/react'
 import { POSFiltersBar } from './POSFiltersBar'
 import { POSCostPanel } from './POSCostPanel'
 import { RevenueHeatmapCalendar } from './RevenueHeatmapCalendar'
@@ -25,6 +26,8 @@ import { DrillDownPanel } from './DrillDownPanel'
 import { CategoryCompanionsCard } from './CategoryCompanionsCard'
 import { ShiftReconciliation } from './ShiftReconciliation'
 import { CategoryPerformersCard } from './CategoryPerformersCard'
+import ProductCostTable from './ProductCostTable'
+import ProductRecipeDetail from './ProductRecipeDetail'
 
 type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 
@@ -34,7 +37,7 @@ const DEFAULT_FILTERS: POSDashboardFilters = {
   // from/to left empty — server auto-detects latest month with data
 }
 
-type DashboardTab = 'operation' | 'costs'
+type DashboardTab = 'operation' | 'costs' | 'catalog'
 
 export function POSDashboardPanel() {
   const [activeTab, setActiveTab] = useState<DashboardTab>('operation')
@@ -50,6 +53,10 @@ export function POSDashboardPanel() {
     group: filters.category,
   }), [filters.from, filters.to, filters.category])
   const { data: costsData, loading: costsLoading, error: costsError } = usePOSCosts(costsFilters)
+
+  // ── Catalog tab hook ──
+  const { data: catalogData, loading: catalogLoading, error: catalogError, refetch: catalogRefetch } = useProductCostCatalog()
+  const [catalogSelectedProduct, setCatalogSelectedProduct] = useState<ProductCostItem | null>(null)
 
   // When in month mode, clear date filters so data covers the full month
   const effectiveFilters = useMemo<POSDashboardFilters>(() => {
@@ -221,9 +228,20 @@ export function POSDashboardPanel() {
               <ChartBar size={13} />
               Costos
             </button>
+            <button
+              onClick={() => setActiveTab('catalog')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                activeTab === 'catalog'
+                  ? 'bg-[var(--color-ak-borgona)] text-white'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <Receipt size={13} />
+              Catalogo
+            </button>
           </div>
           <div>
-            <h2 className="text-lg font-bold text-[var(--text-primary)]">{activeTab === 'costs' ? 'Costos POS' : 'Operacion POS'}</h2>
+            <h2 className="text-lg font-bold text-[var(--text-primary)]">{activeTab === 'costs' ? 'Costos POS' : activeTab === 'catalog' ? 'Catalogo de Costos' : 'Operacion POS'}</h2>
             <p className="text-xs text-[var(--text-secondary)]">
               {viewMode === 'month'
                 ? <>Vista consolidada: <span className="font-semibold text-[var(--color-ak-borgona)]">Mes completo</span></>
@@ -295,6 +313,25 @@ export function POSDashboardPanel() {
           heatmapMetric={heatmapMetric}
           onHeatmapMetricChange={setHeatmapMetric}
         />
+      )}
+
+      {/* Catalog panel */}
+      {activeTab === 'catalog' && (
+        <>
+          <ProductCostTable
+            data={catalogData}
+            loading={catalogLoading}
+            error={catalogError}
+            onProductClick={(product) => setCatalogSelectedProduct(product)}
+            refetch={catalogRefetch}
+          />
+          {catalogSelectedProduct && (
+            <ProductRecipeDetail
+              product={catalogSelectedProduct}
+              onClose={() => setCatalogSelectedProduct(null)}
+            />
+          )}
+        </>
       )}
 
       {data && activeTab === 'operation' && (

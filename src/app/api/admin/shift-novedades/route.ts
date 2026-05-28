@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { getAdminUser, getEmployeeUser, getServiceClient } from '@/lib/utils/admin-auth'
 
 // POST /api/admin/shift-novedades — reportar contingencia
 export async function POST(request: NextRequest) {
   const admin = await getAdminUser(request)
-  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  const employee = !admin ? await getEmployeeUser(request) : null
+
+  if (!admin && !employee) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  }
 
   const sb = getServiceClient()
   const body = await request.json()
@@ -19,16 +23,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Tipo invalido. Use: ${validTypes.join(', ')}` }, { status: 400 })
   }
 
-  // Obtener pos_nomina_staff_id
-  const { data: userRole } = await sb
-    .from('user_roles')
-    .select('pos_nomina_staff_id')
-    .eq('auth_user_id', admin.id)
-    .single()
+  // Validacion: minimo 24hrs de anticipacion para permisos y faltas
+  // Solo empleados (no admins) deben cumplir esta regla
+  if (!admin) {
+    const fechaTurno = new Date(date + 'T00:00:00')
+    const ahora = new Date()
+    const horasAnticipacion = (fechaTurno.getTime() - ahora.getTime()) / (1000 * 60 * 60)
 
-  const employeeId = userRole?.pos_nomina_staff_id
-  if (!employeeId) {
-    return NextResponse.json({ error: 'Perfil de colaborador no encontrado' }, { status: 404 })
+    if (horasAnticipacion < 24) {
+      return NextResponse.json(
+        { error: 'Las novedades deben reportarse con al menos 24 horas de anticipacion. Contacta a tu lider de area para casos urgentes.' },
+        { status: 400 }
+      )
+    }
+  }
+
+  // Obtener pos_nomina_staff_id
+  let employeeId: string
+  if (employee) {
+    employeeId = employee.pos_nomina_staff_id
+  } else {
+    // Admin puede reportar por un empleado — necesita employee_id en el body
+    const bodyEmployeeId = body.employee_id
+    if (!bodyEmployeeId) {
+      return NextResponse.json({ error: 'Admin debe especificar employee_id' }, { status: 400 })
+    }
+    employeeId = bodyEmployeeId
   }
 
   // Insertar novedad

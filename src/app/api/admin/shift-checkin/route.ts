@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { getAdminUser, getEmployeeUser, getServiceClient } from '@/lib/utils/admin-auth'
 
 // POST /api/admin/shift-checkin
 export async function POST(request: NextRequest) {
   const admin = await getAdminUser(request)
-  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  const employee = !admin ? await getEmployeeUser(request) : null
+
+  if (!admin && !employee) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  }
 
   const sb = getServiceClient()
   const body = await request.json()
@@ -15,15 +19,19 @@ export async function POST(request: NextRequest) {
   }
 
   // Obtener pos_nomina_staff_id
-  const { data: userRole } = await sb
-    .from('user_roles')
-    .select('pos_nomina_staff_id')
-    .eq('auth_user_id', admin.id)
-    .single()
-
-  const employeeId = userRole?.pos_nomina_staff_id
-  if (!employeeId) {
-    return NextResponse.json({ error: 'Perfil de colaborador no encontrado' }, { status: 404 })
+  let employeeId: string
+  if (employee) {
+    employeeId = employee.pos_nomina_staff_id
+  } else {
+    const { data: userRole } = await sb
+      .from('user_roles')
+      .select('pos_nomina_staff_id')
+      .eq('auth_user_id', admin!.id)
+      .single()
+    employeeId = userRole?.pos_nomina_staff_id
+    if (!employeeId) {
+      return NextResponse.json({ error: 'Perfil de colaborador no encontrado' }, { status: 404 })
+    }
   }
 
   // Verificar que la asignacion pertenece al empleado

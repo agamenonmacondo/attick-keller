@@ -20,6 +20,7 @@ import {
   X,
   CheckCircle,
   WarningCircle,
+  ClockAfternoon,
 } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 
@@ -66,7 +67,7 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; d
 }
 
 export default function PerfilPage() {
-  const { user, loading: authLoading, roleLoading, isHost, signOut } = useAuth()
+  const { user, loading: authLoading, roleLoading, isHost, isEmployee, isAdmin: isAdminFromAuth, signOut } = useAuth()
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [isAdminUser, setIsAdminUser] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -258,7 +259,7 @@ export default function PerfilPage() {
             </div>
 
             <div className="flex flex-wrap gap-3 mt-5">
-              {!isHost && (
+              {!isHost && !isEmployee && (
                 <Link
                   href="/reservar"
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-ak-borgona)] text-white rounded-xl text-sm font-semibold hover:bg-[var(--color-ak-borgona)] active:scale-[0.97] transition-colors"
@@ -266,6 +267,16 @@ export default function PerfilPage() {
                 >
                   <CalendarBlank size={16} weight="bold" />
                   Nueva Reserva
+                </Link>
+              )}
+              {isEmployee && (
+                <Link
+                  href="/mi-turno"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-ak-borgona)] text-white rounded-xl text-sm font-semibold hover:bg-[var(--color-ak-borgona)] active:scale-[0.97] transition-colors"
+                  style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                >
+                  <ClockAfternoon size={16} weight="bold" />
+                  Mi Turno
                 </Link>
               )}
               {isAdminUser && (

@@ -81,6 +81,29 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
+  // Protect /mi-turno — employee only (lider_area, colaborador)
+  if (request.nextUrl.pathname.startsWith('/mi-turno')) {
+    if (!user) {
+      return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
+    const sb = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    const { data: roleData } = await sb
+      .from('user_roles')
+      .select('role')
+      .eq('auth_user_id', user.id)
+      .eq('restaurant_id', RESTAURANT_ID)
+      .eq('is_active', true)
+      .in('role', ['lider_area', 'colaborador', 'store_admin', 'super_admin'])
+      .single()
+
+    if (!roleData) {
+      return NextResponse.redirect(new URL('/perfil', request.url))
+    }
+  }
+
   return response
 }
 

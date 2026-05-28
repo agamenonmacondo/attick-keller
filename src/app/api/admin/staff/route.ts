@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     .from('user_roles')
     .select('id, auth_user_id, role, is_active, created_at')
     .eq('restaurant_id', RESTAURANT_ID)
-    .in('role', ['host', 'store_admin', 'super_admin'])
+    .in('role', ['host', 'store_admin', 'super_admin', 'lider_area', 'colaborador'])
     .order('created_at', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Email y rol son requeridos' }, { status: 400 })
   }
 
-  if (!['host', 'store_admin'].includes(role)) {
-    return NextResponse.json({ error: 'Rol invalido. Use host o store_admin' }, { status: 400 })
+  if (!['host', 'store_admin', 'lider_area', 'colaborador'].includes(role)) {
+    return NextResponse.json({ error: 'Rol invalido. Use host, store_admin, lider_area o colaborador' }, { status: 400 })
   }
 
   // Look up user by email via Supabase admin API

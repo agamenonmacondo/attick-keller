@@ -16,6 +16,7 @@ import { TablesPanel } from './inventory/TablesPanel'
 import { FloorPlanMap } from './floorplan/FloorPlanMap'
 import { NominaUnifiedPanel } from './nomina/NominaUnifiedPanel'
 import { RodriPanel } from './rodri/RodriPanel'
+import ShiftSchedulePanel from './shifts/ShiftSchedulePanel'
 import { Spinner } from '@phosphor-icons/react'
 
 export function AdminShell() {
@@ -64,6 +65,7 @@ export function AdminShell() {
         {activeTab === 'menu' && <MenuPanel />}
         {activeTab === 'equipo' && <TeamPanel />}
         {activeTab === 'nomina' && <NominaUnifiedPanel />}
+        {activeTab === 'turnos' && <ShiftSchedulePanel />}
         {activeTab === 'app-rodri' && <RodriPanel />}
       </main>
     </div>

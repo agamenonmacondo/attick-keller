@@ -13,7 +13,7 @@ function getServiceClient() {
 export interface AdminUser {
   id: string
   email?: string
-  role: 'store_admin' | 'super_admin' | 'host'
+  role: 'store_admin' | 'super_admin' | 'host' | 'lider_area' | 'colaborador'
 }
 
 export interface HostUser {

@@ -50,6 +50,9 @@ export function AddStaffForm({ onAdd }: AddStaffFormProps) {
         >
           <option value="host">Host</option>
           <option value="store_admin">Administrador</option>
+          <option value="super_admin">Super Admin</option>
+          <option value="lider_area">Lider de Area</option>
+          <option value="colaborador">Colaborador</option>
         </select>
         <button
           type="submit"

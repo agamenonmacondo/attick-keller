@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, PencilSimple, Check, X, User, ChevronDown, ChevronRight } from '@phosphor-icons/react';
+import { Plus, PencilSimple, Check, X, User, CaretDown, CaretRight } from '@phosphor-icons/react';
 import { formatCOP } from '@/lib/utils/costCalculator';
 
 const AREAS: { value: string; label: string; color: string }[] = [
@@ -257,7 +257,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                   <>
                     <tr key={member.id} className={`border-b border-[var(--border-default)] hover:bg-[var(--bg-hover)]/50 transition-colors cursor-pointer ${isExpanded ? 'bg-[var(--bg-hover)]/30' : ''}`} onClick={() => setExpandedId(isExpanded ? null : member.id)}>
                       <td className="p-3 text-[var(--text-secondary)]">
-                        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        {isExpanded ? <CaretDown size={14} /> : <CaretRight size={14} />}
                       </td>
                       <td className="p-3"><span className="font-semibold text-[var(--text-primary)]">{member.alias}</span></td>
                       <td className="p-3 text-[var(--text-primary)] text-xs whitespace-nowrap">{member.nombre_completo}</td>

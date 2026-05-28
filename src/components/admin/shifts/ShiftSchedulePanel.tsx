@@ -189,7 +189,7 @@ export default function ShiftSchedulePanel() {
         <select
           value={area}
           onChange={(e) => setArea(e.target.value as Area)}
-          className="px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] text-sm"
+          className="min-h-[44px] px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] text-sm"
         >
           {AREAS.map((a) => (
             <option key={a.value} value={a.value}>{a.label}</option>
@@ -200,7 +200,7 @@ export default function ShiftSchedulePanel() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setWeekOffset((w) => w - 1)}
-            className="p-2 rounded-lg hover:bg-[var(--bg-card)] text-[var(--text-secondary)]"
+            className="p-2 rounded-lg hover:bg-[var(--bg-card)] text-[var(--text-secondary)] min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <CaretLeft size={16} />
           </button>
@@ -209,7 +209,7 @@ export default function ShiftSchedulePanel() {
           </span>
           <button
             onClick={() => setWeekOffset((w) => w + 1)}
-            className="p-2 rounded-lg hover:bg-[var(--bg-card)] text-[var(--text-secondary)]"
+            className="p-2 rounded-lg hover:bg-[var(--bg-card)] text-[var(--text-secondary)] min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <CaretRight size={16} />
           </button>
@@ -231,7 +231,7 @@ export default function ShiftSchedulePanel() {
         </span>
 
         {/* Tabs */}
-        <div className="flex gap-1 ml-auto">
+        <div className="flex flex-wrap gap-1 ml-auto">
           {[
             { id: 'cronograma' as Tab, icon: <ClockClockwise size={14} />, label: 'Cronograma' },
             { id: 'costos' as Tab, icon: <ChartBar size={14} />, label: 'Costos' },
@@ -241,7 +241,7 @@ export default function ShiftSchedulePanel() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px]
                 ${tab === t.id
                   ? 'bg-[var(--color-ak-borgona)] text-white'
                   : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
@@ -271,7 +271,7 @@ export default function ShiftSchedulePanel() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
                 bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border-default)]
                 hover:bg-[var(--bg-hover)] disabled:opacity-50"
             >
@@ -281,7 +281,7 @@ export default function ShiftSchedulePanel() {
             {scheduleId && scheduleStatus !== 'published' && (
               <button
                 onClick={handlePublish}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
                   bg-[var(--accent-primary)] text-white hover:opacity-90"
               >
                 <PaperPlaneTilt size={16} />
@@ -505,7 +505,7 @@ function ShiftTypeEditor({
                   <h4 className="text-sm font-semibold text-[var(--text-primary)]">
                     Editando: {st.code} — {st.name}
                   </h4>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-xs text-[var(--text-secondary)] mb-1">Codigo</label>
                       <input
@@ -593,7 +593,7 @@ function ShiftTypeEditor({
       {editing === 'new' && (
         <div className="bg-[var(--bg-card)] rounded-xl p-4 space-y-3 border border-[var(--border-default)]">
           <h4 className="text-sm font-semibold text-[var(--text-primary)]">Nuevo horario</h4>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs text-[var(--text-secondary)] mb-1">Codigo</label>
               <input

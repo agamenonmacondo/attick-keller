@@ -168,7 +168,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
   return (
     <div className="space-y-4">
       {/* Resumen */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-[var(--bg-card)] rounded-lg p-3 border border-[var(--border-default)]">
           <div className="text-xs text-[var(--text-secondary)]">Total salarios</div>
           <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">{formatCOP(totalSalarios)}/mes</div>
@@ -184,14 +184,14 @@ export default function StaffPanel({ area }: StaffPanelProps) {
       </div>
 
       {/* Header con filtro */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-3">
-          <select value={filterArea} onChange={(e) => setFilterArea(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] text-sm">
+          <select value={filterArea} onChange={(e) => setFilterArea(e.target.value)} className="min-h-[44px] px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] text-sm">
             {AREAS.map((a) => (<option key={a.value} value={a.value}>{a.label}</option>))}
           </select>
           <span className="text-xs text-[var(--text-secondary)]">{staff.length} {staff.length === 1 ? 'persona' : 'personas'}</span>
         </div>
-        <button onClick={() => { resetForm(); setShowForm(true); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--accent-primary)] text-white hover:opacity-90">
+        <button onClick={() => { resetForm(); setShowForm(true); }} className="flex items-center justify-center gap-1.5 min-h-[44px] px-4 rounded-lg text-sm font-medium bg-[var(--accent-primary)] text-white hover:opacity-90">
           <Plus size={14} /> Agregar persona
         </button>
       </div>
@@ -199,108 +199,159 @@ export default function StaffPanel({ area }: StaffPanelProps) {
       {/* Formulario inline */}
       {showForm && (
         <div className="bg-[var(--bg-card)] rounded-xl p-4 space-y-3 border border-[var(--border-default)]">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Nombre completo *</label><input type="text" value={form.nombre_completo} onChange={(e) => setForm((f) => ({ ...f, nombre_completo: e.target.value }))} className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cargo</label><input type="text" value={form.cargo} onChange={(e) => setForm((f) => ({ ...f, cargo: e.target.value }))} className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Area</label><select value={form.area} onChange={(e) => setForm((f) => ({ ...f, area: e.target.value }))} className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm">{AREAS.filter((a) => a.value !== '').map((a) => (<option key={a.value} value={a.value}>{a.label}</option>))}</select></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Contrato</label><select value={form.contrato} onChange={(e) => setForm((f) => ({ ...f, contrato: e.target.value as 'fijo' | 'turnante' }))} className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"><option value="fijo">Fijo</option><option value="turnante">Turnante</option></select></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cedula</label><input type="text" value={form.cedula} onChange={(e) => setForm((f) => ({ ...f, cedula: e.target.value }))} className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Correo</label><input type="email" value={form.correo} onChange={(e) => setForm((f) => ({ ...f, correo: e.target.value }))} className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Salario mensual</label><input type="number" value={form.salario_mensual || ''} onChange={(e) => setForm((f) => ({ ...f, salario_mensual: Number(e.target.value) || 0 }))} className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Alias</label><input type="text" value={form.alias} onChange={(e) => setForm((f) => ({ ...f, alias: e.target.value }))} className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" disabled={!!editingId} /></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Nombre completo *</label><input type="text" value={form.nombre_completo} onChange={(e) => setForm((f) => ({ ...f, nombre_completo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cargo</label><input type="text" value={form.cargo} onChange={(e) => setForm((f) => ({ ...f, cargo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Area</label><select value={form.area} onChange={(e) => setForm((f) => ({ ...f, area: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm">{AREAS.filter((a) => a.value !== '').map((a) => (<option key={a.value} value={a.value}>{a.label}</option>))}</select></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Contrato</label><select value={form.contrato} onChange={(e) => setForm((f) => ({ ...f, contrato: e.target.value as 'fijo' | 'turnante' }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"><option value="fijo">Fijo</option><option value="turnante">Turnante</option></select></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cedula</label><input type="text" value={form.cedula} onChange={(e) => setForm((f) => ({ ...f, cedula: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Correo</label><input type="email" value={form.correo} onChange={(e) => setForm((f) => ({ ...f, correo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Salario mensual</label><input type="number" value={form.salario_mensual || ''} onChange={(e) => setForm((f) => ({ ...f, salario_mensual: Number(e.target.value) || 0 }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Alias</label><input type="text" value={form.alias} onChange={(e) => setForm((f) => ({ ...f, alias: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" disabled={!!editingId} /></div>
           </div>
           <div className="flex justify-end gap-2">
-            <button onClick={resetForm} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><X size={14} /> Cancelar</button>
-            <button onClick={editingId ? () => handleUpdate(editingId) : handleCreate} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm bg-[var(--accent-primary)] text-white hover:opacity-90"><Check size={14} /> {editingId ? 'Actualizar' : 'Crear'}</button>
+            <button onClick={resetForm} className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[44px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><X size={14} /> Cancelar</button>
+            <button onClick={editingId ? () => handleUpdate(editingId) : handleCreate} className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[44px] bg-[var(--accent-primary)] text-white hover:opacity-90"><Check size={14} /> {editingId ? 'Actualizar' : 'Crear'}</button>
           </div>
         </div>
       )}
 
-      {/* Tabla */}
+      {/* ===== VISTA MOBILE: Tarjetas ===== */}
       {loading ? (
         <div className="text-[var(--text-secondary)] text-center py-8">Cargando...</div>
       ) : staff.length === 0 ? (
         <div className="text-[var(--text-secondary)] text-center py-8 flex flex-col items-center gap-2"><User size={32} className="opacity-30" /> No hay personal registrado</div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="border-b border-[var(--border-default)]">
-                <th className="text-left p-3 text-[var(--text-secondary)] font-medium w-6"></th>
-                <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Alias</th>
-                <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Nombre</th>
-                <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Cargo</th>
-                <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Area</th>
-                <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Modalidad</th>
-                <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Salario</th>
-                <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Aux. transp.</th>
-                <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Costo empresa</th>
-                <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Hora ord.</th>
-                <th className="text-right p-3 text-[var(--text-secondary)] font-medium">HE diurna</th>
-                <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Hora noct.</th>
-                <th className="text-right p-3 text-[var(--text-secondary)] font-medium">HE noct.</th>
-                <th className="text-center p-3 text-[var(--text-secondary)] font-medium w-10"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {staff.map((member) => {
-                const contract = CONTRACT_LABELS[member.contrato] || CONTRACT_LABELS.fijo;
-                const areaMeta = AREAS.find((a) => a.value === member.area);
-                const isExpanded = expandedId === member.id;
-                const costoEmp = costoEmpresaMensual(member.salario_mensual || 0, member.auxilio_no_salarial || 0);
-                const vHO = valorHoraOrd(member);
-                const vHED = valorHEDiurna(member);
-                const vHEN = valorHENocturna(member);
-                const vHN = valorHoraNocturna(member);
-                const d = desglose(member);
-                return (
-                  <>
-                    <tr key={member.id} className={`border-b border-[var(--border-default)] hover:bg-[var(--bg-hover)]/50 transition-colors cursor-pointer ${isExpanded ? 'bg-[var(--bg-hover)]/30' : ''}`} onClick={() => setExpandedId(isExpanded ? null : member.id)}>
-                      <td className="p-3 text-[var(--text-secondary)]">
-                        {isExpanded ? <CaretDown size={14} /> : <CaretRight size={14} />}
-                      </td>
-                      <td className="p-3"><span className="font-semibold text-[var(--text-primary)]">{member.alias}</span></td>
-                      <td className="p-3 text-[var(--text-primary)] text-xs whitespace-nowrap">{member.nombre_completo}</td>
-                      <td className="p-3 text-xs text-[var(--text-secondary)]">{member.cargo || '-'}</td>
-                      <td className="p-3"><span className="text-xs px-2 py-0.5 rounded-full border" style={{ color: areaMeta?.color || 'var(--text-secondary)', borderColor: areaMeta?.color || 'var(--border-default)', backgroundColor: areaMeta?.color ? `${areaMeta.color}15` : undefined }}>{areaMeta?.label || member.area || 'Sin area'}</span></td>
-                      <td className="p-3 text-xs text-[var(--text-secondary)]">{member.modalidad || 'COMPLETO'}{member.aplica_propinas ? ' +Prop' : ''}</td>
-                      <td className="p-3 text-right font-mono text-xs text-[var(--text-secondary)]">{formatCOP(member.salario_mensual || 0)}</td>
-                      <td className="p-3 text-right font-mono text-xs text-[var(--text-secondary)]">{member.auxilio_no_salarial > 0 ? formatCOP(member.auxilio_no_salarial) : '-'}</td>
-                      <td className="p-3 text-right font-mono text-xs font-semibold text-[var(--accent-primary)]">{formatCOP(costoEmp)}</td>
-                      <td className="p-3 text-right font-mono text-xs text-[var(--text-primary)]">{formatCOP(vHO)}</td>
-                      <td className="p-3 text-right font-mono text-xs text-amber-400">{formatCOP(vHED)}</td>
-                      <td className="p-3 text-right font-mono text-xs text-purple-400">{formatCOP(vHN)}</td>
-                      <td className="p-3 text-right font-mono text-xs text-red-400">{formatCOP(vHEN)}</td>
-                      <td className="p-3 text-center">
-                        <button onClick={(e) => { e.stopPropagation(); startEdit(member); }} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><PencilSimple size={14} /></button>
-                      </td>
-                    </tr>
-                    {isExpanded && (
-                      <tr key={`${member.id}-detail`} className="border-b border-[var(--border-default)] bg-[var(--bg-card)]">
-                        <td colSpan={14} className="p-4">
-                          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-xs">
-                            <div><span className="text-[var(--text-secondary)]">Prima de servicios (8.33%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.primaServicios)}/mes</div></div>
-                            <div><span className="text-[var(--text-secondary)]">Cesantias (8.33%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.cesantias)}/mes</div></div>
-                            <div><span className="text-[var(--text-secondary)]">Intereses cesantias (1%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.interesesCesantias)}/mes</div></div>
-                            <div><span className="text-[var(--text-secondary)]">Vacaciones (4.17%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.vacaciones)}/mes</div></div>
-                            <div><span className="text-[var(--text-secondary)]">EPS patronal (8.5%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteSalud)}/mes</div></div>
-                            <div><span className="text-[var(--text-secondary)]">Pension patronal (12%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aportePension)}/mes</div></div>
-                            <div><span className="text-[var(--text-secondary)]">ARL (0.522%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteARL)}/mes</div></div>
-                            <div><span className="text-[var(--text-secondary)]">Caja compensacion (4%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteCaja)}/mes</div></div>
-                            <div><span className="text-[var(--text-secondary)]">SENA (2%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteSena)}/mes</div></div>
-                            <div><span className="text-[var(--text-secondary)]">ICBF (3%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteICBF)}/mes</div></div>
-                            <div><span className="text-[var(--text-secondary)]">Auxilio transporte</span><div className="font-mono text-[var(--text-primary)]">{d.auxilioTransporte > 0 ? formatCOP(d.auxilioTransporte) : '-'} /mes</div></div>
-                            <div><span className="text-[var(--text-secondary)]">Propinas</span><div className="font-mono text-[var(--text-primary)]">{member.aplica_propinas ? 'Si' : 'No'}</div></div>
-                          </div>
+        <>
+          <div className="md:hidden space-y-2">
+            {staff.map((member) => {
+              const contract = CONTRACT_LABELS[member.contrato] || CONTRACT_LABELS.fijo;
+              const areaMeta = AREAS.find((a) => a.value === member.area);
+              const isExpanded = expandedId === member.id;
+              const costoEmp = costoEmpresaMensual(member.salario_mensual || 0, member.auxilio_no_salarial || 0);
+              const vHO = valorHoraOrd(member);
+              const d = desglose(member);
+              return (
+                <div key={member.id} className="bg-[var(--bg-card)] rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setExpandedId(isExpanded ? null : member.id)}
+                    className="w-full text-left p-3 flex items-start justify-between gap-2 min-h-[44px]"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-[var(--text-primary)] text-sm">{member.alias}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full border" style={{ color: areaMeta?.color || 'var(--text-secondary)', borderColor: areaMeta?.color || 'var(--border-default)', backgroundColor: areaMeta?.color ? `${areaMeta.color}15` : undefined }}>{areaMeta?.label || member.area || 'Sin area'}</span>
+                      </div>
+                      <div className="text-xs text-[var(--text-secondary)] mt-0.5">{member.cargo || '-'} &middot; {member.modalidad || 'COMPLETO'}{member.aplica_propinas ? ' +Prop' : ''}</div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="font-mono text-sm font-semibold text-[var(--accent-primary)]">{formatCOP(costoEmp)}</div>
+                      <div className="font-mono text-xs text-[var(--text-secondary)]">Sal: {formatCOP(member.salario_mensual || 0)}</div>
+                    </div>
+                  </button>
+                  {isExpanded && (
+                    <div className="px-3 pb-3 border-t border-[var(--border-default)] pt-2 space-y-2">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                        <div><span className="text-[var(--text-secondary)]">Hora ord.</span> <span className="font-mono text-[var(--text-primary)]">{formatCOP(vHO)}</span></div>
+                        <div><span className="text-[var(--text-secondary)]">Aux. transp.</span> <span className="font-mono text-[var(--text-primary)]">{member.auxilio_no_salarial > 0 ? formatCOP(member.auxilio_no_salarial) : '-'}</span></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs">
+                        <div><span className="text-[var(--text-secondary)]">Prima (8.33%)</span> <span className="font-mono">{formatCOP(d.primaServicios)}</span></div>
+                        <div><span className="text-[var(--text-secondary)]">EPS (8.5%)</span> <span className="font-mono">{formatCOP(d.aporteSalud)}</span></div>
+                        <div><span className="text-[var(--text-secondary)]">Pension (12%)</span> <span className="font-mono">{formatCOP(d.aportePension)}</span></div>
+                        <div><span className="text-[var(--text-secondary)]">Cesantias (8.33%)</span> <span className="font-mono">{formatCOP(d.cesantias)}</span></div>
+                        <div><span className="text-[var(--text-secondary)]">ARL (0.522%)</span> <span className="font-mono">{formatCOP(d.aporteARL)}</span></div>
+                        <div><span className="text-[var(--text-secondary)]">Caja (4%)</span> <span className="font-mono">{formatCOP(d.aporteCaja)}</span></div>
+                      </div>
+                      <button onClick={() => startEdit(member)} className="flex items-center gap-1 text-xs text-[var(--accent-primary)] min-h-[44px]"><PencilSimple size={14} /> Editar</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ===== VISTA DESKTOP: Tabla ===== */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-[var(--border-default)]">
+                  <th className="text-left p-3 text-[var(--text-secondary)] font-medium w-6"></th>
+                  <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Alias</th>
+                  <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Nombre</th>
+                  <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Cargo</th>
+                  <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Area</th>
+                  <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Modalidad</th>
+                  <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Salario</th>
+                  <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Aux. transp.</th>
+                  <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Costo empresa</th>
+                  <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Hora ord.</th>
+                  <th className="text-right p-3 text-[var(--text-secondary)] font-medium">HE diurna</th>
+                  <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Hora noct.</th>
+                  <th className="text-right p-3 text-[var(--text-secondary)] font-medium">HE noct.</th>
+                  <th className="text-center p-3 text-[var(--text-secondary)] font-medium w-10"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {staff.map((member) => {
+                  const contract = CONTRACT_LABELS[member.contrato] || CONTRACT_LABELS.fijo;
+                  const areaMeta = AREAS.find((a) => a.value === member.area);
+                  const isExpanded = expandedId === member.id;
+                  const costoEmp = costoEmpresaMensual(member.salario_mensual || 0, member.auxilio_no_salarial || 0);
+                  const vHO = valorHoraOrd(member);
+                  const vHED = valorHEDiurna(member);
+                  const vHEN = valorHENocturna(member);
+                  const vHN = valorHoraNocturna(member);
+                  const d = desglose(member);
+                  return (
+                    <>
+                      <tr key={member.id} className={`border-b border-[var(--border-default)] hover:bg-[var(--bg-hover)]/50 transition-colors cursor-pointer ${isExpanded ? 'bg-[var(--bg-hover)]/30' : ''}`} onClick={() => setExpandedId(isExpanded ? null : member.id)}>
+                        <td className="p-3 text-[var(--text-secondary)]">
+                          {isExpanded ? <CaretDown size={14} /> : <CaretRight size={14} />}
+                        </td>
+                        <td className="p-3"><span className="font-semibold text-[var(--text-primary)]">{member.alias}</span></td>
+                        <td className="p-3 text-[var(--text-primary)] text-xs whitespace-nowrap">{member.nombre_completo}</td>
+                        <td className="p-3 text-xs text-[var(--text-secondary)]">{member.cargo || '-'}</td>
+                        <td className="p-3"><span className="text-xs px-2 py-0.5 rounded-full border" style={{ color: areaMeta?.color || 'var(--text-secondary)', borderColor: areaMeta?.color || 'var(--border-default)', backgroundColor: areaMeta?.color ? `${areaMeta.color}15` : undefined }}>{areaMeta?.label || member.area || 'Sin area'}</span></td>
+                        <td className="p-3 text-xs text-[var(--text-secondary)]">{member.modalidad || 'COMPLETO'}{member.aplica_propinas ? ' +Prop' : ''}</td>
+                        <td className="p-3 text-right font-mono text-xs text-[var(--text-secondary)]">{formatCOP(member.salario_mensual || 0)}</td>
+                        <td className="p-3 text-right font-mono text-xs text-[var(--text-secondary)]">{member.auxilio_no_salarial > 0 ? formatCOP(member.auxilio_no_salarial) : '-'}</td>
+                        <td className="p-3 text-right font-mono text-xs font-semibold text-[var(--accent-primary)]">{formatCOP(costoEmp)}</td>
+                        <td className="p-3 text-right font-mono text-xs text-[var(--text-primary)]">{formatCOP(vHO)}</td>
+                        <td className="p-3 text-right font-mono text-xs text-amber-400">{formatCOP(vHED)}</td>
+                        <td className="p-3 text-right font-mono text-xs text-purple-400">{formatCOP(vHN)}</td>
+                        <td className="p-3 text-right font-mono text-xs text-red-400">{formatCOP(vHEN)}</td>
+                        <td className="p-3 text-center">
+                          <button onClick={(e) => { e.stopPropagation(); startEdit(member); }} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] min-h-[36px] min-w-[36px]"><PencilSimple size={14} /></button>
                         </td>
                       </tr>
-                    )}
-                  </>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      {isExpanded && (
+                        <tr key={`${member.id}-detail`} className="border-b border-[var(--border-default)] bg-[var(--bg-card)]">
+                          <td colSpan={14} className="p-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-xs">
+                              <div><span className="text-[var(--text-secondary)]">Prima de servicios (8.33%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.primaServicios)}/mes</div></div>
+                              <div><span className="text-[var(--text-secondary)]">Cesantias (8.33%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.cesantias)}/mes</div></div>
+                              <div><span className="text-[var(--text-secondary)]">Intereses cesantias (1%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.interesesCesantias)}/mes</div></div>
+                              <div><span className="text-[var(--text-secondary)]">Vacaciones (4.17%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.vacaciones)}/mes</div></div>
+                              <div><span className="text-[var(--text-secondary)]">EPS patronal (8.5%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteSalud)}/mes</div></div>
+                              <div><span className="text-[var(--text-secondary)]">Pension patronal (12%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aportePension)}/mes</div></div>
+                              <div><span className="text-[var(--text-secondary)]">ARL (0.522%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteARL)}/mes</div></div>
+                              <div><span className="text-[var(--text-secondary)]">Caja compensacion (4%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteCaja)}/mes</div></div>
+                              <div><span className="text-[var(--text-secondary)]">SENA (2%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteSena)}/mes</div></div>
+                              <div><span className="text-[var(--text-secondary)]">ICBF (3%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteICBF)}/mes</div></div>
+                              <div><span className="text-[var(--text-secondary)]">Auxilio transporte</span><div className="font-mono text-[var(--text-primary)]">{d.auxilioTransporte > 0 ? formatCOP(d.auxilioTransporte) : '-'} /mes</div></div>
+                              <div><span className="text-[var(--text-secondary)]">Propinas</span><div className="font-mono text-[var(--text-primary)]">{member.aplica_propinas ? 'Si' : 'No'}</div></div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

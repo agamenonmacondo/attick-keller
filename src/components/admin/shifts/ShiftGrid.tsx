@@ -25,8 +25,7 @@ export default function ShiftGrid({
   onAssignmentsChange,
   readOnly = false,
 }: ShiftGridProps) {
-  // Estado local de la grilla: employee_id -> day_index (BD) -> shift_code
-  // Se inicializa desde assignments y se sincroniza cuando assignments cambia
+  // Estado local de la grilla
   const [localGrid, setLocalGrid] = useState<Record<string, Record<number, string>>>(() => {
     const initial: Record<string, Record<number, string>> = {};
     for (const s of staff) {
@@ -39,7 +38,7 @@ export default function ShiftGrid({
     return initial;
   });
 
-  // Sincronizar cuando assignments cambia externamente (ej: loadData)
+  // Sincronizar cuando assignments cambia externamente
   const [prevAssignments, setPrevAssignments] = useState(assignments);
   if (assignments !== prevAssignments) {
     setPrevAssignments(assignments);
@@ -52,43 +51,43 @@ export default function ShiftGrid({
       newGrid[a.employee_id][a.day_index] = a.shift_code;
     }
     setLocalGrid(newGrid);
-    onAssignmentsChange(newGrid);
   }
 
-  // Tambien sincronizar cuando staff cambia (nuevos empleados)
   const [prevStaff, setPrevStaff] = useState(staff);
   if (staff !== prevStaff) {
     setPrevStaff(staff);
     setLocalGrid((prev) => {
-      const newGrid = { ...prev };
+      const newGrid: Record<string, Record<number, string>> = {};
       for (const s of staff) {
-        if (!newGrid[s.id]) newGrid[s.id] = {};
+        newGrid[s.id] = prev[s.id] || {};
       }
       return newGrid;
     });
   }
 
+  // Grid que se pasa al padre - siempre usa la versión más reciente
   const grid = localGrid;
 
   const weekDates = useMemo(() => getWeekDates(weekStr), [weekStr]);
 
-  // Construir la grilla con orden correcto: Lun-Dom (day_index 1-6,0)
-  // Columnas en orden visual: Lun(1), Mar(2), Mie(3), Jue(4), Vie(5), Sab(6), Dom(0)
-  const COLUMNS: { dayIndex: number; dateIndex: number; label: string }[] = [
-    { dayIndex: 1, dateIndex: 0, label: 'Lun' },
-    { dayIndex: 2, dateIndex: 1, label: 'Mar' },
-    { dayIndex: 3, dateIndex: 2, label: 'Mie' },
-    { dayIndex: 4, dateIndex: 3, label: 'Jue' },
-    { dayIndex: 5, dateIndex: 4, label: 'Vie' },
-    { dayIndex: 6, dateIndex: 5, label: 'Sab' },
-    { dayIndex: 0, dateIndex: 6, label: 'Dom' },
-  ];
+  const COLUMNS = useMemo(() => [
+    { dayIndex: 1, label: 'Lun' },
+    { dayIndex: 2, label: 'Mar' },
+    { dayIndex: 3, label: 'Mie' },
+    { dayIndex: 4, label: 'Jue' },
+    { dayIndex: 5, label: 'Vie' },
+    { dayIndex: 6, label: 'Sab' },
+    { dayIndex: 0, label: 'Dom' },
+  ].map((c) => ({
+    ...c,
+    dateIndex: dayIndexToDateIndex(c.dayIndex),
+  })), []);
 
-  // Calculo de horas y alertas por empleado
+  // Estadísticas por empleado
   const employeeStats = useMemo(() => {
     const stats: Record<string, {
       totalHours: number;
-      dailyHours: number[]; // indexado por dayIndex (BD)
+      dailyHours: Record<number, number>;
       cost: number;
       alerts: ShiftAlert[];
       hasRest: boolean;
@@ -98,25 +97,26 @@ export default function ShiftGrid({
     for (const emp of staff) {
       const empGrid = grid[emp.id] || {};
       let totalHours = 0;
+      const dailyHours: Record<number, number> = {};
       let cost = 0;
-      const dailyHours: number[] = Array(7).fill(0); // BD day_index
+      let baseTotal = 0, rnTotal = 0, rdTotal = 0, heTotal = 0;
       const alerts: ShiftAlert[] = [];
       let diasTrabajados = 0;
-      let baseTotal = 0, rnTotal = 0, rdTotal = 0, heTotal = 0;
 
       for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
         const code = empGrid[dayIdx];
-        if (!code || code === 'OFF') continue;
-
+        if (!code || code === 'OFF') {
+          dailyHours[dayIdx] = 0;
+          continue;
+        }
         const st = shiftTypes.find((t) => t.code === code);
-        if (!st) continue;
+        if (!st) { dailyHours[dayIdx] = 0; continue; }
 
         const hours = st.ordinarias + st.nocturnas;
-        totalHours += hours;
         dailyHours[dayIdx] = hours;
+        totalHours += hours;
         diasTrabajados++;
 
-        // dayIndex 0 = Domingo
         const isSunday = dayIdx === 0;
         const costo = calcularCostoTurno(st, emp.salario_mensual, isSunday);
         cost += costo.total;
@@ -125,18 +125,12 @@ export default function ShiftGrid({
         rdTotal += costo.sunday_surcharge;
         heTotal += costo.overtime_surcharge;
 
-        // Alerta: >8h diarias
+        // Alertas
         if (hours > LEGAL_PARAMS.MAX_DAILY_HOURS) {
-          alerts.push({
-            type: 'overtime_daily',
-            employee_id: emp.id,
-            day_index: dayIdx,
-            message: `${hours}h supera las ${LEGAL_PARAMS.MAX_DAILY_HOURS}h diarias`,
-          });
+          alerts.push({ type: 'overtime_daily', employee_id: emp.id, message: `${hours}h supera las ${LEGAL_PARAMS.MAX_DAILY_HOURS}h diarias`, day_index: dayIdx });
         }
       }
 
-      // Alerta: >44h semanales
       if (totalHours > LEGAL_PARAMS.MAX_WEEKLY_HOURS) {
         alerts.push({
           type: 'overtime_weekly',
@@ -145,7 +139,6 @@ export default function ShiftGrid({
         });
       }
 
-      // Alerta: sin descanso
       if (diasTrabajados >= 7) {
         alerts.push({
           type: 'no_day_off',
@@ -168,15 +161,12 @@ export default function ShiftGrid({
         },
       };
     }
-
     return stats;
   }, [grid, staff, shiftTypes]);
 
   // Totales del area
   const areaTotals = useMemo(() => {
-    let totalHours = 0;
-    let totalCost = 0;
-    let totalBase = 0, totalRN = 0, totalRD = 0, totalHE = 0;
+    let totalHours = 0, totalCost = 0, totalBase = 0, totalRN = 0, totalRD = 0, totalHE = 0;
     for (const emp of staff) {
       const s = employeeStats[emp.id];
       if (s) {
@@ -191,7 +181,6 @@ export default function ShiftGrid({
     return { totalHours, totalCost, totalBase, totalRN, totalRD, totalHE };
   }, [employeeStats, staff]);
 
-  // Cambiar turno en celda
   const handleCellChange = useCallback(
     (employeeId: string, dayIndex: number, shiftCode: string) => {
       setLocalGrid((prev) => {
@@ -210,42 +199,38 @@ export default function ShiftGrid({
     [onAssignmentsChange]
   );
 
-  // Opciones del dropdown: OFF + tipos de turno con horarios
-  const shiftOptions = useMemo(() => {
-    return [
-      { code: 'OFF', name: 'Descanso', ordinarias: 0, nocturnas: 0, entrada: '', salida: '' },
-      ...shiftTypes.map((st) => ({
-        code: st.code,
-        name: st.name,
-        ordinarias: st.ordinarias,
-        nocturnas: st.nocturnas,
-        entrada: st.entrada,
-        salida: st.salida,
-      })),
-    ];
-  }, [shiftTypes]);
+  const shiftOptions = useMemo(() => [
+    { code: 'OFF', name: 'Descanso', ordinarias: 0, nocturnas: 0, entrada: '', salida: '' },
+    ...shiftTypes.map((st) => ({
+      code: st.code, name: st.name, ordinarias: st.ordinarias, nocturnas: st.nocturnas, entrada: st.entrada, salida: st.salida,
+    })),
+  ], [shiftTypes]);
 
-  // Color de fondo por turno
   const getCellBg = (code: string, empId: string, dayIndex: number) => {
     if (!code || code === 'OFF') return 'bg-[var(--bg-card)]';
-
     const stats = employeeStats[empId];
     if (stats) {
-      const hasOvertime = stats.alerts.some(
-        (a) => a.type === 'overtime_daily' && a.day_index === dayIndex
-      );
+      const hasOvertime = stats.alerts.some((a) => a.type === 'overtime_daily' && a.day_index === dayIndex);
       if (hasOvertime) return 'bg-red-500/20';
       if (stats.totalHours > LEGAL_PARAMS.MAX_WEEKLY_HOURS) return 'bg-red-500/10';
       if (!stats.hasRest) return 'bg-amber-500/10';
     }
-
-    // Color por area basado en el codigo de turno
     const st = shiftTypes.find((t) => t.code === code);
     if (!st) return 'bg-amber-500/15';
-
     if (st.area === 'barra') return 'bg-blue-500/15';
     if (st.area === 'servicio') return 'bg-emerald-500/15';
-    return 'bg-amber-500/15'; // cocina
+    return 'bg-amber-500/15';
+  };
+
+  // Nombre corto del turno para mobile
+  const getShiftLabel = (code: string, dayIndex: number) => {
+    if (!code) return '';
+    if (code === 'OFF') return 'OFF';
+    const st = shiftTypes.find((t) => t.code === code);
+    const hours = st ? st.ordinarias + st.nocturnas : 0;
+    const isSunday = dayIndex === 0;
+    const hoursClass = hours > 8 ? 'text-red-400' : isSunday ? 'text-red-300' : 'text-[var(--text-secondary)]';
+    return { code, st, hours, hoursClass, isSunday };
   };
 
   return (
@@ -267,8 +252,120 @@ export default function ShiftGrid({
         </div>
       )}
 
-      {/* Grilla */}
-      <div className="overflow-x-auto">
+      {/* ===== VISTA MOBILE: Tarjetas por empleado ===== */}
+      <div className="md:hidden space-y-3">
+        {staff.map((emp) => {
+          const stats = employeeStats[emp.id];
+          const hasWeeklyOvertime = stats && stats.totalHours > LEGAL_PARAMS.MAX_WEEKLY_HOURS;
+          const hasNoRest = stats && !stats.hasRest && Object.keys(grid[emp.id] || {}).length > 0;
+
+          return (
+            <div key={emp.id} className="bg-[var(--bg-card)] rounded-xl p-3 space-y-2">
+              {/* Header del empleado */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-[var(--text-primary)] text-sm">{emp.alias}</div>
+                  <div className="text-xs text-[var(--text-secondary)]">{emp.cargo}</div>
+                </div>
+                <div className="text-right">
+                  <div className={`font-mono text-sm font-medium ${hasWeeklyOvertime ? 'text-red-400' : 'text-[var(--text-primary)]'}`}>
+                    {stats?.totalHours || 0}h
+                  </div>
+                  <div className="font-mono text-xs text-[var(--text-primary)]">
+                    {formatCOP(stats?.cost || 0)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Alertas del empleado */}
+              {hasNoRest && (
+                <div className="flex items-center gap-1 text-xs text-amber-400">
+                  <ClockAfternoon size={12} /> Sin descanso semanal
+                </div>
+              )}
+
+              {/* Selects por día */}
+              <div className="grid grid-cols-7 gap-1">
+                {COLUMNS.map(({ dayIndex, dateIndex, label }) => {
+                  const code = grid[emp.id]?.[dayIndex] || '';
+                  const hours = stats?.dailyHours[dayIndex] || 0;
+                  const st = code && code !== 'OFF' ? shiftTypes.find((t) => t.code === code) : null;
+                  const isSunday = dayIndex === 0;
+                  const date = weekDates[dateIndex];
+
+                  return (
+                    <div key={dayIndex} className={`rounded-md p-1 text-center ${getCellBg(code, emp.id, dayIndex)}`}>
+                      <div className={`text-[10px] font-medium ${isSunday ? 'text-red-400' : 'text-[var(--text-secondary)]'}`}>
+                        {label}
+                      </div>
+                      {date && (
+                        <div className="text-[9px] text-[var(--text-secondary)] opacity-70">
+                          {date.getDate()}/{date.getMonth() + 1}
+                        </div>
+                      )}
+                      {readOnly ? (
+                        <div className="min-h-[28px] flex items-center justify-center">
+                          {code && code !== 'OFF' ? (
+                            <div>
+                              <div className={`text-xs font-bold ${isSunday ? 'text-red-300' : ''}`}>{code}</div>
+                              {st && <div className="text-[9px] text-[var(--text-secondary)]">{st.entrada?.slice(0,5)}</div>}
+                            </div>
+                          ) : code === 'OFF' ? (
+                            <Coffee size={14} className="mx-auto text-[var(--text-secondary)]" />
+                          ) : null}
+                        </div>
+                      ) : (
+                        <select
+                          value={code || ''}
+                          onChange={(e) => handleCellChange(emp.id, dayIndex, e.target.value)}
+                          className={`w-full min-h-[28px] px-0.5 py-0.5 text-[11px] rounded border-none bg-transparent
+                            focus:ring-1 focus:ring-[var(--color-ak-borgona)]/50
+                            ${hours > 8 ? 'text-red-400 font-bold' : 'text-[var(--text-primary)]'}
+                            ${isSunday ? 'font-semibold' : ''}`}
+                        >
+                          <option value="">--</option>
+                          {shiftOptions.map((opt) => (
+                            <option key={opt.code} value={opt.code}>
+                              {opt.code === 'OFF' ? 'OFF' : `${opt.code} ${opt.entrada?.slice(0,5)}-${opt.salida?.slice(0,5)}`}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      {code && code !== 'OFF' && hours > 0 && (
+                        <div className={`text-[9px] ${hours > 8 ? 'text-red-400 font-bold' : 'text-[var(--text-secondary)]'}`}>
+                          {hours}h
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desglose costo */}
+              {stats && stats.cost > 0 && (
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-[var(--text-secondary)]">
+                  {stats.desglose.base > 0 && <span>B:{formatCOP(stats.desglose.base)}</span>}
+                  {stats.desglose.recargoNocturno > 0 && <span className="text-amber-400">RN:{formatCOP(stats.desglose.recargoNocturno)}</span>}
+                  {stats.desglose.recargoDominical > 0 && <span className="text-red-400">RD:{formatCOP(stats.desglose.recargoDominical)}</span>}
+                  {stats.desglose.horasExtra > 0 && <span className="text-blue-400">HE:{formatCOP(stats.desglose.horasExtra)}</span>}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Totales mobile */}
+        <div className="bg-[var(--bg-card)] rounded-xl p-3 flex items-center justify-between font-semibold">
+          <span className="text-[var(--text-primary)]">TOTAL AREA</span>
+          <div className="text-right">
+            <div className="font-mono text-sm text-[var(--text-primary)]">{areaTotals.totalHours}h</div>
+            <div className="font-mono text-xs text-[var(--text-primary)]">{formatCOP(areaTotals.totalCost)}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== VISTA DESKTOP: Tabla ===== */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="border-b border-[var(--border-default)]">
@@ -330,7 +427,7 @@ export default function ShiftGrid({
                                   {code}
                                 </div>
                                 {st && (
-                                  <div className="text-[10px] text-[var(--text-secondary)]">
+                                  <div className="text-xs text-[var(--text-secondary)]">
                                     {st.entrada}-{st.salida}
                                   </div>
                                 )}
@@ -344,19 +441,17 @@ export default function ShiftGrid({
                           <select
                             value={code || ''}
                             onChange={(e) => handleCellChange(emp.id, dayIndex, e.target.value)}
-                            className={`w-full px-1 py-1 text-xs rounded border-none bg-transparent
+                            className={`w-full px-1 py-1.5 text-xs rounded border-none bg-transparent min-h-[36px]
                               focus:ring-1 focus:ring-[var(--color-ak-borgona)]/50
                               ${hours > 8 ? 'text-red-400 font-bold' : 'text-[var(--text-primary)]'}
-                              ${isSunday ? 'font-semibold' : ''}
-                            `}
+                              ${isSunday ? 'font-semibold' : ''}`}
                           >
                             <option value="">--</option>
                             {shiftOptions.map((opt) => (
                               <option key={opt.code} value={opt.code}>
                                 {opt.code === 'OFF'
                                   ? 'OFF - Descanso'
-                                  : `${opt.code} | ${opt.entrada}-${opt.salida} | ${opt.ordinarias + opt.nocturnas}h`
-                                }
+                                  : `${opt.code} | ${opt.entrada}-${opt.salida} | ${opt.ordinarias + opt.nocturnas}h`}
                               </option>
                             ))}
                           </select>
@@ -368,8 +463,7 @@ export default function ShiftGrid({
                   {/* Total horas */}
                   <td className="p-2 text-center">
                     <span className={`font-mono text-sm font-medium
-                      ${hasWeeklyOvertime ? 'text-red-400' : 'text-[var(--text-primary)]'}`}
-                    >
+                      ${hasWeeklyOvertime ? 'text-red-400' : 'text-[var(--text-primary)]'}`}>
                       {stats?.totalHours || 0}h
                     </span>
                     {hasNoRest && (
@@ -377,13 +471,13 @@ export default function ShiftGrid({
                     )}
                   </td>
 
-                  {/* Costo estimado con desglose */}
+                  {/* Costo estimado */}
                   <td className="p-2 text-right">
                     <div className="font-mono text-sm font-medium text-[var(--text-primary)]">
                       {formatCOP(stats?.cost || 0)}
                     </div>
                     {stats && stats.cost > 0 && (
-                      <div className="text-[9px] text-[var(--text-secondary)] leading-tight">
+                      <div className="text-xs text-[var(--text-secondary)] leading-tight">
                         {stats.desglose.base > 0 && <div>B:{formatCOP(stats.desglose.base)}</div>}
                         {stats.desglose.recargoNocturno > 0 && <div>RN:{formatCOP(stats.desglose.recargoNocturno)}</div>}
                         {stats.desglose.recargoDominical > 0 && <div>RD:{formatCOP(stats.desglose.recargoDominical)}</div>}
@@ -396,7 +490,6 @@ export default function ShiftGrid({
             })}
           </tbody>
 
-          {/* Fila de totales */}
           <tfoot>
             <tr className="border-t-2 border-[var(--border-default)] font-semibold">
               <td className="p-2 sticky left-0 bg-[var(--bg-primary)] z-10 text-[var(--text-primary)]">
@@ -412,7 +505,7 @@ export default function ShiftGrid({
               </td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">
                 <div className="text-sm">{formatCOP(areaTotals.totalCost)}</div>
-                <div className="text-[9px] text-[var(--text-secondary)] leading-tight">
+                <div className="text-xs text-[var(--text-secondary)] leading-tight">
                   <span>B:{formatCOP(areaTotals.totalBase)}</span>
                   {areaTotals.totalRN > 0 && <span> RN:{formatCOP(areaTotals.totalRN)}</span>}
                   {areaTotals.totalRD > 0 && <span> RD:{formatCOP(areaTotals.totalRD)}</span>}

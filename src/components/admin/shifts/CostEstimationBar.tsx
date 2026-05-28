@@ -19,60 +19,32 @@ export default function CostEstimationBar({
   grid,
   weekStr,
 }: CostEstimationBarProps) {
-  const weekDates = useMemo(() => getWeekDates(weekStr), [weekStr]);
-
-  // Dia de la semana que es domingo (day_index 0)
   const SUNDAY_DAY_INDEX = 0;
 
-  // Calcular costos por empleado usando la misma funcion que ShiftGrid
   const employeeCosts = useMemo(() => {
     const results: {
-      id: string;
-      alias: string;
-      area: string;
-      totalHours: number;
-      ho: number; // horas ordinarias
-      hn: number; // horas nocturnas
-      he: number; // horas extra (exceso > 8h/dia)
-      base: number;
-      recargoNocturno: number;
-      recargoDominical: number;
-      horasExtra: number;
-      total: number;
+      id: string; alias: string; area: string; totalHours: number;
+      ho: number; hn: number; he: number; base: number;
+      recargoNocturno: number; recargoDominical: number; horasExtra: number; total: number;
     }[] = [];
 
     for (const emp of staff) {
       const empGrid = grid[emp.id] || {};
-      let totalHours = 0;
-      let ho = 0;
-      let hn = 0;
-      let he = 0;
-      let base = 0;
-      let rn = 0;
-      let rd = 0;
-      let heTotal = 0;
-      let total = 0;
+      let totalHours = 0, ho = 0, hn = 0, he = 0;
+      let base = 0, rn = 0, rd = 0, heTotal = 0, total = 0;
 
       for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
         const code = empGrid[dayIdx];
         if (!code || code === 'OFF') continue;
-
         const st = shiftTypes.find((t) => t.code === code);
         if (!st) continue;
-
         const hours = st.ordinarias + st.nocturnas;
         ho += st.ordinarias;
         hn += st.nocturnas;
-
-        // HE = exceso sobre 8h
-        if (hours > LEGAL_PARAMS.MAX_DAILY_HOURS) {
-          he += hours - LEGAL_PARAMS.MAX_DAILY_HOURS;
-        }
-
+        if (hours > LEGAL_PARAMS.MAX_DAILY_HOURS) he += hours - LEGAL_PARAMS.MAX_DAILY_HOURS;
         totalHours += hours;
         const isSunday = dayIdx === SUNDAY_DAY_INDEX;
         const costo = calcularCostoTurno(st, emp.salario_mensual, isSunday);
-
         base += costo.base_pay;
         rn += costo.night_surcharge;
         rd += costo.sunday_surcharge;
@@ -81,25 +53,15 @@ export default function CostEstimationBar({
       }
 
       results.push({
-        id: emp.id,
-        alias: emp.alias,
-        area: emp.area,
-        totalHours,
-        ho,
-        hn,
-        he,
-        base: Math.round(base),
-        recargoNocturno: Math.round(rn),
-        recargoDominical: Math.round(rd),
-        horasExtra: Math.round(heTotal),
-        total: Math.round(total),
+        id: emp.id, alias: emp.alias, area: emp.area, totalHours,
+        ho, hn, he, base: Math.round(base),
+        recargoNocturno: Math.round(rn), recargoDominical: Math.round(rd),
+        horasExtra: Math.round(heTotal), total: Math.round(total),
       });
     }
-
     return results;
   }, [staff, shiftTypes, grid]);
 
-  // KPIs del area
   const kpis = useMemo(() => {
     const totalCost = employeeCosts.reduce((s, e) => s + e.total, 0);
     const totalHO = employeeCosts.reduce((s, e) => s + e.ho, 0);
@@ -110,22 +72,13 @@ export default function CostEstimationBar({
     const totalRN = employeeCosts.reduce((s, e) => s + e.recargoNocturno, 0);
     const totalRD = employeeCosts.reduce((s, e) => s + e.recargoDominical, 0);
     const totalHECost = employeeCosts.reduce((s, e) => s + e.horasExtra, 0);
-
     return {
-      totalCost,
-      totalHours,
-      totalHO,
-      totalHN,
-      totalHE,
-      totalBase,
-      totalRN,
-      totalRD,
-      totalHECost,
+      totalCost, totalHours, totalHO, totalHN, totalHE,
+      totalBase, totalRN, totalRD, totalHECost,
       avgPerEmployee: employeeCosts.length > 0 ? totalCost / employeeCosts.length : 0,
     };
   }, [employeeCosts]);
 
-  // Data para el chart
   const chartData = useMemo(() => {
     return employeeCosts.map((e) => ({
       name: e.alias,
@@ -151,7 +104,7 @@ export default function CostEstimationBar({
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
           <div className="text-xs text-[var(--text-secondary)]">Horas totales</div>
           <div className="text-lg font-mono font-semibold text-[var(--text-primary)]">{kpis.totalHours}h</div>
-          <div className="text-[9px] text-[var(--text-secondary)]">
+          <div className="text-xs text-[var(--text-secondary)]">
             HO:{kpis.totalHO.toFixed(1)} | HN:{kpis.totalHN.toFixed(1)} | HE:{kpis.totalHE.toFixed(1)}
           </div>
         </div>
@@ -161,7 +114,7 @@ export default function CostEstimationBar({
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
           <div className="text-xs text-[var(--text-secondary)]">Desglose</div>
-          <div className="text-[9px] space-y-0.5">
+          <div className="text-xs space-y-0.5">
             <div className="text-[var(--text-primary)]">Base: {formatCOP(kpis.totalBase)}</div>
             {kpis.totalRN > 0 && <div className="text-amber-400">R.Noc: {formatCOP(kpis.totalRN)}</div>}
             {kpis.totalRD > 0 && <div className="text-red-400">R.Dom: {formatCOP(kpis.totalRD)}</div>}
@@ -170,7 +123,7 @@ export default function CostEstimationBar({
         </div>
       </div>
 
-      {/* Grafico */}
+      {/* Chart */}
       <div className="bg-[var(--bg-card)] rounded-lg p-4">
         <div className="text-sm font-medium text-[var(--text-primary)] mb-3">Costo por empleado</div>
         <ResponsiveContainer width="100%" height={250}>
@@ -192,8 +145,7 @@ export default function CostEstimationBar({
                 borderRadius: '8px',
                 fontSize: 12,
               }}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(value: any) => formatCOP(Number(value))}
+              formatter={(value: number) => formatCOP(Number(value))}
             />
             <Legend iconType="circle" iconSize={8} />
             <Bar dataKey="Base" stackId="cost" fill="#4ade80" />
@@ -204,12 +156,47 @@ export default function CostEstimationBar({
         </ResponsiveContainer>
       </div>
 
-      {/* Tabla detallada */}
-      <div className="overflow-x-auto">
+      {/* ===== VISTA MOBILE: Tarjetas por empleado ===== */}
+      <div className="md:hidden space-y-2">
+        {employeeCosts.map((e) => (
+          <div key={e.id} className="bg-[var(--bg-card)] rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="font-medium text-[var(--text-primary)] text-sm">{e.alias}</div>
+                <div className="text-xs text-[var(--text-secondary)]">
+                  HO:{e.ho.toFixed(1)} | HN:{e.hn.toFixed(1)} | HE:{e.he.toFixed(1)} | Total: {e.totalHours}h
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-mono font-semibold text-[var(--text-primary)]">{formatCOP(e.total)}</div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--text-secondary)]">
+              <span>Base: {formatCOP(e.base)}</span>
+              {e.recargoNocturno > 0 && <span className="text-amber-400">RN: {formatCOP(e.recargoNocturno)}</span>}
+              {e.recargoDominical > 0 && <span className="text-red-400">RD: {formatCOP(e.recargoDominical)}</span>}
+              {e.horasExtra > 0 && <span className="text-blue-400">HE: {formatCOP(e.horasExtra)}</span>}
+            </div>
+          </div>
+        ))}
+        {/* Totales mobile */}
+        <div className="bg-[var(--bg-card)] rounded-lg p-3 border-t-2 border-[var(--border-default)] font-semibold">
+          <div className="flex justify-between items-center">
+            <span className="text-[var(--text-primary)]">TOTAL</span>
+            <div className="text-right">
+              <div className="font-mono text-[var(--text-primary)]">{kpis.totalHours}h</div>
+              <div className="font-mono font-bold text-[var(--text-primary)]">{formatCOP(kpis.totalCost)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== VISTA DESKTOP: Tabla ===== */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-[var(--border-default)]">
-              <th className="text-left p-2 text-[var(--text-secondary)]">Colaborador</th>
+              <th className="text-left p-2 text-[var(--text-secondary)] sticky left-0 bg-[var(--bg-primary)] z-10 min-w-[100px]">Colaborador</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">HO</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">HN</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">HE</th>
@@ -224,7 +211,7 @@ export default function CostEstimationBar({
           <tbody>
             {employeeCosts.map((e) => (
               <tr key={e.id} className="border-b border-[var(--border-default)]/50">
-                <td className="p-2 font-medium text-[var(--text-primary)]">{e.alias}</td>
+                <td className="p-2 font-medium text-[var(--text-primary)] sticky left-0 bg-[var(--bg-primary)] z-10">{e.alias}</td>
                 <td className="p-2 text-right font-mono text-[var(--text-primary)]">{e.ho.toFixed(1)}</td>
                 <td className="p-2 text-right font-mono text-[var(--text-primary)]">{e.hn.toFixed(1)}</td>
                 <td className="p-2 text-right font-mono text-[var(--text-primary)]">{e.he.toFixed(1)}</td>
@@ -239,7 +226,7 @@ export default function CostEstimationBar({
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-[var(--border-default)] font-semibold">
-              <td className="p-2 text-[var(--text-primary)]">TOTAL</td>
+              <td className="p-2 text-[var(--text-primary)] sticky left-0 bg-[var(--bg-primary)] z-10">TOTAL</td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">{kpis.totalHO.toFixed(1)}</td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">{kpis.totalHN.toFixed(1)}</td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">{kpis.totalHE.toFixed(1)}</td>

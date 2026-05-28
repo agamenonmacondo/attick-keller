@@ -356,8 +356,10 @@ export async function GET(request: NextRequest) {
     const margin = salePrice - recipe.totalCost
     const marginPct = salePrice > 0 ? (margin / salePrice) * 100 : 0
 
-    // Filter out garbage margins
+    // Filter out garbage margins and data outliers
+    // Outliers: sale price above 5M or recipe cost below 1K indicate corrupt/incomplete data
     if (marginPct < -100 || marginPct > 300) continue
+    if (salePrice > 5_000_000 || recipe.totalCost < 1_000) continue
 
     productMargins.push({
       productId: pid,

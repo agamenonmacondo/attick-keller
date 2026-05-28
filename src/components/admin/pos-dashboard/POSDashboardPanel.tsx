@@ -229,7 +229,9 @@ export function POSDashboardPanel() {
                 ? <>Vista consolidada: <span className="font-semibold text-[var(--color-ak-borgona)]">Mes completo</span></>
                 : isSingleDay
                   ? <>Vista por dia: <span className="font-semibold text-[var(--color-ak-borgona)]">{filters.from}</span></>
-                  : `${filters.from} a ${filters.to}`
+                  : filters.from && filters.to
+                    ? `${filters.from} — ${filters.to}`
+                    : 'Todo el periodo'
               }
               {filters.zone !== 'all' && ` · Zona: ${filters.zone}`}
               {filters.category !== 'all' && ` · Categoria filtrada`}

@@ -76,8 +76,8 @@ const HEAT_COLORS = {
 }
 
 const HEAT_TEXT = {
-  dark: ['text-[var(--text-secondary)]', 'text-[var(--border-light)]', 'text-white', 'text-white', 'text-white'],
-  light: ['text-[var(--text-secondary)]', 'text-[var(--text-primary)]', 'text-[var(--text-primary)]', 'text-[var(--text-primary)]', 'text-white'],
+  dark: ['text-[var(--text-secondary)]', 'text-white', 'text-white', 'text-white', 'text-white'],
+  light: ['text-[var(--text-secondary)]', 'text-white', 'text-white', 'text-white', 'text-white'],
 }
 
 // Helper: pad month number to 2 digits
@@ -307,7 +307,7 @@ export function RevenueHeatmapCalendar({
               type="button"
               onClick={() => onDayClick(cell.date)}
               className={cn(
-                'relative rounded-lg py-1.5 text-center text-xs font-medium cursor-pointer active:scale-[0.95]',
+                'relative z-10 rounded-lg py-1.5 text-center text-xs font-medium cursor-pointer active:scale-[0.95]',
                 bgClass,
                 textClass,
                 !cell.inMonth && 'opacity-30',

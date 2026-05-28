@@ -9,11 +9,12 @@ import { RevenueHeatmapCalendar, type HeatmapMetric } from './RevenueHeatmapCale
 import { Spinner, Money, TrendUp, ShoppingCart, ChartBar, Warning, Trophy, Truck, Package, CalendarDots } from '@phosphor-icons/react'
 import type { POSCostsData } from '@/lib/hooks/usePOSCosts'
 
-// ── COP full format (with dots for thousands) ──
+// ── COP full format — always rounded, dots for thousands, NO decimals ──
 function formatCOPFull(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? '-' : ''
-  return `${sign}$${abs.toLocaleString('es-CO')}`
+  const rounded = Math.round(n)
+  const abs = Math.abs(rounded)
+  const sign = rounded < 0 ? '-' : ''
+  return `${sign}$${abs.toLocaleString('es-CO', { maximumFractionDigits: 0, minimumFractionDigits: 0 })}`
 }
 
 function formatCOPShort(n: number): string {
@@ -128,6 +129,11 @@ export function POSCostPanel({
     if (!data) return []
     return data.costByCategory.slice(0, 10)
   }, [data])
+
+  // ── Clean category name: strip "LI ", "NO USAR " prefixes ──
+  function cleanCategoryName(name: string): string {
+    return name.replace(/^(LI |NO USAR )/i, '')
+  }
 
   // ── Low & high margin products from productMargins ──
   const topLowMarginProducts = useMemo(() => {
@@ -296,8 +302,8 @@ export function POSCostPanel({
                 const pct = (cat.total / maxCost) * 100
                 return (
                   <div key={cat.categoryId} className="flex items-center gap-3">
-                    <div className="w-28 sm:w-36 text-[11px] text-[var(--text-secondary)] truncate" title={cat.categoryName}>
-                      {cat.categoryName}
+                    <div className="w-32 sm:w-44 text-[11px] text-[var(--text-secondary)] truncate" title={cat.categoryName}>
+                      {cleanCategoryName(cat.categoryName)}
                     </div>
                     <div className="flex-1 h-6 bg-[var(--bg-card)] border border-[var(--border-default)] rounded overflow-hidden relative">
                       <div
@@ -341,15 +347,15 @@ export function POSCostPanel({
                 <thead>
                   <tr className="border-b border-[var(--border-default)]">
                     <th className="text-left py-1.5 pr-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Producto</th>
-                    <th className="text-right py-1.5 px-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Precio Venta</th>
-                    <th className="text-right py-1.5 px-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Costo Receta</th>
-                    <th className="text-right py-1.5 pl-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Margen %</th>
+                    <th className="text-right py-1.5 px-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium min-w-[80px]">Precio Venta</th>
+                    <th className="text-right py-1.5 px-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium min-w-[80px]">Costo Receta</th>
+                    <th className="text-right py-1.5 pl-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium min-w-[65px]">Margen</th>
                   </tr>
                 </thead>
                 <tbody>
                   {topLowMarginProducts.map((p, i) => (
                     <tr key={i} className="border-b border-[var(--border-default)]/50 last:border-0">
-                      <td className="py-1.5 pr-2 text-[var(--text-primary)] max-w-[120px] truncate" title={p.productName}>
+                      <td className="py-1.5 pr-2 text-[var(--text-primary)] max-w-[100px] truncate" title={p.productName}>
                         {p.productName}
                       </td>
                       <td className="py-1.5 px-2 text-right text-[var(--text-primary)] tabular-nums">
@@ -358,7 +364,7 @@ export function POSCostPanel({
                       <td className="py-1.5 px-2 text-right text-[var(--text-secondary)] tabular-nums">
                         {formatCOPFull(Math.round(p.recipeCost))}
                       </td>
-                      <td className={`py-1.5 pl-2 text-right font-medium tabular-nums ${p.marginPct < 30 ? 'text-red-400' : p.marginPct < 50 ? 'text-yellow-400' : 'text-[var(--text-primary)]'}`}>
+                      <td className={`py-1.5 pl-2 text-right font-medium tabular-nums min-w-[55px] ${p.marginPct < 30 ? 'text-red-400' : p.marginPct < 50 ? 'text-yellow-400' : 'text-[var(--text-primary)]'}`}>
                         {p.marginPct.toFixed(1)}%
                       </td>
                     </tr>
@@ -383,15 +389,15 @@ export function POSCostPanel({
                 <thead>
                   <tr className="border-b border-[var(--border-default)]">
                     <th className="text-left py-1.5 pr-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Producto</th>
-                    <th className="text-right py-1.5 px-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Precio Venta</th>
-                    <th className="text-right py-1.5 px-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Costo Receta</th>
-                    <th className="text-right py-1.5 pl-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Margen %</th>
+                    <th className="text-right py-1.5 px-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium min-w-[80px]">Precio Venta</th>
+                    <th className="text-right py-1.5 px-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium min-w-[80px]">Costo Receta</th>
+                    <th className="text-right py-1.5 pl-2 text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-medium min-w-[65px]">Margen</th>
                   </tr>
                 </thead>
                 <tbody>
                   {topHighMarginProducts.map((p, i) => (
                     <tr key={i} className="border-b border-[var(--border-default)]/50 last:border-0">
-                      <td className="py-1.5 pr-2 text-[var(--text-primary)] max-w-[120px] truncate" title={p.productName}>
+                      <td className="py-1.5 pr-2 text-[var(--text-primary)] max-w-[100px] truncate" title={p.productName}>
                         {p.productName}
                       </td>
                       <td className="py-1.5 px-2 text-right text-[var(--text-primary)] tabular-nums">
@@ -400,7 +406,7 @@ export function POSCostPanel({
                       <td className="py-1.5 px-2 text-right text-[var(--text-secondary)] tabular-nums">
                         {formatCOPFull(Math.round(p.recipeCost))}
                       </td>
-                      <td className={`py-1.5 pl-2 text-right font-medium tabular-nums ${p.marginPct >= 70 ? 'text-green-400' : 'text-[var(--text-primary)]'}`}>
+                      <td className={`py-1.5 pl-2 text-right font-medium tabular-nums min-w-[55px] ${p.marginPct >= 70 ? 'text-green-400' : 'text-[var(--text-primary)]'}`}>
                         {p.marginPct.toFixed(1)}%
                       </td>
                     </tr>

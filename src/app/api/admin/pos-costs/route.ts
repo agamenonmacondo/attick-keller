@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
     const idsBatch = activePurchaseIds.slice(i, i + BATCH)
     const { data: items } = await sb
       .from('pos_purchase_items')
-      .select('pos_purchase_id, pos_ingredient_id, quantity, unit_cost, total')
+      .select('pos_purchase_id, pos_ingredient_id, quantity, cost, amount_with_tax')
       .in('pos_purchase_id', idsBatch)
     if (items) allPurchaseItems.push(...items)
   }
@@ -201,7 +201,7 @@ export async function GET(request: NextRequest) {
     if (ing.categoryId === '021') continue
     const catId = ing.categoryId || 'unknown'
     const entry = categoryCostMap.get(catId) || { total: 0, count: 0 }
-    entry.total += item.total || 0
+    entry.total += item.amount_with_tax || 0
     entry.count += 1
     categoryCostMap.set(catId, entry)
   }

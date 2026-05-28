@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, ChartBar, PencilSimple, IdentificationBadge } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, ChartBar, PencilSimple, IdentificationBadge, Trash } from '@phosphor-icons/react';
 import { SectionHeading } from '../shared/SectionHeading';
 import { supabase } from '@/lib/supabase/client';
 import type { ShiftType, StaffMemberForShift, ShiftAssignment } from '@/lib/types/shifts';
@@ -324,10 +324,13 @@ function ShiftTypeEditor({
     nocturnas: 0,
     area: area,
   });
+  const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const filteredTypes = initialTypes.filter((t) => t.area === area);
 
   const handleNew = async () => {
+    setSaving(true);
     try {
       const res = await fetch('/api/admin/shift-schedules', {
         method: 'POST',
@@ -340,7 +343,63 @@ function ShiftTypeEditor({
       onRefresh();
     } catch (err) {
       console.error(err);
+      alert('Error creando tipo de turno');
+    } finally {
+      setSaving(false);
     }
+  };
+
+  const handleEdit = async (id: string) => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/shift-type', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...form }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error actualizando tipo de turno');
+      }
+      setEditing(null);
+      onRefresh();
+    } catch (err: unknown) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Error actualizando tipo de turno');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/shift-type?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error eliminando tipo de turno');
+      }
+      setConfirmDelete(null);
+      onRefresh();
+    } catch (err: unknown) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Error eliminando tipo de turno');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const startEdit = (st: ShiftType) => {
+    setEditing(st.id);
+    setForm({
+      code: st.code,
+      name: st.name,
+      entrada: st.entrada.slice(0, 5), // HH:MM from HH:MM:00
+      salida: st.salida.slice(0, 5),
+      ordinarias: st.ordinarias,
+      nocturnas: st.nocturnas,
+      area: st.area,
+    });
   };
 
   return (
@@ -350,7 +409,10 @@ function ShiftTypeEditor({
           Horarios — {area.charAt(0).toUpperCase() + area.slice(1)}
         </h3>
         <button
-          onClick={() => setEditing('new')}
+          onClick={() => {
+            setForm({ code: '', name: '', entrada: '', salida: '', ordinarias: 0, nocturnas: 0, area });
+            setEditing('new');
+          }}
           className="text-xs px-3 py-1.5 rounded-lg bg-[var(--accent-primary)] text-white hover:opacity-90"
         >
           + Nuevo horario
@@ -359,27 +421,155 @@ function ShiftTypeEditor({
 
       {/* Lista de tipos de turno */}
       <div className="space-y-2">
-        {filteredTypes.map((st) => (
-          <div key={st.id} className="bg-[var(--bg-card)] rounded-lg p-3 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span className="font-mono font-bold text-[var(--text-primary)] w-8">{st.code}</span>
-              <span className="text-sm text-[var(--text-primary)]">{st.name}</span>
-            </div>
-            <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
-              <span>{st.entrada} - {st.salida}</span>
-              <span>{st.ordinarias + st.nocturnas}h</span>
-              <span className={st.ordinarias > 0 ? 'text-emerald-400' : ''}>
-                HO:{st.ordinarias}
-              </span>
-              <span className={st.nocturnas > 0 ? 'text-amber-400' : ''}>
-                HN:{st.nocturnas}
-              </span>
-              {st.ordinarias + st.nocturnas > 8 && (
-                <span className="text-red-400 font-bold">+HE</span>
+        {filteredTypes.map((st) => {
+          const isEditing = editing === st.id;
+          return (
+            <div key={st.id} className="bg-[var(--bg-card)] rounded-lg p-3 space-y-3">
+              {/* Vista normal */}
+              {!isEditing ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <span className="font-mono font-bold text-[var(--text-primary)] w-8">{st.code}</span>
+                    <span className="text-sm text-[var(--text-primary)]">{st.name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
+                      <span>{st.entrada.slice(0, 5)} - {st.salida.slice(0, 5)}</span>
+                      <span>{st.ordinarias + st.nocturnas}h</span>
+                      <span className={st.ordinarias > 0 ? 'text-emerald-400' : ''}>
+                        HO:{st.ordinarias}
+                      </span>
+                      <span className={st.nocturnas > 0 ? 'text-amber-400' : ''}>
+                        HN:{st.nocturnas}
+                      </span>
+                      {st.ordinarias + st.nocturnas > 8 && (
+                        <span className="text-red-400 font-bold">+HE</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => startEdit(st)}
+                        className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
+                        title="Editar"
+                      >
+                        <PencilSimple size={14} />
+                      </button>
+                      {confirmDelete === st.id ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleDelete(st.id)}
+                            disabled={saving}
+                            className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                          >
+                            Confirmar
+                          </button>
+                          <button
+                            onClick={() => setConfirmDelete(null)}
+                            className="text-xs px-2 py-1 rounded text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDelete(st.id)}
+                          className="p-1.5 rounded hover:bg-red-500/10 text-red-400/60 hover:text-red-400"
+                          title="Eliminar"
+                        >
+                          <Trash size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Formulario de edición */
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-[var(--text-primary)]">
+                    Editando: {st.code} — {st.name}
+                  </h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Codigo</label>
+                      <input
+                        type="text"
+                        value={form.code}
+                        onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
+                        className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm font-mono uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Nombre</label>
+                      <input
+                        type="text"
+                        value={form.name}
+                        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                        className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
+                      />
+                    </div>
+                    <div className="col-span-1" />
+                    <div>
+                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Entrada (HH:MM)</label>
+                      <input
+                        type="time"
+                        value={form.entrada}
+                        onChange={(e) => setForm((f) => ({ ...f, entrada: e.target.value }))}
+                        className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Salida (HH:MM)</label>
+                      <input
+                        type="time"
+                        value={form.salida}
+                        onChange={(e) => setForm((f) => ({ ...f, salida: e.target.value }))}
+                        className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
+                      />
+                    </div>
+                    <div className="col-span-1" />
+                    <div>
+                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Horas ordinarias (HO)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        value={form.ordinarias}
+                        onChange={(e) => setForm((f) => ({ ...f, ordinarias: parseFloat(e.target.value) || 0 }))}
+                        className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Horas nocturnas (HN)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        value={form.nocturnas}
+                        onChange={(e) => setForm((f) => ({ ...f, nocturnas: parseFloat(e.target.value) || 0 }))}
+                        className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setEditing(null)}
+                      className="px-3 py-1.5 rounded-lg text-sm text-[var(--text-secondary)]"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={() => handleEdit(st.id)}
+                      disabled={saving}
+                      className="px-3 py-1.5 rounded-lg text-sm bg-[var(--accent-primary)] text-white hover:opacity-90 disabled:opacity-50"
+                    >
+                      {saving ? 'Guardando...' : 'Guardar'}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Formulario para nuevo tipo */}
@@ -459,9 +649,10 @@ function ShiftTypeEditor({
             </button>
             <button
               onClick={handleNew}
-              className="px-3 py-1.5 rounded-lg text-sm bg-[var(--accent-primary)] text-white"
+              disabled={saving}
+              className="px-3 py-1.5 rounded-lg text-sm bg-[var(--accent-primary)] text-white hover:opacity-90 disabled:opacity-50"
             >
-              Crear
+              {saving ? 'Creando...' : 'Crear'}
             </button>
           </div>
         </div>

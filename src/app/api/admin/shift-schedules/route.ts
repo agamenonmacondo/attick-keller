@@ -56,12 +56,13 @@ export async function GET(request: NextRequest) {
       (aliases || []).map((a: Record<string, unknown>) => [a.employee_id as string, a.alias as string])
     )
 
-    const enrichedStaff = (staff || []).map((s: Record<string, unknown>) => ({
-      ...s,
-      alias: aliasMap.get(s.id as string) || (s.nombre_completo as string).split(' ')[0],
-    }))
+  const enrichedStaff = (staff || []).map((s: Record<string, unknown>) => ({
+    ...s,
+    salario_mensual: s.salario ?? 0,
+    alias: aliasMap.get(s.id as string) || (s.nombre_completo as string).split(' ')[0],
+  }))
 
-    return NextResponse.json({ schedule: null, assignments: [], staff: enrichedStaff, shift_types: shiftTypes || [] })
+  return NextResponse.json({ schedule: null, assignments: [], staff: enrichedStaff, shift_types: shiftTypes || [] })
   }
 
   // Obtener asignaciones
@@ -102,6 +103,7 @@ export async function GET(request: NextRequest) {
 
   const enrichedStaff = (staff || []).map((s: Record<string, unknown>) => ({
     ...s,
+    salario_mensual: s.salario ?? 0,
     alias: aliasMap.get(s.id as string) || (s.nombre_completo as string).split(' ')[0],
   }))
 

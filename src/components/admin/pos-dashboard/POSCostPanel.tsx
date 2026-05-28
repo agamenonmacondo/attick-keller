@@ -27,7 +27,6 @@ interface POSCostPanelProps {
   loading: boolean
   error: string | null
   // Calendar heatmap props
-  calendarData?: Array<{ date: string; revenue: number; cheques: number; propina: number; personas: number }>
   selectedDate?: string
   onDayClick?: (date: string) => void
   calendarMonth?: string
@@ -90,7 +89,6 @@ export function POSCostPanel({
   data,
   loading,
   error,
-  calendarData,
   selectedDate,
   onDayClick,
   calendarMonth,
@@ -98,6 +96,18 @@ export function POSCostPanel({
   heatmapMetric = 'revenue',
   onHeatmapMetricChange,
 }: POSCostPanelProps) {
+  // ── Transform dailyPurchases to calendar format ──
+  const calendarData = useMemo(() => {
+    if (!data) return []
+    return data.dailyPurchases.map(d => ({
+      date: d.date,
+      revenue: d.total,
+      cheques: d.count,
+      propina: 0,
+      personas: 0,
+    }))
+  }, [data])
+
   // ── Monthly trend data for chart ──
   const monthlyChartData = useMemo(() => {
     if (!data) return []

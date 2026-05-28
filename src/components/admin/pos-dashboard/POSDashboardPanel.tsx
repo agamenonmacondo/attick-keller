@@ -286,7 +286,6 @@ export function POSDashboardPanel() {
           data={costsData}
           loading={costsLoading}
           error={costsError}
-          calendarData={calendarTrend}
           selectedDate={isSingleDay ? filters.from : undefined}
           onDayClick={handleDayClick}
           calendarMonth={calendarMonth}

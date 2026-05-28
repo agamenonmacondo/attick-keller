@@ -2,10 +2,12 @@
 
 import { useState, useCallback, useMemo, useRef } from 'react'
 import { usePOSDashboard, type POSDashboardFilters } from '@/lib/hooks/usePOSDashboard'
+import { usePOSCosts } from '@/lib/hooks/usePOSCosts'
 import { usePOSCalendar } from '@/lib/hooks/usePOSCalendar'
 import { AnimatedCard } from '../shared/AnimatedCard'
-import { Spinner } from '@phosphor-icons/react'
+import { Spinner, ChartBar, ChartLine } from '@phosphor-icons/react'
 import { POSFiltersBar } from './POSFiltersBar'
+import { POSCostPanel } from './POSCostPanel'
 import { RevenueHeatmapCalendar } from './RevenueHeatmapCalendar'
 import { DayKPIBar } from './DayKPIBar'
 import { ZoneRevenueChart } from './ZoneRevenueChart'
@@ -32,11 +34,22 @@ const DEFAULT_FILTERS: POSDashboardFilters = {
   // from/to left empty — server auto-detects latest month with data
 }
 
+type DashboardTab = 'operation' | 'costs'
+
 export function POSDashboardPanel() {
+  const [activeTab, setActiveTab] = useState<DashboardTab>('operation')
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day')
   const [filters, setFilters] = useState<POSDashboardFilters>(DEFAULT_FILTERS)
   const [heatmapMetric, setHeatmapMetric] = useState<HeatmapMetric>('revenue')
   const [calendarMonth, setCalendarMonth] = useState<string | undefined>(undefined) // 'YYYY-MM' for calendar view month
+
+  // ── Cost tab hook ──
+  const costsFilters = useMemo(() => ({
+    from: filters.from,
+    to: filters.to,
+    group: filters.category,
+  }), [filters.from, filters.to, filters.category])
+  const { data: costsData, loading: costsLoading, error: costsError } = usePOSCosts(costsFilters)
 
   // When in month mode, clear date filters so data covers the full month
   const effectiveFilters = useMemo<POSDashboardFilters>(() => {
@@ -182,20 +195,46 @@ export function POSDashboardPanel() {
 
   return (
     <div className="space-y-5 px-3 sm:px-0">
-      {/* Header */}
+      {/* Header with tab toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div>
-          <h2 className="text-lg font-bold text-[var(--text-primary)]">Operacion POS</h2>
-          <p className="text-xs text-[var(--text-secondary)]">
-            {viewMode === 'month'
-              ? <>Vista consolidada: <span className="font-semibold text-[var(--color-ak-borgona)]">Mes completo</span></>
-              : isSingleDay
-                ? <>Vista por dia: <span className="font-semibold text-[var(--color-ak-borgona)]">{filters.from}</span></>
-                : `${filters.from} a ${filters.to}`
-            }
-            {filters.zone !== 'all' && ` · Zona: ${filters.zone}`}
-            {filters.category !== 'all' && ` · Categoria filtrada`}
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg p-0.5">
+            <button
+              onClick={() => setActiveTab('operation')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                activeTab === 'operation'
+                  ? 'bg-[var(--color-ak-borgona)] text-white'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <ChartLine size={13} />
+              Operacion
+            </button>
+            <button
+              onClick={() => setActiveTab('costs')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                activeTab === 'costs'
+                  ? 'bg-[var(--color-ak-borgona)] text-white'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <ChartBar size={13} />
+              Costos
+            </button>
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-[var(--text-primary)]">{activeTab === 'costs' ? 'Costos POS' : 'Operacion POS'}</h2>
+            <p className="text-xs text-[var(--text-secondary)]">
+              {viewMode === 'month'
+                ? <>Vista consolidada: <span className="font-semibold text-[var(--color-ak-borgona)]">Mes completo</span></>
+                : isSingleDay
+                  ? <>Vista por dia: <span className="font-semibold text-[var(--color-ak-borgona)]">{filters.from}</span></>
+                  : `${filters.from} a ${filters.to}`
+              }
+              {filters.zone !== 'all' && ` · Zona: ${filters.zone}`}
+              {filters.category !== 'all' && ` · Categoria filtrada`}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -235,13 +274,18 @@ export function POSDashboardPanel() {
       )}
 
       {/* Full-page spinner when no data yet */}
-      {loading && !data && (
+      {loading && !data && activeTab === 'operation' && (
         <div className="py-16 flex items-center justify-center">
           <Spinner size={32} className="animate-spin text-[var(--text-secondary)]" />
         </div>
       )}
 
-      {data && (
+      {/* Cost panel */}
+      {activeTab === 'costs' && (
+        <POSCostPanel data={costsData} loading={costsLoading} error={costsError} />
+      )}
+
+      {data && activeTab === 'operation' && (
         <>
           {/* CALENDAR — calendar grid with day-by-day navigation */}
           <AnimatedCard delay={0} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">

@@ -145,7 +145,8 @@ export default function CostEstimationBar({
                 borderRadius: '8px',
                 fontSize: 12,
               }}
-              formatter={(value: number) => formatCOP(Number(value))}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={(value: any) => formatCOP(Number(value))}
             />
             <Legend iconType="circle" iconSize={8} />
             <Bar dataKey="Base" stackId="cost" fill="#4ade80" />

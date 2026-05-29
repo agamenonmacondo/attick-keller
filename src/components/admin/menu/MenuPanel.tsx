@@ -124,6 +124,21 @@ export function MenuPanel() {
   const [recipeItem, setRecipeItem] = useState<string | null>(null) // menu item id
   const [recipeData, setRecipeData] = useState<RecipeData | null>(null)
   const [recipeLoading, setRecipeLoading] = useState(false)
+  const [posRecipeProduct, setPosRecipeProduct] = useState<string | null>(null) // pos_product_id
+  const [posRecipeData, setPosRecipeData] = useState<{
+    posProduct: { pos_product_id: string; name: string; pos_group_id: string; groupName: string }
+    linkedMenuItem: { id: string; name: string; confidence: string; verified: boolean } | null
+    price: number
+    priceBeforeTax: number
+    recipe: {
+      ingredients: { pos_ingredient_id: string; name: string; quantity: number; unit: string; unitCost: number; totalCost: number; is_composite: boolean }[]
+      totalCost: number
+      sellPrice: number
+      margin: number
+      marginPercent: number
+    }
+  } | null>(null)
+  const [posRecipeLoading, setPosRecipeLoading] = useState(false)
 
   // --- Fetch menu data ---
   const fetchMenu = useCallback(async () => {
@@ -208,6 +223,24 @@ export function MenuPanel() {
       // Silently fail
     } finally {
       setRecipeLoading(false)
+    }
+  }, [])
+
+  // --- Fetch POS product recipe ---
+  const fetchPosRecipe = useCallback(async (posProductId: string) => {
+    setPosRecipeLoading(true)
+    setPosRecipeProduct(posProductId)
+    setPosRecipeData(null)
+    try {
+      const res = await fetch(`/api/admin/pos-products/${encodeURIComponent(posProductId)}`)
+      if (res.ok) {
+        const d = await res.json()
+        setPosRecipeData(d)
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setPosRecipeLoading(false)
     }
   }, [])
 
@@ -627,11 +660,13 @@ export function MenuPanel() {
                         return (
                           <div
                             key={product.pos_product_id}
-                            className={`rounded-lg border p-3 relative ${
+                            className={`rounded-lg border p-3 relative cursor-pointer hover:border-[var(--color-ak-borgona)]/40 hover:bg-[var(--color-ak-borgona)]/5 ${
                               isLinked
                                 ? 'border-[var(--color-ak-dorado)]/30 bg-[var(--color-ak-dorado)]/5'
                                 : 'border-[var(--border-default)] bg-[var(--bg-card)]'
                             }`}
+                            onClick={() => fetchPosRecipe(product.pos_product_id)}
+                            style={{ transition: 'border-color 150ms ease, background-color 150ms ease' }}
                           >
                             {isLinked && (
                               <span className="absolute top-2 right-2 rounded-full bg-[var(--color-ak-dorado)]/20 px-2 py-0.5 text-[9px] font-medium text-[var(--color-ak-dorado)]">
@@ -1014,12 +1049,132 @@ export function MenuPanel() {
       </AnimatePresence>
 
       {/* =================== Overlay for recipe panel =================== */}
-      {recipeItem && (
+      {(recipeItem || posRecipeProduct) && (
         <div
           className="fixed inset-0 z-30 bg-black/20"
-          onClick={() => { setRecipeItem(null); setRecipeData(null) }}
+          onClick={() => { setRecipeItem(null); setRecipeData(null); setPosRecipeProduct(null); setPosRecipeData(null) }}
         />
       )}
+
+      {/* =================== POS PRODUCT RECIPE PANEL (Slide-over) =================== */}
+      <AnimatePresence>
+        {posRecipeProduct && (
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+            className="fixed right-0 top-0 bottom-0 z-40 w-full max-w-md bg-[var(--bg-primary)] border-l border-[var(--border-default)] shadow-2xl overflow-y-auto"
+          >
+            <div className="sticky top-0 bg-[var(--bg-primary)] border-b border-[var(--border-default)] px-5 py-4 flex items-center justify-between z-10">
+              <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">
+                Detalle del producto
+              </h2>
+              <button
+                type="button"
+                onClick={() => { setPosRecipeProduct(null); setPosRecipeData(null) }}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {posRecipeLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Spinner size={28} className="animate-spin text-[var(--text-secondary)]" />
+              </div>
+            ) : posRecipeData ? (
+              <div className="p-5 space-y-5">
+                {/* Product info */}
+                <div>
+                  <h3 className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
+                    {posRecipeData.posProduct.name}
+                  </h3>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1">
+                    {posRecipeData.posProduct.groupName}
+                  </p>
+                  {posRecipeData.linkedMenuItem && (
+                    <p className="text-xs text-[var(--color-ak-dorado)] mt-1">
+                      Vinculado a: {posRecipeData.linkedMenuItem.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* Price info */}
+                <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[var(--text-secondary)]">Precio venta</span>
+                    <span className="font-mono font-bold text-[var(--color-ak-borgona)]">{formatCOP(posRecipeData.price)}</span>
+                  </div>
+                  {posRecipeData.priceBeforeTax > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[var(--text-secondary)]">Precio sin impuesto</span>
+                      <span className="font-mono text-[var(--text-primary)]">{formatCOP(posRecipeData.priceBeforeTax)}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Ingredients table */}
+                <div>
+                  <h4 className="text-sm font-medium text-[var(--text-secondary)] mb-2">Ingredientes</h4>
+                  {posRecipeData.recipe.ingredients.length === 0 ? (
+                    <p className="text-sm text-[var(--text-muted)] py-4 text-center">Sin ingredientes registrados</p>
+                  ) : (
+                    <div className="rounded-lg border border-[var(--border-default)] overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-[var(--bg-input)] text-[var(--text-secondary)]">
+                            <th className="text-left px-3 py-2 text-xs font-medium">Ingrediente</th>
+                            <th className="text-right px-3 py-2 text-xs font-medium">Cant.</th>
+                            <th className="text-right px-3 py-2 text-xs font-medium">Unidad</th>
+                            <th className="text-right px-3 py-2 text-xs font-medium">C. Unit.</th>
+                            <th className="text-right px-3 py-2 text-xs font-medium">C. Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {posRecipeData.recipe.ingredients.map((ing, idx) => (
+                            <tr key={ing.pos_ingredient_id} className={idx % 2 === 0 ? 'bg-[var(--bg-card)]' : 'bg-[var(--bg-input)]/30'}>
+                              <td className="px-3 py-2 text-[var(--text-primary)]">{ing.name}</td>
+                              <td className="px-3 py-2 text-right text-[var(--text-primary)]">{ing.quantity}</td>
+                              <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{ing.unit}</td>
+                              <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{formatCOP(ing.unitCost)}</td>
+                              <td className="px-3 py-2 text-right font-medium text-[var(--color-ak-borgona)]">{formatCOP(ing.totalCost)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* Summary */}
+                <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[var(--text-secondary)]">Costo total</span>
+                    <span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(posRecipeData.recipe.totalCost)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[var(--text-secondary)]">Precio venta</span>
+                    <span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(posRecipeData.recipe.sellPrice)}</span>
+                  </div>
+                  <div className="border-t border-[var(--border-default)] pt-2 flex justify-between text-sm">
+                    <span className="text-[var(--text-secondary)]">Margen</span>
+                    <span className={`font-mono font-bold ${
+                      posRecipeData.recipe.margin >= 0 ? 'text-[var(--color-ak-oliva)]' : 'text-[var(--color-danger)]'
+                    }`}>
+                      {formatCOP(posRecipeData.recipe.margin)} ({posRecipeData.recipe.marginPercent.toFixed(1)}%)
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="py-12 text-center">
+                <p className="text-sm text-[var(--text-secondary)]">No se pudo cargar el detalle</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* =================== Forms =================== */}
       {showCategoryForm && (

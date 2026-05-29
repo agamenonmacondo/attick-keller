@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get('category')?.trim() || ''
   const includeBar = searchParams.get('include_bar') === 'true'
   const includeWine = searchParams.get('include_wine') === 'true'
-  const limit = Math.min(Math.max(Number(searchParams.get('limit')) || 50, 1), 200)
+  const limit = Math.min(Math.max(Number(searchParams.get('limit')) || 50, 1), 2000)
 
   // Step 1: Fetch "NO USAR" category IDs to exclude
   const { data: noUsarCategories } = await sb

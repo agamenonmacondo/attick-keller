@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { X, CaretDown, CaretRight, Plus, Trash, Spinner } from '@phosphor-icons/react'
+import { useState, useEffect, useMemo } from 'react'
+import { X, Plus, Trash, Spinner } from '@phosphor-icons/react'
 import { formatCOP } from '@/lib/utils/formatCOP'
 
 interface Category {
@@ -22,14 +22,7 @@ interface MenuItem {
   sort_order: number
 }
 
-interface IngredientCategory {
-  pos_category_id: string
-  name: string
-  classification: string
-  ingredient_count: number
-}
-
-interface IngResult {
+interface IngItem {
   pos_ingredient_id: string
   name: string
   unit: string
@@ -44,7 +37,6 @@ interface AddedIng {
   unit: string
   quantity: number
   avg_cost: number
-  category_name: string
   is_composite: boolean
 }
 
@@ -67,56 +59,60 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [allIngredients, setAllIngredients] = useState<IngItem[]>([])
   const [added, setAdded] = useState<AddedIng[]>([])
-  const [ingCats, setIngCats] = useState<IngredientCategory[]>([])
-  const [catItems, setCatItems] = useState<Record<string, IngResult[]>>({})
-  const [openCat, setOpenCat] = useState<string | null>(null)
-  const [loadingCat, setLoadingCat] = useState<string | null>(null)
+  const [activeCat, setActiveCat] = useState<string | null>(null)
+  const [dataLoading, setDataLoading] = useState(true)
 
+  // Single fetch: all ingredients + categories in one call
   useEffect(() => {
-    fetch('/api/admin/pos-ingredient-categories')
-      .then(r => r.json())
-      .then(d => { if (d.categories) setIngCats(d.categories) })
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (!item?.id) return
-    fetch(`/api/admin/menu/items/${item.id}/ingredients`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.ingredients) {
-          setAdded(d.ingredients.map((i: any) => ({
+    let cancelled = false
+    Promise.all([
+      fetch('/api/admin/pos-ingredients?limit=1000&include_bar=false&include_wine=false').then(r => r.json()),
+      item?.id
+        ? fetch(`/api/admin/menu/items/${item.id}/ingredients`).then(r => r.json()).catch(() => ({ ingredients: [] }))
+        : Promise.resolve({ ingredients: [] }),
+    ])
+      .then(([ingData, savedData]) => {
+        if (cancelled) return
+        const ingredients = ingData.ingredients || []
+        setAllIngredients(ingredients)
+        // Set default active category to first one
+        if (ingredients.length > 0) {
+          const firstCat = ingredients.find((i: IngItem) => i.category_name)?.category_name
+          if (firstCat) setActiveCat(firstCat)
+        }
+        // Load saved ingredients
+        if (savedData.ingredients?.length) {
+          setAdded(savedData.ingredients.map((i: any) => ({
             pos_ingredient_id: i.pos_ingredient_id,
             name: i.name,
             unit: i.unit,
             quantity: i.quantity,
             avg_cost: i.avg_cost,
-            category_name: i.category_name || '',
             is_composite: i.is_composite || false,
           })))
         }
+        setDataLoading(false)
       })
-      .catch(() => {})
+      .catch(() => { if (!cancelled) setDataLoading(false) })
+    return () => { cancelled = true }
   }, [item?.id])
 
-  const toggleCat = useCallback(async (catId: string) => {
-    if (openCat === catId) { setOpenCat(null); return }
-    if (!catItems[catId]) {
-      setLoadingCat(catId)
-      try {
-        const r = await fetch(`/api/admin/pos-ingredients?category=${catId}&limit=500&include_bar=true&include_wine=true`)
-        const d = await r.json()
-        setCatItems(prev => ({ ...prev, [catId]: d.ingredients || [] }))
-      } catch {}
-      setLoadingCat(null)
+  // Group ingredients by category
+  const catGroups = useMemo(() => {
+    const map = new Map<string, IngItem[]>()
+    for (const ing of allIngredients) {
+      const cat = ing.category_name || 'Sin categoria'
+      if (!map.has(cat)) map.set(cat, [])
+      map.get(cat)!.push(ing)
     }
-    setOpenCat(catId)
-  }, [openCat, catItems])
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b))
+  }, [allIngredients])
 
-  const add = (ing: IngResult) => {
+  const addIng = (ing: IngItem) => {
     if (added.some(a => a.pos_ingredient_id === ing.pos_ingredient_id)) {
-      remove(ing.pos_ingredient_id)
+      removeIng(ing.pos_ingredient_id)
       return
     }
     const newIng: AddedIng = {
@@ -125,7 +121,6 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
       unit: ing.unit,
       quantity: 1,
       avg_cost: ing.avg_cost || 0,
-      category_name: ing.category_name || '',
       is_composite: ing.is_composite,
     }
     if (item?.id) {
@@ -138,7 +133,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
     setAdded(prev => [...prev, newIng])
   }
 
-  const remove = (posId: string) => {
+  const removeIng = (posId: string) => {
     if (item?.id) {
       fetch(`/api/admin/menu/items/${item.id}/ingredients`, {
         method: 'DELETE',
@@ -227,56 +222,58 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
           </button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {error && (
             <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">{error}</div>
           )}
 
-          {/* Basic info */}
-          <div>
-            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Nombre</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)}
-              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
-              placeholder="Ej: Pizza Margherita" />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Descripcion</label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2}
-              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
-              placeholder="Descripcion del plato..." />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+          {/* Basic fields */}
+          <form id="item-form" onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Precio (COP)</label>
-              <input type="number" min="0" step="500" value={price} onChange={e => setPrice(e.target.value)}
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Nombre</label>
+              <input type="text" value={name} onChange={e => setName(e.target.value)}
                 className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
-                placeholder="37000" />
+                placeholder="Ej: Pizza Margherita" />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Categoria menu</label>
-              <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
-                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none">
-                {categories.filter(c => c.is_active).map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Descripcion</label>
+              <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2}
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
+                placeholder="Descripcion del plato..." />
             </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-[var(--text-secondary)]">URL imagen</label>
-            <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)}
-              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
-              placeholder="https://..." />
-          </div>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={isFeatured} onChange={e => setIsFeatured(e.target.checked)}
-              className="rounded border-[var(--border-default)] text-[var(--color-ak-borgona)]" />
-            <span className="text-xs text-[var(--text-primary)]">Destacado</span>
-          </label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs text-[var(--text-secondary)]">Precio (COP)</label>
+                <input type="number" min="0" step="500" value={price} onChange={e => setPrice(e.target.value)}
+                  className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
+                  placeholder="37000" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-[var(--text-secondary)]">Categoria menu</label>
+                <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
+                  className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none">
+                  {categories.filter(c => c.is_active).map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">URL imagen</label>
+              <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)}
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
+                placeholder="https://..." />
+            </div>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={isFeatured} onChange={e => setIsFeatured(e.target.checked)}
+                className="rounded border-[var(--border-default)] text-[var(--color-ak-borgona)]" />
+              <span className="text-xs text-[var(--text-primary)]">Destacado</span>
+            </label>
+          </form>
 
-          {/* ====== INGREDIENTS ====== */}
-          <div className="border-t border-[var(--border-default)] pt-4">
+          {/* ====== INGREDIENTES ====== */}
+          <div className="border-t border-[var(--border-default)] pt-3">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">Ingredientes</h3>
               {added.length > 0 && (
@@ -284,31 +281,30 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
               )}
             </div>
 
-            {/* Added list */}
-            {added.length > 0 && (
-              <div className="mb-3 space-y-1">
+            {/* Added ingredients list */}
+            {added.length > 0 ? (
+              <div className="mb-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] divide-y divide-[var(--border-default)]">
                 {added.map(a => (
-                  <div key={a.pos_ingredient_id} className="flex items-center gap-2 py-1 px-2 rounded hover:bg-[var(--bg-input)]/50">
+                  <div key={a.pos_ingredient_id} className="flex items-center gap-2 px-3 py-1.5">
                     <div className="flex-1 min-w-0">
-                      <span className="text-[13px] text-[var(--text-primary)] truncate block">
-                        {a.name}{a.is_composite && <span className="ml-1 text-[8px] text-amber-600">(sub)</span>}
+                      <span className="text-[13px] text-[var(--text-primary)] block truncate">
+                        {a.name}
+                        {a.is_composite && <span className="ml-1 text-[8px] text-amber-600">(sub)</span>}
                       </span>
-                      <span className="text-[9px] text-[var(--text-secondary)]">{formatCOP(a.avg_cost)}/{a.unit.toLowerCase()}</span>
                     </div>
                     <input type="number" min="0.01" step="0.1" value={a.quantity}
                       onChange={e => updateQty(a.pos_ingredient_id, parseFloat(e.target.value) || 0)}
                       className="w-14 rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-1 py-0.5 text-xs text-center text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none" />
-                    <span className="text-[9px] text-[var(--text-secondary)] w-5">{a.unit}</span>
-                    <span className="text-xs font-mono text-[var(--color-ak-borgona)] w-[70px] text-right">{formatCOP(a.avg_cost * a.quantity)}</span>
-                    <button type="button" onClick={() => remove(a.pos_ingredient_id)}
+                    <span className="text-[10px] text-[var(--text-secondary)] w-6">{a.unit}</span>
+                    <span className="text-xs font-mono text-[var(--color-ak-borgona)] w-[72px] text-right">{formatCOP(a.avg_cost * a.quantity)}</span>
+                    <button type="button" onClick={() => removeIng(a.pos_ingredient_id)}
                       className="flex h-5 w-5 items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600">
                       <Trash size={11} />
                     </button>
                   </div>
                 ))}
-
                 {/* Summary */}
-                <div className="px-2 py-2 rounded bg-[var(--bg-card)] border border-[var(--border-default)] text-[12px] space-y-1">
+                <div className="px-3 py-2 space-y-1 text-[12px]">
                   <div className="flex justify-between">
                     <span className="text-[var(--text-secondary)]">Costo ingredientes</span>
                     <span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(totalCost)}</span>
@@ -329,75 +325,71 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
                   )}
                 </div>
               </div>
-            )}
-
-            {added.length === 0 && (
-              <p className="text-center text-sm text-[var(--text-secondary)] py-3 mb-3 border border-dashed border-[var(--border-default)] rounded-lg">
+            ) : (
+              <p className="text-center text-xs text-[var(--text-secondary)] py-2 mb-3 border border-dashed border-[var(--border-default)] rounded-lg">
                 Selecciona ingredientes de las categorias
               </p>
             )}
 
-            {/* Category accordion */}
-            <div className="space-y-1">
-              <p className="text-[9px] font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-1">Categorias de ingredientes</p>
-              {ingCats.map(cat => {
-                const isOpen = openCat === cat.pos_category_id
-                const isLoading = loadingCat === cat.pos_category_id
-                const items = catItems[cat.pos_category_id] || []
-                const addedCount = added.filter(a => items.some(i => i.pos_ingredient_id === a.pos_ingredient_id)).length
-
-                return (
-                  <div key={cat.pos_category_id} className="rounded border border-[var(--border-default)] overflow-hidden">
-                    <button type="button" onClick={() => toggleCat(cat.pos_category_id)}
-                      className="w-full flex items-center justify-between px-3 py-2 hover:bg-[var(--color-ak-borgona)]/5 text-left">
-                      <div className="flex items-center gap-2">
-                        {isOpen ? <CaretDown size={11} className="text-[var(--color-ak-borgona)]" /> : <CaretRight size={11} className="text-[var(--text-secondary)]" />}
-                        <span className="text-[12px] font-medium text-[var(--text-primary)]">{cat.name}</span>
-                        {addedCount > 0 && (
-                          <span className="rounded-full bg-[var(--color-ak-borgona)]/10 px-1.5 py-0.5 text-[8px] font-medium text-[var(--color-ak-borgona)]">{addedCount}</span>
+            {/* Category pills + ingredient list */}
+            {dataLoading ? (
+              <div className="flex justify-center py-8"><Spinner size={20} className="animate-spin text-[var(--text-secondary)]" /></div>
+            ) : catGroups.length === 0 ? (
+              <p className="text-center text-xs text-[var(--text-secondary)] py-4">No se cargaron ingredientes</p>
+            ) : (
+              <>
+                {/* Pills */}
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {catGroups.map(([catName, items]) => {
+                    const isActive = activeCat === catName
+                    const count = items.filter(i => added.some(a => a.pos_ingredient_id === i.pos_ingredient_id)).length
+                    return (
+                      <button key={catName} type="button" onClick={() => setActiveCat(isActive ? null : catName)}
+                        className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
+                          isActive
+                            ? 'bg-[var(--color-ak-borgona)] text-white'
+                            : 'bg-[var(--bg-card)] border border-[var(--border-default)] text-[var(--text-primary)] hover:border-[var(--color-ak-borgona)]/50'
+                        }`}>
+                        {catName}
+                        {count > 0 && (
+                          <span className={`rounded-full px-1 py-px text-[8px] font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)]'}`}>{count}</span>
                         )}
-                      </div>
-                      <span className="text-[9px] text-[var(--text-secondary)]">{cat.ingredient_count}</span>
-                    </button>
+                      </button>
+                    )
+                  })}
+                </div>
 
-                    {isOpen && (
-                      <div className="border-t border-[var(--border-default)] max-h-48 overflow-y-auto">
-                        {isLoading ? (
-                          <div className="flex justify-center py-6"><Spinner size={14} className="animate-spin text-[var(--text-secondary)]" /></div>
-                        ) : items.length === 0 ? (
-                          <p className="text-center text-[11px] text-[var(--text-secondary)] py-3">Sin ingredientes</p>
-                        ) : (
-                          items.map(ing => {
-                            const isAdded = added.some(a => a.pos_ingredient_id === ing.pos_ingredient_id)
-                            return (
-                              <div key={ing.pos_ingredient_id}
-                                className={`flex items-center justify-between px-3 py-1 border-b border-[var(--border-default)]/30 last:border-0 hover:bg-[var(--bg-input)]/50 ${isAdded ? 'bg-[var(--color-ak-borgona)]/[0.03]' : ''}`}>
-                                <div className="min-w-0 flex-1 mr-2">
-                                  <span className="text-[11px] text-[var(--text-primary)] truncate block">
-                                    {ing.name}
-                                    {ing.is_composite && <span className="ml-1 text-[8px] text-amber-600">(subreceta)</span>}
-                                  </span>
-                                  <span className="text-[8px] text-[var(--text-secondary)]">{formatCOP(ing.avg_cost)}/{ing.unit.toLowerCase()}</span>
-                                </div>
-                                <button type="button" onClick={() => add(ing)}
-                                  className={`flex items-center gap-0.5 rounded px-2 py-0.5 text-[9px] font-medium shrink-0 ${
-                                    isAdded
-                                      ? 'bg-[var(--color-ak-dorado)]/15 text-[var(--color-ak-dorado)]'
-                                      : 'bg-[var(--color-ak-borgona)] text-white hover:bg-[var(--color-ak-borgona)]/90'
-                                  }`}>
-                                  <Plus size={9} />
-                                  {isAdded ? 'Agregado' : 'Agregar'}
-                                </button>
-                              </div>
-                            )
-                          })
-                        )}
-                      </div>
-                    )}
+                {/* Ingredient list for active category */}
+                {activeCat && (
+                  <div className="rounded-lg border border-[var(--border-default)] divide-y divide-[var(--border-default)]/50 max-h-52 overflow-y-auto">
+                    {(catGroups.find(([c]) => c === activeCat)?.[1] || []).map(ing => {
+                      const isAdded = added.some(a => a.pos_ingredient_id === ing.pos_ingredient_id)
+                      return (
+                        <div key={ing.pos_ingredient_id}
+                          className={`flex items-center justify-between px-3 py-2 hover:bg-[var(--bg-input)]/50 ${isAdded ? 'bg-[var(--color-ak-borgona)]/[0.04]' : ''}`}>
+                          <div className="min-w-0 flex-1 mr-3">
+                            <span className="text-[12px] text-[var(--text-primary)] truncate block">
+                              {ing.name}
+                              {ing.is_composite && <span className="ml-1 text-[8px] text-amber-600">(subreceta)</span>}
+                            </span>
+                            <span className="text-[9px] text-[var(--text-secondary)]">{formatCOP(ing.avg_cost)} / {ing.unit.toLowerCase()}</span>
+                          </div>
+                          <button type="button" onClick={() => addIng(ing)}
+                            className={`flex items-center gap-1 rounded px-2.5 py-1 text-[10px] font-medium shrink-0 transition-colors ${
+                              isAdded
+                                ? 'bg-[var(--color-ak-dorado)]/15 text-[var(--color-ak-dorado)]'
+                                : 'bg-[var(--color-ak-borgona)] text-white hover:bg-[var(--color-ak-borgona)]/90'
+                            }`}>
+                            <Plus size={10} />
+                            {isAdded ? 'Agregado' : 'Agregar'}
+                          </button>
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
-            </div>
+                )}
+              </>
+            )}
           </div>
         </div>
 

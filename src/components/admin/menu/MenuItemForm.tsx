@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
-import { X, MagnifyingGlass, Plus, Trash, Spinner } from '@phosphor-icons/react'
+import { useState, useCallback } from 'react'
+import { X, CaretDown, CaretRight, Plus, Trash, Spinner } from '@phosphor-icons/react'
 import { formatCOP } from '@/lib/utils/formatCOP'
 
 interface Category {
@@ -22,7 +22,7 @@ interface MenuItem {
   sort_order: number
 }
 
-interface IngredientSearchResult {
+interface IngredientResult {
   pos_ingredient_id: string
   name: string
   unit: string
@@ -30,6 +30,14 @@ interface IngredientSearchResult {
   category_name: string
   avg_cost: number
   cost: number
+}
+
+interface IngredientCategory {
+  pos_category_id: string
+  name: string
+  classification: string
+  priority: number
+  ingredient_count: number
 }
 
 interface SavedIngredient {
@@ -41,6 +49,7 @@ interface SavedIngredient {
   avg_cost: number
   total_cost: number
   is_composite: boolean
+  category_name: string
 }
 
 interface MenuItemFormProps {
@@ -64,108 +73,95 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
   // Ingredient state
   const [ingredients, setIngredients] = useState<SavedIngredient[]>([])
   const [ingredientsLoaded, setIngredientsLoaded] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<IngredientSearchResult[]>([])
-  const [searchLoading, setSearchLoading] = useState(false)
-  const [showSearch, setShowSearch] = useState(false)
-  const searchRef = useRef<HTMLDivElement>(null)
-  const debounceRef = useRef<NodeJS.Timeout | null>(null)
+  const [ingCategories, setIngCategories] = useState<IngredientCategory[]>([])
+  const [ingByCategory, setIngByCategory] = useState<Record<string, IngredientResult[]>>({})
+  const [expandedCat, setExpandedCat] = useState<string | null>(null)
+  const [loadingCat, setLoadingCat] = useState<string | null>(null)
 
   // Load existing ingredients when editing
-  useEffect(() => {
+  useState(() => {
     if (item?.id) {
       fetch(`/api/admin/menu/items/${item.id}/ingredients`)
-        .then(res => res.ok ? res.json() : [])
+        .then(res => res.ok ? res.json() : { ingredients: [] })
         .then(data => {
-          if (data.ingredients) {
-            setIngredients(data.ingredients)
-          }
+          if (data.ingredients) setIngredients(data.ingredients)
           setIngredientsLoaded(true)
         })
         .catch(() => setIngredientsLoaded(true))
     } else {
       setIngredientsLoaded(true)
     }
-  }, [item?.id])
+  })
 
-  // Search ingredients with debounce
-  const searchIngredients = useCallback(async (query: string) => {
-    if (query.length < 2) {
-      setSearchResults([])
+  // Load ingredient categories on mount
+  useState(() => {
+    fetch('/api/admin/pos-ingredient-categories')
+      .then(res => res.ok ? res.json() : { categories: [] })
+      .then(data => {
+        if (data.categories) setIngCategories(data.categories)
+      })
+      .catch(() => {})
+  })
+
+  // Load ingredients for a category
+  const loadCategoryIngredients = useCallback(async (catId: string) => {
+    if (ingByCategory[catId]) {
+      setExpandedCat(expandedCat === catId ? null : catId)
       return
     }
-    setSearchLoading(true)
+    setLoadingCat(catId)
     try {
-      const res = await fetch(`/api/admin/pos-ingredients?search=${encodeURIComponent(query)}&limit=20`)
+      const res = await fetch(`/api/admin/pos-ingredients?category=${encodeURIComponent(catId)}&limit=500&include_bar=true&include_wine=true`)
       if (res.ok) {
         const data = await res.json()
-        // Filter out already added ingredients
-        const existingIds = new Set(ingredients.map(i => i.pos_ingredient_id))
-        setSearchResults((data.ingredients || []).filter((i: IngredientSearchResult) => !existingIds.has(i.pos_ingredient_id)))
+        setIngByCategory(prev => ({ ...prev, [catId]: data.ingredients || [] }))
+        setExpandedCat(catId)
       }
     } catch {
       // Silently fail
     } finally {
-      setSearchLoading(false)
+      setLoadingCat(null)
     }
-  }, [ingredients])
+  }, [ingByCategory, expandedCat])
 
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => searchIngredients(value), 300)
-  }
+  const addIngredient = (ing: IngredientResult) => {
+    const existing = ingredients.find(i => i.pos_ingredient_id === ing.pos_ingredient_id)
+    if (existing) return
 
-  const addIngredient = (ingredient: IngredientSearchResult) => {
-    // If editing existing item, save to DB immediately
+    const newIng: SavedIngredient = {
+      id: `temp-${ing.pos_ingredient_id}`,
+      pos_ingredient_id: ing.pos_ingredient_id,
+      name: ing.name,
+      unit: ing.unit,
+      quantity: 1,
+      avg_cost: ing.avg_cost || 0,
+      total_cost: ing.avg_cost || 0,
+      is_composite: ing.is_composite,
+      category_name: ing.category_name || '',
+    }
+
     if (item?.id) {
       fetch(`/api/admin/menu/items/${item.id}/ingredients`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pos_ingredient_id: ingredient.pos_ingredient_id, quantity: 1 }),
-      }).then(res => {
-        if (res.ok) return res.json()
-        throw new Error('Failed')
-      }).then(data => {
-        setIngredients(prev => [...prev, {
-          id: data.id,
-          pos_ingredient_id: ingredient.pos_ingredient_id,
-          name: ingredient.name,
-          unit: ingredient.unit,
-          quantity: 1,
-          avg_cost: ingredient.avg_cost,
-          total_cost: ingredient.avg_cost,
-          is_composite: ingredient.is_composite,
-        }])
-      }).catch(() => {})
+        body: JSON.stringify({ pos_ingredient_id: ing.pos_ingredient_id, quantity: 1 }),
+      }).then(res => res.ok ? res.json() : Promise.reject()).then(data => {
+        setIngredients(prev => [...prev, { ...newIng, id: data.id || newIng.id }])
+      }).catch(() => setIngredients(prev => [...prev, newIng]))
     } else {
-      setIngredients(prev => [...prev, {
-        id: `temp-${ingredient.pos_ingredient_id}`,
-        pos_ingredient_id: ingredient.pos_ingredient_id,
-        name: ingredient.name,
-        unit: ingredient.unit,
-        quantity: 1,
-        avg_cost: ingredient.avg_cost,
-        total_cost: ingredient.avg_cost,
-        is_composite: ingredient.is_composite,
-      }])
+      setIngredients(prev => [...prev, newIng])
     }
-    setSearchQuery('')
-    setSearchResults([])
   }
 
-  const removeIngredient = (ingredientId: string, posIngredientId: string) => {
+  const removeIngredient = (posIngredientId: string) => {
     if (item?.id) {
       fetch(`/api/admin/menu/items/${item.id}/ingredients`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pos_ingredient_id: posIngredientId }),
-      }).then(() => {
-        setIngredients(prev => prev.filter(i => i.pos_ingredient_id !== posIngredientId))
       }).catch(() => {})
-    } else {
-      setIngredients(prev => prev.filter(i => i.pos_ingredient_id !== posIngredientId))
     }
+    setIngredients(prev => prev.filter(i => i.pos_ingredient_id !== posIngredientId))
   }
 
   const updateQuantity = (posIngredientId: string, quantity: number) => {
@@ -189,16 +185,13 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
   const margin = sellPrice - totalIngredientCost
   const marginPercent = sellPrice > 0 ? (margin / sellPrice) * 100 : 0
 
-  // Close search dropdown on outside click
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowSearch(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
+  // Group added ingredients by category
+  const addedByCategory: Record<string, SavedIngredient[]> = {}
+  for (const ing of ingredients) {
+    const cat = ing.category_name || 'Sin categoria'
+    if (!addedByCategory[cat]) addedByCategory[cat] = []
+    addedByCategory[cat].push(ing)
+  }
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -232,7 +225,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ pos_ingredient_id: ing.pos_ingredient_id, quantity: ing.quantity }),
-          }).catch(() => {}) // Best effort
+          }).catch(() => {})
         }
       }
 
@@ -287,13 +280,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
             <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none" placeholder="https://..." />
           </div>
           <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="featured"
-              checked={isFeatured}
-              onChange={e => setIsFeatured(e.target.checked)}
-              className="rounded border-[var(--border-default)] text-[var(--color-ak-borgona)] focus:ring-[var(--color-ak-borgona)]"
-            />
+            <input type="checkbox" id="featured" checked={isFeatured} onChange={e => setIsFeatured(e.target.checked)} className="rounded border-[var(--border-default)] text-[var(--color-ak-borgona)] focus:ring-[var(--color-ak-borgona)]" />
             <label htmlFor="featured" className="text-xs text-[var(--text-primary)]">Destacado</label>
           </div>
 
@@ -310,91 +297,135 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
               )}
             </div>
 
-            {/* Search input */}
-            <div className="relative mb-3" ref={searchRef}>
-              <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => { handleSearchChange(e.target.value); setShowSearch(true) }}
-                onFocus={() => setShowSearch(true)}
-                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] pl-9 pr-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
-                placeholder="Buscar ingrediente del POS..."
-              />
-              {searchLoading && (
-                <Spinner size={16} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-[var(--text-secondary)]" />
-              )}
-              {showSearch && searchResults.length > 0 && (
-                <div className="absolute z-50 left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] shadow-lg">
-                  {searchResults.map(ing => (
-                    <button
-                      key={ing.pos_ingredient_id}
-                      type="button"
-                      onClick={() => addIngredient(ing)}
-                      className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-[var(--color-ak-borgona)]/5 active:bg-[var(--color-ak-borgona)]/10"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm text-[var(--text-primary)] truncate">{ing.name}</div>
-                        <div className="text-[11px] text-[var(--text-secondary)]">
-                          {ing.category_name} &middot; {ing.unit}{ing.is_composite ? ' (subreceta)' : ''}
-                        </div>
-                      </div>
-                      <span className="ml-2 text-xs font-mono text-[var(--color-ak-borgona)]">
-                        {formatCOP(ing.avg_cost)}/{ing.unit.toLowerCase()}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Ingredient list */}
-            {ingredients.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-[var(--border-default)] py-6 text-center">
-                <p className="text-sm text-[var(--text-secondary)]">Busca y agrega ingredientes del POS</p>
-                <p className="text-xs text-[var(--text-muted)] mt-1">Los costos se calculan automaticamente</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {ingredients.map(ing => (
-                  <div key={ing.pos_ingredient_id} className="flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-2.5">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm text-[var(--text-primary)] truncate">
-                        {ing.name}
-                        {ing.is_composite && (
-                          <span className="ml-1.5 rounded bg-[var(--color-ak-borgona)]/10 px-1.5 py-0.5 text-[9px] font-medium text-[var(--color-ak-borgona)]">sub</span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-[var(--text-secondary)]">
-                        {formatCOP(ing.avg_cost)}/{ing.unit.toLowerCase()} &middot; Total: {formatCOP(ing.total_cost)}
-                      </div>
+            {/* Added ingredients grouped by category */}
+            {ingredients.length > 0 && (
+              <div className="mb-4 space-y-3">
+                {Object.entries(addedByCategory).map(([catName, ings]) => (
+                  <div key={catName} className="rounded-lg border border-[var(--border-default)] overflow-hidden">
+                    <div className="bg-[var(--bg-input)] px-3 py-1.5">
+                      <span className="text-[11px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">{catName}</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <input
-                        type="number"
-                        min="0.01"
-                        step="0.1"
-                        value={ing.quantity}
-                        onChange={e => updateQuantity(ing.pos_ingredient_id, parseFloat(e.target.value) || 0)}
-                        className="w-16 rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-xs text-center text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
-                      />
-                      <span className="text-[11px] text-[var(--text-secondary)]">{ing.unit}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeIngredient(ing.id, ing.pos_ingredient_id)}
-                        className="flex h-6 w-6 items-center justify-center rounded text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
-                      >
-                        <Trash size={14} />
-                      </button>
+                    <div className="divide-y divide-[var(--border-default)]">
+                      {ings.map(ing => (
+                        <div key={ing.pos_ingredient_id} className="flex items-center gap-2 px-3 py-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm text-[var(--text-primary)] truncate">
+                              {ing.name}
+                              {ing.is_composite && (
+                                <span className="ml-1.5 rounded bg-[var(--color-ak-borgona)]/10 px-1.5 py-0.5 text-[9px] font-medium text-[var(--color-ak-borgona)]">sub</span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-[var(--text-secondary)]">
+                              {formatCOP(ing.avg_cost)}/{ing.unit.toLowerCase()}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number"
+                              min="0.01"
+                              step="0.1"
+                              value={ing.quantity}
+                              onChange={e => updateQuantity(ing.pos_ingredient_id, parseFloat(e.target.value) || 0)}
+                              className="w-16 rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-xs text-center text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
+                            />
+                            <span className="text-[10px] text-[var(--text-secondary)] w-6">{ing.unit}</span>
+                            <span className="text-xs font-mono font-medium text-[var(--color-ak-borgona)] w-20 text-right">{formatCOP(ing.total_cost)}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeIngredient(ing.pos_ingredient_id)}
+                              className="flex h-6 w-6 items-center justify-center rounded text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
+                            >
+                              <Trash size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
+            {/* Empty state */}
+            {ingredients.length === 0 && (
+              <div className="rounded-lg border border-dashed border-[var(--border-default)] py-6 text-center mb-4">
+                <p className="text-sm text-[var(--text-secondary)]">Agrega ingredientes desde las categorias</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">Los costos se calculan automaticamente</p>
+              </div>
+            )}
+
+            {/* Ingredient categories accordion */}
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-2">Agregar ingredientes</p>
+              {ingCategories.map(cat => (
+                <div key={cat.pos_category_id} className="rounded-lg border border-[var(--border-default)] overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => loadCategoryIngredients(cat.pos_category_id)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-[var(--color-ak-borgona)]/5 active:bg-[var(--color-ak-borgona)]/10"
+                  >
+                    <div className="flex items-center gap-2">
+                      {expandedCat === cat.pos_category_id ? (
+                        <CaretDown size={14} className="text-[var(--color-ak-borgona)]" />
+                      ) : (
+                        <CaretRight size={14} className="text-[var(--text-secondary)]" />
+                      )}
+                      <span className="text-sm font-medium text-[var(--text-primary)]">{cat.name}</span>
+                    </div>
+                    <span className="text-[11px] text-[var(--text-secondary)]">{cat.ingredient_count}</span>
+                  </button>
+                  {(expandedCat === cat.pos_category_id && ingByCategory[cat.pos_category_id]) && (
+                    <div className="border-t border-[var(--border-default)] max-h-48 overflow-y-auto">
+                      {loadingCat === cat.pos_category_id ? (
+                        <div className="flex items-center justify-center py-6">
+                          <Spinner size={20} className="animate-spin text-[var(--text-secondary)]" />
+                        </div>
+                      ) : (
+                        (ingByCategory[cat.pos_category_id] || []).map(ing => {
+                          const isAdded = ingredients.some(i => i.pos_ingredient_id === ing.pos_ingredient_id)
+                          return (
+                            <div
+                              key={ing.pos_ingredient_id}
+                              className={`flex items-center justify-between px-3 py-2 hover:bg-[var(--bg-input)]/50 ${isAdded ? 'opacity-50' : ''}`}
+                            >
+                              <div className="min-w-0 flex-1 mr-2">
+                                <div className="text-sm text-[var(--text-primary)] truncate">
+                                  {ing.name}
+                                  {ing.is_composite && (
+                                    <span className="ml-1 rounded bg-[var(--color-ak-borgona)]/10 px-1 py-0.5 text-[9px] font-medium text-[var(--color-ak-borgona)]">sub</span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-[var(--text-secondary)]">
+                                  {formatCOP(ing.avg_cost)}/{ing.unit.toLowerCase()}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                disabled={isAdded}
+                                onClick={() => addIngredient(ing)}
+                                className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium active:scale-[0.97] ${
+                                  isAdded
+                                    ? 'bg-[var(--color-ak-dorado)]/10 text-[var(--color-ak-dorado)] cursor-default'
+                                    : 'bg-[var(--color-ak-borgona)] text-white hover:bg-[var(--color-ak-borgona)]/90'
+                                }`}
+                                style={{ transition: 'transform 120ms ease-out' }}
+                              >
+                                <Plus size={12} />
+                                {isAdded ? 'Agregado' : 'Agregar'}
+                              </button>
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
             {/* Cost summary */}
             {ingredients.length > 0 && (
-              <div className="mt-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-3 space-y-2">
+              <div className="mt-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-[var(--text-secondary)]">Costo ingredientes</span>
                   <span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(totalIngredientCost)}</span>

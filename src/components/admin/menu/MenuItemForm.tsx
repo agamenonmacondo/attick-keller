@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { X, CaretDown, CaretRight, Plus, Trash, Spinner } from '@phosphor-icons/react'
 import { formatCOP } from '@/lib/utils/formatCOP'
 
@@ -72,57 +72,64 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
 
   // Ingredient state
   const [ingredients, setIngredients] = useState<SavedIngredient[]>([])
-  const [ingredientsLoaded, setIngredientsLoaded] = useState(false)
   const [ingCategories, setIngCategories] = useState<IngredientCategory[]>([])
   const [ingByCategory, setIngByCategory] = useState<Record<string, IngredientResult[]>>({})
-  const [expandedCat, setExpandedCat] = useState<string | null>(null)
-  const [loadingCat, setLoadingCat] = useState<string | null>(null)
+  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set())
+  const [loadingCats, setLoadingCats] = useState<Set<string>>(new Set())
 
   // Load existing ingredients when editing
-  useState(() => {
+  useEffect(() => {
     if (item?.id) {
       fetch(`/api/admin/menu/items/${item.id}/ingredients`)
         .then(res => res.ok ? res.json() : { ingredients: [] })
         .then(data => {
           if (data.ingredients) setIngredients(data.ingredients)
-          setIngredientsLoaded(true)
         })
-        .catch(() => setIngredientsLoaded(true))
-    } else {
-      setIngredientsLoaded(true)
+        .catch(() => {})
     }
-  })
+  }, [item?.id])
 
   // Load ingredient categories on mount
-  useState(() => {
+  useEffect(() => {
     fetch('/api/admin/pos-ingredient-categories')
       .then(res => res.ok ? res.json() : { categories: [] })
       .then(data => {
         if (data.categories) setIngCategories(data.categories)
       })
       .catch(() => {})
-  })
+  }, [])
 
   // Load ingredients for a category
   const loadCategoryIngredients = useCallback(async (catId: string) => {
     if (ingByCategory[catId]) {
-      setExpandedCat(expandedCat === catId ? null : catId)
+      // Toggle expand/collapse
+      setExpandedCats(prev => {
+        const next = new Set(prev)
+        if (next.has(catId)) next.delete(catId)
+        else next.add(catId)
+        return next
+      })
       return
     }
-    setLoadingCat(catId)
+    // Load from API
+    setLoadingCats(prev => new Set(prev).add(catId))
     try {
       const res = await fetch(`/api/admin/pos-ingredients?category=${encodeURIComponent(catId)}&limit=500&include_bar=true&include_wine=true`)
       if (res.ok) {
         const data = await res.json()
         setIngByCategory(prev => ({ ...prev, [catId]: data.ingredients || [] }))
-        setExpandedCat(catId)
+        setExpandedCats(prev => new Set(prev).add(catId))
       }
     } catch {
       // Silently fail
     } finally {
-      setLoadingCat(null)
+      setLoadingCats(prev => {
+        const next = new Set(prev)
+        next.delete(catId)
+        return next
+      })
     }
-  }, [ingByCategory, expandedCat])
+  }, [ingByCategory])
 
   const addIngredient = (ing: IngredientResult) => {
     const existing = ingredients.find(i => i.pos_ingredient_id === ing.pos_ingredient_id)
@@ -253,6 +260,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
         {error && <div className="mb-3 rounded-lg bg-[var(--color-danger)]/10 border border-red-200 px-3 py-2 text-sm text-[var(--color-danger)]">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-3">
+          {/* ======== BASIC INFO ======== */}
           <div>
             <label className="mb-1 block text-xs text-[var(--text-secondary)]">Nombre</label>
             <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none" placeholder="Hummus de garbanzos" />
@@ -291,51 +299,52 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
                 Ingredientes
               </h3>
               {ingredients.length > 0 && (
-                <span className="text-xs text-[var(--text-secondary)]">
-                  {ingredients.length} {ingredients.length === 1 ? 'ingrediente' : 'ingredientes'}
+                <span className="rounded-full bg-[var(--color-ak-borgona)]/10 px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-ak-borgona)]">
+                  {ingredients.length}
                 </span>
               )}
             </div>
 
             {/* Added ingredients grouped by category */}
             {ingredients.length > 0 && (
-              <div className="mb-4 space-y-3">
+              <div className="mb-4 space-y-2">
                 {Object.entries(addedByCategory).map(([catName, ings]) => (
                   <div key={catName} className="rounded-lg border border-[var(--border-default)] overflow-hidden">
-                    <div className="bg-[var(--bg-input)] px-3 py-1.5">
+                    <div className="bg-[var(--bg-input)]/60 px-3 py-1.5 flex items-center justify-between">
                       <span className="text-[11px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">{catName}</span>
+                      <span className="text-[10px] text-[var(--text-muted)]">{formatCOP(ings.reduce((s, i) => s + i.total_cost, 0))}</span>
                     </div>
-                    <div className="divide-y divide-[var(--border-default)]">
+                    <div className="divide-y divide-[var(--border-default)]/50">
                       {ings.map(ing => (
-                        <div key={ing.pos_ingredient_id} className="flex items-center gap-2 px-3 py-2">
+                        <div key={ing.pos_ingredient_id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-[var(--bg-input)]/30">
                           <div className="min-w-0 flex-1">
-                            <div className="text-sm text-[var(--text-primary)] truncate">
+                            <div className="text-[13px] text-[var(--text-primary)] truncate">
                               {ing.name}
                               {ing.is_composite && (
-                                <span className="ml-1.5 rounded bg-[var(--color-ak-borgona)]/10 px-1.5 py-0.5 text-[9px] font-medium text-[var(--color-ak-borgona)]">sub</span>
+                                <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-medium text-amber-700">subreceta</span>
                               )}
                             </div>
-                            <div className="text-[11px] text-[var(--text-secondary)]">
+                            <div className="text-[10px] text-[var(--text-secondary)]">
                               {formatCOP(ing.avg_cost)}/{ing.unit.toLowerCase()}
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <input
                               type="number"
                               min="0.01"
                               step="0.1"
                               value={ing.quantity}
                               onChange={e => updateQuantity(ing.pos_ingredient_id, parseFloat(e.target.value) || 0)}
-                              className="w-16 rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-xs text-center text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
+                              className="w-14 rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-1.5 py-0.5 text-xs text-center text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                             />
-                            <span className="text-[10px] text-[var(--text-secondary)] w-6">{ing.unit}</span>
-                            <span className="text-xs font-mono font-medium text-[var(--color-ak-borgona)] w-20 text-right">{formatCOP(ing.total_cost)}</span>
+                            <span className="text-[10px] text-[var(--text-secondary)]">{ing.unit}</span>
+                            <span className="text-xs font-mono font-medium text-[var(--color-ak-borgona)] min-w-[70px] text-right">{formatCOP(ing.total_cost)}</span>
                             <button
                               type="button"
                               onClick={() => removeIngredient(ing.pos_ingredient_id)}
-                              className="flex h-6 w-6 items-center justify-center rounded text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
+                              className="flex h-6 w-6 items-center justify-center rounded text-[var(--color-danger)]/70 hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]"
                             >
-                              <Trash size={14} />
+                              <Trash size={13} />
                             </button>
                           </div>
                         </div>
@@ -343,109 +352,139 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
                     </div>
                   </div>
                 ))}
+
+                {/* Cost summary */}
+                <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-3 space-y-1.5">
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-[var(--text-secondary)]">Costo ingredientes</span>
+                    <span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(totalIngredientCost)}</span>
+                  </div>
+                  {sellPrice > 0 && (
+                    <>
+                      <div className="flex justify-between text-[13px]">
+                        <span className="text-[var(--text-secondary)]">Precio venta</span>
+                        <span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(sellPrice)}</span>
+                      </div>
+                      <div className="border-t border-[var(--border-default)] pt-1.5 flex justify-between text-[13px]">
+                        <span className="text-[var(--text-secondary)]">Margen</span>
+                        <span className={`font-mono font-bold ${margin >= 0 ? 'text-[var(--color-ak-oliva)]' : 'text-[var(--color-danger)]'}`}>
+                          {formatCOP(margin)} ({marginPercent.toFixed(1)}%)
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Empty state */}
             {ingredients.length === 0 && (
-              <div className="rounded-lg border border-dashed border-[var(--border-default)] py-6 text-center mb-4">
-                <p className="text-sm text-[var(--text-secondary)]">Agrega ingredientes desde las categorias</p>
+              <div className="rounded-lg border border-dashed border-[var(--border-default)] py-8 text-center mb-4">
+                <p className="text-sm text-[var(--text-secondary)]">Selecciona ingredientes de las categorias</p>
                 <p className="text-xs text-[var(--text-muted)] mt-1">Los costos se calculan automaticamente</p>
               </div>
             )}
 
-            {/* Ingredient categories accordion */}
+            {/* ======== CATEGORY ACCORDION ======== */}
             <div className="space-y-1">
-              <p className="text-[11px] font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-2">Agregar ingredientes</p>
-              {ingCategories.map(cat => (
-                <div key={cat.pos_category_id} className="rounded-lg border border-[var(--border-default)] overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => loadCategoryIngredients(cat.pos_category_id)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-[var(--color-ak-borgona)]/5 active:bg-[var(--color-ak-borgona)]/10"
-                  >
-                    <div className="flex items-center gap-2">
-                      {expandedCat === cat.pos_category_id ? (
-                        <CaretDown size={14} className="text-[var(--color-ak-borgona)]" />
-                      ) : (
-                        <CaretRight size={14} className="text-[var(--text-secondary)]" />
-                      )}
-                      <span className="text-sm font-medium text-[var(--text-primary)]">{cat.name}</span>
-                    </div>
-                    <span className="text-[11px] text-[var(--text-secondary)]">{cat.ingredient_count}</span>
-                  </button>
-                  {(expandedCat === cat.pos_category_id && ingByCategory[cat.pos_category_id]) && (
-                    <div className="border-t border-[var(--border-default)] max-h-48 overflow-y-auto">
-                      {loadingCat === cat.pos_category_id ? (
-                        <div className="flex items-center justify-center py-6">
-                          <Spinner size={20} className="animate-spin text-[var(--text-secondary)]" />
-                        </div>
-                      ) : (
-                        (ingByCategory[cat.pos_category_id] || []).map(ing => {
-                          const isAdded = ingredients.some(i => i.pos_ingredient_id === ing.pos_ingredient_id)
-                          return (
-                            <div
-                              key={ing.pos_ingredient_id}
-                              className={`flex items-center justify-between px-3 py-2 hover:bg-[var(--bg-input)]/50 ${isAdded ? 'opacity-50' : ''}`}
-                            >
-                              <div className="min-w-0 flex-1 mr-2">
-                                <div className="text-sm text-[var(--text-primary)] truncate">
-                                  {ing.name}
-                                  {ing.is_composite && (
-                                    <span className="ml-1 rounded bg-[var(--color-ak-borgona)]/10 px-1 py-0.5 text-[9px] font-medium text-[var(--color-ak-borgona)]">sub</span>
-                                  )}
-                                </div>
-                                <div className="text-[10px] text-[var(--text-secondary)]">
-                                  {formatCOP(ing.avg_cost)}/{ing.unit.toLowerCase()}
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                disabled={isAdded}
-                                onClick={() => addIngredient(ing)}
-                                className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium active:scale-[0.97] ${
-                                  isAdded
-                                    ? 'bg-[var(--color-ak-dorado)]/10 text-[var(--color-ak-dorado)] cursor-default'
-                                    : 'bg-[var(--color-ak-borgona)] text-white hover:bg-[var(--color-ak-borgona)]/90'
-                                }`}
-                                style={{ transition: 'transform 120ms ease-out' }}
-                              >
-                                <Plus size={12} />
-                                {isAdded ? 'Agregado' : 'Agregar'}
-                              </button>
-                            </div>
-                          )
-                        })
-                      )}
-                    </div>
-                  )}
+              <p className="text-[11px] font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-2">
+                Agregar ingredientes
+              </p>
+              {ingCategories.length === 0 && (
+                <div className="flex items-center justify-center py-6">
+                  <Spinner size={20} className="animate-spin text-[var(--text-secondary)]" />
                 </div>
-              ))}
-            </div>
+              )}
+              {ingCategories.map(cat => {
+                const isExpanded = expandedCats.has(cat.pos_category_id)
+                const isLoading = loadingCats.has(cat.pos_category_id)
+                const catItems = ingByCategory[cat.pos_category_id] || []
+                // Count how many from this category are already added
+                const addedFromCat = ingredients.filter(i =>
+                  catItems.some(c => c.pos_ingredient_id === i.pos_ingredient_id)
+                ).length
 
-            {/* Cost summary */}
-            {ingredients.length > 0 && (
-              <div className="mt-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-[var(--text-secondary)]">Costo ingredientes</span>
-                  <span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(totalIngredientCost)}</span>
-                </div>
-                {sellPrice > 0 && (
-                  <>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-[var(--text-secondary)]">Precio venta</span>
-                      <span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(sellPrice)}</span>
-                    </div>
-                    <div className="border-t border-[var(--border-default)] pt-2 flex justify-between text-sm">
-                      <span className="text-[var(--text-secondary)]">Margen</span>
-                      <span className={`font-mono font-bold ${margin >= 0 ? 'text-[var(--color-ak-oliva)]' : 'text-[var(--color-danger)]'}`}>
-                        {formatCOP(margin)} ({marginPercent.toFixed(1)}%)
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+                return (
+                  <div key={cat.pos_category_id} className="rounded-lg border border-[var(--border-default)] overflow-hidden">
+                    {/* Category header */}
+                    <button
+                      type="button"
+                      onClick={() => loadCategoryIngredients(cat.pos_category_id)}
+                      className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-[var(--color-ak-borgona)]/5 active:bg-[var(--color-ak-borgona)]/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        {isExpanded ? (
+                          <CaretDown size={14} className="text-[var(--color-ak-borgona)]" />
+                        ) : (
+                          <CaretRight size={14} className="text-[var(--text-secondary)]" />
+                        )}
+                        <span className="text-sm font-medium text-[var(--text-primary)]">{cat.name}</span>
+                        {addedFromCat > 0 && (
+                          <span className="rounded-full bg-[var(--color-ak-borgona)]/10 px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-ak-borgona)]">
+                            {addedFromCat}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-[var(--text-secondary)]">{cat.ingredient_count}</span>
+                    </button>
+
+                    {/* Expanded category items */}
+                    {isExpanded && (
+                      <div className="border-t border-[var(--border-default)] max-h-56 overflow-y-auto">
+                        {isLoading ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Spinner size={18} className="animate-spin text-[var(--text-secondary)]" />
+                          </div>
+                        ) : catItems.length === 0 ? (
+                          <div className="py-4 text-center text-xs text-[var(--text-secondary)]">
+                            Sin ingredientes
+                          </div>
+                        ) : (
+                          catItems.map(ing => {
+                            const isAdded = ingredients.some(i => i.pos_ingredient_id === ing.pos_ingredient_id)
+                            return (
+                              <div
+                                key={ing.pos_ingredient_id}
+                                className={`flex items-center justify-between px-3 py-2 border-b border-[var(--border-default)]/30 last:border-0 hover:bg-[var(--bg-input)]/50 transition-colors ${isAdded ? 'bg-[var(--color-ak-borgona)]/[0.03]' : ''}`}
+                              >
+                                <div className="min-w-0 flex-1 mr-2">
+                                  <div className="text-[13px] text-[var(--text-primary)] truncate">
+                                    {ing.name}
+                                    {ing.is_composite && (
+                                      <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-medium text-amber-700">subreceta</span>
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] text-[var(--text-secondary)]">
+                                    {formatCOP(ing.avg_cost)}/{ing.unit.toLowerCase()}
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  disabled={isAdded}
+                                  onClick={() => addIngredient(ing)}
+                                  className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium active:scale-[0.97] shrink-0 ${
+                                    isAdded
+                                      ? 'bg-[var(--color-ak-dorado)]/10 text-[var(--color-ak-dorado)] cursor-default'
+                                      : 'bg-[var(--color-ak-borgona)] text-white hover:bg-[var(--color-ak-borgona)]/90'
+                                  }`}
+                                  style={{ transition: 'transform 120ms ease-out' }}
+                                >
+                                  {isAdded ? (
+                                    <><Plus size={12} weight="bold" /> Agregado</>
+                                  ) : (
+                                    <><Plus size={12} /> Agregar</>
+                                  )}
+                                </button>
+                              </div>
+                            )
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
           <div className="flex gap-3 pt-1">

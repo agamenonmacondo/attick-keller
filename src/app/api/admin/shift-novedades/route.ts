@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getEmployeeUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { sendShiftNovedadEmail } from '@/lib/email/send'
 
 // POST /api/admin/shift-novedades — reportar contingencia
 export async function POST(request: NextRequest) {
@@ -76,6 +77,13 @@ export async function POST(request: NextRequest) {
       .eq('schedule_id', schedule_id)
       .eq('employee_id', employeeId)
       .filter('day_index', 'eq', getDayIndexFromDate(date))
+  }
+
+  // Enviar correo de novedad al lider de area (fire-and-forget)
+  try {
+    await sendShiftNovedadEmail(employeeId, type, date, description, schedule_id, sb)
+  } catch (emailErr) {
+    console.error('[email] Error sending novedad email:', emailErr)
   }
 
   return NextResponse.json(data, { status: 201 })

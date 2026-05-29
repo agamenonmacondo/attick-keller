@@ -894,3 +894,326 @@ export async function sendShiftCheckoutReminders(
 
   return results
 }
+
+// ================================================================
+// Correo 4: Confirmacion de check-in
+// ================================================================
+
+export async function sendShiftCheckinEmail(
+  scheduleId: string,
+  shiftCode: string,
+  dayIndex: number,
+  employeeId: string,
+  sb: any
+): Promise<{ sent: number; failed: number }> {
+  const { data: schedule } = await sb
+    .from('shift_schedules')
+    .select('id, area, week_str')
+    .eq('id', scheduleId)
+    .single()
+  if (!schedule) return { sent: 0, failed: 0 }
+
+  const { data: shiftType } = await sb
+    .from('shift_types')
+    .select('code, name, entrada, salida, ordinarias, nocturnas')
+    .eq('area', schedule.area)
+    .eq('code', shiftCode)
+    .single()
+  if (!shiftType) return { sent: 0, failed: 0 }
+
+  const { data: employee } = await sb
+    .from('pos_nomina_staff')
+    .select('id, nombre_completo, correo, area')
+    .eq('id', employeeId)
+    .single()
+  if (!employee) return { sent: 0, failed: 0 }
+
+  let email = employee.correo
+  if (!email) {
+    const { data: userRole } = await sb
+      .from('user_roles')
+      .select('auth_user_id')
+      .eq('pos_nomina_staff_id', employeeId)
+      .eq('is_active', true)
+      .limit(1)
+      .maybeSingle()
+    if (userRole) {
+      const { data: { users } } = await sb.auth.admin.listUsers()
+      const authUser = users.find((u: any) => u.id === userRole.auth_user_id)
+      email = authUser?.email || ''
+    }
+  }
+  if (!email) return { sent: 0, failed: 0 }
+
+  const { data: aliasData } = await sb
+    .from('staff_aliases')
+    .select('alias')
+    .eq('employee_id', employeeId)
+    .limit(1)
+  const employeeName = aliasData?.[0]?.alias || employee.nombre_completo.split(' ')[0]
+  const areaLabel = AREA_LABELS[schedule.area] || schedule.area
+  const hours = (shiftType.ordinarias || 0) + (shiftType.nocturnas || 0)
+
+  const now = new Date()
+  const colombiaNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Bogota' }))
+  const dateStr = colombiaNow.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+  const timeStr = colombiaNow.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+
+  const html =
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+    '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
+    '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
+    '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+    '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+    '</td></tr>' +
+    '<tr><td style="padding:24px 40px;text-align:center;background:#E8F5E9;">' +
+    '<h2 style="color:#2E7D32;font-size:20px;margin:0;">Entrada registrada</h2>' +
+    '</td></tr>' +
+    '<tr><td style="padding:32px 40px;">' +
+    '<p style="color:#3E2723;font-size:16px;margin:0 0 8px 0;">Hola ' + employeeName + ',</p>' +
+    '<p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Tu entrada ha sido registrada correctamente.</p>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
+    '<tr><td style="padding:16px 24px;">' +
+    '<p style="color:#3E2723;font-size:20px;font-weight:bold;margin:0 0 8px 0;">' + shiftType.code + ' \u2014 ' + shiftType.name + '</p>' +
+    '<p style="color:#8D6E63;font-size:15px;margin:0 0 4px 0;">' + dateStr + ' \u00b7 ' + areaLabel + '</p>' +
+    '<p style="color:#3E2723;font-size:16px;margin:0;">Entrada: <strong>' + shiftType.entrada + '</strong> \u2014 Salida: <strong>' + shiftType.salida + '</strong> <span style="color:#8D6E63;font-size:14px;">(' + hours + 'h)</span></p>' +
+    '<p style="color:#2E7D32;font-size:14px;margin:8px 0 0 0;font-weight:600;">Check-in registrado a las ' + timeStr + '</p>' +
+    '</td></tr>' +
+    '</table>' +
+    '</td></tr>' +
+    '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
+    '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+    '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+    '</td></tr>' +
+    '</table></body></html>'
+
+  const subject = `Entrada registrada \u2014 ${areaLabel} ${shiftType.code} ${dateStr}`
+  const result = await sendResendEmail(email, subject, html)
+
+  await sb.from('email_log').insert({
+    type: 'shift_checkin',
+    recipient_email: email,
+    recipient_name: employeeName,
+    schedule_id: scheduleId,
+    assignment_id: null,
+    status: result.success ? 'sent' : 'failed',
+    error: result.error || null,
+  }).then(({ error }: any) => { if (error) console.error('[email] Error logging email_log:', error) })
+
+  return { sent: result.success ? 1 : 0, failed: result.success ? 0 : 1 }
+}
+
+// ================================================================
+// Correo 5: Confirmacion de checkout
+// ================================================================
+
+export async function sendShiftCheckoutEmail(
+  scheduleId: string,
+  shiftCode: string,
+  dayIndex: number,
+  employeeId: string,
+  sb: any
+): Promise<{ sent: number; failed: number }> {
+  const { data: schedule } = await sb
+    .from('shift_schedules')
+    .select('id, area, week_str')
+    .eq('id', scheduleId)
+    .single()
+  if (!schedule) return { sent: 0, failed: 0 }
+
+  const { data: shiftType } = await sb
+    .from('shift_types')
+    .select('code, name, entrada, salida, ordinarias, nocturnas')
+    .eq('area', schedule.area)
+    .eq('code', shiftCode)
+    .single()
+  if (!shiftType) return { sent: 0, failed: 0 }
+
+  const { data: employee } = await sb
+    .from('pos_nomina_staff')
+    .select('id, nombre_completo, correo, area')
+    .eq('id', employeeId)
+    .single()
+  if (!employee) return { sent: 0, failed: 0 }
+
+  let email = employee.correo
+  if (!email) {
+    const { data: userRole } = await sb
+      .from('user_roles')
+      .select('auth_user_id')
+      .eq('pos_nomina_staff_id', employeeId)
+      .eq('is_active', true)
+      .limit(1)
+      .maybeSingle()
+    if (userRole) {
+      const { data: { users } } = await sb.auth.admin.listUsers()
+      const authUser = users.find((u: any) => u.id === userRole.auth_user_id)
+      email = authUser?.email || ''
+    }
+  }
+  if (!email) return { sent: 0, failed: 0 }
+
+  const { data: aliasData } = await sb
+    .from('staff_aliases')
+    .select('alias')
+    .eq('employee_id', employeeId)
+    .limit(1)
+  const employeeName = aliasData?.[0]?.alias || employee.nombre_completo.split(' ')[0]
+  const areaLabel = AREA_LABELS[schedule.area] || schedule.area
+  const hours = (shiftType.ordinarias || 0) + (shiftType.nocturnas || 0)
+
+  const now = new Date()
+  const colombiaNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Bogota' }))
+  const dateStr = colombiaNow.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+  const timeStr = colombiaNow.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+
+  const html =
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+    '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
+    '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
+    '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+    '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+    '</td></tr>' +
+    '<tr><td style="padding:24px 40px;text-align:center;background:#E3F2FD;">' +
+    '<h2 style="color:#1565C0;font-size:20px;margin:0;">Salida registrada</h2>' +
+    '</td></tr>' +
+    '<tr><td style="padding:32px 40px;">' +
+    '<p style="color:#3E2723;font-size:16px;margin:0 0 8px 0;">Hola ' + employeeName + ',</p>' +
+    '<p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Tu salida ha sido registrada correctamente.</p>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
+    '<tr><td style="padding:16px 24px;">' +
+    '<p style="color:#3E2723;font-size:20px;font-weight:bold;margin:0 0 8px 0;">' + shiftType.code + ' \u2014 ' + shiftType.name + '</p>' +
+    '<p style="color:#8D6E63;font-size:15px;margin:0 0 4px 0;">' + dateStr + ' \u00b7 ' + areaLabel + '</p>' +
+    '<p style="color:#3E2723;font-size:16px;margin:0;">Entrada: <strong>' + shiftType.entrada + '</strong> \u2014 Salida: <strong>' + shiftType.salida + '</strong> <span style="color:#8D6E63;font-size:14px;">(' + hours + 'h)</span></p>' +
+    '<p style="color:#1565C0;font-size:14px;margin:8px 0 0 0;font-weight:600;">Salida registrada a las ' + timeStr + '</p>' +
+    '</td></tr>' +
+    '</table>' +
+    '</td></tr>' +
+    '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
+    '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+    '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+    '</td></tr>' +
+    '</table></body></html>'
+
+  const subject = `Salida registrada \u2014 ${areaLabel} ${shiftType.code} ${dateStr}`
+  const result = await sendResendEmail(email, subject, html)
+
+  await sb.from('email_log').insert({
+    type: 'shift_checkout',
+    recipient_email: email,
+    recipient_name: employeeName,
+    schedule_id: scheduleId,
+    assignment_id: null,
+    status: result.success ? 'sent' : 'failed',
+    error: result.error || null,
+  }).then(({ error }: any) => { if (error) console.error('[email] Error logging email_log:', error) })
+
+  return { sent: result.success ? 1 : 0, failed: result.success ? 0 : 1 }
+}
+
+// ================================================================
+// Correo 6: Novedad reportada (falta, tardanza, permiso, incapacidad)
+// Se envia al lider de area + admins
+// ================================================================
+
+const NOVEDAD_LABELS: Record<string, string> = {
+  falta: 'Falta',
+  tarde: 'Llegada tarde',
+  permiso: 'Permiso',
+  incapacidad: 'Incapacidad',
+}
+
+export async function sendShiftNovedadEmail(
+  employeeId: string,
+  novedadType: string,
+  date: string,
+  description: string | null,
+  scheduleId: string | null,
+  sb: any
+): Promise<{ sent: number; failed: number }> {
+  const { data: employee } = await sb
+    .from('pos_nomina_staff')
+    .select('id, nombre_completo, correo, area')
+    .eq('id', employeeId)
+    .single()
+  if (!employee) return { sent: 0, failed: 0 }
+
+  // Buscar lideres de area + admins
+  const { data: leaders } = await sb
+    .from('user_roles')
+    .select('auth_user_id, pos_nomina_staff_id, role')
+    .in('role', ['lider_area', 'super_admin', 'store_admin'])
+    .eq('is_active', true)
+    .limit(10)
+
+  if (!leaders || leaders.length === 0) return { sent: 0, failed: 0 }
+
+  const { data: { users } } = await sb.auth.admin.listUsers()
+  const results = { sent: 0, failed: 0 }
+
+  const novedadLabel = NOVEDAD_LABELS[novedadType] || novedadType
+  const employeeName = employee.nombre_completo
+  const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+
+  for (const leader of leaders) {
+    const authUser = users.find((u: any) => u.id === leader.auth_user_id)
+    const email = authUser?.email
+    if (!email) continue
+
+    const recipientName = authUser?.user_metadata?.name || authUser?.email?.split('@')[0] || 'Administrador'
+
+    const descHtml = description ? '<p style="color:#3E2723;font-size:14px;margin:8px 0 0 0;font-style:italic;">"' + description + '"</p>' : ''
+
+    const html =
+      '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+      '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+      '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
+      '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
+      '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+      '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+      '</td></tr>' +
+      '<tr><td style="padding:24px 40px;text-align:center;background:#FFF3E0;">' +
+      '<h2 style="color:#E65100;font-size:20px;margin:0;">Novedad reportada</h2>' +
+      '</td></tr>' +
+      '<tr><td style="padding:32px 40px;">' +
+      '<p style="color:#3E2723;font-size:16px;margin:0 0 8px 0;">Hola ' + recipientName + ',</p>' +
+      '<p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Se ha reportado una novedad:</p>' +
+      '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
+      '<tr><td style="padding:16px 24px;">' +
+      '<p style="color:#3E2723;font-size:18px;font-weight:bold;margin:0 0 8px 0;">' + employeeName + '</p>' +
+      '<p style="color:#E65100;font-size:15px;font-weight:600;margin:0 0 4px 0;">' + novedadLabel + '</p>' +
+      '<p style="color:#8D6E63;font-size:15px;margin:0 0 4px 0;">' + dateFormatted + '</p>' +
+      descHtml +
+      '</td></tr>' +
+      '</table>' +
+      '<div style="text-align:center;margin-top:24px;">' +
+      '<a href="https://web-rosy-nine-64.vercel.app/admin/turnos" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Cronograma</a>' +
+      '</div>' +
+      '</td></tr>' +
+      '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
+      '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+      '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+      '</td></tr>' +
+      '</table></body></html>'
+
+    const subject = `Novedad: ${employeeName} \u2014 ${novedadLabel} ${dateFormatted}`
+    const result = await sendResendEmail(email, subject, html)
+
+    await sb.from('email_log').insert({
+      type: 'shift_novedad',
+      recipient_email: email,
+      recipient_name: recipientName,
+      schedule_id: scheduleId,
+      assignment_id: null,
+      status: result.success ? 'sent' : 'failed',
+      error: result.error || null,
+    }).then(({ error }: any) => { if (error) console.error('[email] Error logging email_log:', error) })
+
+    if (result.success) results.sent++
+    else results.failed++
+  }
+
+  return results
+}

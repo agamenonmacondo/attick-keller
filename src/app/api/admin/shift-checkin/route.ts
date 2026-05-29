@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getEmployeeUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { sendShiftCheckinEmail } from '@/lib/email/send'
 
 // POST /api/admin/shift-checkin
 export async function POST(request: NextRequest) {
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
   // Verificar que la asignacion pertenece al empleado
   const { data: assignment } = await sb
     .from('shift_assignments')
-    .select('employee_id')
+    .select('employee_id, schedule_id, shift_code, day_index')
     .eq('id', assignment_id)
     .single()
 
@@ -69,6 +70,13 @@ export async function POST(request: NextRequest) {
     checkin_at: now,
     location: location || null,
   })
+
+  // Enviar correo de confirmacion de check-in (fire-and-forget)
+  try {
+    await sendShiftCheckinEmail(assignment.schedule_id, assignment.shift_code, assignment.day_index, employeeId, sb)
+  } catch (emailErr) {
+    console.error('[email] Error sending checkin email:', emailErr)
+  }
 
   return NextResponse.json(data)
 }

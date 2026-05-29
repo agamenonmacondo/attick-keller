@@ -1,7 +1,7 @@
 -- Tabla para deduplicar correos de turnos
 CREATE TABLE IF NOT EXISTS email_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  type TEXT NOT NULL CHECK (type IN ('schedule_published', 'shift_reminder', 'shift_checkout_reminder')),
+  type TEXT NOT NULL CHECK (type IN ('schedule_published', 'shift_reminder', 'shift_checkout_reminder', 'shift_checkin', 'shift_checkout', 'shift_novedad')),
   recipient_email TEXT NOT NULL,
   recipient_name TEXT,
   schedule_id UUID REFERENCES shift_schedules(id),

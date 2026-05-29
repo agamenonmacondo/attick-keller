@@ -66,7 +66,7 @@ export async function POST(
       .select('code, name, entrada, salida, ordinarias, nocturnas')
       .eq('area', updated.area)
 
-    const shiftTypeMap = new Map((shiftTypes || []).map((st: any) => [st.code, st]))
+    const shiftTypeMap: Map<string, any> = new Map((shiftTypes || []).map((st: any) => [st.code, st]))
 
     // Agrupar por empleado
     const employeeMap = new Map<string, { shiftCode: string; shiftName: string; entrada: string; salida: string; hours: number; dayIndex: number }[]>()

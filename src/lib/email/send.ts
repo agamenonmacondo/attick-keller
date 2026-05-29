@@ -657,7 +657,7 @@ export async function sendShiftReminderEmails(
       .select('code, name, entrada, salida, ordinarias, nocturnas')
       .eq('area', schedule.area)
 
-    const shiftTypeMap = new Map((shiftTypes || []).map((st: any) => [st.code, st]))
+    const shiftTypeMap: Map<string, any> = new Map((shiftTypes || []).map((st: any) => [st.code, st]))
 
     const { data: assignments } = await sb
       .from('shift_assignments')
@@ -794,7 +794,7 @@ export async function sendShiftCheckoutReminders(
       .select('code, name, entrada, salida, ordinarias, nocturnas')
       .eq('area', schedule.area)
 
-    const shiftTypeMap = new Map((shiftTypes || []).map((st: any) => [st.code, st]))
+    const shiftTypeMap: Map<string, any> = new Map((shiftTypes || []).map((st: any) => [st.code, st]))
 
     // Asignaciones de hoy SIN checkout
     const { data: assignments } = await sb

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { X, CaretDown, CaretRight, Plus, Trash, Spinner } from '@phosphor-icons/react'
 import { formatCOP } from '@/lib/utils/formatCOP'
 
@@ -22,188 +22,154 @@ interface MenuItem {
   sort_order: number
 }
 
-interface IngredientResult {
+interface IngredientCategory {
+  pos_category_id: string
+  name: string
+  classification: string
+  ingredient_count: number
+}
+
+interface IngResult {
   pos_ingredient_id: string
   name: string
   unit: string
   is_composite: boolean
   category_name: string
   avg_cost: number
-  cost: number
 }
 
-interface IngredientCategory {
-  pos_category_id: string
-  name: string
-  classification: string
-  priority: number
-  ingredient_count: number
-}
-
-interface SavedIngredient {
-  id: string
+interface AddedIng {
   pos_ingredient_id: string
   name: string
   unit: string
   quantity: number
   avg_cost: number
-  total_cost: number
-  is_composite: boolean
   category_name: string
+  is_composite: boolean
 }
 
-interface MenuItemFormProps {
+interface Props {
   item: MenuItem | null
   categories: Category[]
   onClose: () => void
   onSaved: () => void
 }
 
-export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFormProps) {
+export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
   const isEditing = !!item
+
   const [name, setName] = useState(item?.name || '')
   const [description, setDescription] = useState(item?.description || '')
   const [price, setPrice] = useState(item?.price?.toString() || '')
-  const [categoryId, setCategoryId] = useState(item?.category_id || (categories[0]?.id || ''))
+  const [categoryId, setCategoryId] = useState(item?.category_id || categories[0]?.id || '')
   const [imageUrl, setImageUrl] = useState(item?.image_url || '')
   const [isFeatured, setIsFeatured] = useState(item?.is_featured || false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Ingredient state
-  const [ingredients, setIngredients] = useState<SavedIngredient[]>([])
-  const [ingCategories, setIngCategories] = useState<IngredientCategory[]>([])
-  const [ingByCategory, setIngByCategory] = useState<Record<string, IngredientResult[]>>({})
-  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set())
-  const [loadingCats, setLoadingCats] = useState<Set<string>>(new Set())
+  const [added, setAdded] = useState<AddedIng[]>([])
+  const [ingCats, setIngCats] = useState<IngredientCategory[]>([])
+  const [catItems, setCatItems] = useState<Record<string, IngResult[]>>({})
+  const [openCat, setOpenCat] = useState<string | null>(null)
+  const [loadingCat, setLoadingCat] = useState<string | null>(null)
 
-  // Load existing ingredients when editing
-  useEffect(() => {
-    if (item?.id) {
-      fetch(`/api/admin/menu/items/${item.id}/ingredients`)
-        .then(res => res.ok ? res.json() : { ingredients: [] })
-        .then(data => {
-          if (data.ingredients) setIngredients(data.ingredients)
-        })
-        .catch(() => {})
-    }
-  }, [item?.id])
-
-  // Load ingredient categories on mount
   useEffect(() => {
     fetch('/api/admin/pos-ingredient-categories')
-      .then(res => res.ok ? res.json() : { categories: [] })
-      .then(data => {
-        if (data.categories) setIngCategories(data.categories)
-      })
+      .then(r => r.json())
+      .then(d => { if (d.categories) setIngCats(d.categories) })
       .catch(() => {})
   }, [])
 
-  // Load ingredients for a category
-  const loadCategoryIngredients = useCallback(async (catId: string) => {
-    if (ingByCategory[catId]) {
-      // Toggle expand/collapse
-      setExpandedCats(prev => {
-        const next = new Set(prev)
-        if (next.has(catId)) next.delete(catId)
-        else next.add(catId)
-        return next
+  useEffect(() => {
+    if (!item?.id) return
+    fetch(`/api/admin/menu/items/${item.id}/ingredients`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.ingredients) {
+          setAdded(d.ingredients.map((i: any) => ({
+            pos_ingredient_id: i.pos_ingredient_id,
+            name: i.name,
+            unit: i.unit,
+            quantity: i.quantity,
+            avg_cost: i.avg_cost,
+            category_name: i.category_name || '',
+            is_composite: i.is_composite || false,
+          })))
+        }
       })
+      .catch(() => {})
+  }, [item?.id])
+
+  const toggleCat = useCallback(async (catId: string) => {
+    if (openCat === catId) { setOpenCat(null); return }
+    if (!catItems[catId]) {
+      setLoadingCat(catId)
+      try {
+        const r = await fetch(`/api/admin/pos-ingredients?category=${catId}&limit=500&include_bar=true&include_wine=true`)
+        const d = await r.json()
+        setCatItems(prev => ({ ...prev, [catId]: d.ingredients || [] }))
+      } catch {}
+      setLoadingCat(null)
+    }
+    setOpenCat(catId)
+  }, [openCat, catItems])
+
+  const add = (ing: IngResult) => {
+    if (added.some(a => a.pos_ingredient_id === ing.pos_ingredient_id)) {
+      remove(ing.pos_ingredient_id)
       return
     }
-    // Load from API
-    setLoadingCats(prev => new Set(prev).add(catId))
-    try {
-      const res = await fetch(`/api/admin/pos-ingredients?category=${encodeURIComponent(catId)}&limit=500&include_bar=true&include_wine=true`)
-      if (res.ok) {
-        const data = await res.json()
-        setIngByCategory(prev => ({ ...prev, [catId]: data.ingredients || [] }))
-        setExpandedCats(prev => new Set(prev).add(catId))
-      }
-    } catch {
-      // Silently fail
-    } finally {
-      setLoadingCats(prev => {
-        const next = new Set(prev)
-        next.delete(catId)
-        return next
-      })
-    }
-  }, [ingByCategory])
-
-  const addIngredient = (ing: IngredientResult) => {
-    const existing = ingredients.find(i => i.pos_ingredient_id === ing.pos_ingredient_id)
-    if (existing) return
-
-    const newIng: SavedIngredient = {
-      id: `temp-${ing.pos_ingredient_id}`,
+    const newIng: AddedIng = {
       pos_ingredient_id: ing.pos_ingredient_id,
       name: ing.name,
       unit: ing.unit,
       quantity: 1,
       avg_cost: ing.avg_cost || 0,
-      total_cost: ing.avg_cost || 0,
-      is_composite: ing.is_composite,
       category_name: ing.category_name || '',
+      is_composite: ing.is_composite,
     }
-
     if (item?.id) {
       fetch(`/api/admin/menu/items/${item.id}/ingredients`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pos_ingredient_id: ing.pos_ingredient_id, quantity: 1 }),
-      }).then(res => res.ok ? res.json() : Promise.reject()).then(data => {
-        setIngredients(prev => [...prev, { ...newIng, id: data.id || newIng.id }])
-      }).catch(() => setIngredients(prev => [...prev, newIng]))
-    } else {
-      setIngredients(prev => [...prev, newIng])
+      }).catch(() => {})
     }
+    setAdded(prev => [...prev, newIng])
   }
 
-  const removeIngredient = (posIngredientId: string) => {
+  const remove = (posId: string) => {
     if (item?.id) {
       fetch(`/api/admin/menu/items/${item.id}/ingredients`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pos_ingredient_id: posIngredientId }),
+        body: JSON.stringify({ pos_ingredient_id: posId }),
       }).catch(() => {})
     }
-    setIngredients(prev => prev.filter(i => i.pos_ingredient_id !== posIngredientId))
+    setAdded(prev => prev.filter(a => a.pos_ingredient_id !== posId))
   }
 
-  const updateQuantity = (posIngredientId: string, quantity: number) => {
-    setIngredients(prev => prev.map(i =>
-      i.pos_ingredient_id === posIngredientId
-        ? { ...i, quantity, total_cost: i.avg_cost * quantity }
-        : i
+  const updateQty = (posId: string, qty: number) => {
+    setAdded(prev => prev.map(a =>
+      a.pos_ingredient_id === posId ? { ...a, quantity: qty } : a
     ))
     if (item?.id) {
       fetch(`/api/admin/menu/items/${item.id}/ingredients`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pos_ingredient_id: posIngredientId, quantity }),
+        body: JSON.stringify({ pos_ingredient_id: posId, quantity: qty }),
       }).catch(() => {})
     }
   }
 
-  // Calculate totals
-  const totalIngredientCost = ingredients.reduce((sum, i) => sum + i.total_cost, 0)
+  const totalCost = added.reduce((s, a) => s + a.avg_cost * a.quantity, 0)
   const sellPrice = parseFloat(price) || 0
-  const margin = sellPrice - totalIngredientCost
-  const marginPercent = sellPrice > 0 ? (margin / sellPrice) * 100 : 0
+  const margin = sellPrice - totalCost
+  const marginPct = sellPrice > 0 ? (margin / sellPrice) * 100 : 0
 
-  // Group added ingredients by category
-  const addedByCategory: Record<string, SavedIngredient[]> = {}
-  for (const ing of ingredients) {
-    const cat = ing.category_name || 'Sin categoria'
-    if (!addedByCategory[cat]) addedByCategory[cat] = []
-    addedByCategory[cat].push(ing)
-  }
-
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-
     if (!name.trim()) { setError('Nombre requerido'); return }
     if (!price || parseFloat(price) < 0) { setError('Precio invalido'); return }
     if (!categoryId) { setError('Categoria requerida'); return }
@@ -212,22 +178,23 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
     try {
       const url = isEditing ? `/api/admin/menu/items/${item!.id}` : '/api/admin/menu/items'
       const method = isEditing ? 'PATCH' : 'POST'
-      const body: Record<string, unknown> = {
-        name: name.trim(),
-        description: description || null,
-        price: parseFloat(price),
-        category_id: categoryId,
-        image_url: imageUrl || null,
-        is_featured: isFeatured,
-      }
-
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description || null,
+          price: parseFloat(price),
+          category_id: categoryId,
+          image_url: imageUrl || null,
+          is_featured: isFeatured,
+        }),
+      })
       const d = await res.json()
       if (!res.ok) { setError(d.error || 'Error'); return }
 
-      // If creating new item, save ingredients
-      if (!isEditing && d.id && ingredients.length > 0) {
-        for (const ing of ingredients) {
+      if (!isEditing && d.id) {
+        for (const ing of added) {
           await fetch(`/api/admin/menu/items/${d.id}/ingredients`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -235,7 +202,6 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
           }).catch(() => {})
         }
       }
-
       onSaved()
       onClose()
     } catch {
@@ -243,40 +209,54 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
     } finally {
       setSaving(false)
     }
-  }, [item, name, description, price, categoryId, imageUrl, isFeatured, ingredients, isEditing, onSaved, onClose])
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-default)] shadow-xl p-5" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">
-            {isEditing ? 'Editar Plato' : 'Nuevo Plato'}
+      <div
+        className="w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-default)] shadow-xl"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-default)] shrink-0">
+          <h2 className="font-[Playfair_Display] text-lg font-semibold text-[var(--text-primary)]">
+            {isEditing ? 'Editar plato' : 'Nuevo plato'}
           </h2>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50">
             <X size={18} />
           </button>
         </div>
 
-        {error && <div className="mb-3 rounded-lg bg-[var(--color-danger)]/10 border border-red-200 px-3 py-2 text-sm text-[var(--color-danger)]">{error}</div>}
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+          {error && (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">{error}</div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {/* ======== BASIC INFO ======== */}
+          {/* Basic info */}
           <div>
             <label className="mb-1 block text-xs text-[var(--text-secondary)]">Nombre</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none" placeholder="Hummus de garbanzos" />
+            <input type="text" value={name} onChange={e => setName(e.target.value)}
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
+              placeholder="Ej: Pizza Margherita" />
           </div>
           <div>
             <label className="mb-1 block text-xs text-[var(--text-secondary)]">Descripcion</label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none" placeholder="Descripcion del plato..." />
+            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2}
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
+              placeholder="Descripcion del plato..." />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-xs text-[var(--text-secondary)]">Precio (COP)</label>
-              <input type="number" min="0" step="500" value={price} onChange={e => setPrice(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none" placeholder="18000" />
+              <input type="number" min="0" step="500" value={price} onChange={e => setPrice(e.target.value)}
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
+                placeholder="37000" />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Categoria</label>
-              <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none">
+              <label className="mb-1 block text-xs text-[var(--text-secondary)]">Categoria menu</label>
+              <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none">
                 {categories.filter(c => c.is_active).map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -284,91 +264,65 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-[var(--text-secondary)]">URL de imagen</label>
-            <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none" placeholder="https://..." />
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">URL imagen</label>
+            <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)}
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
+              placeholder="https://..." />
           </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="featured" checked={isFeatured} onChange={e => setIsFeatured(e.target.checked)} className="rounded border-[var(--border-default)] text-[var(--color-ak-borgona)] focus:ring-[var(--color-ak-borgona)]" />
-            <label htmlFor="featured" className="text-xs text-[var(--text-primary)]">Destacado</label>
-          </div>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={isFeatured} onChange={e => setIsFeatured(e.target.checked)}
+              className="rounded border-[var(--border-default)] text-[var(--color-ak-borgona)]" />
+            <span className="text-xs text-[var(--text-primary)]">Destacado</span>
+          </label>
 
-          {/* ======== INGREDIENTS SECTION ======== */}
-          <div className="border-t border-[var(--border-default)] pt-4 mt-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-['Playfair_Display'] text-sm font-semibold text-[var(--text-primary)]">
-                Ingredientes
-              </h3>
-              {ingredients.length > 0 && (
-                <span className="rounded-full bg-[var(--color-ak-borgona)]/10 px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-ak-borgona)]">
-                  {ingredients.length}
-                </span>
+          {/* ====== INGREDIENTS ====== */}
+          <div className="border-t border-[var(--border-default)] pt-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">Ingredientes</h3>
+              {added.length > 0 && (
+                <span className="text-xs text-[var(--text-secondary)]">{added.length} agregados</span>
               )}
             </div>
 
-            {/* Added ingredients grouped by category */}
-            {ingredients.length > 0 && (
-              <div className="mb-4 space-y-2">
-                {Object.entries(addedByCategory).map(([catName, ings]) => (
-                  <div key={catName} className="rounded-lg border border-[var(--border-default)] overflow-hidden">
-                    <div className="bg-[var(--bg-input)]/60 px-3 py-1.5 flex items-center justify-between">
-                      <span className="text-[11px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">{catName}</span>
-                      <span className="text-[10px] text-[var(--text-muted)]">{formatCOP(ings.reduce((s, i) => s + i.total_cost, 0))}</span>
+            {/* Added list */}
+            {added.length > 0 && (
+              <div className="mb-3 space-y-1">
+                {added.map(a => (
+                  <div key={a.pos_ingredient_id} className="flex items-center gap-2 py-1 px-2 rounded hover:bg-[var(--bg-input)]/50">
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[13px] text-[var(--text-primary)] truncate block">
+                        {a.name}{a.is_composite && <span className="ml-1 text-[8px] text-amber-600">(sub)</span>}
+                      </span>
+                      <span className="text-[9px] text-[var(--text-secondary)]">{formatCOP(a.avg_cost)}/{a.unit.toLowerCase()}</span>
                     </div>
-                    <div className="divide-y divide-[var(--border-default)]/50">
-                      {ings.map(ing => (
-                        <div key={ing.pos_ingredient_id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-[var(--bg-input)]/30">
-                          <div className="min-w-0 flex-1">
-                            <div className="text-[13px] text-[var(--text-primary)] truncate">
-                              {ing.name}
-                              {ing.is_composite && (
-                                <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-medium text-amber-700">subreceta</span>
-                              )}
-                            </div>
-                            <div className="text-[10px] text-[var(--text-secondary)]">
-                              {formatCOP(ing.avg_cost)}/{ing.unit.toLowerCase()}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <input
-                              type="number"
-                              min="0.01"
-                              step="0.1"
-                              value={ing.quantity}
-                              onChange={e => updateQuantity(ing.pos_ingredient_id, parseFloat(e.target.value) || 0)}
-                              className="w-14 rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-1.5 py-0.5 text-xs text-center text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
-                            />
-                            <span className="text-[10px] text-[var(--text-secondary)]">{ing.unit}</span>
-                            <span className="text-xs font-mono font-medium text-[var(--color-ak-borgona)] min-w-[70px] text-right">{formatCOP(ing.total_cost)}</span>
-                            <button
-                              type="button"
-                              onClick={() => removeIngredient(ing.pos_ingredient_id)}
-                              className="flex h-6 w-6 items-center justify-center rounded text-[var(--color-danger)]/70 hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]"
-                            >
-                              <Trash size={13} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <input type="number" min="0.01" step="0.1" value={a.quantity}
+                      onChange={e => updateQty(a.pos_ingredient_id, parseFloat(e.target.value) || 0)}
+                      className="w-14 rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-1 py-0.5 text-xs text-center text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none" />
+                    <span className="text-[9px] text-[var(--text-secondary)] w-5">{a.unit}</span>
+                    <span className="text-xs font-mono text-[var(--color-ak-borgona)] w-[70px] text-right">{formatCOP(a.avg_cost * a.quantity)}</span>
+                    <button type="button" onClick={() => remove(a.pos_ingredient_id)}
+                      className="flex h-5 w-5 items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600">
+                      <Trash size={11} />
+                    </button>
                   </div>
                 ))}
 
-                {/* Cost summary */}
-                <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-3 space-y-1.5">
-                  <div className="flex justify-between text-[13px]">
+                {/* Summary */}
+                <div className="px-2 py-2 rounded bg-[var(--bg-card)] border border-[var(--border-default)] text-[12px] space-y-1">
+                  <div className="flex justify-between">
                     <span className="text-[var(--text-secondary)]">Costo ingredientes</span>
-                    <span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(totalIngredientCost)}</span>
+                    <span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(totalCost)}</span>
                   </div>
                   {sellPrice > 0 && (
                     <>
-                      <div className="flex justify-between text-[13px]">
+                      <div className="flex justify-between">
                         <span className="text-[var(--text-secondary)]">Precio venta</span>
                         <span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(sellPrice)}</span>
                       </div>
-                      <div className="border-t border-[var(--border-default)] pt-1.5 flex justify-between text-[13px]">
+                      <div className="flex justify-between border-t border-[var(--border-default)] pt-1">
                         <span className="text-[var(--text-secondary)]">Margen</span>
-                        <span className={`font-mono font-bold ${margin >= 0 ? 'text-[var(--color-ak-oliva)]' : 'text-[var(--color-danger)]'}`}>
-                          {formatCOP(margin)} ({marginPercent.toFixed(1)}%)
+                        <span className={`font-mono font-bold ${margin >= 0 ? 'text-[var(--color-ak-oliva)]' : 'text-red-500'}`}>
+                          {formatCOP(margin)} ({marginPct.toFixed(1)}%)
                         </span>
                       </div>
                     </>
@@ -377,103 +331,62 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
               </div>
             )}
 
-            {/* Empty state */}
-            {ingredients.length === 0 && (
-              <div className="rounded-lg border border-dashed border-[var(--border-default)] py-8 text-center mb-4">
-                <p className="text-sm text-[var(--text-secondary)]">Selecciona ingredientes de las categorias</p>
-                <p className="text-xs text-[var(--text-muted)] mt-1">Los costos se calculan automaticamente</p>
-              </div>
+            {added.length === 0 && (
+              <p className="text-center text-sm text-[var(--text-secondary)] py-3 mb-3 border border-dashed border-[var(--border-default)] rounded-lg">
+                Selecciona ingredientes de las categorias
+              </p>
             )}
 
-            {/* ======== CATEGORY ACCORDION ======== */}
+            {/* Category accordion */}
             <div className="space-y-1">
-              <p className="text-[11px] font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-2">
-                Agregar ingredientes
-              </p>
-              {ingCategories.length === 0 && (
-                <div className="flex items-center justify-center py-6">
-                  <Spinner size={20} className="animate-spin text-[var(--text-secondary)]" />
-                </div>
-              )}
-              {ingCategories.map(cat => {
-                const isExpanded = expandedCats.has(cat.pos_category_id)
-                const isLoading = loadingCats.has(cat.pos_category_id)
-                const catItems = ingByCategory[cat.pos_category_id] || []
-                // Count how many from this category are already added
-                const addedFromCat = ingredients.filter(i =>
-                  catItems.some(c => c.pos_ingredient_id === i.pos_ingredient_id)
-                ).length
+              <p className="text-[9px] font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-1">Categorias de ingredientes</p>
+              {ingCats.map(cat => {
+                const isOpen = openCat === cat.pos_category_id
+                const isLoading = loadingCat === cat.pos_category_id
+                const items = catItems[cat.pos_category_id] || []
+                const addedCount = added.filter(a => items.some(i => i.pos_ingredient_id === a.pos_ingredient_id)).length
 
                 return (
-                  <div key={cat.pos_category_id} className="rounded-lg border border-[var(--border-default)] overflow-hidden">
-                    {/* Category header */}
-                    <button
-                      type="button"
-                      onClick={() => loadCategoryIngredients(cat.pos_category_id)}
-                      className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-[var(--color-ak-borgona)]/5 active:bg-[var(--color-ak-borgona)]/10 transition-colors"
-                    >
+                  <div key={cat.pos_category_id} className="rounded border border-[var(--border-default)] overflow-hidden">
+                    <button type="button" onClick={() => toggleCat(cat.pos_category_id)}
+                      className="w-full flex items-center justify-between px-3 py-2 hover:bg-[var(--color-ak-borgona)]/5 text-left">
                       <div className="flex items-center gap-2">
-                        {isExpanded ? (
-                          <CaretDown size={14} className="text-[var(--color-ak-borgona)]" />
-                        ) : (
-                          <CaretRight size={14} className="text-[var(--text-secondary)]" />
-                        )}
-                        <span className="text-sm font-medium text-[var(--text-primary)]">{cat.name}</span>
-                        {addedFromCat > 0 && (
-                          <span className="rounded-full bg-[var(--color-ak-borgona)]/10 px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-ak-borgona)]">
-                            {addedFromCat}
-                          </span>
+                        {isOpen ? <CaretDown size={11} className="text-[var(--color-ak-borgona)]" /> : <CaretRight size={11} className="text-[var(--text-secondary)]" />}
+                        <span className="text-[12px] font-medium text-[var(--text-primary)]">{cat.name}</span>
+                        {addedCount > 0 && (
+                          <span className="rounded-full bg-[var(--color-ak-borgona)]/10 px-1.5 py-0.5 text-[8px] font-medium text-[var(--color-ak-borgona)]">{addedCount}</span>
                         )}
                       </div>
-                      <span className="text-[11px] text-[var(--text-secondary)]">{cat.ingredient_count}</span>
+                      <span className="text-[9px] text-[var(--text-secondary)]">{cat.ingredient_count}</span>
                     </button>
 
-                    {/* Expanded category items */}
-                    {isExpanded && (
-                      <div className="border-t border-[var(--border-default)] max-h-56 overflow-y-auto">
+                    {isOpen && (
+                      <div className="border-t border-[var(--border-default)] max-h-48 overflow-y-auto">
                         {isLoading ? (
-                          <div className="flex items-center justify-center py-8">
-                            <Spinner size={18} className="animate-spin text-[var(--text-secondary)]" />
-                          </div>
-                        ) : catItems.length === 0 ? (
-                          <div className="py-4 text-center text-xs text-[var(--text-secondary)]">
-                            Sin ingredientes
-                          </div>
+                          <div className="flex justify-center py-6"><Spinner size={14} className="animate-spin text-[var(--text-secondary)]" /></div>
+                        ) : items.length === 0 ? (
+                          <p className="text-center text-[11px] text-[var(--text-secondary)] py-3">Sin ingredientes</p>
                         ) : (
-                          catItems.map(ing => {
-                            const isAdded = ingredients.some(i => i.pos_ingredient_id === ing.pos_ingredient_id)
+                          items.map(ing => {
+                            const isAdded = added.some(a => a.pos_ingredient_id === ing.pos_ingredient_id)
                             return (
-                              <div
-                                key={ing.pos_ingredient_id}
-                                className={`flex items-center justify-between px-3 py-2 border-b border-[var(--border-default)]/30 last:border-0 hover:bg-[var(--bg-input)]/50 transition-colors ${isAdded ? 'bg-[var(--color-ak-borgona)]/[0.03]' : ''}`}
-                              >
+                              <div key={ing.pos_ingredient_id}
+                                className={`flex items-center justify-between px-3 py-1 border-b border-[var(--border-default)]/30 last:border-0 hover:bg-[var(--bg-input)]/50 ${isAdded ? 'bg-[var(--color-ak-borgona)]/[0.03]' : ''}`}>
                                 <div className="min-w-0 flex-1 mr-2">
-                                  <div className="text-[13px] text-[var(--text-primary)] truncate">
+                                  <span className="text-[11px] text-[var(--text-primary)] truncate block">
                                     {ing.name}
-                                    {ing.is_composite && (
-                                      <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-medium text-amber-700">subreceta</span>
-                                    )}
-                                  </div>
-                                  <div className="text-[10px] text-[var(--text-secondary)]">
-                                    {formatCOP(ing.avg_cost)}/{ing.unit.toLowerCase()}
-                                  </div>
+                                    {ing.is_composite && <span className="ml-1 text-[8px] text-amber-600">(subreceta)</span>}
+                                  </span>
+                                  <span className="text-[8px] text-[var(--text-secondary)]">{formatCOP(ing.avg_cost)}/{ing.unit.toLowerCase()}</span>
                                 </div>
-                                <button
-                                  type="button"
-                                  disabled={isAdded}
-                                  onClick={() => addIngredient(ing)}
-                                  className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium active:scale-[0.97] shrink-0 ${
+                                <button type="button" onClick={() => add(ing)}
+                                  className={`flex items-center gap-0.5 rounded px-2 py-0.5 text-[9px] font-medium shrink-0 ${
                                     isAdded
-                                      ? 'bg-[var(--color-ak-dorado)]/10 text-[var(--color-ak-dorado)] cursor-default'
+                                      ? 'bg-[var(--color-ak-dorado)]/15 text-[var(--color-ak-dorado)]'
                                       : 'bg-[var(--color-ak-borgona)] text-white hover:bg-[var(--color-ak-borgona)]/90'
-                                  }`}
-                                  style={{ transition: 'transform 120ms ease-out' }}
-                                >
-                                  {isAdded ? (
-                                    <><Plus size={12} weight="bold" /> Agregado</>
-                                  ) : (
-                                    <><Plus size={12} /> Agregar</>
-                                  )}
+                                  }`}>
+                                  <Plus size={9} />
+                                  {isAdded ? 'Agregado' : 'Agregar'}
                                 </button>
                               </div>
                             )
@@ -486,16 +399,19 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: MenuItemFor
               })}
             </div>
           </div>
+        </div>
 
-          <div className="flex gap-3 pt-1">
-            <button type="submit" disabled={saving} className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 disabled:opacity-50 active:scale-[0.97]" style={{ transition: 'transform 160ms ease-out' }}>
-              {saving ? 'Guardando...' : isEditing ? 'Guardar' : 'Crear Plato'}
-            </button>
-            <button type="button" onClick={onClose} className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]" style={{ transition: 'transform 160ms ease-out' }}>
-              Cancelar
-            </button>
-          </div>
-        </form>
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-[var(--border-default)] shrink-0 flex gap-3">
+          <button type="submit" form="item-form" disabled={saving}
+            className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 disabled:opacity-50">
+            {saving ? 'Guardando...' : isEditing ? 'Guardar' : 'Crear plato'}
+          </button>
+          <button type="button" onClick={onClose}
+            className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)]">
+            Cancelar
+          </button>
+        </div>
       </div>
     </div>
   )

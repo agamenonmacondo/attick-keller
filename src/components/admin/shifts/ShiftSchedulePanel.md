@@ -33,7 +33,9 @@ Panel principal de gestion de turnos del administrador. Permite crear, editar y 
 - **Filtro de area sincronizado**: Cambiar area resetea los datos pero NO resetea la grilla local — se depende del useEffect en `loadData` para reemplazar el grid.
 - **Publicacion sin validacion**: Publicar solo verifica que exista `scheduleId`, no valida que haya turnos asignados. Un cronograma vacio puede publicarse.
 - **ShiftTypeEditor inline**: Es un componente hijo definido en el mismo archivo. No tiene memo ni keys estables — re-renderiza con cada cambio del padre.
-- **confirm() para publish**: Usa browser `confirm()` nativo, no un modal custom. Bloquea UI en mobile.
+|- **confirm() para publish**: Usa browser `confirm()` nativo, no un modal custom. Bloquea UI en mobile.
+|- **Grilla siempre editable**: No se bloquea cuando el cronograma esta published. Se puede guardar y re-publicar.
+|- **Boton dual**: Si es draft muestra "Publicar cronograma" (verde), si es published muestra "Guardar y notificar" (borgona).
 
 ## Historial
 | Fecha | Agente | Cambio |
@@ -43,4 +45,5 @@ Panel principal de gestion de turnos del administrador. Permite crear, editar y 
 | 2026-05-28 | Ninja | feat: vista simultanea de turnos (timeline) en tab Horarios |
 | 2026-05-28 | Ninja | fix: sync grid state in ShiftGrid, improve save error handling, reload after save |
 | 2026-05-28 | Ninja | feat: editar y eliminar tipos de turno en panel Horarios + API endpoint |
-| 2026-05-28 | Ninja | fix: modulo turnos — arreglar calculo HE, quitar apoyo del cronograma, agregar tab Personal |
+|| 2026-05-28 | Ninja | fix: modulo turnos — arreglar calculo HE, quitar apoyo del cronograma, agregar tab Personal |
+|| 2026-05-29 | Ninja | feat: grilla siempre editable + boton dual Publicar/Guardar y notificar + re-publicacion con email |

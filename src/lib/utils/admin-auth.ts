@@ -13,7 +13,7 @@ function getServiceClient() {
 export interface AdminUser {
   id: string
   email?: string
-  role: 'store_admin' | 'super_admin' | 'host' | 'lider_area' | 'colaborador'
+  role: 'store_admin' | 'super_admin' | 'host' | 'lider_area' | 'colaborador' | 'reservante'
 }
 
 export interface HostUser {
@@ -97,7 +97,7 @@ export async function getHostUser(request: NextRequest): Promise<HostUser | null
 export interface EmployeeUser {
   id: string
   email?: string
-  role: 'lider_area' | 'colaborador'
+  role: 'lider_area' | 'colaborador' | 'reservante'
   pos_nomina_staff_id: string
 }
 
@@ -124,7 +124,7 @@ export async function getEmployeeUser(request: NextRequest): Promise<EmployeeUse
     .eq('auth_user_id', user.id)
     .eq('restaurant_id', RESTAURANT_ID)
     .eq('is_active', true)
-    .in('role', ['lider_area', 'colaborador'])
+    .in('role', ['lider_area', 'colaborador', 'reservante'])
     .single()
 
   if (!roleData || !roleData.pos_nomina_staff_id) return null
@@ -132,7 +132,7 @@ export async function getEmployeeUser(request: NextRequest): Promise<EmployeeUse
   return {
     id: user.id,
     email: user.email,
-    role: roleData.role as 'lider_area' | 'colaborador',
+    role: roleData.role as 'lider_area' | 'colaborador' | 'reservante',
     pos_nomina_staff_id: roleData.pos_nomina_staff_id,
   }
 }

@@ -75,8 +75,6 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
     ])
       .then(([ingRes, savedRes]) => {
         if (cancelled) return
-        console.log('[MenuItemForm] ingredients response:', ingRes?.error, ingRes?.ingredients?.length)
-        console.log('[MenuItemForm] saved response:', savedRes?.error, savedRes?.ingredients?.length)
         const ingredients = ingRes?.ingredients || []
         setAllIngredients(ingredients)
         // Set default active category to first one
@@ -97,7 +95,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
         }
         setDataLoading(false)
       })
-      .catch((e) => { console.error('[MenuItemForm] fetch error:', e); if (!cancelled) setDataLoading(false) })
+      .catch(() => { if (!cancelled) setDataLoading(false) })
     return () => { cancelled = true }
   }, [item?.id])
 
@@ -224,15 +222,10 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
           </button>
         </div>
 
-        {/* DEBUG BAR */}
-        <div className="px-5 py-1 bg-yellow-100 text-[9px] text-yellow-800 font-mono break-all">
-          loading:{dataLoading.toString()} cats:{catGroups.length} all:{allIngredients.length} active:{activeCat || 'none'}
-        </div>
-
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">{error}</div>
+            <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-2 text-sm text-red-400">{error}</div>
           )}
 
           {/* Basic fields */}
@@ -296,7 +289,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
                     <div className="flex-1 min-w-0">
                       <span className="text-[13px] text-[var(--text-primary)] block truncate">
                         {a.name}
-                        {a.is_composite && <span className="ml-1 text-[8px] text-amber-600">(sub)</span>}
+                        {a.is_composite && <span className="ml-1 text-[8px] text-[var(--color-ak-dorado)]">(sub)</span>}
                       </span>
                     </div>
                     <input type="number" min="0.01" step="0.1" value={a.quantity}
@@ -305,7 +298,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
                     <span className="text-[10px] text-[var(--text-secondary)] w-6">{a.unit}</span>
                     <span className="text-xs font-mono text-[var(--color-ak-borgona)] w-[72px] text-right">{formatCOP(a.avg_cost * a.quantity)}</span>
                     <button type="button" onClick={() => removeIng(a.pos_ingredient_id)}
-                      className="flex h-5 w-5 items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600">
+                      className="flex h-5 w-5 items-center justify-center rounded text-red-400 hover:bg-red-500/10 hover:text-red-400">
                       <Trash size={11} />
                     </button>
                   </div>
@@ -324,7 +317,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
                       </div>
                       <div className="flex justify-between border-t border-[var(--border-default)] pt-1">
                         <span className="text-[var(--text-secondary)]">Margen</span>
-                        <span className={`font-mono font-bold ${margin >= 0 ? 'text-[var(--color-ak-oliva)]' : 'text-red-500'}`}>
+                        <span className={`font-mono font-bold ${margin >= 0 ? 'text-[var(--color-ak-oliva)]' : 'text-red-400'}`}>
                           {formatCOP(margin)} ({marginPct.toFixed(1)}%)
                         </span>
                       </div>
@@ -377,7 +370,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
                           <div className="min-w-0 flex-1 mr-3">
                             <span className="text-[12px] text-[var(--text-primary)] truncate block">
                               {ing.name}
-                              {ing.is_composite && <span className="ml-1 text-[8px] text-amber-600">(subreceta)</span>}
+                              {ing.is_composite && <span className="ml-1 text-[8px] text-[var(--color-ak-dorado)]">(subreceta)</span>}
                             </span>
                             <span className="text-[9px] text-[var(--text-secondary)]">{formatCOP(ing.avg_cost)} / {ing.unit.toLowerCase()}</span>
                           </div>

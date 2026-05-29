@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await res.json()
         const admin = data.role === 'store_admin' || data.role === 'super_admin'
         const host = data.role === 'host'
-        const employee = data.role === 'lider_area' || data.role === 'colaborador'
+        const employee = data.role === 'lider_area' || data.role === 'colaborador' || data.role === 'reservante'
         setIsAdmin(admin)
         setIsHost(host)
         setIsEmployee(employee)

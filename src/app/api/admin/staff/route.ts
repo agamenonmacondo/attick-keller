@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     .from('user_roles')
     .select('id, auth_user_id, role, is_active, created_at, pos_nomina_staff_id, area')
     .eq('restaurant_id', RESTAURANT_ID)
-    .in('role', ['host', 'store_admin', 'super_admin', 'lider_area', 'colaborador'])
+    .in('role', ['host', 'store_admin', 'super_admin', 'lider_area', 'colaborador', 'reservante'])
     .order('created_at', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -49,12 +49,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Email y rol son requeridos' }, { status: 400 })
   }
 
-  if (!['host', 'store_admin', 'lider_area', 'colaborador'].includes(role)) {
-    return NextResponse.json({ error: 'Rol invalido. Use host, store_admin, lider_area o colaborador' }, { status: 400 })
+  if (!['host', 'store_admin', 'super_admin', 'lider_area', 'colaborador', 'reservante'].includes(role)) {
+    return NextResponse.json({ error: 'Rol invalido. Use host, store_admin, super_admin, lider_area, colaborador o reservante' }, { status: 400 })
   }
 
-  // For lider_area/colaborador, pos_nomina_staff_id is required
-  if ((role === 'lider_area' || role === 'colaborador') && !pos_nomina_staff_id) {
+  // For lider_area/colaborador/reservante, pos_nomina_staff_id is required
+  if ((role === 'lider_area' || role === 'colaborador' || role === 'reservante') && !pos_nomina_staff_id) {
     return NextResponse.json({ error: 'Empleado de nomina es requerido para este rol' }, { status: 400 })
   }
 

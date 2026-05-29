@@ -81,7 +81,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  // Protect /mi-turno — employee only (lider_area, colaborador)
+  // Protect /mi-turno — employee only (lider_area, colaborador, reservante)
   if (request.nextUrl.pathname.startsWith('/mi-turno')) {
     if (!user) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
@@ -96,7 +96,7 @@ export async function middleware(request: NextRequest) {
       .eq('auth_user_id', user.id)
       .eq('restaurant_id', RESTAURANT_ID)
       .eq('is_active', true)
-      .in('role', ['lider_area', 'colaborador', 'store_admin', 'super_admin'])
+      .in('role', ['lider_area', 'colaborador', 'reservante', 'store_admin', 'super_admin'])
       .single()
 
     if (!roleData) {

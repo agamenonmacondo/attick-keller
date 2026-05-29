@@ -23,7 +23,7 @@ export function AddStaffForm({ onAdd }: AddStaffFormProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const needsEmployeeId = role === 'lider_area' || role === 'colaborador'
+  const needsEmployeeId = role === 'lider_area' || role === 'colaborador' || role === 'reservante'
 
   useEffect(() => {
     if (needsEmployeeId) {
@@ -87,6 +87,7 @@ export function AddStaffForm({ onAdd }: AddStaffFormProps) {
             <option value="super_admin">Super Admin</option>
             <option value="lider_area">Lider de Area</option>
             <option value="colaborador">Colaborador</option>
+            <option value="reservante">Reservante</option>
           </select>
           <button
             type="submit"

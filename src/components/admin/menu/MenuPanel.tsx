@@ -67,8 +67,8 @@ interface RecipeIngredient {
   name: string
   quantity: number
   unit: string
-  unit_cost: number
-  total_cost: number
+  unitCost: number
+  totalCost: number
 }
 
 interface RecipeData {
@@ -940,8 +940,8 @@ export function MenuPanel() {
                               <td className="px-3 py-2 text-[var(--text-primary)]">{ing.name}</td>
                               <td className="px-3 py-2 text-right text-[var(--text-primary)]">{ing.quantity}</td>
                               <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{ing.unit}</td>
-                              <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{formatCOP(ing.unit_cost)}</td>
-                              <td className="px-3 py-2 text-right font-medium text-[var(--color-ak-borgona)]">{formatCOP(ing.total_cost)}</td>
+                              <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{formatCOP(ing.unitCost)}</td>
+                              <td className="px-3 py-2 text-right font-medium text-[var(--color-ak-borgona)]">{formatCOP(ing.totalCost)}</td>
                             </tr>
                           ))}
                         </tbody>

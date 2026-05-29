@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   let query = sb
     .from('pos_nomina_staff')
-    .select('id, nombre_completo, cargo, area')
+    .select('id, nombre_completo, cargo, area, correo')
     .order('nombre_completo')
 
   if (activo === 'true') {

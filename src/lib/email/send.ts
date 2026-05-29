@@ -1,3 +1,5 @@
+import { getWeekStr, getWeekDates, dayIndexToDateIndex } from '@/lib/utils/costCalculator'
+
 // Email templates for reservation status changes
 // Uses Resend API
 
@@ -330,6 +332,563 @@ export async function sendCampaignEmailBatch(
     } catch (err: any) {
       results.failed += chunk.length
       results.errors.push(`Batch ${i / BATCH_SIZE + 1}: ${err.message}`)
+    }
+  }
+
+  return results
+}
+
+const SHIFTS_FROM = 'Attick & Keller <ventas@ccs724.com>'
+
+const AREA_LABELS: Record<string, string> = {
+  cocina: 'Cocina',
+  barra: 'Barra',
+  servicio: 'Servicio',
+}
+
+const DAY_NAMES_SHORT = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
+
+interface ShiftScheduleAssignmentData {
+  dayIndex: number
+  shiftCode: string
+  shiftName: string
+  entrada: string
+  salida: string
+  hours: number
+}
+
+interface ShiftScheduleData {
+  weekStr: string
+  area: string
+  areaLabel: string
+  assignments: {
+    dayName: string
+    date: string
+    shiftCode: string
+    shiftName: string
+    entrada: string
+    salida: string
+    hours: number
+  }[]
+}
+
+function buildShiftScheduleHtml(data: ShiftScheduleData, employeeName: string): string {
+  const rows = data.assignments.map(a =>
+    '<tr>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;font-weight:600;">' + a.dayName + ' ' + a.date + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;">' + a.shiftCode + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;">' + a.shiftName + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;">' + a.entrada + ' - ' + a.salida + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#8D6E63;font-size:14px;text-align:right;">' + a.hours + 'h</td>' +
+    '</tr>'
+  ).join('')
+
+  const accentColor: Record<string, string> = { cocina: '#6B2737', barra: '#D4A843', servicio: '#22c55e' }
+  const color = accentColor[data.area] || '#6B2737'
+
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+    '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
+    '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
+    '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+    '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+    '</td></tr>' +
+    '<tr><td style="padding:24px 40px;text-align:center;background:#E8F5E9;">' +
+    '<h2 style="color:#2E7D32;font-size:20px;margin:0;">Tu cronograma esta listo</h2>' +
+    '</td></tr>' +
+    '<tr><td style="padding:32px 40px;">' +
+    '<p style="color:#3E2723;font-size:16px;margin:0 0 8px 0;">Hola ' + employeeName + ',</p>' +
+    '<p style="color:#3E2723;font-size:15px;margin:0 0 20px 0;">Se ha publicado el cronograma de <strong style="color:' + color + ';">' + data.areaLabel + '</strong> para la semana <strong>' + data.weekStr + '</strong>.</p>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
+    '<tr style="background:#3E2723;">' +
+    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Dia</td>' +
+    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Codigo</td>' +
+    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Turno</td>' +
+    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Horario</td>' +
+    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;text-align:right;">Horas</td>' +
+    '</tr>' + rows +
+    '</table>' +
+    '<div style="text-align:center;margin-top:24px;">' +
+    '<a href="https://web-rosy-nine-64.vercel.app/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
+    '</div>' +
+    '</td></tr>' +
+    '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
+    '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+    '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+    '</td></tr>' +
+    '</table></body></html>'
+}
+
+interface ShiftReminderData {
+  employeeName: string
+  shiftCode: string
+  shiftName: string
+  entrada: string
+  salida: string
+  hours: number
+  dayName: string
+  date: string
+  area: string
+  areaLabel: string
+}
+
+function buildShiftReminderHtml(data: ShiftReminderData): string {
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+    '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
+    '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
+    '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+    '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+    '</td></tr>' +
+    '<tr><td style="padding:24px 40px;text-align:center;background:#FFF8E1;">' +
+    '<h2 style="color:#F57F17;font-size:20px;margin:0;">Tu turno empieza pronto</h2>' +
+    '</td></tr>' +
+    '<tr><td style="padding:32px 40px;">' +
+    '<p style="color:#3E2723;font-size:16px;margin:0 0 20px 0;">Hola ' + data.employeeName + ',</p>' +
+    '<p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Tu turno de <strong>' + data.areaLabel + '</strong> esta programado para hoy:</p>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
+    '<tr><td style="padding:16px 24px;">' +
+    '<p style="color:#3E2723;font-size:20px;font-weight:bold;margin:0 0 8px 0;">' + data.shiftCode + ' — ' + data.shiftName + '</p>' +
+    '<p style="color:#8D6E63;font-size:15px;margin:0 0 4px 0;">' + data.dayName + ' ' + data.date + ' · ' + data.areaLabel + '</p>' +
+    '<p style="color:#3E2723;font-size:16px;margin:0;">' + data.entrada + ' — ' + data.salida + ' <span style="color:#8D6E63;font-size:14px;">(' + data.hours + 'h)</span></p>' +
+    '</td></tr>' +
+    '</table>' +
+    '<div style="text-align:center;margin-top:24px;">' +
+    '<a href="https://web-rosy-nine-64.vercel.app/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Entrada</a>' +
+    '</div>' +
+    '</td></tr>' +
+    '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
+    '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+    '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+    '</td></tr>' +
+    '</table></body></html>'
+}
+
+interface ShiftCheckoutData {
+  employeeName: string
+  shiftCode: string
+  shiftName: string
+  salida: string
+  dayName: string
+  date: string
+  area: string
+  areaLabel: string
+}
+
+function buildShiftCheckoutHtml(data: ShiftCheckoutData): string {
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+    '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
+    '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
+    '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+    '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+    '</td></tr>' +
+    '<tr><td style="padding:24px 40px;text-align:center;background:#FFF3E0;">' +
+    '<h2 style="color:#E65100;font-size:20px;margin:0;">No olvides registrar tu salida</h2>' +
+    '</td></tr>' +
+    '<tr><td style="padding:32px 40px;">' +
+    '<p style="color:#3E2723;font-size:16px;margin:0 0 20px 0;">Hola ' + data.employeeName + ',</p>' +
+    '<p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Tu turno de <strong>' + data.areaLabel + '</strong> debio terminar a las <strong>' + data.salida + '</strong>. Registra tu salida:</p>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
+    '<tr><td style="padding:16px 24px;">' +
+    '<p style="color:#3E2723;font-size:20px;font-weight:bold;margin:0 0 8px 0;">' + data.shiftCode + ' — ' + data.shiftName + '</p>' +
+    '<p style="color:#8D6E63;font-size:15px;margin:0 0 4px 0;">' + data.dayName + ' ' + data.date + ' · ' + data.areaLabel + '</p>' +
+    '<p style="color:#3E2723;font-size:16px;margin:0;">Hora de salida programada: <strong>' + data.salida + '</strong></p>' +
+    '</td></tr>' +
+    '</table>' +
+    '<div style="text-align:center;margin-top:24px;">' +
+    '<a href="https://web-rosy-nine-64.vercel.app/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Salida</a>' +
+    '</div>' +
+    '</td></tr>' +
+    '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
+    '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+    '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+    '</td></tr>' +
+    '</table></body></html>'
+}
+
+// Helper: enviar correo individual con Resend
+async function sendResendEmail(to: string, subject: string, html: string): Promise<{ success: boolean; error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    console.warn('[email] RESEND_API_KEY not set, skipping email')
+    return { success: false, error: 'No API key' }
+  }
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: SHIFTS_FROM,
+        to,
+        subject,
+        html,
+      }),
+    })
+    if (!res.ok) {
+      const err = await res.text()
+      console.error('[email] Resend error:', err)
+      return { success: false, error: err }
+    }
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+// ================================================================
+// Correo 1: Cronograma publicado — enviar a cada colaborador
+// ================================================================
+
+interface ScheduleEmailRecipient {
+  email: string
+  name: string
+  employeeId: string
+  assignments: ShiftScheduleAssignmentData[]
+}
+
+export async function sendShiftScheduleEmail(
+  weekStr: string,
+  area: string,
+  scheduleId: string,
+  recipients: ScheduleEmailRecipient[],
+  sb: any // Supabase service client
+): Promise<{ sent: number; failed: number; errors: string[] }> {
+  const results = { sent: 0, failed: 0, errors: [] as string[] }
+
+  for (const r of recipients) {
+    // Deduplicar
+    const { data: existing } = await sb
+      .from('email_log')
+      .select('id')
+      .eq('type', 'schedule_published')
+      .eq('recipient_email', r.email)
+      .eq('schedule_id', scheduleId)
+      .is('assignment_id', null)
+      .maybeSingle()
+
+    if (existing) {
+      console.log(`[email] Skipping schedule_published for ${r.email} (already sent)`)
+      continue
+    }
+
+    // Calcular fechas de la semana
+    const weekDates = getWeekDates(weekStr)
+    const assignments = r.assignments
+      .sort((a, b) => a.dayIndex - b.dayIndex)
+      .map(a => {
+        const dateIdx = dayIndexToDateIndex(a.dayIndex)
+        const date = weekDates[dateIdx]
+        return {
+          dayName: DAY_NAMES_SHORT[a.dayIndex],
+          date: date ? date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : '',
+          shiftCode: a.shiftCode,
+          shiftName: a.shiftName,
+          entrada: a.entrada,
+          salida: a.salida,
+          hours: a.hours,
+        }
+      })
+
+    const html = buildShiftScheduleHtml({
+      weekStr,
+      area,
+      areaLabel: AREA_LABELS[area] || area,
+      assignments,
+    }, r.name)
+
+    const subject = `Tu cronograma de ${AREA_LABELS[area] || area} — Semana ${weekStr}`
+    const result = await sendResendEmail(r.email, subject, html)
+
+    // Log
+    await sb.from('email_log').insert({
+      type: 'schedule_published',
+      recipient_email: r.email,
+      recipient_name: r.name,
+      schedule_id: scheduleId,
+      assignment_id: null,
+      status: result.success ? 'sent' : 'failed',
+      error: result.error || null,
+    }).then(({ error }: any) => { if (error) console.error('[email] Error logging email_log:', error) })
+
+    if (result.success) results.sent++
+    else { results.failed++; results.errors.push(`${r.email}: ${result.error}`) }
+  }
+
+  return results
+}
+
+// ================================================================
+// Correo 2: Recordatorio de turno (2h antes)
+// ================================================================
+
+export async function sendShiftReminderEmails(
+  sb: any
+): Promise<{ sent: number; failed: number; errors: string[] }> {
+  const results = { sent: 0, failed: 0, errors: [] as string[] }
+
+  // Hora actual en Colombia (UTC-5)
+  const now = new Date()
+  const colombiaNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Bogota' }))
+  const colombiaMs = colombiaNow.getTime()
+  // Ventana de 30 min (15 min antes, 15 min después del momento exacto del recordatorio)
+  const windowStart = colombiaMs - 15 * 60 * 1000
+  const windowEnd = colombiaMs + 15 * 60 * 1000
+
+  const dayIndex = colombiaNow.getDay() // 0=Dom, 1=Lun, etc.
+  const weekStr = getWeekStr(colombiaNow)
+
+  // Buscar schedules publicados para esta semana
+  const { data: schedules } = await sb
+    .from('shift_schedules')
+    .select('id, area')
+    .eq('week_str', weekStr)
+    .eq('status', 'published')
+
+  if (!schedules || schedules.length === 0) return results
+
+  for (const schedule of schedules) {
+    const { data: shiftTypes } = await sb
+      .from('shift_types')
+      .select('code, name, entrada, salida, ordinarias, nocturnas')
+      .eq('area', schedule.area)
+
+    const shiftTypeMap = new Map((shiftTypes || []).map((st: any) => [st.code, st]))
+
+    const { data: assignments } = await sb
+      .from('shift_assignments')
+      .select('id, employee_id, shift_code, day_index')
+      .eq('schedule_id', schedule.id)
+      .eq('day_index', dayIndex)
+
+    if (!assignments || assignments.length === 0) continue
+
+    for (const assignment of assignments) {
+      const st = shiftTypeMap.get(assignment.shift_code)
+      if (!st) continue
+
+      // Hora de entrada del turno en Colombia
+      const [entryHour, entryMin] = st.entrada.split(':').map(Number)
+      const turnoStartMs = new Date(colombiaNow.getFullYear(), colombiaNow.getMonth(), colombiaNow.getDate(), entryHour, entryMin, 0, 0).getTime()
+
+      // Momento del recordatorio = 2h antes de la entrada
+      const reminderMs = turnoStartMs - 2 * 60 * 60 * 1000
+
+      // Verificar si estamos en la ventana
+      if (reminderMs < windowStart || reminderMs > windowEnd) continue
+
+      // Obtener datos del empleado
+      const { data: employee } = await sb
+        .from('pos_nomina_staff')
+        .select('id, nombre_completo, correo, area')
+        .eq('id', assignment.employee_id)
+        .single()
+
+      if (!employee) continue
+      let email = employee.correo
+      if (!email) {
+        const { data: userRole } = await sb
+          .from('user_roles')
+          .select('auth_user_id')
+          .eq('pos_nomina_staff_id', assignment.employee_id)
+          .eq('is_active', true)
+          .limit(1)
+          .maybeSingle()
+        if (userRole) {
+          const { data: { users } } = await sb.auth.admin.listUsers()
+          const authUser = users.find((u: any) => u.id === userRole.auth_user_id)
+          email = authUser?.email || ''
+        }
+      }
+      if (!email) continue
+
+      // Nombre (preferir alias)
+      const { data: aliasData } = await sb
+        .from('staff_aliases')
+        .select('alias')
+        .eq('employee_id', assignment.employee_id)
+        .limit(1)
+      const employeeName = aliasData?.[0]?.alias || employee.nombre_completo.split(' ')[0]
+
+      // Deduplicar
+      const { data: existing } = await sb
+        .from('email_log')
+        .select('id')
+        .eq('type', 'shift_reminder')
+        .eq('recipient_email', email)
+        .eq('assignment_id', assignment.id)
+        .maybeSingle()
+
+      if (existing) continue
+
+      const dateStr = colombiaNow.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })
+      const hours = (st.ordinarias || 0) + (st.nocturnas || 0)
+
+      const html = buildShiftReminderHtml({
+        employeeName,
+        shiftCode: st.code,
+        shiftName: st.name,
+        entrada: st.entrada,
+        salida: st.salida,
+        hours,
+        dayName: DAY_NAMES_SHORT[dayIndex],
+        date: dateStr,
+        area: schedule.area,
+        areaLabel: AREA_LABELS[schedule.area] || schedule.area,
+      })
+
+      const subject = `Recordatorio: Tu turno de ${AREA_LABELS[schedule.area] || schedule.area} empieza a las ${st.entrada}`
+      const result = await sendResendEmail(email, subject, html)
+
+      await sb.from('email_log').insert({
+        type: 'shift_reminder',
+        recipient_email: email,
+        recipient_name: employeeName,
+        schedule_id: schedule.id,
+        assignment_id: assignment.id,
+        status: result.success ? 'sent' : 'failed',
+        error: result.error || null,
+      }).then(({ error }: any) => { if (error) console.error('[email] Error logging email_log:', error) })
+
+      if (result.success) results.sent++
+      else { results.failed++; results.errors.push(`${email}: ${result.error}`) }
+    }
+  }
+
+  return results
+}
+
+// ================================================================
+// Correo 3: Recordatorio de checkout (30min después de la hora de salida)
+// ================================================================
+
+export async function sendShiftCheckoutReminders(
+  sb: any
+): Promise<{ sent: number; failed: number; errors: string[] }> {
+  const results = { sent: 0, failed: 0, errors: [] as string[] }
+
+  const now = new Date()
+  const colombiaNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Bogota' }))
+  const colombiaMs = colombiaNow.getTime()
+  const windowStart = colombiaMs - 15 * 60 * 1000
+  const windowEnd = colombiaMs + 15 * 60 * 1000
+
+  const dayIndex = colombiaNow.getDay()
+  const weekStr = getWeekStr(colombiaNow)
+
+  const { data: schedules } = await sb
+    .from('shift_schedules')
+    .select('id, area')
+    .eq('week_str', weekStr)
+    .eq('status', 'published')
+
+  if (!schedules || schedules.length === 0) return results
+
+  for (const schedule of schedules) {
+    const { data: shiftTypes } = await sb
+      .from('shift_types')
+      .select('code, name, entrada, salida, ordinarias, nocturnas')
+      .eq('area', schedule.area)
+
+    const shiftTypeMap = new Map((shiftTypes || []).map((st: any) => [st.code, st]))
+
+    // Asignaciones de hoy SIN checkout
+    const { data: assignments } = await sb
+      .from('shift_assignments')
+      .select('id, employee_id, shift_code, day_index, checkin_at, checkout_at')
+      .eq('schedule_id', schedule.id)
+      .eq('day_index', dayIndex)
+      .is('checkout_at', null)
+
+    if (!assignments || assignments.length === 0) continue
+
+    for (const assignment of assignments) {
+      const st = shiftTypeMap.get(assignment.shift_code)
+      if (!st) continue
+
+      // Hora de salida del turno + 30 min
+      const [exitHour, exitMin] = st.salida.split(':').map(Number)
+      const turnoEndMs = new Date(colombiaNow.getFullYear(), colombiaNow.getMonth(), colombiaNow.getDate(), exitHour, exitMin, 0, 0).getTime()
+      const reminderMs = turnoEndMs + 30 * 60 * 1000 // 30min después de salida
+
+      // Verificar ventana
+      if (reminderMs < windowStart || reminderMs > windowEnd) continue
+
+      // Obtener datos del empleado
+      const { data: employee } = await sb
+        .from('pos_nomina_staff')
+        .select('id, nombre_completo, correo, area')
+        .eq('id', assignment.employee_id)
+        .single()
+
+      if (!employee) continue
+      let email = employee.correo
+      if (!email) {
+        const { data: userRole } = await sb
+          .from('user_roles')
+          .select('auth_user_id')
+          .eq('pos_nomina_staff_id', assignment.employee_id)
+          .eq('is_active', true)
+          .limit(1)
+          .maybeSingle()
+        if (userRole) {
+          const { data: { users } } = await sb.auth.admin.listUsers()
+          const authUser = users.find((u: any) => u.id === userRole.auth_user_id)
+          email = authUser?.email || ''
+        }
+      }
+      if (!email) continue
+
+      const { data: aliasData } = await sb
+        .from('staff_aliases')
+        .select('alias')
+        .eq('employee_id', assignment.employee_id)
+        .limit(1)
+      const employeeName = aliasData?.[0]?.alias || employee.nombre_completo.split(' ')[0]
+
+      // Deduplicar
+      const { data: existing } = await sb
+        .from('email_log')
+        .select('id')
+        .eq('type', 'shift_checkout_reminder')
+        .eq('recipient_email', email)
+        .eq('assignment_id', assignment.id)
+        .maybeSingle()
+
+      if (existing) continue
+
+      const dateStr = colombiaNow.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })
+
+      const html = buildShiftCheckoutHtml({
+        employeeName,
+        shiftCode: st.code,
+        shiftName: st.name,
+        salida: st.salida,
+        dayName: DAY_NAMES_SHORT[dayIndex],
+        date: dateStr,
+        area: schedule.area,
+        areaLabel: AREA_LABELS[schedule.area] || schedule.area,
+      })
+
+      const subject = `No olvides registrar tu salida — ${AREA_LABELS[schedule.area] || schedule.area}`
+      const result = await sendResendEmail(email, subject, html)
+
+      await sb.from('email_log').insert({
+        type: 'shift_checkout_reminder',
+        recipient_email: email,
+        recipient_name: employeeName,
+        schedule_id: schedule.id,
+        assignment_id: assignment.id,
+        status: result.success ? 'sent' : 'failed',
+        error: result.error || null,
+      }).then(({ error }: any) => { if (error) console.error('[email] Error logging email_log:', error) })
+
+      if (result.success) results.sent++
+      else { results.failed++; results.errors.push(`${email}: ${result.error}`) }
     }
   }
 

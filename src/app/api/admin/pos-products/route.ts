@@ -12,9 +12,20 @@ export async function GET(request: NextRequest) {
   const groupId = searchParams.get('group_id') || '';
   const linkedOnly = searchParams.get('linked') === 'true';
   const unlinkedOnly = searchParams.get('unlinked') === 'true';
-  const limit = parseInt(searchParams.get('limit') || '50');
+  const limit = parseInt(searchParams.get('limit') || '200');
   const offset = parseInt(searchParams.get('offset') || '0');
 
+  // Fetch all groups first (always needed for grouping)
+  const { data: allGroups, error: groupsError } = await supabase
+    .from('pos_product_groups')
+    .select('pos_group_id, name')
+    .order('pos_group_id');
+
+  if (groupsError) {
+    return NextResponse.json({ error: groupsError.message }, { status: 500 });
+  }
+
+  // Build products query
   let qb = supabase
     .from('pos_products')
     .select('pos_product_id, name, pos_group_id, use_dining, use_delivery, visible_menu', { count: 'exact' })
@@ -35,29 +46,31 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Get mapping info (which products are already linked to menu items)
   const productIds = (products || []).map(p => p.pos_product_id);
+
+  // Get prices for all products
+  const { data: prices } = await supabase
+    .from('pos_product_prices')
+    .select('pos_product_id, price, price_before_tax')
+    .in('pos_product_id', productIds);
+  const priceMap = new Map((prices || []).map(p => [p.pos_product_id, p]));
+
+  // Get mapping info
   const { data: mappings } = await supabase
     .from('pos_menu_mapping')
     .select('pos_product_id, menu_item_id, confidence, verified')
     .in('pos_product_id', productIds);
-
   const mappingMap = new Map((mappings || []).map(m => [m.pos_product_id, m]));
 
-  // Enrich with group names
-  const groupIds = [...new Set((products || []).map(p => p.pos_group_id))];
-  const { data: groups } = await supabase
-    .from('pos_product_groups')
-    .select('pos_group_id, name')
-    .in('pos_group_id', groupIds);
-  const groupMap = new Map((groups || []).map(g => [g.pos_group_id, g.name]));
-
+  // Enrich products
   const enriched = (products || []).map(p => {
     const mapping = mappingMap.get(p.pos_product_id);
+    const price = priceMap.get(p.pos_product_id);
     return {
       ...p,
-      groupName: groupMap.get(p.pos_group_id) || p.pos_group_id,
-      linkedToMenuItem: mapping?.menu_item_id || null,
+      price: price?.price || null,
+      priceBeforeTax: price?.price_before_tax || null,
+      linked_menu_item_id: mapping?.menu_item_id || null,
       confidence: mapping?.confidence || null,
       verified: mapping?.verified || false
     };
@@ -65,14 +78,16 @@ export async function GET(request: NextRequest) {
 
   // Filter by linked/unlinked status
   let filtered = enriched;
-  if (linkedOnly) {
-    filtered = enriched.filter(p => p.linkedToMenuItem);
-  } else if (unlinkedOnly) {
-    filtered = enriched.filter(p => !p.linkedToMenuItem);
+  if (linkedOnly && !unlinkedOnly) {
+    filtered = enriched.filter(p => p.linked_menu_item_id);
+  } else if (unlinkedOnly && !linkedOnly) {
+    filtered = enriched.filter(p => !p.linked_menu_item_id);
   }
+  // If both or neither, return all
 
   return NextResponse.json({
     products: filtered,
+    groups: allGroups || [],
     total: count || 0,
     limit,
     offset

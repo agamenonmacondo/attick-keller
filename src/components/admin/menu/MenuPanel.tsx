@@ -349,16 +349,15 @@ export function MenuPanel() {
     }
   }, [fetchMappings])
 
-  // --- Grouped POS products ---
-  const groupedPOS = posGroups.reduce<Record<string, POSProduct[]>>((acc, g) => {
-    acc[g.pos_group_id] = []
-    return acc
-  }, {})
+  // --- Grouped POS products (only groups with products) ---
+  const groupedPOS: Record<string, POSProduct[]> = {}
   posProducts.forEach(p => {
     const gid = p.pos_group_id || '__ungrouped__'
     if (!groupedPOS[gid]) groupedPOS[gid] = []
     groupedPOS[gid].push(p)
   })
+  // Sort groups by pos_group_id to match the POS order
+  const sortedGroupKeys = Object.keys(groupedPOS).sort()
 
   // --- Tab configuration ---
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
@@ -602,16 +601,22 @@ export function MenuPanel() {
             </div>
           ) : (
             <div className="space-y-6">
-              {Object.entries(groupedPOS).map(([groupId, products]) => {
-                if (products.length === 0) return null
+              {sortedGroupKeys.map(groupId => {
+                const products = groupedPOS[groupId]
+                if (!products || products.length === 0) return null
                 const group = posGroups.find(g => g.pos_group_id === groupId)
                 const groupName = group?.name || 'Sin grupo'
 
                 return (
                   <div key={groupId} className="space-y-3">
-                    <h3 className="font-['Playfair_Display'] text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border-default)] pb-2">
-                      {groupName}
-                    </h3>
+                    <div className="flex items-center gap-2 border-b border-[var(--border-default)] pb-2">
+                      <h3 className="font-['Playfair_Display'] text-sm font-semibold text-[var(--text-primary)]">
+                        {groupName}
+                      </h3>
+                      <span className="rounded-full bg-[var(--color-ak-borgona)]/10 px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-ak-borgona)]">
+                        {products.length}
+                      </span>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                       {products.map(product => {
                         const isLinked = !!product.linked_menu_item_id

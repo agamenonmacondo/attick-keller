@@ -76,14 +76,7 @@ export default function MiTurnoPage() {
       setEmployee(data.employee)
       setSchedule(data.schedule)
       setAssignments(data.assignments || [])
-
-      if (data.employee?.area) {
-        const stRes = await fetch(`/api/admin/shift-schedules?area=${data.employee.area}&week_str=${weekStr}`)
-        if (stRes.ok) {
-          const stData = await stRes.json()
-          setShiftTypes(stData.shift_types || [])
-        }
-      }
+      setShiftTypes(data.shift_types || [])
 
       // Fetch hours
       const hoursRes = await fetch(`/api/admin/shift-my-hours?week_str=${weekStr}`)

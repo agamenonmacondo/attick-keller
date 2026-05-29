@@ -62,13 +62,14 @@ export async function GET(request: NextRequest) {
 
   const alias = aliasData?.[0]?.alias || (employeeData.nombre_completo as string).split(' ')[0]
 
-  // Buscar cronograma publicado del area
+  // Buscar cronograma del area (published O draft — colaborador ve published)
   const { data: schedule } = await sb
     .from('shift_schedules')
     .select('id, week_str, status')
     .eq('area', employeeData.area)
     .eq('week_str', week_str)
-    .eq('status', 'published')
+    .order('version', { ascending: false })
+    .limit(1)
     .maybeSingle()
 
   if (!schedule) {
@@ -76,6 +77,8 @@ export async function GET(request: NextRequest) {
       employee: { ...employeeData, alias },
       schedule: null,
       assignments: [],
+      shift_types: [],
+      debug: { employeeId, area: employeeData.area, week_str },
     })
   }
 
@@ -86,9 +89,18 @@ export async function GET(request: NextRequest) {
     .eq('schedule_id', schedule.id)
     .eq('employee_id', employeeId)
 
+  // Obtener shift_types del area
+  const { data: shiftTypes } = await sb
+    .from('shift_types')
+    .select('*')
+    .eq('area', employeeData.area)
+    .order('code')
+
   return NextResponse.json({
     employee: { ...employeeData, alias },
     schedule,
     assignments: assignments || [],
+    shift_types: shiftTypes || [],
+    debug: { employeeId, area: employeeData.area, week_str, scheduleId: schedule.id, scheduleStatus: schedule.status, assignmentCount: assignments?.length || 0 },
   })
 }

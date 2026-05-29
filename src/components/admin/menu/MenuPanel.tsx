@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Plus, Spinner, CaretDown, CaretRight, PencilSimple, Eye, EyeSlash, Trash,
+  Plus, Spinner, CaretDown, CaretRight, CaretLeft, PencilSimple, Eye, EyeSlash, Trash,
   MagnifyingGlass, Package, Link, X, Flask, CheckCircle, ArrowsLeftRight, Tag,
 } from '@phosphor-icons/react'
 import { formatCOP } from '@/lib/utils/formatCOP'
@@ -105,6 +105,7 @@ export function MenuPanel() {
   const [posGroups, setPosGroups] = useState<POSGroup[]>([])
   const [posSearch, setPosSearch] = useState('')
   const [posGroupFilter, setPosGroupFilter] = useState<string>('')
+  const [selectedPosGroup, setSelectedPosGroup] = useState<string | null>(null)
   const [posLoading, setPosLoading] = useState(false)
   const [addModalProduct, setAddModalProduct] = useState<POSProduct | null>(null)
   const [addModalCategory, setAddModalCategory] = useState<string>('')
@@ -567,6 +568,18 @@ export function MenuPanel() {
       {/* =================== TAB: Catalogo POS =================== */}
       {activeTab === 'pos-catalog' && (
         <div className="space-y-5">
+          {/* Breadcrumb nav */}
+          {selectedPosGroup ? (
+            <button
+              type="button"
+              onClick={() => setSelectedPosGroup(null)}
+              className="flex items-center gap-1.5 text-sm text-[var(--color-ak-borgona)] hover:underline"
+            >
+              <CaretLeft size={16} />
+              Todas las categorias
+            </button>
+          ) : null}
+
           {/* Search bar */}
           <div className="flex gap-3">
             <div className="relative flex-1">
@@ -579,16 +592,6 @@ export function MenuPanel() {
                 className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] pl-9 pr-3 py-2.5 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               />
             </div>
-            <select
-              value={posGroupFilter}
-              onChange={e => setPosGroupFilter(e.target.value)}
-              className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2.5 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
-            >
-              <option value="">Todos los grupos</option>
-              {posGroups.map(g => (
-                <option key={g.pos_group_id} value={g.pos_group_id}>{g.name}</option>
-              ))}
-            </select>
           </div>
 
           {posLoading ? (
@@ -599,26 +602,27 @@ export function MenuPanel() {
             <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] py-12 text-center">
               <p className="text-sm text-[var(--text-secondary)]">No se encontraron productos POS</p>
             </div>
-          ) : (
-            <div className="space-y-6">
-              {sortedGroupKeys.map(groupId => {
-                const products = groupedPOS[groupId]
-                if (!products || products.length === 0) return null
-                const group = posGroups.find(g => g.pos_group_id === groupId)
-                const groupName = group?.name || 'Sin grupo'
-
+          ) : selectedPosGroup ? (
+            /* ====== Products inside selected category ====== */
+            <div className="space-y-3">
+              {(() => {
+                const group = posGroups.find(g => g.pos_group_id === selectedPosGroup)
+                const products = groupedPOS[selectedPosGroup] || []
+                const linkedCount = products.filter(p => !!p.linked_menu_item_id).length
                 return (
-                  <div key={groupId} className="space-y-3">
-                    <div className="flex items-center gap-2 border-b border-[var(--border-default)] pb-2">
-                      <h3 className="font-['Playfair_Display'] text-sm font-semibold text-[var(--text-primary)]">
-                        {groupName}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">
+                        {group?.name || 'Sin grupo'}
                       </h3>
-                      <span className="rounded-full bg-[var(--color-ak-borgona)]/10 px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-ak-borgona)]">
-                        {products.length}
+                      <span className="text-xs text-[var(--text-secondary)]">
+                        {linkedCount} de {products.length} en menu
                       </span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {products.map(product => {
+                      {products
+                        .filter(p => !posSearch || p.name.toLowerCase().includes(posSearch.toLowerCase()))
+                        .map(product => {
                         const isLinked = !!product.linked_menu_item_id
                         return (
                           <div
@@ -629,7 +633,6 @@ export function MenuPanel() {
                                 : 'border-[var(--border-default)] bg-[var(--bg-card)]'
                             }`}
                           >
-                            {/* Linked badge */}
                             {isLinked && (
                               <span className="absolute top-2 right-2 rounded-full bg-[var(--color-ak-dorado)]/20 px-2 py-0.5 text-[9px] font-medium text-[var(--color-ak-dorado)]">
                                 En menu
@@ -639,10 +642,6 @@ export function MenuPanel() {
                             <h4 className="text-sm font-medium text-[var(--text-primary)] pr-16 mb-1">
                               {product.name}
                             </h4>
-
-                            <p className="text-xs text-[var(--text-secondary)] mb-2">
-                              {group?.name || 'Sin grupo'}
-                            </p>
 
                             <div className="flex items-center justify-between">
                               <span className="font-mono text-sm font-bold text-[var(--color-ak-borgona)]">
@@ -666,6 +665,36 @@ export function MenuPanel() {
                       })}
                     </div>
                   </div>
+                )
+              })()}
+            </div>
+          ) : (
+            /* ====== Category grid ====== */
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {sortedGroupKeys.map(groupId => {
+                const products = groupedPOS[groupId] || []
+                const group = posGroups.find(g => g.pos_group_id === groupId)
+                const linkedCount = products.filter(p => !!p.linked_menu_item_id).length
+                return (
+                  <button
+                    key={groupId}
+                    type="button"
+                    onClick={() => setSelectedPosGroup(groupId)}
+                    className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 text-center hover:border-[var(--color-ak-borgona)]/40 hover:bg-[var(--color-ak-borgona)]/5 active:scale-[0.98]"
+                    style={{ transition: 'transform 120ms ease-out, border-color 150ms ease, background-color 150ms ease' }}
+                  >
+                    <span className="font-['Playfair_Display'] text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--color-ak-borgona)]">
+                      {group?.name || 'Sin grupo'}
+                    </span>
+                    <span className="text-[11px] text-[var(--text-secondary)]">
+                      {products.length} {products.length === 1 ? 'producto' : 'productos'}
+                    </span>
+                    {linkedCount > 0 && (
+                      <span className="rounded-full bg-[var(--color-ak-dorado)]/15 px-2 py-0.5 text-[10px] font-medium text-[var(--color-ak-dorado)]">
+                        {linkedCount} en menu
+                      </span>
+                    )}
+                  </button>
                 )
               })}
             </div>

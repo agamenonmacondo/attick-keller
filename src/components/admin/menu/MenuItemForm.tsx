@@ -73,9 +73,11 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
         ? fetch(`/api/admin/menu/items/${item.id}/ingredients`).then(r => r.json()).catch(() => ({ ingredients: [] }))
         : Promise.resolve({ ingredients: [] }),
     ])
-      .then(([ingData, savedData]) => {
+      .then(([ingRes, savedRes]) => {
         if (cancelled) return
-        const ingredients = ingData.ingredients || []
+        console.log('[MenuItemForm] ingredients response:', ingRes?.error, ingRes?.ingredients?.length)
+        console.log('[MenuItemForm] saved response:', savedRes?.error, savedRes?.ingredients?.length)
+        const ingredients = ingRes?.ingredients || []
         setAllIngredients(ingredients)
         // Set default active category to first one
         if (ingredients.length > 0) {
@@ -83,8 +85,8 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
           if (firstCat) setActiveCat(firstCat)
         }
         // Load saved ingredients
-        if (savedData.ingredients?.length) {
-          setAdded(savedData.ingredients.map((i: any) => ({
+        if (savedRes?.ingredients?.length) {
+          setAdded(savedRes.ingredients.map((i: any) => ({
             pos_ingredient_id: i.pos_ingredient_id,
             name: i.name,
             unit: i.unit,
@@ -95,7 +97,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
         }
         setDataLoading(false)
       })
-      .catch(() => { if (!cancelled) setDataLoading(false) })
+      .catch((e) => { console.error('[MenuItemForm] fetch error:', e); if (!cancelled) setDataLoading(false) })
     return () => { cancelled = true }
   }, [item?.id])
 
@@ -220,6 +222,11 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50">
             <X size={18} />
           </button>
+        </div>
+
+        {/* DEBUG BAR */}
+        <div className="px-5 py-1 bg-yellow-100 text-[9px] text-yellow-800 font-mono break-all">
+          loading:{dataLoading.toString()} cats:{catGroups.length} all:{allIngredients.length} active:{activeCat || 'none'}
         </div>
 
         {/* Body */}

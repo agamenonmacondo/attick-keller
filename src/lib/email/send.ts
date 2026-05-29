@@ -507,6 +507,57 @@ function buildShiftCheckoutHtml(data: ShiftCheckoutData): string {
     '</table></body></html>'
 }
 
+// ================================================================
+// Cambio de cronograma — HTML builder (re-publicacion)
+// ================================================================
+
+function buildShiftChangeHtml(data: ShiftScheduleData, employeeName: string): string {
+  const rows = data.assignments.map(a =>
+    '<tr>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;font-weight:600;">' + a.dayName + ' ' + a.date + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;">' + a.shiftCode + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;">' + a.shiftName + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;">' + a.entrada + ' - ' + a.salida + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#8D6E63;font-size:14px;text-align:right;">' + a.hours + 'h</td>' +
+    '</tr>'
+  ).join('')
+
+  const accentColor: Record<string, string> = { cocina: '#6B2737', barra: '#D4A843', servicio: '#22c55e' }
+  const color = accentColor[data.area] || '#6B2737'
+
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+    '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
+    '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
+    '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+    '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+    '</td></tr>' +
+    '<tr><td style="padding:24px 40px;text-align:center;background:#FFF8E1;">' +
+    '<h2 style="color:#F57F17;font-size:20px;margin:0;">Actualizacion de tu cronograma</h2>' +
+    '</td></tr>' +
+    '<tr><td style="padding:32px 40px;">' +
+    '<p style="color:#3E2723;font-size:16px;margin:0 0 8px 0;">Hola ' + employeeName + ',</p>' +
+    '<p style="color:#3E2723;font-size:15px;margin:0 0 20px 0;">Se ha actualizado el cronograma de <strong style="color:' + color + ';">' + data.areaLabel + '</strong> para la semana <strong>' + data.weekStr + '</strong>.</p>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
+    '<tr style="background:#3E2723;">' +
+    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Dia</td>' +
+    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Codigo</td>' +
+    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Turno</td>' +
+    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Horario</td>' +
+    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;text-align:right;">Horas</td>' +
+    '</tr>' + rows +
+    '</table>' +
+    '<div style="text-align:center;margin-top:24px;">' +
+    '<a href="https://web-rosy-nine-64.vercel.app/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
+    '</div>' +
+    '</td></tr>' +
+    '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
+    '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+    '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+    '</td></tr>' +
+    '</table></body></html>'
+}
+
 // Helper: enviar correo individual con Resend
 async function sendResendEmail(to: string, subject: string, html: string): Promise<{ success: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY
@@ -607,6 +658,81 @@ export async function sendShiftScheduleEmail(
     // Log
     await sb.from('email_log').insert({
       type: 'schedule_published',
+      recipient_email: r.email,
+      recipient_name: r.name,
+      schedule_id: scheduleId,
+      assignment_id: null,
+      status: result.success ? 'sent' : 'failed',
+      error: result.error || null,
+    }).then(({ error }: any) => { if (error) console.error('[email] Error logging email_log:', error) })
+
+    if (result.success) results.sent++
+    else { results.failed++; results.errors.push(`${r.email}: ${result.error}`) }
+  }
+
+  return results
+}
+
+// ================================================================
+// Correo 1b: Cronograma actualizado (re-publicacion) — notificar a afectados
+// ================================================================
+
+export async function sendShiftChangeEmail(
+  weekStr: string,
+  area: string,
+  scheduleId: string,
+  recipients: ScheduleEmailRecipient[],
+  sb: any // Supabase service client
+): Promise<{ sent: number; failed: number; errors: string[] }> {
+  const results = { sent: 0, failed: 0, errors: [] as string[] }
+
+  for (const r of recipients) {
+    // Deduplicar con tipo 'schedule_updated'
+    const { data: existing } = await sb
+      .from('email_log')
+      .select('id')
+      .eq('type', 'schedule_updated')
+      .eq('recipient_email', r.email)
+      .eq('schedule_id', scheduleId)
+      .is('assignment_id', null)
+      .maybeSingle()
+
+    if (existing) {
+      console.log(`[email] Skipping schedule_updated for ${r.email} (already sent)`)
+      continue
+    }
+
+    // Calcular fechas de la semana
+    const weekDates = getWeekDates(weekStr)
+    const assignments = r.assignments
+      .sort((a, b) => a.dayIndex - b.dayIndex)
+      .map(a => {
+        const dateIdx = dayIndexToDateIndex(a.dayIndex)
+        const date = weekDates[dateIdx]
+        return {
+          dayName: DAY_NAMES_SHORT[a.dayIndex],
+          date: date ? date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : '',
+          shiftCode: a.shiftCode,
+          shiftName: a.shiftName,
+          entrada: a.entrada,
+          salida: a.salida,
+          hours: a.hours,
+        }
+      })
+
+    const html = buildShiftChangeHtml({
+      weekStr,
+      area,
+      areaLabel: AREA_LABELS[area] || area,
+      assignments,
+    }, r.name)
+
+    const subject = `Tu horario cambio — ${AREA_LABELS[area] || area}, Semana ${weekStr}`
+    const result = await sendResendEmail(r.email, subject, html)
+
+    // Log
+    await sb.from('email_log').insert({
+      type: 'schedule_updated',
       recipient_email: r.email,
       recipient_name: r.name,
       schedule_id: scheduleId,

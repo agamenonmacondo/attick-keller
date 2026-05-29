@@ -267,7 +267,7 @@ export default function ShiftSchedulePanel() {
           />
 
           {/* Botones de accion */}
-          <div className="flex gap-3 justify-end">
+          <div className="flex items-center gap-3 justify-end">
             <button
               onClick={handleSave}
               disabled={saving}
@@ -278,17 +278,34 @@ export default function ShiftSchedulePanel() {
               <FloppyDisk size={16} />
               {saving ? 'Guardando...' : 'Guardar'}
             </button>
-            {scheduleId && scheduleStatus !== 'published' && (
+            {scheduleId && scheduleStatus === 'draft' && (
               <button
                 onClick={handlePublish}
+                disabled={saving}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
-                  bg-[var(--accent-primary)] text-white hover:opacity-90"
+                  bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
               >
                 <PaperPlaneTilt size={16} />
-                Publicar
+                Publicar cronograma
+              </button>
+            )}
+            {scheduleId && scheduleStatus === 'published' && (
+              <button
+                onClick={handlePublish}
+                disabled={saving}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
+                  bg-[var(--color-ak-borgona)] text-white hover:opacity-90 disabled:opacity-50"
+              >
+                <FloppyDisk size={16} />
+                Guardar y notificar
               </button>
             )}
           </div>
+          {scheduleId && scheduleStatus === 'published' && (
+            <p className="text-xs text-[var(--text-secondary)] text-right">
+              Cronograma publicado
+            </p>
+          )}
         </div>
       )}
 

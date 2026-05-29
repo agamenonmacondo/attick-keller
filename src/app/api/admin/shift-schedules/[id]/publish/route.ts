@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
-import { sendShiftScheduleEmail } from '@/lib/email/send'
+import { sendShiftScheduleEmail, sendShiftChangeEmail } from '@/lib/email/send'
 
 // POST /api/admin/shift-schedules/[id]/publish
 export async function POST(
@@ -17,7 +17,7 @@ export async function POST(
   const sb = getServiceClient()
   const { id } = await params
 
-  // Verificar que el cronograma existe y esta en draft
+  // Verificar que el cronograma existe (draft o published — ambos permitidos)
   const { data: schedule, error: fetchError } = await sb
     .from('shift_schedules')
     .select('*')
@@ -28,9 +28,11 @@ export async function POST(
     return NextResponse.json({ error: 'Cronograma no encontrado' }, { status: 404 })
   }
 
-  if (schedule.status !== 'draft') {
-    return NextResponse.json({ error: 'Solo se pueden publicar cronogramas en borrador' }, { status: 400 })
+  if (schedule.status !== 'draft' && schedule.status !== 'published') {
+    return NextResponse.json({ error: 'Solo se pueden publicar cronogramas en borrador o ya publicados' }, { status: 400 })
   }
+
+  const isRepublish = schedule.status === 'published'
 
   // Verificar que tiene asignaciones
   const { count } = await sb
@@ -42,7 +44,7 @@ export async function POST(
     return NextResponse.json({ error: 'El cronograma no tiene asignaciones' }, { status: 400 })
   }
 
-  // Publicar
+  // Publicar / Re-publicar: siempre status = 'published', siempre actualizar updated_at
   const { data: updated, error: updateError } = await sb
     .from('shift_schedules')
     .update({ status: 'published', updated_at: new Date().toISOString() })
@@ -54,7 +56,7 @@ export async function POST(
     return NextResponse.json({ error: updateError.message }, { status: 500 })
   }
 
-  // Enviar correos de cronograma publicado (fire-and-forget)
+  // Enviar correos (fire-and-forget)
   try {
     const { data: allAssignments } = await sb
       .from('shift_assignments')
@@ -130,10 +132,18 @@ export async function POST(
       })
     }
 
-    // Enviar correos (no bloquea la respuesta)
-    sendShiftScheduleEmail(updated.week_str, updated.area, updated.id, recipients, sb)
-      .then(result => console.log('[email] Schedule published emails:', result))
-      .catch(err => console.error('[email] Error sending schedule emails:', err))
+    // Elegir funcion de email segun si es primera publicacion o re-publicacion
+    if (isRepublish) {
+      // Re-publicacion: enviar correo de "Tu horario cambio" a todos los asignados
+      sendShiftChangeEmail(updated.week_str, updated.area, updated.id, recipients, sb)
+        .then(result => console.log('[email] Schedule updated emails:', result))
+        .catch(err => console.error('[email] Error sending schedule update emails:', err))
+    } else {
+      // Primera publicacion: enviar correo de "Tu cronograma esta listo" a todos los asignados
+      sendShiftScheduleEmail(updated.week_str, updated.area, updated.id, recipients, sb)
+        .then(result => console.log('[email] Schedule published emails:', result))
+        .catch(err => console.error('[email] Error sending schedule emails:', err))
+    }
   } catch (emailErr) {
     // No fallar la publicación si el correo falla
     console.error('[email] Error preparing schedule emails:', emailErr)

@@ -37,6 +37,7 @@ Panel principal de gestion de turnos del administrador. Permite crear, editar y 
 - **Grilla siempre editable**: No se bloquea cuando el cronograma esta published. Se puede guardar y re-publicar.
 - **Botones separados**: "Guardar" (borgona, siempre disponible) guarda asignaciones. "Publicar" (verde, solo si draft) cambia status a published y envia correos. Despues de publicado, "Guardar" notifica por correo a los colaboradores afectados.
 - **Numeric overflow bug (resuelto)**: Empleados con salario inflado (ej: Gibi 172B) causaban `numeric field overflow` en PostgreSQL. Solucion: sanitizar salarios > 50M a 0, tanto en frontend como en API PUT.
+- **Navegacion de semanas**: Flechas anterior/siguiente + label "26 May - 1 Jun" + boton "Hoy". Permite navegar a cualquier semana futura para asignar turnos. Semana anterior se bloquea si es pasada (weekStr < currentWeekStr deshabilita boton izquierdo).
 
 ## Historial
 | Fecha | Agente | Cambio |
@@ -51,3 +52,4 @@ Panel principal de gestion de turnos del administrador. Permite crear, editar y 
 | 2026-05-30 | Ninja | fix: numeric overflow en shift assignments — sanitizar salario > 50M a 0 |
 | 2026-05-30 | Ninja | feat: notificar por correo a colaboradores afectados al guardar cambios en turnos publicados |
 | 2026-05-30 | Ninja | fix: botones separados Guardar/Publicar en vez de boton dual |
+| 2026-05-30 | Ninja | feat: navegacion de semanas con flechas anterior/siguiente + label de rango + boton Hoy |

@@ -143,6 +143,27 @@ export default function ShiftSchedulePanel() {
   const currentWeekStr = useMemo(() => getWeekStr(new Date()), []);
   const isWeekEditable = (wStr: string) => wStr >= currentWeekStr;
 
+  // Navegacion semana a semana
+  const handlePrevWeek = () => {
+    const dates = getWeekDates(weekStr);
+    const prevMonday = new Date(dates[0]);
+    prevMonday.setDate(prevMonday.getDate() - 7);
+    const newWeekStr = getWeekStr(prevMonday);
+    setWeekStr(newWeekStr);
+    setViewYear(prevMonday.getFullYear());
+    setViewMonth(prevMonday.getMonth());
+  };
+
+  const handleNextWeek = () => {
+    const dates = getWeekDates(weekStr);
+    const nextMonday = new Date(dates[0]);
+    nextMonday.setDate(nextMonday.getDate() + 7);
+    const newWeekStr = getWeekStr(nextMonday);
+    setWeekStr(newWeekStr);
+    setViewYear(nextMonday.getFullYear());
+    setViewMonth(nextMonday.getMonth());
+  };
+
   const handleDayClick = (dateStr: string) => {
     const [y, m, d] = dateStr.split('-').map(Number);
     const clickedWeek = getWeekStr(new Date(y, m - 1, d));
@@ -337,6 +358,45 @@ export default function ShiftSchedulePanel() {
         >
           {scheduleStatus === 'published' ? 'Publicado' : 'Borrador'}
         </span>
+
+        {/* Navegacion de semana */}
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={handlePrevWeek}
+            disabled={weekStr <= currentWeekStr}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            aria-label="Semana anterior"
+          >
+            <CaretLeft size={16} weight="bold" />
+          </button>
+          <span className="font-['Playfair_Display'] text-sm font-semibold text-[var(--text-primary)] min-w-[120px] text-center">
+            {weekDates[0] && (() => {
+              const from = weekDates[0];
+              const to = weekDates[6];
+              const fmtShort = (d: Date) => `${d.getDate()} ${MONTH_NAMES[d.getMonth()].slice(0, 3).toLowerCase()}`;
+              return `${fmtShort(from)} - ${fmtShort(to)}`;
+            })()}
+          </span>
+          <button
+            type="button"
+            onClick={handleNextWeek}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
+            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            aria-label="Semana siguiente"
+          >
+            <CaretRight size={16} weight="bold" />
+          </button>
+          <button
+            type="button"
+            onClick={handleToday}
+            className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[var(--color-ak-borgona)]/30 text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
+            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+          >
+            Hoy
+          </button>
+        </div>
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-1 ml-auto">

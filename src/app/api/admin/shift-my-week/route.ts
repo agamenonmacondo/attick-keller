@@ -62,15 +62,17 @@ export async function GET(request: NextRequest) {
 
   const alias = aliasData?.[0]?.alias || (employeeData.nombre_completo as string).split(' ')[0]
 
-  // Buscar cronograma del area (published O draft — colaborador ve published)
-  const { data: schedule } = await sb
+  // Buscar cronograma del area: priorizar published, si no hay mostrar draft
+  // Si hay published Y draft para la misma semana, mostrar published
+  const { data: schedules } = await sb
     .from('shift_schedules')
     .select('id, week_str, status')
     .eq('area', employeeData.area)
     .eq('week_str', week_str)
     .order('version', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+
+  // Priorizar published sobre draft
+  const schedule = schedules?.find(s => s.status === 'published') || schedules?.[0] || null
 
   if (!schedule) {
     return NextResponse.json({
@@ -82,7 +84,18 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  // Obtener asignaciones del empleado
+  // Si el cronograma esta en draft, no mostrar asignaciones (no son definitivas)
+  if (schedule.status === 'draft') {
+    return NextResponse.json({
+      employee: { ...employeeData, alias },
+      schedule: { id: schedule.id, week_str: schedule.week_str, status: 'draft' },
+      assignments: [],
+      shift_types: [],
+      debug: { employeeId, area: employeeData.area, week_str, scheduleStatus: 'draft' },
+    })
+  }
+
+  // Obtener asignaciones del empleado (solo para published)
   const { data: assignments } = await sb
     .from('shift_assignments')
     .select('*')

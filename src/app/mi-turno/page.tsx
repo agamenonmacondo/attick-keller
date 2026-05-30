@@ -214,12 +214,24 @@ export default function MiTurnoPage() {
           </div>
         )}
 
-        {!loading && activeTab === 'horario' && (
+          {!loading && activeTab === 'horario' && (
           <div className="space-y-2">
             {!schedule ? (
               <div className="bg-[var(--bg-card)] rounded-xl p-8 text-center text-[var(--text-secondary)]">
                 <ClockAfternoon size={48} className="mx-auto mb-3 opacity-30" weight="duotone" />
-                <p>No hay cronograma publicado para la semana {weekStr}</p>
+                <p>No hay cronograma para la semana {weekStr}</p>
+                <p className="text-sm mt-1">Contacta a tu lider de area</p>
+              </div>
+            ) : schedule.status === 'draft' ? (
+              <div className="bg-[var(--bg-card)] rounded-xl p-8 text-center text-[var(--text-secondary)]">
+                <WarningCircle size={48} className="mx-auto mb-3 opacity-30" weight="duotone" />
+                <p>Cronograma en preparacion</p>
+                <p className="text-sm mt-1">Tu lider de area esta configurando los turnos para la semana {weekStr}</p>
+              </div>
+            ) : assignments.length === 0 ? (
+              <div className="bg-[var(--bg-card)] rounded-xl p-8 text-center text-[var(--text-secondary)]">
+                <WarningCircle size={48} className="mx-auto mb-3 opacity-30" weight="duotone" />
+                <p>No tienes turnos asignados para la semana {weekStr}</p>
                 <p className="text-sm mt-1">Contacta a tu lider de area</p>
               </div>
             ) : (
@@ -286,12 +298,18 @@ export default function MiTurnoPage() {
           </div>
         )}
 
-        {!loading && activeTab === 'checkin' && (
+          {!loading && activeTab === 'checkin' && (
           <div className="space-y-4">
             {!schedule ? (
               <div className="bg-[var(--bg-card)] rounded-xl p-6 text-center text-[var(--text-secondary)]">
                 <MapPin size={36} className="mx-auto mb-2 opacity-30" />
-                <p>No hay cronograma publicado para esta semana</p>
+                <p>No hay cronograma para esta semana</p>
+              </div>
+            ) : schedule.status === 'draft' ? (
+              <div className="bg-[var(--bg-card)] rounded-xl p-6 text-center text-[var(--text-secondary)]">
+                <WarningCircle size={36} className="mx-auto mb-2 opacity-30" />
+                <p>Cronograma en preparacion</p>
+                <p className="text-sm mt-1">Tu lider de area esta configurando los turnos</p>
               </div>
             ) : !todayAssignment ? (
               <div className="bg-[var(--bg-card)] rounded-xl p-6 text-center text-[var(--text-secondary)]">

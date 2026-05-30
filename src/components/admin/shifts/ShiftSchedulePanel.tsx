@@ -138,10 +138,17 @@ export default function ShiftSchedulePanel() {
     setViewMonth(now.getMonth());
   };
 
+  // Bloquear semanas pasadas — solo semana actual y futuras
+  const currentWeekStr = useMemo(() => getWeekStr(new Date()), []);
+  const isWeekEditable = (wStr: string) => wStr >= currentWeekStr;
+
   const handleDayClick = (dateStr: string) => {
     // Convert clicked date to weekStr
     const clickedDate = new Date(dateStr + 'T12:00:00');
-    setWeekStr(getWeekStr(clickedDate));
+    const clickedWeek = getWeekStr(clickedDate);
+    // Solo permitir semana actual y futuras
+    if (clickedWeek < currentWeekStr) return;
+    setWeekStr(clickedWeek);
     // Update view to month of clicked date
     setViewYear(clickedDate.getFullYear());
     setViewMonth(clickedDate.getMonth());
@@ -202,6 +209,7 @@ export default function ShiftSchedulePanel() {
           });
           if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
+            console.error('Error creating schedule:', res.status, errData);
             throw new Error(errData.error || `Error creando cronograma (${res.status})`);
           }
           const data = await res.json();
@@ -391,6 +399,8 @@ export default function ShiftSchedulePanel() {
             const isInSelectedWeek = selectedWeekDates.has(cell.date);
             const isToday = cell.date === today;
             const isWeekend = i % 7 === 5 || i % 7 === 6;
+            const cellWeek = getWeekStr(new Date(cell.date + 'T12:00:00'));
+            const isPastWeek = cellWeek < currentWeekStr;
             const heat = getHeatClasses(count, isDark);
 
             return (
@@ -401,16 +411,18 @@ export default function ShiftSchedulePanel() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.15, delay: i * 0.008 }}
                 onClick={() => handleDayClick(cell.date)}
+                disabled={isPastWeek}
                 className={cn(
                   'relative rounded-lg py-1.5 text-center text-xs font-medium cursor-pointer active:scale-[0.95]',
                   heat.bg,
                   heat.text,
                   !cell.inMonth && 'opacity-40',
-                  isInSelectedWeek && cell.inMonth && 'ring-2 ring-[var(--color-ak-borgona)] ring-offset-1 ring-offset-[var(--bg-card)]',
-                  isWeekend && cell.inMonth && 'font-semibold',
+                  isPastWeek && 'opacity-30 cursor-not-allowed',
+                  isInSelectedWeek && cell.inMonth && !isPastWeek && 'ring-2 ring-[var(--color-ak-borgona)] ring-offset-1 ring-offset-[var(--bg-card)]',
+                  isWeekend && cell.inMonth && !isPastWeek && 'font-semibold',
                 )}
                 style={{ transition: 'transform 120ms ease-out' }}
-                title={count > 0 ? `${count} turnos asignados` : 'Sin turnos'}
+                title={isPastWeek ? 'Semana pasada' : count > 0 ? `${count} turnos asignados` : 'Sin turnos'}
               >
                 {cell.day}
                 {isToday && !isInSelectedWeek && (
@@ -455,40 +467,48 @@ export default function ShiftSchedulePanel() {
           />
 
           {/* Botones de accion */}
-          <div className="flex items-center gap-3 justify-end">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
-                bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border-default)]
-                hover:bg-[var(--bg-hover)] disabled:opacity-50"
-            >
-              <FloppyDisk size={16} />
-              {saving ? 'Guardando...' : 'Guardar'}
-            </button>
-            {scheduleId && scheduleStatus === 'draft' && (
+          {/* Botones de accion — solo para semana actual o futura */}
+          {isWeekEditable(weekStr) && (
+            <div className="flex items-center gap-3 justify-end">
               <button
-                onClick={handlePublish}
+                onClick={handleSave}
                 disabled={saving}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
-                  bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
-              >
-                <PaperPlaneTilt size={16} />
-                Publicar cronograma
-              </button>
-            )}
-            {scheduleId && scheduleStatus === 'published' && (
-              <button
-                onClick={handlePublish}
-                disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
-                  bg-[var(--color-ak-borgona)] text-white hover:opacity-90 disabled:opacity-50"
+                  bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border-default)]
+                  hover:bg-[var(--bg-hover)] disabled:opacity-50"
               >
                 <FloppyDisk size={16} />
-                Guardar y notificar
+                {saving ? 'Guardando...' : 'Guardar'}
               </button>
-            )}
-          </div>
+              {scheduleId && scheduleStatus === 'draft' && (
+                <button
+                  onClick={handlePublish}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
+                    bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  <PaperPlaneTilt size={16} />
+                  Publicar cronograma
+                </button>
+              )}
+              {scheduleId && scheduleStatus === 'published' && (
+                <button
+                  onClick={handlePublish}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
+                    bg-[var(--color-ak-borgona)] text-white hover:opacity-90 disabled:opacity-50"
+                >
+                  <FloppyDisk size={16} />
+                  Guardar y notificar
+                </button>
+              )}
+            </div>
+          )}
+          {!isWeekEditable(weekStr) && (
+            <p className="text-xs text-[var(--text-secondary)] text-right">
+              No se pueden editar semanas pasadas
+            </p>
+          )}
           {scheduleId && scheduleStatus === 'published' && (
             <p className="text-xs text-[var(--text-secondary)] text-right">
               Cronograma publicado

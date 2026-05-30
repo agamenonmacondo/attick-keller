@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Warning, ClockAfternoon, Coffee } from '@phosphor-icons/react';
 import type { ShiftType, StaffMemberForShift, ShiftAssignment, ShiftAlert } from '@/lib/types/shifts';
 import { calcularCostoTurno, calcularCostoSemanal, formatCOP, getWeekDates, dayIndexToDateIndex, dateToDayIndex } from '@/lib/utils/costCalculator';
@@ -38,10 +38,28 @@ export default function ShiftGrid({
     return initial;
   });
 
-  // Sincronizar cuando assignments cambia externamente
-  const [prevAssignments, setPrevAssignments] = useState(assignments);
-  if (assignments !== prevAssignments) {
-    setPrevAssignments(assignments);
+  // Ref para trackear si el usuario ha hecho cambios locales
+  const hasLocalChanges = useRef(false);
+
+  // Reset hasLocalChanges cuando se incrementa la cantidad de asignaciones (post-save)
+  const prevAssignmentCount = useRef(assignments.length);
+  useEffect(() => {
+    // Si assignments crecio y antes habia cambios locales, es porque se guardo exitosamente
+    if (assignments.length >= prevAssignmentCount.current && assignments.length > 0 && hasLocalChanges.current) {
+      hasLocalChanges.current = false;
+    }
+    prevAssignmentCount.current = assignments.length;
+  }, [assignments.length]);
+
+  // Sincronizar cuando assignments cambia externamente (solo si no hay cambios locales sin guardar)
+  const prevAssignmentsRef = useRef(assignments);
+  useEffect(() => {
+    if (assignments === prevAssignmentsRef.current) return;
+    prevAssignmentsRef.current = assignments;
+
+    // Si el usuario hizo cambios locales, no sobreescribir
+    if (hasLocalChanges.current) return;
+
     const newGrid: Record<string, Record<number, string>> = {};
     for (const s of staff) {
       newGrid[s.id] = {};
@@ -51,11 +69,14 @@ export default function ShiftGrid({
       newGrid[a.employee_id][a.day_index] = a.shift_code;
     }
     setLocalGrid(newGrid);
-  }
+  }, [assignments, staff]);
 
-  const [prevStaff, setPrevStaff] = useState(staff);
-  if (staff !== prevStaff) {
-    setPrevStaff(staff);
+  // Sincronizar cuando staff cambia (agregar/eliminar empleados)
+  const prevStaffRef = useRef(staff);
+  useEffect(() => {
+    if (staff === prevStaffRef.current) return;
+    prevStaffRef.current = staff;
+
     setLocalGrid((prev) => {
       const newGrid: Record<string, Record<number, string>> = {};
       for (const s of staff) {
@@ -63,7 +84,7 @@ export default function ShiftGrid({
       }
       return newGrid;
     });
-  }
+  }, [staff]);
 
   // Grid que se pasa al padre - siempre usa la versión más reciente
   const grid = localGrid;
@@ -183,6 +204,7 @@ export default function ShiftGrid({
 
   const handleCellChange = useCallback(
     (employeeId: string, dayIndex: number, shiftCode: string) => {
+      hasLocalChanges.current = true;
       setLocalGrid((prev) => {
         const newGrid = { ...prev };
         if (!newGrid[employeeId]) newGrid[employeeId] = {};

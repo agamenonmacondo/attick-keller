@@ -3,6 +3,9 @@ import { getStaffOrLeaderUser, getServiceClient } from '@/lib/utils/admin-auth'
 import type { ShiftType } from '@/lib/types/shifts'
 import { calcularCostoTurno, calcularValorHora } from '@/lib/utils/costCalculator'
 
+// Force dynamic — never cache shift data
+export const dynamic = 'force-dynamic'
+
 // PUT /api/admin/shift-assignments — batch update de asignaciones
 export async function PUT(request: NextRequest) {
   const admin = await getStaffOrLeaderUser(request)

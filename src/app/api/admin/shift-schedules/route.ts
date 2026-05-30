@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStaffOrLeaderUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 
+// Force dynamic — never cache shift data
+export const dynamic = 'force-dynamic'
+
 // GET /api/admin/shift-schedules?area=cocina&week_str=2026-W23
 export async function GET(request: NextRequest) {
   const admin = await getStaffOrLeaderUser(request)

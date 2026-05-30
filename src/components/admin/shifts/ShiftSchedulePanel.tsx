@@ -279,11 +279,11 @@ export default function ShiftSchedulePanel() {
 
       const result = await res.json();
       const resultCount = result.assignments?.length || 0;
-      console.log('[Turnos] Asignaciones guardadas:', resultCount, 'res status:', res.status);
+      console.log('[Turnos] Result:', JSON.stringify(result).substring(0, 500));
 
       // Recargar datos para sincronizar
       await loadData();
-      alert(`Guardadas ${resultCount} asignaciones. Payload enviado: ${payload.length}`, );
+      alert(`OK: ${resultCount} guardadas, ${payload.length} enviadas. ID=${schedId?.slice(0,8)}`);
     } catch (err) {
       console.error('[Turnos] Error saving:', err);
       alert(`Error guardando: ${err instanceof Error ? err.message : 'Error desconocido'}`);

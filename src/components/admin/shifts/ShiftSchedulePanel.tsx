@@ -88,6 +88,9 @@ export default function ShiftSchedulePanel() {
     if (startDow < 0) startDow = 6;
 
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const totalCells = startDow + daysInMonth;
+    // Ensure 5 or 6 complete rows (35 or 42 cells) — whichever covers all days
+    const rows = totalCells <= 35 ? 35 : 42;
     const cells: Array<{ date: string; day: number; inMonth: boolean }> = [];
 
     const prevMonthDays = new Date(viewYear, viewMonth, 0).getDate();
@@ -104,7 +107,7 @@ export default function ShiftSchedulePanel() {
       cells.push({ date: dateStr, day: d, inMonth: true });
     }
 
-    const remaining = 42 - cells.length;
+    const remaining = rows - cells.length;
     for (let d = 1; d <= remaining; d++) {
       const m = viewMonth + 2 > 12 ? 1 : viewMonth + 2;
       const y = viewMonth + 2 > 12 ? viewYear + 1 : viewYear;

@@ -157,7 +157,7 @@ export default function ShiftSchedulePanel() {
   // Cargar datos
   const loadData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/admin/shift-schedules?area=${area}&week_str=${weekStr}`);
+      const res = await fetch(`/api/admin/shift-schedules?area=${area}&week_str=${weekStr}`, { credentials: 'include' });
       if (!res.ok) throw new Error('Error cargando datos');
       const data = await res.json();
 
@@ -212,6 +212,7 @@ export default function ShiftSchedulePanel() {
           console.log('[Turnos] Creando cronograma...', { area, week_str: weekStr });
           const res = await fetch('/api/admin/shift-schedules', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ area, week_str: weekStr }),
           });
@@ -264,6 +265,7 @@ export default function ShiftSchedulePanel() {
       console.log('[Turnos] Guardando asignaciones...', { schedule_id: schedId, count: payload.length });
       const res = await fetch('/api/admin/shift-assignments', {
         method: 'PUT',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ schedule_id: schedId, assignments: payload }),
       });
@@ -296,6 +298,7 @@ export default function ShiftSchedulePanel() {
     try {
       const res = await fetch(`/api/admin/shift-schedules/${scheduleId}/publish`, {
         method: 'POST',
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Error publicando');
       setScheduleStatus('published');
@@ -585,6 +588,7 @@ function ShiftTypeEditor({
     try {
       const res = await fetch('/api/admin/shift-schedules', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'create_shift_type', ...form }),
       });
@@ -605,6 +609,7 @@ function ShiftTypeEditor({
     try {
       const res = await fetch('/api/admin/shift-type', {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...form }),
       });
@@ -625,7 +630,7 @@ function ShiftTypeEditor({
   const handleDelete = async (id: string) => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/admin/shift-type?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/shift-type?id=${id}`, { method: 'DELETE', credentials: 'include' });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || 'Error eliminando tipo de turno');

@@ -144,16 +144,13 @@ export default function ShiftSchedulePanel() {
   const isWeekEditable = (wStr: string) => wStr >= currentWeekStr;
 
   const handleDayClick = (dateStr: string) => {
-    // Convert clicked date to weekStr — use noon to avoid timezone issues
     const [y, m, d] = dateStr.split('-').map(Number);
-    const clickedDate = new Date(y, m - 1, d, 12, 0, 0);
-    const clickedWeek = getWeekStr(clickedDate);
+    const clickedWeek = getWeekStr(new Date(y, m - 1, d));
     // Solo permitir semana actual y futuras
     if (clickedWeek < currentWeekStr) return;
     setWeekStr(clickedWeek);
-    // Update view to month of clicked date
-    setViewYear(clickedDate.getFullYear());
-    setViewMonth(clickedDate.getMonth());
+    setViewYear(y);
+    setViewMonth(m - 1);
   };
 
   // Cargar datos

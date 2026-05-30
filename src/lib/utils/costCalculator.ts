@@ -293,13 +293,17 @@ export function formatCOP(value: number): string {
  * Retorna formato '2026-W23' donde W23 empieza en Lunes
  */
 export function getWeekStr(date: Date): string {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  // ISO week: Thursday determines the year
-  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
-  const yearStart = new Date(d.getFullYear(), 0, 4);
-  const weekNumber = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-  return `${d.getFullYear()}-W${String(weekNumber).padStart(2, '0')}`;
+  // ISO 8601 week number — proper algorithm
+  // Step 1: Find the Thursday of the week containing this date
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7; // Sunday = 7, not 0
+  // Set to Thursday of the same week
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  // Step 2: Find Jan 1 of that year
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  // Step 3: Week number = days since Jan 1 / 7 + 1
+  const weekNumber = Math.floor((d.getTime() - yearStart.getTime()) / 86400000 / 7) + 1;
+  return `${d.getUTCFullYear()}-W${String(weekNumber).padStart(2, '0')}`;
 }
 
 /**
@@ -311,15 +315,16 @@ export function getWeekStr(date: Date): string {
  */
 export function getWeekDates(weekStr: string): Date[] {
   const [year, week] = weekStr.split('-W').map(Number);
-  const jan4 = new Date(year, 0, 4);
-  const dayOfWeek = jan4.getDay() || 7;
+  // January 4th is always in ISO week 1
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const dayOfWeek = jan4.getUTCDay() || 7; // Monday=1, Sunday=7
   const monday = new Date(jan4);
-  monday.setDate(jan4.getDate() - dayOfWeek + 1 + (week - 1) * 7);
+  monday.setUTCDate(jan4.getUTCDate() - dayOfWeek + 1 + (week - 1) * 7);
 
   const dates: Date[] = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
+    d.setUTCDate(monday.getUTCDate() + i);
     dates.push(d);
   }
   return dates;

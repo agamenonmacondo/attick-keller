@@ -63,10 +63,11 @@ export default function StaffPanel({ area }: StaffPanelProps) {
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [filterArea, setFilterArea] = useState(area);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [form, setForm] = useState({
+  const [saving, setSaving] = useState(false);
+  const [addForm, setAddForm] = useState({
     nombre_completo: '',
     cargo: '',
     area: area || 'cocina',
@@ -76,6 +77,16 @@ export default function StaffPanel({ area }: StaffPanelProps) {
     salario_mensual: 0,
     alias: '',
   });
+  const [editForm, setEditForm] = useState<Record<string, {
+    nombre_completo: string;
+    cargo: string;
+    area: string;
+    contrato: string;
+    cedula: string;
+    correo: string;
+    salario_mensual: number;
+    alias: string;
+  }>>({});
 
   const fetchStaff = useCallback(async () => {
     setLoading(true);
@@ -96,43 +107,66 @@ export default function StaffPanel({ area }: StaffPanelProps) {
   useEffect(() => { fetchStaff(); }, [fetchStaff]);
   useEffect(() => { setFilterArea(area); }, [area]);
 
-  const resetForm = () => {
-    setForm({ nombre_completo: '', cargo: '', area: area || 'cocina', contrato: 'fijo', cedula: '', correo: '', salario_mensual: 0, alias: '' });
-    setEditingId(null);
-    setShowForm(false);
+  const resetAddForm = () => {
+    setAddForm({ nombre_completo: '', cargo: '', area: area || 'cocina', contrato: 'fijo', cedula: '', correo: '', salario_mensual: 0, alias: '' });
+    setShowAddForm(false);
   };
 
   const handleCreate = async () => {
-    if (!form.nombre_completo.trim()) return;
+    if (!addForm.nombre_completo.trim()) return;
+    setSaving(true);
     try {
       const res = await fetch('/api/admin/nomina-staff', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre_completo: form.nombre_completo, cargo: form.cargo, area: form.area, contrato: form.contrato, cedula: form.cedula || null, correo: form.correo || null, salario_mensual: form.salario_mensual, alias: form.alias || null }),
+        body: JSON.stringify({ nombre_completo: addForm.nombre_completo, cargo: addForm.cargo, area: addForm.area, contrato: addForm.contrato, cedula: addForm.cedula || null, correo: addForm.correo || null, salario_mensual: addForm.salario_mensual, alias: addForm.alias || null }),
       });
       if (!res.ok) throw new Error('Error creando empleado');
-      resetForm();
+      resetAddForm();
       fetchStaff();
     } catch (err) { console.error('Error creating staff:', err); }
+    finally { setSaving(false); }
   };
 
   const handleUpdate = async (id: string) => {
+    const f = editForm[id];
+    if (!f) return;
+    setSaving(true);
     try {
       const res = await fetch('/api/admin/nomina-staff', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, nombre_completo: form.nombre_completo, cargo: form.cargo, area: form.area, contrato: form.contrato, cedula: form.cedula || null, correo: form.correo || null, salario_mensual: form.salario_mensual }),
+        body: JSON.stringify({ id, nombre_completo: f.nombre_completo, cargo: f.cargo, area: f.area, contrato: f.contrato, cedula: f.cedula || null, correo: f.correo || null, salario_mensual: f.salario_mensual }),
       });
       if (!res.ok) throw new Error('Error actualizando empleado');
-      resetForm();
+      setEditingId(null);
+      setEditForm(prev => { const next = { ...prev }; delete next[id]; return next; });
       fetchStaff();
     } catch (err) { console.error('Error updating staff:', err); }
+    finally { setSaving(false); }
   };
 
   const startEdit = (member: StaffRow) => {
-    setForm({ nombre_completo: member.nombre_completo, cargo: member.cargo || '', area: member.area || 'cocina', contrato: member.contrato as 'fijo' | 'turnante', cedula: member.cedula || '', correo: member.correo || '', salario_mensual: member.salario_mensual || 0, alias: member.alias || '' });
+    setEditForm(prev => ({
+      ...prev,
+      [member.id]: {
+        nombre_completo: member.nombre_completo,
+        cargo: member.cargo || '',
+        area: member.area || 'cocina',
+        contrato: member.contrato,
+        cedula: member.cedula || '',
+        correo: member.correo || '',
+        salario_mensual: member.salario_mensual || 0,
+        alias: member.alias || '',
+      },
+    }));
     setEditingId(member.id);
-    setShowForm(true);
+    setExpandedId(member.id);
+  };
+
+  const cancelEdit = (id: string) => {
+    setEditingId(null);
+    setEditForm(prev => { const next = { ...prev }; delete next[id]; return next; });
   };
 
   // Totales
@@ -191,27 +225,27 @@ export default function StaffPanel({ area }: StaffPanelProps) {
           </select>
           <span className="text-xs text-[var(--text-secondary)]">{staff.length} {staff.length === 1 ? 'persona' : 'personas'}</span>
         </div>
-        <button onClick={() => { resetForm(); setShowForm(true); }} className="flex items-center justify-center gap-1.5 min-h-[44px] px-4 rounded-lg text-sm font-medium bg-[var(--accent-primary)] text-white hover:opacity-90">
+        <button onClick={() => { resetAddForm(); setShowAddForm(true); }} className="flex items-center justify-center gap-1.5 min-h-[44px] px-4 rounded-lg text-sm font-medium bg-[var(--accent-primary)] text-white hover:opacity-90">
           <Plus size={14} /> Agregar persona
         </button>
       </div>
 
-      {/* Formulario inline */}
-      {showForm && (
+      {/* Formulario agregar */}
+      {showAddForm && (
         <div className="bg-[var(--bg-card)] rounded-xl p-4 space-y-3 border border-[var(--border-default)]">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Nombre completo *</label><input type="text" value={form.nombre_completo} onChange={(e) => setForm((f) => ({ ...f, nombre_completo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cargo</label><input type="text" value={form.cargo} onChange={(e) => setForm((f) => ({ ...f, cargo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Area</label><select value={form.area} onChange={(e) => setForm((f) => ({ ...f, area: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm">{AREAS.filter((a) => a.value !== '').map((a) => (<option key={a.value} value={a.value}>{a.label}</option>))}</select></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Contrato</label><select value={form.contrato} onChange={(e) => setForm((f) => ({ ...f, contrato: e.target.value as 'fijo' | 'turnante' }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"><option value="fijo">Fijo</option><option value="turnante">Turnante</option></select></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cedula</label><input type="text" value={form.cedula} onChange={(e) => setForm((f) => ({ ...f, cedula: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Correo</label><input type="email" value={form.correo} onChange={(e) => setForm((f) => ({ ...f, correo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Salario mensual</label><input type="number" value={form.salario_mensual || ''} onChange={(e) => setForm((f) => ({ ...f, salario_mensual: Number(e.target.value) || 0 }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Alias</label><input type="text" value={form.alias} onChange={(e) => setForm((f) => ({ ...f, alias: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" disabled={!!editingId} /></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Nombre completo *</label><input type="text" value={addForm.nombre_completo} onChange={(e) => setAddForm((f) => ({ ...f, nombre_completo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cargo</label><input type="text" value={addForm.cargo} onChange={(e) => setAddForm((f) => ({ ...f, cargo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Area</label><select value={addForm.area} onChange={(e) => setAddForm((f) => ({ ...f, area: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm">{AREAS.filter((a) => a.value !== '').map((a) => (<option key={a.value} value={a.value}>{a.label}</option>))}</select></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Contrato</label><select value={addForm.contrato} onChange={(e) => setAddForm((f) => ({ ...f, contrato: e.target.value as 'fijo' | 'turnante' }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"><option value="fijo">Fijo</option><option value="turnante">Turnante</option></select></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cedula</label><input type="text" value={addForm.cedula} onChange={(e) => setAddForm((f) => ({ ...f, cedula: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Correo</label><input type="email" value={addForm.correo} onChange={(e) => setAddForm((f) => ({ ...f, correo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Salario mensual</label><input type="number" value={addForm.salario_mensual || ''} onChange={(e) => setAddForm((f) => ({ ...f, salario_mensual: Number(e.target.value) || 0 }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Alias</label><input type="text" value={addForm.alias} onChange={(e) => setAddForm((f) => ({ ...f, alias: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
           </div>
           <div className="flex justify-end gap-2">
-            <button onClick={resetForm} className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[44px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><X size={14} /> Cancelar</button>
-            <button onClick={editingId ? () => handleUpdate(editingId) : handleCreate} className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[44px] bg-[var(--accent-primary)] text-white hover:opacity-90"><Check size={14} /> {editingId ? 'Actualizar' : 'Crear'}</button>
+            <button onClick={resetAddForm} className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[44px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><X size={14} /> Cancelar</button>
+            <button onClick={handleCreate} disabled={saving} className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[44px] bg-[var(--accent-primary)] text-white hover:opacity-90 disabled:opacity-50"><Check size={14} /> {saving ? 'Creando...' : 'Crear'}</button>
           </div>
         </div>
       )}
@@ -225,21 +259,22 @@ export default function StaffPanel({ area }: StaffPanelProps) {
         <>
           <div className="md:hidden space-y-2">
             {staff.map((member) => {
-              const contract = CONTRACT_LABELS[member.contrato] || CONTRACT_LABELS.fijo;
               const areaMeta = AREAS.find((a) => a.value === member.area);
               const isExpanded = expandedId === member.id;
+              const isEditing = editingId === member.id;
+              const ef = editForm[member.id];
               const costoEmp = costoEmpresaMensual(member.salario_mensual || 0, member.auxilio_no_salarial || 0);
               const vHO = valorHoraOrd(member);
               const d = desglose(member);
               return (
                 <div key={member.id} className="bg-[var(--bg-card)] rounded-lg overflow-hidden">
                   <button
-                    onClick={() => setExpandedId(isExpanded ? null : member.id)}
+                    onClick={() => { if (!isEditing) setExpandedId(isExpanded ? null : member.id); }}
                     className="w-full text-left p-3 flex items-start justify-between gap-2 min-h-[44px]"
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-[var(--text-primary)] text-sm">{member.alias}</span>
+                        <span className="font-semibold text-[var(--text-primary)] text-sm">{isEditing ? ef?.alias || member.alias : member.alias}</span>
                         <span className="text-xs px-2 py-0.5 rounded-full border" style={{ color: areaMeta?.color || 'var(--text-secondary)', borderColor: areaMeta?.color || 'var(--border-default)', backgroundColor: areaMeta?.color ? `${areaMeta.color}15` : undefined }}>{areaMeta?.label || member.area || 'Sin area'}</span>
                       </div>
                       <div className="text-xs text-[var(--text-secondary)] mt-0.5">{member.cargo || '-'} &middot; {member.modalidad || 'COMPLETO'}{member.aplica_propinas ? ' +Prop' : ''}</div>
@@ -249,7 +284,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                       <div className="font-mono text-xs text-[var(--text-secondary)]">Sal: {formatCOP(member.salario_mensual || 0)}</div>
                     </div>
                   </button>
-                  {isExpanded && (
+                  {isExpanded && !isEditing && (
                     <div className="px-3 pb-3 border-t border-[var(--border-default)] pt-2 space-y-2">
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                         <div><span className="text-[var(--text-secondary)]">Hora ord.</span> <span className="font-mono text-[var(--text-primary)]">{formatCOP(vHO)}</span></div>
@@ -264,6 +299,30 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                         <div><span className="text-[var(--text-secondary)]">Caja (4%)</span> <span className="font-mono">{formatCOP(d.aporteCaja)}</span></div>
                       </div>
                       <button onClick={() => startEdit(member)} className="flex items-center gap-1 text-xs text-[var(--accent-primary)] min-h-[44px]"><PencilSimple size={14} /> Editar</button>
+                    </div>
+                  )}
+                  {isExpanded && isEditing && ef && (
+                    <div className="px-3 pb-3 border-t border-[var(--border-default)] pt-2 space-y-2">
+                      <div className="grid grid-cols-1 gap-2">
+                        <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Nombre completo</label><input type="text" value={ef.nombre_completo} onChange={(e) => setEditForm(prev => ({ ...prev, [member.id]: { ...prev[member.id], nombre_completo: e.target.value } }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+                        <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Alias</label><input type="text" value={ef.alias} onChange={(e) => setEditForm(prev => ({ ...prev, [member.id]: { ...prev[member.id], alias: e.target.value } }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cargo</label><input type="text" value={ef.cargo} onChange={(e) => setEditForm(prev => ({ ...prev, [member.id]: { ...prev[member.id], cargo: e.target.value } }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+                          <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Area</label><select value={ef.area} onChange={(e) => setEditForm(prev => ({ ...prev, [member.id]: { ...prev[member.id], area: e.target.value } }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm">{AREAS.filter(a => a.value !== '').map(a => <option key={a.value} value={a.value}>{a.label}</option>)}</select></div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Contrato</label><select value={ef.contrato} onChange={(e) => setEditForm(prev => ({ ...prev, [member.id]: { ...prev[member.id], contrato: e.target.value } }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"><option value="fijo">Fijo</option><option value="turnante">Turnante</option></select></div>
+                          <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Salario</label><input type="number" value={ef.salario_mensual || ''} onChange={(e) => setEditForm(prev => ({ ...prev, [member.id]: { ...prev[member.id], salario_mensual: Number(e.target.value) || 0 } }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cedula</label><input type="text" value={ef.cedula} onChange={(e) => setEditForm(prev => ({ ...prev, [member.id]: { ...prev[member.id], cedula: e.target.value } }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+                          <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Correo</label><input type="email" value={ef.correo} onChange={(e) => setEditForm(prev => ({ ...prev, [member.id]: { ...prev[member.id], correo: e.target.value } }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm" /></div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 sticky bottom-0 bg-[var(--bg-card)] pt-2 pb-1">
+                        <button onClick={() => cancelEdit(member.id)} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[44px] border border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><X size={14} /> Cancelar</button>
+                        <button onClick={() => handleUpdate(member.id)} disabled={saving} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[44px] bg-[var(--accent-primary)] text-white hover:opacity-90 disabled:opacity-50"><Check size={14} /> {saving ? 'Guardando...' : 'Guardar'}</button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -281,53 +340,63 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                   <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Nombre</th>
                   <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Cargo</th>
                   <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Area</th>
-                  <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Modalidad</th>
+                  <th className="text-left p-3 text-[var(--text-secondary)] font-medium">Contrato</th>
                   <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Salario</th>
-                  <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Aux. transp.</th>
                   <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Costo empresa</th>
                   <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Hora ord.</th>
-                  <th className="text-right p-3 text-[var(--text-secondary)] font-medium">HE diurna</th>
-                  <th className="text-right p-3 text-[var(--text-secondary)] font-medium">Hora noct.</th>
-                  <th className="text-right p-3 text-[var(--text-secondary)] font-medium">HE noct.</th>
-                  <th className="text-center p-3 text-[var(--text-secondary)] font-medium w-10"></th>
+                  <th className="text-center p-3 text-[var(--text-secondary)] font-medium w-20"></th>
                 </tr>
               </thead>
               <tbody>
                 {staff.map((member) => {
-                  const contract = CONTRACT_LABELS[member.contrato] || CONTRACT_LABELS.fijo;
                   const areaMeta = AREAS.find((a) => a.value === member.area);
                   const isExpanded = expandedId === member.id;
+                  const isEditing = editingId === member.id;
+                  const ef = editForm[member.id];
                   const costoEmp = costoEmpresaMensual(member.salario_mensual || 0, member.auxilio_no_salarial || 0);
                   const vHO = valorHoraOrd(member);
-                  const vHED = valorHEDiurna(member);
-                  const vHEN = valorHENocturna(member);
-                  const vHN = valorHoraNocturna(member);
                   const d = desglose(member);
+                  const upEF = (field: string, value: string | number) => setEditForm(prev => ({ ...prev, [member.id]: { ...prev[member.id], [field]: value } }));
                   return (
                     <>
-                      <tr key={member.id} className={`border-b border-[var(--border-default)] hover:bg-[var(--bg-hover)]/50 transition-colors cursor-pointer ${isExpanded ? 'bg-[var(--bg-hover)]/30' : ''}`} onClick={() => setExpandedId(isExpanded ? null : member.id)}>
-                        <td className="p-3 text-[var(--text-secondary)]">
+                      <tr key={member.id} className={`border-b border-[var(--border-default)] hover:bg-[var(--bg-hover)]/50 transition-colors ${isExpanded ? 'bg-[var(--bg-hover)]/30' : ''} ${isEditing ? 'bg-[var(--accent-primary)]/5 ring-1 ring-[var(--accent-primary)]/30' : ''}`}>
+                        <td className="p-3 text-[var(--text-secondary)] cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : member.id)}>
                           {isExpanded ? <CaretDown size={14} /> : <CaretRight size={14} />}
                         </td>
-                        <td className="p-3"><span className="font-semibold text-[var(--text-primary)]">{member.alias}</span></td>
-                        <td className="p-3 text-[var(--text-primary)] text-xs whitespace-nowrap">{member.nombre_completo}</td>
-                        <td className="p-3 text-xs text-[var(--text-secondary)]">{member.cargo || '-'}</td>
-                        <td className="p-3"><span className="text-xs px-2 py-0.5 rounded-full border" style={{ color: areaMeta?.color || 'var(--text-secondary)', borderColor: areaMeta?.color || 'var(--border-default)', backgroundColor: areaMeta?.color ? `${areaMeta.color}15` : undefined }}>{areaMeta?.label || member.area || 'Sin area'}</span></td>
-                        <td className="p-3 text-xs text-[var(--text-secondary)]">{member.modalidad || 'COMPLETO'}{member.aplica_propinas ? ' +Prop' : ''}</td>
-                        <td className="p-3 text-right font-mono text-xs text-[var(--text-secondary)]">{formatCOP(member.salario_mensual || 0)}</td>
-                        <td className="p-3 text-right font-mono text-xs text-[var(--text-secondary)]">{member.auxilio_no_salarial > 0 ? formatCOP(member.auxilio_no_salarial) : '-'}</td>
-                        <td className="p-3 text-right font-mono text-xs font-semibold text-[var(--accent-primary)]">{formatCOP(costoEmp)}</td>
-                        <td className="p-3 text-right font-mono text-xs text-[var(--text-primary)]">{formatCOP(vHO)}</td>
-                        <td className="p-3 text-right font-mono text-xs text-amber-400">{formatCOP(vHED)}</td>
-                        <td className="p-3 text-right font-mono text-xs text-purple-400">{formatCOP(vHN)}</td>
-                        <td className="p-3 text-right font-mono text-xs text-red-400">{formatCOP(vHEN)}</td>
-                        <td className="p-3 text-center">
-                          <button onClick={(e) => { e.stopPropagation(); startEdit(member); }} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] min-h-[36px] min-w-[36px]"><PencilSimple size={14} /></button>
-                        </td>
+                        {isEditing && ef ? (
+                          <>
+                            <td className="p-1"><input type="text" value={ef.alias} onChange={(e) => upEF('alias', e.target.value)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm font-semibold" /></td>
+                            <td className="p-1"><input type="text" value={ef.nombre_completo} onChange={(e) => upEF('nombre_completo', e.target.value)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs" /></td>
+                            <td className="p-1"><input type="text" value={ef.cargo} onChange={(e) => upEF('cargo', e.target.value)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs" /></td>
+                            <td className="p-1"><select value={ef.area} onChange={(e) => upEF('area', e.target.value)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs">{AREAS.filter(a => a.value !== '').map(a => <option key={a.value} value={a.value}>{a.label}</option>)}</select></td>
+                            <td className="p-1"><select value={ef.contrato} onChange={(e) => upEF('contrato', e.target.value)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs"><option value="fijo">Fijo</option><option value="turnante">Turnante</option></select></td>
+                            <td className="p-1"><input type="number" value={ef.salario_mensual || ''} onChange={(e) => upEF('salario_mensual', Number(e.target.value) || 0)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs font-mono text-right" /></td>
+                            <td className="p-3 text-right font-mono text-xs font-semibold text-[var(--accent-primary)]">-</td>
+                            <td className="p-3 text-right font-mono text-xs text-[var(--text-secondary)]">-</td>
+                            <td className="p-1 flex gap-1 justify-center">
+                              <button onClick={() => handleUpdate(member.id)} disabled={saving} className="p-1.5 rounded bg-[var(--accent-primary)] text-white hover:opacity-90 disabled:opacity-50 min-h-[36px] min-w-[36px]"><Check size={14} /></button>
+                              <button onClick={() => cancelEdit(member.id)} className="p-1.5 rounded border border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] min-h-[36px] min-w-[36px]"><X size={14} /></button>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="p-3"><span className="font-semibold text-[var(--text-primary)]">{member.alias}</span></td>
+                            <td className="p-3 text-[var(--text-primary)] text-xs whitespace-nowrap">{member.nombre_completo}</td>
+                            <td className="p-3 text-xs text-[var(--text-secondary)]">{member.cargo || '-'}</td>
+                            <td className="p-3"><span className="text-xs px-2 py-0.5 rounded-full border" style={{ color: areaMeta?.color || 'var(--text-secondary)', borderColor: areaMeta?.color || 'var(--border-default)', backgroundColor: areaMeta?.color ? `${areaMeta.color}15` : undefined }}>{areaMeta?.label || member.area || 'Sin area'}</span></td>
+                            <td className="p-3 text-xs text-[var(--text-secondary)]">{CONTRACT_LABELS[member.contrato]?.label || member.contrato}</td>
+                            <td className="p-3 text-right font-mono text-xs text-[var(--text-secondary)]">{formatCOP(member.salario_mensual || 0)}</td>
+                            <td className="p-3 text-right font-mono text-xs font-semibold text-[var(--accent-primary)]">{formatCOP(costoEmp)}</td>
+                            <td className="p-3 text-right font-mono text-xs text-[var(--text-primary)]">{formatCOP(vHO)}</td>
+                            <td className="p-3 text-center">
+                              <button onClick={(e) => { e.stopPropagation(); startEdit(member); }} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] min-h-[36px] min-w-[36px]"><PencilSimple size={14} /></button>
+                            </td>
+                          </>
+                        )}
                       </tr>
-                      {isExpanded && (
+                      {isExpanded && !isEditing && (
                         <tr key={`${member.id}-detail`} className="border-b border-[var(--border-default)] bg-[var(--bg-card)]">
-                          <td colSpan={14} className="p-4">
+                          <td colSpan={10} className="p-4">
                             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-xs">
                               <div><span className="text-[var(--text-secondary)]">Prima de servicios (8.33%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.primaServicios)}/mes</div></div>
                               <div><span className="text-[var(--text-secondary)]">Cesantias (8.33%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.cesantias)}/mes</div></div>

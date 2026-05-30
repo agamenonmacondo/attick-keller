@@ -85,14 +85,14 @@ export default function ShiftSchedulePanel() {
   const handlePrevWeek = () => {
     const dates = getWeekDates(weekStr);
     const prevMonday = new Date(dates[0]);
-    prevMonday.setDate(prevMonday.getDate() - 7);
+    prevMonday.setUTCDate(prevMonday.getUTCDate() - 7);
     setWeekStr(getWeekStr(prevMonday));
   };
 
   const handleNextWeek = () => {
     const dates = getWeekDates(weekStr);
     const nextMonday = new Date(dates[0]);
-    nextMonday.setDate(nextMonday.getDate() + 7);
+    nextMonday.setUTCDate(nextMonday.getUTCDate() + 7);
     setWeekStr(getWeekStr(nextMonday));
   };
 

@@ -195,13 +195,21 @@ export default function ShiftSchedulePanel() {
       return;
     }
 
+    // Verificar semana editable
+    if (!isWeekEditable(weekStr)) {
+      alert('No se pueden editar semanas pasadas.');
+      return;
+    }
+
     setSaving(true);
     try {
       let schedId = scheduleId;
+      console.log('[Turnos] Guardando...', { scheduleId: schedId, area, weekStr, gridEntries: Object.keys(grid).length });
 
       // Crear cronograma si no existe
       if (!schedId) {
         try {
+          console.log('[Turnos] Creando cronograma...', { area, week_str: weekStr });
           const res = await fetch('/api/admin/shift-schedules', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -209,15 +217,16 @@ export default function ShiftSchedulePanel() {
           });
           if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
-            console.error('Error creating schedule:', res.status, errData);
+            console.error('[Turnos] Error creating schedule:', res.status, errData);
             throw new Error(errData.error || `Error creando cronograma (${res.status})`);
           }
           const data = await res.json();
+          console.log('[Turnos] Cronograma creado:', data);
           schedId = data.id;
           setScheduleId(data.id);
           setScheduleStatus('draft');
         } catch (err) {
-          console.error('Error creating schedule:', err);
+          console.error('[Turnos] Error creating schedule:', err);
           alert(`Error creando cronograma: ${err instanceof Error ? err.message : 'Error desconocido'}`);
           return;
         }
@@ -252,6 +261,7 @@ export default function ShiftSchedulePanel() {
         return;
       }
 
+      console.log('[Turnos] Guardando asignaciones...', { schedule_id: schedId, count: payload.length });
       const res = await fetch('/api/admin/shift-assignments', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -260,14 +270,18 @@ export default function ShiftSchedulePanel() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
+        console.error('[Turnos] Error saving assignments:', res.status, errData);
         throw new Error(errData.error || `Error guardando asignaciones (${res.status})`);
       }
+
+      const result = await res.json();
+      console.log('[Turnos] Asignaciones guardadas:', result);
 
       // Recargar datos para sincronizar
       await loadData();
       alert('Asignaciones guardadas correctamente');
     } catch (err) {
-      console.error('Error saving:', err);
+      console.error('[Turnos] Error saving:', err);
       alert(`Error guardando: ${err instanceof Error ? err.message : 'Error desconocido'}`);
     } finally {
       setSaving(false);

@@ -9,7 +9,11 @@ export async function PUT(request: NextRequest) {
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()
-  const { schedule_id, assignments } = await request.json()
+  const body = await request.json()
+  const { schedule_id, assignments } = body
+
+  console.log('[API shift-assignments PUT] schedule_id:', schedule_id, 'assignments count:', assignments?.length)
+  console.log('[API shift-assignments PUT] first 3 assignments:', JSON.stringify(assignments?.slice(0, 3)))
 
   if (!schedule_id || !Array.isArray(assignments)) {
     return NextResponse.json({ error: 'schedule_id y assignments[] son requeridos' }, { status: 400 })
@@ -83,6 +87,7 @@ export async function PUT(request: NextRequest) {
   })
 
   // Borrar asignaciones existentes
+  console.log('[API shift-assignments PUT] Deleting existing assignments for schedule:', schedule_id)
   const { error: deleteError } = await sb
     .from('shift_assignments')
     .delete()
@@ -93,14 +98,18 @@ export async function PUT(request: NextRequest) {
   }
 
   // Insertar nuevas
+  console.log('[API shift-assignments PUT] Inserting', enrichedAssignments.length, 'assignments')
   const { data, error: insertError } = await sb
     .from('shift_assignments')
     .insert(enrichedAssignments)
     .select()
 
   if (insertError) {
+    console.error('[API shift-assignments PUT] Insert error:', insertError.message, insertError.code, insertError.details)
     return NextResponse.json({ error: insertError.message }, { status: 500 })
   }
+
+  console.log('[API shift-assignments PUT] Inserted', data?.length, 'assignments successfully')
 
   // Calcular costo total del cronograma
   const totalCost = (data || []).reduce((sum: number, a: Record<string, unknown>) => sum + (Number(a.estimated_cost) || 0), 0)

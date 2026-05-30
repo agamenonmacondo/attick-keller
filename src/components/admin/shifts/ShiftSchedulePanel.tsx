@@ -285,13 +285,19 @@ export default function ShiftSchedulePanel() {
       const result = await res.json();
       console.log('[Turnos] PUT response:', JSON.stringify(result).substring(0, 500));
 
+      // DEBUG: verificar BD directamente antes de recargar
+      const verifyRes = await fetch(`/api/admin/shift-schedules?area=${area}&week_str=${weekStr}`, { credentials: 'include' });
+      const verifyData = await verifyRes.json();
+      console.log('[Turnos] VERIFY after save - assignments:', verifyData.assignments?.length, 'schedule:', verifyData.schedule?.id);
+
       // Recargar datos para sincronizar
       await loadData();
       
       const savedCount = result.assignments?.length ?? 'N/A';
       const totalCost = result.total_estimated_cost ?? 'N/A';
       const gridCount = Object.values(grid).reduce((s,d) => s + Object.keys(d).length, 0);
-      alert(`DEBUG: Guardadas ${savedCount} asignaciones\nPayload enviado: ${payload.length}\nGrid tenia: ${gridCount} celdas\nCosto: ${totalCost}\nRes.status: ${res.status}`);
+      const verifyAssignCount = verifyData.assignments?.length ?? 'N/A';
+      alert(`DEBUG Guardar:\nPayload: ${payload.length} items\nPUT returned: ${savedCount} asignaciones\nVerify BD: ${verifyAssignCount} asignaciones\nGrid tenia: ${gridCount} celdas\nCosto: ${totalCost}\nStatus: ${res.status}`);
     } catch (err) {
       console.error('[Turnos] Error saving:', err);
       alert(`Error guardando: ${err instanceof Error ? err.message : 'Error desconocido'}`);

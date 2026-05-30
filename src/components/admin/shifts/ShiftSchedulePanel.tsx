@@ -258,7 +258,8 @@ export default function ShiftSchedulePanel() {
       }
 
       if (payload.length === 0) {
-        alert('No hay turnos asignados para guardar.');
+        const gridCells = Object.values(grid).reduce((s,d) => s + Object.keys(d).length, 0);
+        alert(`No hay turnos asignados para guardar. (Grid: ${Object.keys(grid).length} empleados, ${gridCells} celdas)`);
         return;
       }
 

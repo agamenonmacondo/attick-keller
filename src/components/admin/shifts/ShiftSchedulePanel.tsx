@@ -81,19 +81,23 @@ export default function ShiftSchedulePanel() {
   const currentWeekStr = useMemo(() => getWeekStr(new Date()), []);
   const isWeekEditable = (wStr: string) => wStr >= currentWeekStr;
 
-  // Navegacion semana a semana
+  // Navegacion semana a semana — aritmetica pura sobre weekStr, sin objetos Date
   const handlePrevWeek = () => {
-    const dates = getWeekDates(weekStr);
-    const prevMonday = new Date(dates[0]);
-    prevMonday.setUTCDate(prevMonday.getUTCDate() - 7);
-    setWeekStr(getWeekStr(prevMonday));
+    const [year, week] = weekStr.split('-W').map(Number);
+    if (week === 1) {
+      setWeekStr(`${year - 1}-W52`);
+    } else {
+      setWeekStr(`${year}-W${String(week - 1).padStart(2, '0')}`);
+    }
   };
 
   const handleNextWeek = () => {
-    const dates = getWeekDates(weekStr);
-    const nextMonday = new Date(dates[0]);
-    nextMonday.setUTCDate(nextMonday.getUTCDate() + 7);
-    setWeekStr(getWeekStr(nextMonday));
+    const [year, week] = weekStr.split('-W').map(Number);
+    if (week === 52) {
+      setWeekStr(`${year + 1}-W01`);
+    } else {
+      setWeekStr(`${year}-W${String(week + 1).padStart(2, '0')}`);
+    }
   };
 
   const handleToday = () => {

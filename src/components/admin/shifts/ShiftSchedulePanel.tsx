@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, ChartBar, PencilSimple, IdentificationBadge, Trash } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, ChartBar, ChartLineUp, PencilSimple, IdentificationBadge, Trash } from '@phosphor-icons/react';
 import { SectionHeading } from '../shared/SectionHeading';
 
 import type { ShiftType, StaffMemberForShift, ShiftAssignment } from '@/lib/types/shifts';
@@ -14,8 +14,10 @@ import CostEstimationBar from './CostEstimationBar';
 import StaffPanel from './StaffPanel';
 import ShiftTimelineView from './ShiftTimelineView';
 
+import SalesReferenceTab from './SalesReferenceTab';
+
 type Area = 'cocina' | 'barra' | 'servicio' | 'todos';
-type Tab = 'cronograma' | 'costos' | 'horarios' | 'personal';
+type Tab = 'cronograma' | 'costos' | 'referencia' | 'horarios' | 'personal';
 
 const AREAS: { value: Area; label: string }[] = [
   { value: 'cocina', label: 'Cocina' },
@@ -354,9 +356,10 @@ export default function ShiftSchedulePanel() {
           {[
             { id: 'cronograma' as Tab, icon: <ClockClockwise size={14} />, label: 'Cronograma' },
             { id: 'costos' as Tab, icon: <ChartBar size={14} />, label: 'Costos' },
+            { id: 'referencia' as Tab, icon: <ChartLineUp size={14} />, label: 'Referencia' },
             { id: 'horarios' as Tab, icon: <PencilSimple size={14} />, label: 'Horarios' },
             { id: 'personal' as Tab, icon: <IdentificationBadge size={14} />, label: 'Personal' },
-          ].filter(t => area === 'todos' ? t.id === 'costos' : true).map((t) => (
+          ].filter(t => area === 'todos' ? t.id === 'costos' || t.id === 'referencia' : true).map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
@@ -504,6 +507,16 @@ export default function ShiftSchedulePanel() {
 
       {tab === 'costos' && (
         <CostEstimationBar
+          staff={staff}
+          shiftTypes={shiftTypes}
+          grid={grid}
+          weekStr={weekStr}
+          area={area}
+        />
+      )}
+
+      {tab === 'referencia' && (
+        <SalesReferenceTab
           staff={staff}
           shiftTypes={shiftTypes}
           grid={grid}

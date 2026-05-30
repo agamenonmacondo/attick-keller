@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { getStaffOrLeaderUser, getServiceClient } from '@/lib/utils/admin-auth'
 import { sendShiftScheduleEmail, sendShiftChangeEmail } from '@/lib/email/send'
 
 // POST /api/admin/shift-schedules/[id]/publish
@@ -7,7 +7,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = await getAdminUser(request)
+  const admin = await getStaffOrLeaderUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   if (!['super_admin', 'store_admin', 'lider_area'].includes(admin.role)) {

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { getStaffOrLeaderUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 
 // GET /api/admin/shift-schedules?area=cocina&week_str=2026-W23
 export async function GET(request: NextRequest) {
-  const admin = await getAdminUser(request)
+  const admin = await getStaffOrLeaderUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/admin/shift-schedules — crear nuevo cronograma
 export async function POST(request: NextRequest) {
-  const admin = await getAdminUser(request)
+  const admin = await getStaffOrLeaderUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()

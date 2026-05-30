@@ -1,11 +1,15 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, ChartBar, PencilSimple, IdentificationBadge, Trash } from '@phosphor-icons/react';
+import { motion } from 'framer-motion';
 import { SectionHeading } from '../shared/SectionHeading';
 import { supabase } from '@/lib/supabase/client';
 import type { ShiftType, StaffMemberForShift, ShiftAssignment } from '@/lib/types/shifts';
-import { getWeekStr, getWeekDates, calcularCostoTurno } from '@/lib/utils/costCalculator';
+import { getWeekStr, getWeekDates, dayIndexToDateIndex, calcularCostoTurno } from '@/lib/utils/costCalculator';
+import { getLocalDate } from '@/lib/utils/formatDate';
+import { cn } from '@/lib/utils/cn';
+import { useTheme } from '@/lib/ThemeProvider';
 import ShiftGrid from './ShiftGrid';
 import CostEstimationBar from './CostEstimationBar';
 import StaffPanel from './StaffPanel';
@@ -20,10 +24,29 @@ const AREAS: { value: Area; label: string }[] = [
   { value: 'servicio', label: 'Servicio' },
 ];
 
+const WEEKDAYS = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
+const MONTH_NAMES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+
+function getHeatClasses(count: number, isDark: boolean): { bg: string; text: string } {
+  if (isDark) {
+    if (count === 0) return { bg: 'bg-[var(--bg-input)]', text: 'text-[var(--text-muted)]' };
+    if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/25', text: 'text-[var(--border-light)]' };
+    if (count <= 5) return { bg: 'bg-[var(--color-ak-borgona)]/45', text: 'text-white' };
+    return { bg: 'bg-[var(--color-ak-borgona)]/70', text: 'text-white' };
+  }
+  if (count === 0) return { bg: 'bg-[var(--bg-input)]', text: 'text-[var(--text-secondary)]' };
+  if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/15', text: 'text-[var(--text-primary)]' };
+  if (count <= 5) return { bg: 'bg-[var(--color-ak-borgona)]/35', text: 'text-[var(--text-primary)]' };
+  return { bg: 'bg-[var(--color-ak-borgona)]/60', text: 'text-white' };
+}
+
 export default function ShiftSchedulePanel() {
   const [area, setArea] = useState<Area>('cocina');
   const [tab, setTab] = useState<Tab>('cronograma');
-  const [weekOffset, setWeekOffset] = useState(0);
+  const [weekStr, setWeekStr] = useState(() => getWeekStr(new Date()));
   const [shiftTypes, setShiftTypes] = useState<ShiftType[]>([]);
   const [staff, setStaff] = useState<StaffMemberForShift[]>([]);
   const [assignments, setAssignments] = useState<ShiftAssignment[]>([]);
@@ -31,12 +54,98 @@ export default function ShiftSchedulePanel() {
   const [scheduleStatus, setScheduleStatus] = useState<string>('draft');
   const [saving, setSaving] = useState(false);
   const [grid, setGrid] = useState<Record<string, Record<number, string>>>({});
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
-  // Semana actual
-  const today = new Date();
-  const targetDate = new Date(today);
-  targetDate.setDate(today.getDate() + weekOffset * 7);
-  const weekStr = getWeekStr(targetDate);
+  // Compute heatmap days from assignments
+  const days = useMemo(() => {
+    const d: Record<string, number> = {};
+    const weekDates = getWeekDates(weekStr);
+    for (const a of assignments) {
+      // day_index 0=Sunday maps to weekDates[6] (Monday-first array)
+      const dateIndex = dayIndexToDateIndex(a.day_index);
+      const date = weekDates[dateIndex];
+      if (date) {
+        const dateStr = date.toISOString().split('T')[0];
+        d[dateStr] = (d[dateStr] || 0) + 1;
+      }
+    }
+    return d;
+  }, [assignments, weekStr]);
+
+  // Calendar state: derive viewYear/viewMonth from weekStr's middle date (Thursday)
+  const weekDates = useMemo(() => getWeekDates(weekStr), [weekStr]);
+  const selectedWeekThursday = weekDates[3]; // Thursday of the selected week
+  const [viewYear, setViewYear] = useState(selectedWeekThursday.getFullYear());
+  const [viewMonth, setViewMonth] = useState(selectedWeekThursday.getMonth());
+
+  const today = useMemo(() => getLocalDate(), []);
+
+  const calendarDays = useMemo(() => {
+    const firstDay = new Date(viewYear, viewMonth, 1);
+    let startDow = firstDay.getDay() - 1;
+    if (startDow < 0) startDow = 6;
+
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const cells: Array<{ date: string; day: number; inMonth: boolean }> = [];
+
+    const prevMonthDays = new Date(viewYear, viewMonth, 0).getDate();
+    for (let i = startDow - 1; i >= 0; i--) {
+      const d = prevMonthDays - i;
+      const m = viewMonth === 0 ? 12 : viewMonth + 1;
+      const y = viewMonth === 0 ? viewYear - 1 : viewYear;
+      const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      cells.push({ date: dateStr, day: d, inMonth: false });
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      cells.push({ date: dateStr, day: d, inMonth: true });
+    }
+
+    const remaining = 42 - cells.length;
+    for (let d = 1; d <= remaining; d++) {
+      const m = viewMonth + 2 > 12 ? 1 : viewMonth + 2;
+      const y = viewMonth + 2 > 12 ? viewYear + 1 : viewYear;
+      const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      cells.push({ date: dateStr, day: d, inMonth: false });
+    }
+
+    return cells;
+  }, [viewYear, viewMonth]);
+
+  // Determine which dates belong to the selected week for ring highlight
+  const selectedWeekDates = useMemo(() => {
+    return new Set(weekDates.map(d => d.toISOString().split('T')[0]));
+  }, [weekDates]);
+
+  const handlePrevMonth = () => {
+    const newDate = new Date(viewYear, viewMonth - 1, 1);
+    setViewYear(newDate.getFullYear());
+    setViewMonth(newDate.getMonth());
+  };
+
+  const handleNextMonth = () => {
+    const newDate = new Date(viewYear, viewMonth + 1, 1);
+    setViewYear(newDate.getFullYear());
+    setViewMonth(newDate.getMonth());
+  };
+
+  const handleToday = () => {
+    setWeekStr(getWeekStr(new Date()));
+    const now = new Date();
+    setViewYear(now.getFullYear());
+    setViewMonth(now.getMonth());
+  };
+
+  const handleDayClick = (dateStr: string) => {
+    // Convert clicked date to weekStr
+    const clickedDate = new Date(dateStr + 'T12:00:00');
+    setWeekStr(getWeekStr(clickedDate));
+    // Update view to month of clicked date
+    setViewYear(clickedDate.getFullYear());
+    setViewMonth(clickedDate.getMonth());
+  };
 
   // Cargar datos
   const loadData = useCallback(async () => {
@@ -196,33 +305,6 @@ export default function ShiftSchedulePanel() {
           ))}
         </select>
 
-        {/* Navegacion de semana */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setWeekOffset((w) => w - 1)}
-            className="p-2 rounded-lg hover:bg-[var(--bg-card)] text-[var(--text-secondary)] min-h-[44px] min-w-[44px] flex items-center justify-center"
-          >
-            <CaretLeft size={16} />
-          </button>
-          <span className="text-sm font-mono text-[var(--text-primary)] min-w-[100px] text-center">
-            {weekStr}
-          </span>
-          <button
-            onClick={() => setWeekOffset((w) => w + 1)}
-            className="p-2 rounded-lg hover:bg-[var(--bg-card)] text-[var(--text-secondary)] min-h-[44px] min-w-[44px] flex items-center justify-center"
-          >
-            <CaretRight size={16} />
-          </button>
-          {weekOffset !== 0 && (
-            <button
-              onClick={() => setWeekOffset(0)}
-              className="text-xs text-[var(--text-secondary)] underline"
-            >
-              Hoy
-            </button>
-          )}
-        </div>
-
         {/* Status badge */}
         <span className={`text-xs px-2 py-1 rounded-full
           ${scheduleStatus === 'published' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}
@@ -251,6 +333,112 @@ export default function ShiftSchedulePanel() {
               {t.label}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Calendar heatmap */}
+      <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4">
+        {/* Month header */}
+        <div className="flex items-center justify-between mb-3">
+          <button
+            type="button"
+            onClick={handlePrevMonth}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
+            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            aria-label="Mes anterior"
+          >
+            <CaretLeft size={16} weight="bold" />
+          </button>
+
+          <div className="flex items-center gap-3">
+            <span className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
+              {MONTH_NAMES[viewMonth]} {viewYear}
+            </span>
+            <button
+              type="button"
+              onClick={handleToday}
+              className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[var(--color-ak-borgona)]/30 text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
+              style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            >
+              Hoy
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleNextMonth}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
+            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            aria-label="Mes siguiente"
+          >
+            <CaretRight size={16} weight="bold" />
+          </button>
+        </div>
+
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 mb-1">
+          {WEEKDAYS.map(d => (
+            <div key={d} className="text-center text-[10px] font-medium text-[var(--text-secondary)] py-1">
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Day grid */}
+        <div className="grid grid-cols-7 gap-1">
+          {calendarDays.map((cell, i) => {
+            const count = days[cell.date] || 0;
+            const isInSelectedWeek = selectedWeekDates.has(cell.date);
+            const isToday = cell.date === today;
+            const isWeekend = i % 7 === 5 || i % 7 === 6;
+            const heat = getHeatClasses(count, isDark);
+
+            return (
+              <motion.button
+                key={cell.date}
+                type="button"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.15, delay: i * 0.008 }}
+                onClick={() => handleDayClick(cell.date)}
+                className={cn(
+                  'relative rounded-lg py-1.5 text-center text-xs font-medium cursor-pointer active:scale-[0.95]',
+                  heat.bg,
+                  heat.text,
+                  !cell.inMonth && 'opacity-40',
+                  isInSelectedWeek && cell.inMonth && 'ring-2 ring-[var(--color-ak-borgona)] ring-offset-1 ring-offset-[var(--bg-card)]',
+                  isWeekend && cell.inMonth && 'font-semibold',
+                )}
+                style={{ transition: 'transform 120ms ease-out' }}
+                title={count > 0 ? `${count} turnos asignados` : 'Sin turnos'}
+              >
+                {cell.day}
+                {isToday && !isInSelectedWeek && (
+                  <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-[var(--color-ak-borgona)]" />
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-3 mt-3">
+          <div className="flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-sm bg-[var(--bg-input)]" />
+            <span className="text-[9px] text-[var(--text-secondary)]">0</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-sm bg-[var(--color-ak-borgona)]/15" />
+            <span className="text-[9px] text-[var(--text-secondary)]">1-2</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-sm bg-[var(--color-ak-borgona)]/35" />
+            <span className="text-[9px] text-[var(--text-secondary)]">3-5</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-sm bg-[var(--color-ak-borgona)]/60" />
+            <span className="text-[9px] text-[var(--text-secondary)]">6+</span>
+          </div>
         </div>
       </div>
 
@@ -499,15 +687,15 @@ function ShiftTypeEditor({
                           </button>
                           <button
                             onClick={() => setConfirmDelete(null)}
-                            className="text-xs px-2 py-1 rounded text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
+                            className="text-xs px-2 py-1 rounded bg-[var(--bg-hover)] text-[var(--text-secondary)]"
                           >
-                            No
+                            Cancelar
                           </button>
                         </div>
                       ) : (
                         <button
                           onClick={() => setConfirmDelete(st.id)}
-                          className="p-1.5 rounded hover:bg-red-500/10 text-red-400/60 hover:text-red-400"
+                          className="p-1.5 rounded hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-400"
                           title="Eliminar"
                         >
                           <Trash size={14} />
@@ -517,84 +705,58 @@ function ShiftTypeEditor({
                   </div>
                 </div>
               ) : (
-                /* Formulario de edición */
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold text-[var(--text-primary)]">
-                    Editando: {st.code} — {st.name}
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Codigo</label>
-                      <input
-                        type="text"
-                        value={form.code}
-                        onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
-                        className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm font-mono uppercase"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Nombre</label>
-                      <input
-                        type="text"
-                        value={form.name}
-                        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                        className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
-                      />
-                    </div>
-                    <div className="col-span-1" />
-                    <div>
-                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Entrada (HH:MM)</label>
-                      <input
-                        type="time"
-                        value={form.entrada}
-                        onChange={(e) => setForm((f) => ({ ...f, entrada: e.target.value }))}
-                        className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Salida (HH:MM)</label>
-                      <input
-                        type="time"
-                        value={form.salida}
-                        onChange={(e) => setForm((f) => ({ ...f, salida: e.target.value }))}
-                        className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
-                      />
-                    </div>
-                    <div className="col-span-1" />
-                    <div>
-                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Horas ordinarias (HO)</label>
-                      <input
-                        type="number"
-                        step="0.5"
-                        min="0"
-                        value={form.ordinarias}
-                        onChange={(e) => setForm((f) => ({ ...f, ordinarias: parseFloat(e.target.value) || 0 }))}
-                        className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Horas nocturnas (HN)</label>
-                      <input
-                        type="number"
-                        step="0.5"
-                        min="0"
-                        value={form.nocturnas}
-                        onChange={(e) => setForm((f) => ({ ...f, nocturnas: parseFloat(e.target.value) || 0 }))}
-                        className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
-                      />
-                    </div>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      value={form.code}
+                      onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                      placeholder="Codigo"
+                      className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
+                    />
+                    <input
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      placeholder="Nombre"
+                      className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
+                    />
+                    <input
+                      value={form.entrada}
+                      onChange={(e) => setForm({ ...form, entrada: e.target.value })}
+                      placeholder=" Entrada HH:MM"
+                      className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
+                    />
+                    <input
+                      value={form.salida}
+                      onChange={(e) => setForm({ ...form, salida: e.target.value })}
+                      placeholder="Salida HH:MM"
+                      className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
+                    />
+                    <input
+                      type="number"
+                      value={form.ordinarias}
+                      onChange={(e) => setForm({ ...form, ordinarias: Number(e.target.value) })}
+                      placeholder="Ordinarias"
+                      className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
+                    />
+                    <input
+                      type="number"
+                      value={form.nocturnas}
+                      onChange={(e) => setForm({ ...form, nocturnas: Number(e.target.value) })}
+                      placeholder="Nocturnas"
+                      className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
+                    />
                   </div>
-                  <div className="flex justify-end gap-2">
+                  <div className="flex gap-2 justify-end">
                     <button
                       onClick={() => setEditing(null)}
-                      className="px-3 py-1.5 rounded-lg text-sm text-[var(--text-secondary)]"
+                      className="text-xs px-3 py-1.5 rounded-lg bg-[var(--bg-hover)] text-[var(--text-secondary)]"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={() => handleEdit(st.id)}
                       disabled={saving}
-                      className="px-3 py-1.5 rounded-lg text-sm bg-[var(--accent-primary)] text-white hover:opacity-90 disabled:opacity-50"
+                      className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-ak-borgona)] text-white hover:opacity-90 disabled:opacity-50"
                     >
                       {saving ? 'Guardando...' : 'Guardar'}
                     </button>
@@ -606,85 +768,60 @@ function ShiftTypeEditor({
         })}
       </div>
 
-      {/* Formulario para nuevo tipo */}
+      {/* Nuevo turno */}
       {editing === 'new' && (
-        <div className="bg-[var(--bg-card)] rounded-xl p-4 space-y-3 border border-[var(--border-default)]">
-          <h4 className="text-sm font-semibold text-[var(--text-primary)]">Nuevo horario</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs text-[var(--text-secondary)] mb-1">Codigo</label>
-              <input
-                type="text"
-                value={form.code}
-                onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
-                className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm font-mono uppercase"
-                placeholder="EJ"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-[var(--text-secondary)] mb-1">Nombre</label>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
-                placeholder="Ej: Cierre Especial"
-              />
-            </div>
-            <div className="col-span-1" />
-            <div>
-              <label className="block text-xs text-[var(--text-secondary)] mb-1">Entrada (HH:MM)</label>
-              <input
-                type="time"
-                value={form.entrada}
-                onChange={(e) => setForm((f) => ({ ...f, entrada: e.target.value }))}
-                className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-[var(--text-secondary)] mb-1">Salida (HH:MM)</label>
-              <input
-                type="time"
-                value={form.salida}
-                onChange={(e) => setForm((f) => ({ ...f, salida: e.target.value }))}
-                className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
-              />
-            </div>
-            <div className="col-span-1" />
-            <div>
-              <label className="block text-xs text-[var(--text-secondary)] mb-1">Horas ordinarias (HO)</label>
-              <input
-                type="number"
-                step="0.5"
-                min="0"
-                value={form.ordinarias}
-                onChange={(e) => setForm((f) => ({ ...f, ordinarias: parseFloat(e.target.value) || 0 }))}
-                className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-[var(--text-secondary)] mb-1">Horas nocturnas (HN)</label>
-              <input
-                type="number"
-                step="0.5"
-                min="0"
-                value={form.nocturnas}
-                onChange={(e) => setForm((f) => ({ ...f, nocturnas: parseFloat(e.target.value) || 0 }))}
-                className="w-full px-2 py-1.5 rounded border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
-              />
-            </div>
+        <div className="bg-[var(--bg-card)] rounded-lg p-3 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              value={form.code}
+              onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+              placeholder="Codigo"
+              className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
+            />
+            <input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="Nombre"
+              className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
+            />
+            <input
+              value={form.entrada}
+              onChange={(e) => setForm({ ...form, entrada: e.target.value })}
+              placeholder="Entrada HH:MM"
+              className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
+            />
+            <input
+              value={form.salida}
+              onChange={(e) => setForm({ ...form, salida: e.target.value })}
+              placeholder="Salida HH:MM"
+              className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
+            />
+            <input
+              type="number"
+              value={form.ordinarias}
+              onChange={(e) => setForm({ ...form, ordinarias: Number(e.target.value) })}
+              placeholder="Ordinarias"
+              className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
+            />
+            <input
+              type="number"
+              value={form.nocturnas}
+              onChange={(e) => setForm({ ...form, nocturnas: Number(e.target.value) })}
+              placeholder="Nocturnas"
+              className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
+            />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex gap-2 justify-end">
             <button
               onClick={() => setEditing(null)}
-              className="px-3 py-1.5 rounded-lg text-sm text-[var(--text-secondary)]"
+              className="text-xs px-3 py-1.5 rounded-lg bg-[var(--bg-hover)] text-[var(--text-secondary)]"
             >
               Cancelar
             </button>
             <button
               onClick={handleNew}
               disabled={saving}
-              className="px-3 py-1.5 rounded-lg text-sm bg-[var(--accent-primary)] text-white hover:opacity-90 disabled:opacity-50"
+              className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-ak-borgona)] text-white hover:opacity-90 disabled:opacity-50"
             >
               {saving ? 'Creando...' : 'Crear'}
             </button>

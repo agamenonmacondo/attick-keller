@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { getStaffOrLeaderUser, getServiceClient } from '@/lib/utils/admin-auth'
 import type { ShiftType } from '@/lib/types/shifts'
 import { calcularCostoTurno, calcularValorHora } from '@/lib/utils/costCalculator'
 
 // PUT /api/admin/shift-assignments — batch update de asignaciones
 export async function PUT(request: NextRequest) {
-  const admin = await getAdminUser(request)
+  const admin = await getStaffOrLeaderUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()

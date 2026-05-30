@@ -11,6 +11,7 @@ interface CostEstimationBarProps {
   shiftTypes: ShiftType[];
   grid: Record<string, Record<number, string>>;
   weekStr: string;
+  area?: string;
 }
 
 export default function CostEstimationBar({
@@ -18,6 +19,7 @@ export default function CostEstimationBar({
   shiftTypes,
   grid,
   weekStr,
+  area,
 }: CostEstimationBarProps) {
   const SUNDAY_DAY_INDEX = 0;
 
@@ -89,6 +91,25 @@ export default function CostEstimationBar({
     }));
   }, [employeeCosts]);
 
+  // Agrupacion por area para modo consolidado
+  const areaGroups = useMemo(() => {
+    if (area !== 'todos') return null;
+    const groups: Record<string, { label: string; employees: typeof employeeCosts; totalCost: number; totalHours: number; totalBase: number; totalRN: number; totalRD: number; totalHE: number }> = {};
+    const areaLabels: Record<string, string> = { cocina: 'Cocina', barra: 'Barra', servicio: 'Servicio' };
+    for (const emp of employeeCosts) {
+      const a = emp.area || 'otro';
+      if (!groups[a]) groups[a] = { label: areaLabels[a] || a, employees: [], totalCost: 0, totalHours: 0, totalBase: 0, totalRN: 0, totalRD: 0, totalHE: 0 };
+      groups[a].employees.push(emp);
+      groups[a].totalCost += emp.total;
+      groups[a].totalHours += emp.totalHours;
+      groups[a].totalBase += emp.base;
+      groups[a].totalRN += emp.recargoNocturno;
+      groups[a].totalRD += emp.recargoDominical;
+      groups[a].totalHE += emp.horasExtra;
+    }
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [employeeCosts, area]);
+
   if (employeeCosts.length === 0) {
     return <div className="text-[var(--text-secondary)] text-center py-8">Sin datos para calcular</div>;
   }
@@ -122,6 +143,53 @@ export default function CostEstimationBar({
           </div>
         </div>
       </div>
+
+      {/* Resumen por area — solo modo consolidado */}
+      {areaGroups && areaGroups.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {areaGroups.map(([areaKey, group]) => (
+            <div key={areaKey} className="bg-[var(--bg-card)] rounded-lg p-3 border border-[var(--border-default)]">
+              <div className="text-sm font-semibold text-[var(--color-ak-borgona)] mb-2">{group.label}</div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-[var(--text-secondary)]">Empleados</span>
+                  <span className="font-mono text-[var(--text-primary)]">{group.employees.length}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[var(--text-secondary)]">Horas</span>
+                  <span className="font-mono text-[var(--text-primary)]">{group.totalHours.toFixed(1)}h</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[var(--text-secondary)]">Base</span>
+                  <span className="font-mono text-[var(--text-primary)]">{formatCOP(group.totalBase)}</span>
+                </div>
+                {group.totalRN > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[var(--text-secondary)]">R.Noc</span>
+                    <span className="font-mono text-amber-400">{formatCOP(group.totalRN)}</span>
+                  </div>
+                )}
+                {group.totalRD > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[var(--text-secondary)]">R.Dom</span>
+                    <span className="font-mono text-red-400">{formatCOP(group.totalRD)}</span>
+                  </div>
+                )}
+                {group.totalHE > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[var(--text-secondary)]">HE</span>
+                    <span className="font-mono text-blue-400">{formatCOP(group.totalHE)}</span>
+                  </div>
+                )}
+                <div className="border-t border-[var(--border-default)] pt-1 flex justify-between text-xs font-semibold">
+                  <span className="text-[var(--text-primary)]">Total</span>
+                  <span className="font-mono text-[var(--text-primary)]">{formatCOP(group.totalCost)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Chart */}
       <div className="bg-[var(--bg-card)] rounded-lg p-4">

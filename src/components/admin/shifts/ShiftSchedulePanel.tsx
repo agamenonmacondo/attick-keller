@@ -14,13 +14,14 @@ import CostEstimationBar from './CostEstimationBar';
 import StaffPanel from './StaffPanel';
 import ShiftTimelineView from './ShiftTimelineView';
 
-type Area = 'cocina' | 'barra' | 'servicio';
+type Area = 'cocina' | 'barra' | 'servicio' | 'todos';
 type Tab = 'cronograma' | 'costos' | 'horarios' | 'personal';
 
 const AREAS: { value: Area; label: string }[] = [
   { value: 'cocina', label: 'Cocina' },
   { value: 'barra', label: 'Barra' },
   { value: 'servicio', label: 'Servicio' },
+  { value: 'todos', label: 'Todos' },
 ];
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
@@ -45,6 +46,11 @@ function getHeatClasses(count: number, isDark: boolean): { bg: string; text: str
 export default function ShiftSchedulePanel() {
   const [area, setArea] = useState<Area>('cocina');
   const [tab, setTab] = useState<Tab>('cronograma');
+
+  // Cuando se cambia a "todos", forzar tab de costos
+  useEffect(() => {
+    if (area === 'todos' && tab !== 'costos') setTab('costos');
+  }, [area]);
   const [weekStr, setWeekStr] = useState(() => getWeekStr(new Date()));
   const [shiftTypes, setShiftTypes] = useState<ShiftType[]>([]);
   const [staff, setStaff] = useState<StaffMemberForShift[]>([]);
@@ -107,27 +113,63 @@ export default function ShiftSchedulePanel() {
   // Cargar datos
   const loadData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/admin/shift-schedules?area=${area}&week_str=${weekStr}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Error cargando datos');
-      const data = await res.json();
+      if (area === 'todos') {
+        // Modo consolidado: fetch todas las areas en paralelo
+        const areas: ('cocina' | 'barra' | 'servicio')[] = ['cocina', 'barra', 'servicio'];
+        const results = await Promise.all(
+          areas.map(a => fetch(`/api/admin/shift-schedules?area=${a}&week_str=${weekStr}`, { credentials: 'include' }).then(r => r.json()))
+        );
 
-      setShiftTypes(data.shift_types || []);
-      setStaff(data.staff || []);
-      setAssignments(data.assignments || []);
-      setScheduleId(data.schedule?.id || null);
-      setScheduleStatus(data.schedule?.status || 'draft');
+        const allStaff = results.flatMap(r => r.staff || []);
+        const allAssignments = results.flatMap(r => r.assignments || []);
+        const allShiftTypes = results.flatMap(r => r.shift_types || []);
 
-      // Inicializar grid desde asignaciones — only when data comes from server (not local edits)
-      const initialGrid: Record<string, Record<number, string>> = {};
-      for (const s of data.staff || []) {
-        initialGrid[s.id] = {};
+        // Deduplicar shift types por code
+        const seenCodes = new Set<string>();
+        const uniqueShiftTypes = allShiftTypes.filter((st: { code: string }) => {
+          if (seenCodes.has(st.code)) return false;
+          seenCodes.add(st.code);
+          return true;
+        });
+
+        setShiftTypes(uniqueShiftTypes);
+        setStaff(allStaff);
+        setAssignments(allAssignments);
+        setScheduleId(null);
+        setScheduleStatus('draft');
+
+        const initialGrid: Record<string, Record<number, string>> = {};
+        for (const s of allStaff) {
+          initialGrid[s.id] = {};
+        }
+        for (const a of allAssignments) {
+          if (!initialGrid[a.employee_id]) initialGrid[a.employee_id] = {};
+          initialGrid[a.employee_id][a.day_index] = a.shift_code;
+        }
+        setGrid(initialGrid);
+        gridDirtyRef.current = false;
+      } else {
+        const res = await fetch(`/api/admin/shift-schedules?area=${area}&week_str=${weekStr}`, { credentials: 'include' });
+        if (!res.ok) throw new Error('Error cargando datos');
+        const data = await res.json();
+
+        setShiftTypes(data.shift_types || []);
+        setStaff(data.staff || []);
+        setAssignments(data.assignments || []);
+        setScheduleId(data.schedule?.id || null);
+        setScheduleStatus(data.schedule?.status || 'draft');
+
+        const initialGrid: Record<string, Record<number, string>> = {};
+        for (const s of data.staff || []) {
+          initialGrid[s.id] = {};
+        }
+        for (const a of data.assignments || []) {
+          if (!initialGrid[a.employee_id]) initialGrid[a.employee_id] = {};
+          initialGrid[a.employee_id][a.day_index] = a.shift_code;
+        }
+        setGrid(initialGrid);
+        gridDirtyRef.current = false;
       }
-      for (const a of data.assignments || []) {
-        if (!initialGrid[a.employee_id]) initialGrid[a.employee_id] = {};
-        initialGrid[a.employee_id][a.day_index] = a.shift_code;
-      }
-      setGrid(initialGrid);
-      gridDirtyRef.current = false;
     } catch (err) {
       console.error('Error loading shift data:', err);
     }
@@ -314,7 +356,7 @@ export default function ShiftSchedulePanel() {
             { id: 'costos' as Tab, icon: <ChartBar size={14} />, label: 'Costos' },
             { id: 'horarios' as Tab, icon: <PencilSimple size={14} />, label: 'Horarios' },
             { id: 'personal' as Tab, icon: <IdentificationBadge size={14} />, label: 'Personal' },
-          ].map((t) => (
+          ].filter(t => area === 'todos' ? t.id === 'costos' : true).map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
@@ -405,8 +447,8 @@ export default function ShiftSchedulePanel() {
             onGridChange={handleGridChange}
           />
 
-          {/* Botones de accion — solo para semana actual o futura */}
-          {isWeekEditable(weekStr) && (
+          {/* Botones de accion — solo para semana actual o futura, y no en modo consolidado */}
+          {area !== 'todos' && isWeekEditable(weekStr) && (
             <div className="flex items-center gap-3 justify-end flex-wrap">
               {/* Indicador de estado */}
               {scheduleId && scheduleStatus === 'published' && (
@@ -466,6 +508,7 @@ export default function ShiftSchedulePanel() {
           shiftTypes={shiftTypes}
           grid={grid}
           weekStr={weekStr}
+          area={area}
         />
       )}
 

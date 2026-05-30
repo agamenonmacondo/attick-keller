@@ -283,14 +283,15 @@ export default function ShiftSchedulePanel() {
       }
 
       const result = await res.json();
-      console.log('[Turnos] Asignaciones guardadas:', result);
+      console.log('[Turnos] PUT response:', JSON.stringify(result).substring(0, 500));
 
       // Recargar datos para sincronizar
       await loadData();
       
-      const savedCount = result.assignments?.length || 0;
-      const totalCost = result.total_estimated_cost || 0;
-      alert(`Guardadas ${savedCount} asignaciones (costo: $${totalCost.toLocaleString()})`);
+      const savedCount = result.assignments?.length ?? 'N/A';
+      const totalCost = result.total_estimated_cost ?? 'N/A';
+      const gridCount = Object.values(grid).reduce((s,d) => s + Object.keys(d).length, 0);
+      alert(`DEBUG: Guardadas ${savedCount} asignaciones\nPayload enviado: ${payload.length}\nGrid tenia: ${gridCount} celdas\nCosto: ${totalCost}\nRes.status: ${res.status}`);
     } catch (err) {
       console.error('[Turnos] Error saving:', err);
       alert(`Error guardando: ${err instanceof Error ? err.message : 'Error desconocido'}`);

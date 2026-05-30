@@ -287,7 +287,10 @@ export default function ShiftSchedulePanel() {
 
       // Recargar datos para sincronizar
       await loadData();
-      alert('Asignaciones guardadas correctamente');
+      
+      const savedCount = result.assignments?.length || 0;
+      const totalCost = result.total_estimated_cost || 0;
+      alert(`Guardadas ${savedCount} asignaciones (costo: $${totalCost.toLocaleString()})`);
     } catch (err) {
       console.error('[Turnos] Error saving:', err);
       alert(`Error guardando: ${err instanceof Error ? err.message : 'Error desconocido'}`);
@@ -478,6 +481,15 @@ export default function ShiftSchedulePanel() {
             <span className="text-[9px] text-[var(--text-secondary)]">6+</span>
           </div>
         </div>
+      </div>
+
+      {/* DEBUG: estado actual - quitar despues de resolver bug */}
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-[10px] font-mono text-amber-300 space-y-1">
+        <div className="font-bold text-amber-200">DEBUG Turnos:</div>
+        <div>weekStr={weekStr} | scheduleId={scheduleId || 'null'} | status={scheduleStatus}</div>
+        <div>staff={staff.length} | shiftTypes={shiftTypes.length} | grid entries={Object.keys(grid).length}</div>
+        <div>grid con datos: {Object.entries(grid).filter(([,d]) => Object.keys(d).length > 0).map(([id]) => id.slice(0,6)).join(', ') || 'VACIO'}</div>
+        <div>total celdas llenas: {Object.values(grid).reduce((s,d) => s + Object.keys(d).length, 0)}</div>
       </div>
 
       {/* Contenido del tab */}

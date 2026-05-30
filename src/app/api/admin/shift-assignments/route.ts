@@ -51,7 +51,12 @@ export async function PUT(request: NextRequest) {
     .in('id', employeeIds)
 
   const salaryMap = new Map(
-    (staffData || []).map((s: Record<string, unknown>) => [s.id as string, Number(s.salario) || 0])
+    (staffData || []).map((s: Record<string, unknown>) => {
+      const raw = Number(s.salario) || 0
+      // Sanitize: cap at 50M (5x salario minimo legal) to prevent numeric overflow
+      const sanitized = raw > 50000000 ? 0 : raw
+      return [s.id as string, sanitized]
+    })
   )
 
   // Calcular dias de la semana para determinar domingos

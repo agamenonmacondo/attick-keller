@@ -245,7 +245,8 @@ export default function ShiftSchedulePanel() {
 
           const hours = st.ordinarias + st.nocturnas;
           const isSunday = Number(dayIdx) === 0;
-          const cost = calcularCostoTurno(st, emp.salario_mensual, isSunday);
+          const salario = (emp.salario_mensual && emp.salario_mensual > 50000000) ? 0 : (emp.salario_mensual || 0);
+          const cost = calcularCostoTurno(st, salario, isSunday);
 
           payload.push({
             employee_id: empId,
@@ -258,12 +259,11 @@ export default function ShiftSchedulePanel() {
       }
 
       if (payload.length === 0) {
-        const gridCells = Object.values(grid).reduce((s,d) => s + Object.keys(d).length, 0);
-        alert(`No hay turnos asignados para guardar. (Grid: ${Object.keys(grid).length} empleados, ${gridCells} celdas)`);
+        alert('No hay turnos asignados para guardar.');
         return;
       }
 
-      console.log('[Turnos] Guardando asignaciones...', { schedule_id: schedId, count: payload.length, first3: payload.slice(0, 3) });
+      console.log('[Turnos] Guardando asignaciones...', { schedule_id: schedId, count: payload.length });
       const res = await fetch('/api/admin/shift-assignments', {
         method: 'PUT',
         credentials: 'include',
@@ -278,12 +278,10 @@ export default function ShiftSchedulePanel() {
       }
 
       const result = await res.json();
-      const resultCount = result.assignments?.length || 0;
-      console.log('[Turnos] Result:', JSON.stringify(result).substring(0, 500));
 
       // Recargar datos para sincronizar
       await loadData();
-      alert(`OK: ${resultCount} guardadas, ${payload.length} enviadas. ID=${schedId?.slice(0,8)}`);
+      alert('Asignaciones guardadas correctamente');
     } catch (err) {
       console.error('[Turnos] Error saving:', err);
       alert(`Error guardando: ${err instanceof Error ? err.message : 'Error desconocido'}`);

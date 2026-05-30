@@ -236,12 +236,18 @@ export default function ShiftSchedulePanel() {
       // Guardar asignaciones
       const payload: { employee_id: string; day_index: number; shift_code: string; estimated_hours: number | null; estimated_cost: number | null }[] = [];
 
+      console.log('[Turnos] Grid completo:', JSON.stringify(grid));
+      console.log('[Turnos] Staff count:', staff.length, 'ShiftTypes count:', shiftTypes.length);
+
       for (const [empId, days] of Object.entries(grid)) {
         for (const [dayIdx, code] of Object.entries(days)) {
           if (!code || code === 'OFF') continue;
           const st = shiftTypes.find((t) => t.code === code);
           const emp = staff.find((e) => e.id === empId);
-          if (!st || !emp) continue;
+          if (!st || !emp) {
+            console.warn('[Turnos] Saltando:', { empId, code, foundShiftType: !!st, foundStaff: !!emp });
+            continue;
+          }
 
           const hours = st.ordinarias + st.nocturnas;
           const isSunday = Number(dayIdx) === 0;
@@ -262,7 +268,7 @@ export default function ShiftSchedulePanel() {
         return;
       }
 
-      console.log('[Turnos] Guardando asignaciones...', { schedule_id: schedId, count: payload.length });
+      console.log('[Turnos] Guardando asignaciones...', { schedule_id: schedId, count: payload.length, payload_sample: payload.slice(0, 3) });
       const res = await fetch('/api/admin/shift-assignments', {
         method: 'PUT',
         credentials: 'include',

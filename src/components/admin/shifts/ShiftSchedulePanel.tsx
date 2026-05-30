@@ -32,13 +32,13 @@ const MONTH_NAMES = [
 function getHeatClasses(count: number, isDark: boolean): { bg: string; text: string } {
   if (isDark) {
     if (count === 0) return { bg: 'bg-[var(--bg-input)]', text: 'text-[var(--text-muted)]' };
-    if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/25', text: 'text-[var(--border-light)]' };
-    if (count <= 5) return { bg: 'bg-[var(--color-ak-borgona)]/45', text: 'text-white' };
+    if (count <= 3) return { bg: 'bg-[var(--color-ak-borgona)]/25', text: 'text-[var(--border-light)]' };
+    if (count <= 7) return { bg: 'bg-[var(--color-ak-borgona)]/45', text: 'text-white' };
     return { bg: 'bg-[var(--color-ak-borgona)]/70', text: 'text-white' };
   }
   if (count === 0) return { bg: 'bg-[var(--bg-input)]', text: 'text-[var(--text-secondary)]' };
-  if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/15', text: 'text-[var(--text-primary)]' };
-  if (count <= 5) return { bg: 'bg-[var(--color-ak-borgona)]/35', text: 'text-[var(--text-primary)]' };
+  if (count <= 3) return { bg: 'bg-[var(--color-ak-borgona)]/15', text: 'text-[var(--text-primary)]' };
+  if (count <= 7) return { bg: 'bg-[var(--color-ak-borgona)]/35', text: 'text-[var(--text-primary)]' };
   return { bg: 'bg-[var(--color-ak-borgona)]/60', text: 'text-white' };
 }
 
@@ -285,44 +285,23 @@ export default function ShiftSchedulePanel() {
           {scheduleStatus === 'published' ? 'Publicado' : 'Borrador'}
         </span>
 
-        {/* Navegacion de semana */}
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={handlePrevWeek}
-            disabled={weekStr <= currentWeekStr}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
-            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
-            aria-label="Semana anterior"
-          >
-            <CaretLeft size={16} weight="bold" />
-          </button>
-          <span className="font-['Playfair_Display'] text-sm font-semibold text-[var(--text-primary)] min-w-[120px] text-center">
-            {weekDates[0] && (() => {
-              const from = weekDates[0];
-              const to = weekDates[6];
-              const fmtShort = (d: Date) => `${d.getDate()} ${MONTH_NAMES[d.getMonth()].slice(0, 3).toLowerCase()}`;
-              return `${fmtShort(from)} - ${fmtShort(to)}`;
-            })()}
-          </span>
-          <button
-            type="button"
-            onClick={handleNextWeek}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
-            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
-            aria-label="Semana siguiente"
-          >
-            <CaretRight size={16} weight="bold" />
-          </button>
-          <button
-            type="button"
-            onClick={handleToday}
-            className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[var(--color-ak-borgona)]/30 text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
-            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
-          >
-            Hoy
-          </button>
-        </div>
+        {/* Rango de semana */}
+        <span className="font-['Playfair_Display'] text-sm font-semibold text-[var(--text-primary)] min-w-[120px] text-center">
+          {weekDates[0] && (() => {
+            const from = weekDates[0];
+            const to = weekDates[6];
+            const fmtShort = (d: Date) => `${d.getDate()} ${MONTH_NAMES[d.getMonth()].slice(0, 3).toLowerCase()}`;
+            return `${fmtShort(from)} - ${fmtShort(to)}`;
+          })()}
+        </span>
+        <button
+          type="button"
+          onClick={handleToday}
+          className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[var(--color-ak-borgona)]/30 text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
+          style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+        >
+          Hoy
+        </button>
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-1 ml-auto">
@@ -348,8 +327,8 @@ export default function ShiftSchedulePanel() {
         </div>
       </div>
 
-      {/* Week strip — 7 dias Lun-Dom */}
-      <div className="grid grid-cols-7 gap-1 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-3">
+      {/* Week strip — 7 dias Lun-Dom + flechas */}
+      <div className="flex items-stretch gap-1.5 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-3">
         {weekDates.map((date, i) => {
           const dateStr = date.toISOString().split('T')[0];
           const count = days[dateStr] || 0;
@@ -361,7 +340,7 @@ export default function ShiftSchedulePanel() {
             <div
               key={i}
               className={cn(
-                'flex flex-col items-center gap-0.5 rounded-lg py-2 px-1 transition-all duration-100',
+                'flex flex-1 flex-col items-center gap-0.5 rounded-lg py-2 px-1 transition-all duration-100',
                 heat.bg,
                 heat.text,
                 isToday && 'ring-2 ring-[var(--color-ak-borgona)] ring-offset-1 ring-offset-[var(--bg-card)]',
@@ -379,12 +358,34 @@ export default function ShiftSchedulePanel() {
               </span>
               {count > 0 && (
                 <span className="text-[9px] font-medium mt-0.5">
-                  {count} turno{count > 1 ? 's' : ''}
+                  {count}
                 </span>
               )}
             </div>
           );
         })}
+        {/* Flechas de navegacion integradas */}
+        <div className="flex flex-col gap-1 justify-center">
+          <button
+            type="button"
+            onClick={handlePrevWeek}
+            disabled={weekStr <= currentWeekStr}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            aria-label="Semana anterior"
+          >
+            <CaretLeft size={16} weight="bold" />
+          </button>
+          <button
+            type="button"
+            onClick={handleNextWeek}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
+            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            aria-label="Semana siguiente"
+          >
+            <CaretRight size={16} weight="bold" />
+          </button>
+        </div>
       </div>
 
       {/* Contenido del tab */}

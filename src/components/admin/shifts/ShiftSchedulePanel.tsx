@@ -263,7 +263,7 @@ export default function ShiftSchedulePanel() {
         return;
       }
 
-      console.log('[Turnos] Guardando asignaciones...', { schedule_id: schedId, count: payload.length });
+      console.log('[Turnos] Guardando asignaciones...', { schedule_id: schedId, count: payload.length, first3: payload.slice(0, 3) });
       const res = await fetch('/api/admin/shift-assignments', {
         method: 'PUT',
         credentials: 'include',
@@ -278,11 +278,12 @@ export default function ShiftSchedulePanel() {
       }
 
       const result = await res.json();
-      console.log('[Turnos] Asignaciones guardadas:', result.assignments?.length || 0);
+      const resultCount = result.assignments?.length || 0;
+      console.log('[Turnos] Asignaciones guardadas:', resultCount, 'res status:', res.status);
 
       // Recargar datos para sincronizar
       await loadData();
-      alert('Asignaciones guardadas correctamente');
+      alert(`Guardadas ${resultCount} asignaciones. Payload enviado: ${payload.length}`, );
     } catch (err) {
       console.error('[Turnos] Error saving:', err);
       alert(`Error guardando: ${err instanceof Error ? err.message : 'Error desconocido'}`);

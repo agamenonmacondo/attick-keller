@@ -54,6 +54,7 @@
 
 /* Dark theme */
 .dark {
+  color-scheme: dark;
   --bg-primary: #1A1412;
   --bg-card: #2C2018;
   --bg-input: #362A22;

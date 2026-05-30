@@ -29,13 +29,14 @@ Panel principal de gestion de turnos del administrador. Permite crear, editar y 
 - **Estado grid vs asignaciones**: La grilla se inicializa desde asignaciones cargadas por la API, pero el estado local `grid` se desincroniza si se guarda sin recargar. Siempre se llama `loadData()` despues de guardar para sincronizar.
 - **Creacion de schedule implicita**: Si no existe `scheduleId`, handleSave primero crea el cronograma via POST y luego guarda las asignaciones. Si POST falla, no se guardan asignaciones — no hay transaccion atomica.
 - **Turnos OFF se ignoran**: Al guardar, los turnos con codigo "OFF" se saltan (`if (!code || code === 'OFF') continue`). Si se renombra OFF, se rompe.
-- **Calculo de costos por turno**: Usa `calcularCostoTurno()` que recibe salario_mensual y determina HE segun ordinarias+nocturnas > 8. Si el salario viene null/0 desde la API, el costo es 0.
+- **Calculo de costos por turno**: Usa `calcularCostoTurno()` que recibe salario_mensual y determina HE segun ordinarias+nocturnas > 8. Si el salario viene null/0 desde la API, el costo es 0. **Salarios > 50M se sanitizan a 0** para prevenir numeric overflow en PostgreSQL.
 - **Filtro de area sincronizado**: Cambiar area resetea los datos pero NO resetea la grilla local — se depende del useEffect en `loadData` para reemplazar el grid.
 - **Publicacion sin validacion**: Publicar solo verifica que exista `scheduleId`, no valida que haya turnos asignados. Un cronograma vacio puede publicarse.
 - **ShiftTypeEditor inline**: Es un componente hijo definido en el mismo archivo. No tiene memo ni keys estables — re-renderiza con cada cambio del padre.
-|- **confirm() para publish**: Usa browser `confirm()` nativo, no un modal custom. Bloquea UI en mobile.
-|- **Grilla siempre editable**: No se bloquea cuando el cronograma esta published. Se puede guardar y re-publicar.
-|- **Boton dual**: Si es draft muestra "Publicar cronograma" (verde), si es published muestra "Guardar y notificar" (borgona).
+- **confirm() para publish**: Usa browser `confirm()` nativo, no un modal custom. Bloquea UI en mobile.
+- **Grilla siempre editable**: No se bloquea cuando el cronograma esta published. Se puede guardar y re-publicar.
+- **Botones separados**: "Guardar" (borgona, siempre disponible) guarda asignaciones. "Publicar" (verde, solo si draft) cambia status a published y envia correos. Despues de publicado, "Guardar" notifica por correo a los colaboradores afectados.
+- **Numeric overflow bug (resuelto)**: Empleados con salario inflado (ej: Gibi 172B) causaban `numeric field overflow` en PostgreSQL. Solucion: sanitizar salarios > 50M a 0, tanto en frontend como en API PUT.
 
 ## Historial
 | Fecha | Agente | Cambio |
@@ -47,3 +48,6 @@ Panel principal de gestion de turnos del administrador. Permite crear, editar y 
 | 2026-05-28 | Ninja | feat: editar y eliminar tipos de turno en panel Horarios + API endpoint |
 || 2026-05-28 | Ninja | fix: modulo turnos — arreglar calculo HE, quitar apoyo del cronograma, agregar tab Personal |
 || 2026-05-29 | Ninja | feat: grilla siempre editable + boton dual Publicar/Guardar y notificar + re-publicacion con email |
+| 2026-05-30 | Ninja | fix: numeric overflow en shift assignments — sanitizar salario > 50M a 0 |
+| 2026-05-30 | Ninja | feat: notificar por correo a colaboradores afectados al guardar cambios en turnos publicados |
+| 2026-05-30 | Ninja | fix: botones separados Guardar/Publicar en vez de boton dual |

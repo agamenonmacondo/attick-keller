@@ -9,7 +9,10 @@
 - Deduplicacion por email_log: type + recipient_email + schedule_id. Primera publicacion y actualizacion son tipos diferentes, no se bloquean entre si
 - No hay restriccion de draft vs published — se puede publicar y re-publicar libremente
 - Si falla el envio de email, la publicacion NO falla (fire-and-forget)
+- **Guardar cambios en published** tambien envia correos, pero solo a empleados afectados (via PUT shift-assignments, no este endpoint)
 
 ## Historial
 | Fecha | Agente | Cambio |
+|-------|--------|--------|
 | 2026-05-29 | Ninja | Permitir re-publicacion + email de actualizacion separado |
+| 2026-05-30 | Ninja | Documentar que guardar cambios en published tambien notifica (via PUT) |

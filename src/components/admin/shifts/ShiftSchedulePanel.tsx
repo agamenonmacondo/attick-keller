@@ -236,18 +236,12 @@ export default function ShiftSchedulePanel() {
       // Guardar asignaciones
       const payload: { employee_id: string; day_index: number; shift_code: string; estimated_hours: number | null; estimated_cost: number | null }[] = [];
 
-      console.log('[Turnos] Grid completo:', JSON.stringify(grid));
-      console.log('[Turnos] Staff count:', staff.length, 'ShiftTypes count:', shiftTypes.length);
-
       for (const [empId, days] of Object.entries(grid)) {
         for (const [dayIdx, code] of Object.entries(days)) {
           if (!code || code === 'OFF') continue;
           const st = shiftTypes.find((t) => t.code === code);
           const emp = staff.find((e) => e.id === empId);
-          if (!st || !emp) {
-            console.warn('[Turnos] Saltando:', { empId, code, foundShiftType: !!st, foundStaff: !!emp });
-            continue;
-          }
+          if (!st || !emp) continue;
 
           const hours = st.ordinarias + st.nocturnas;
           const isSunday = Number(dayIdx) === 0;
@@ -268,7 +262,7 @@ export default function ShiftSchedulePanel() {
         return;
       }
 
-      console.log('[Turnos] Guardando asignaciones...', { schedule_id: schedId, count: payload.length, payload_sample: payload.slice(0, 3) });
+      console.log('[Turnos] Guardando asignaciones...', { schedule_id: schedId, count: payload.length });
       const res = await fetch('/api/admin/shift-assignments', {
         method: 'PUT',
         credentials: 'include',
@@ -283,21 +277,11 @@ export default function ShiftSchedulePanel() {
       }
 
       const result = await res.json();
-      console.log('[Turnos] PUT response:', JSON.stringify(result).substring(0, 500));
-
-      // DEBUG: verificar BD directamente antes de recargar
-      const verifyRes = await fetch(`/api/admin/shift-schedules?area=${area}&week_str=${weekStr}`, { credentials: 'include' });
-      const verifyData = await verifyRes.json();
-      console.log('[Turnos] VERIFY after save - assignments:', verifyData.assignments?.length, 'schedule:', verifyData.schedule?.id);
+      console.log('[Turnos] Asignaciones guardadas:', result.assignments?.length || 0);
 
       // Recargar datos para sincronizar
       await loadData();
-      
-      const savedCount = result.assignments?.length ?? 'N/A';
-      const totalCost = result.total_estimated_cost ?? 'N/A';
-      const gridCount = Object.values(grid).reduce((s,d) => s + Object.keys(d).length, 0);
-      const verifyAssignCount = verifyData.assignments?.length ?? 'N/A';
-      alert(`DEBUG Guardar:\nPayload: ${payload.length} items\nPUT returned: ${savedCount} asignaciones\nVerify BD: ${verifyAssignCount} asignaciones\nGrid tenia: ${gridCount} celdas\nCosto: ${totalCost}\nStatus: ${res.status}`);
+      alert('Asignaciones guardadas correctamente');
     } catch (err) {
       console.error('[Turnos] Error saving:', err);
       alert(`Error guardando: ${err instanceof Error ? err.message : 'Error desconocido'}`);
@@ -490,15 +474,6 @@ export default function ShiftSchedulePanel() {
         </div>
       </div>
 
-      {/* DEBUG: estado actual - quitar despues de resolver bug */}
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-[10px] font-mono text-amber-300 space-y-1">
-        <div className="font-bold text-amber-200">DEBUG Turnos:</div>
-        <div>weekStr={weekStr} | scheduleId={scheduleId || 'null'} | status={scheduleStatus}</div>
-        <div>staff={staff.length} | shiftTypes={shiftTypes.length} | grid entries={Object.keys(grid).length}</div>
-        <div>grid con datos: {Object.entries(grid).filter(([,d]) => Object.keys(d).length > 0).map(([id]) => id.slice(0,6)).join(', ') || 'VACIO'}</div>
-        <div>total celdas llenas: {Object.values(grid).reduce((s,d) => s + Object.keys(d).length, 0)}</div>
-      </div>
-
       {/* Contenido del tab */}
       {tab === 'cronograma' && (
         <div className="space-y-4">
@@ -514,17 +489,38 @@ export default function ShiftSchedulePanel() {
 
           {/* Botones de accion — solo para semana actual o futura */}
           {isWeekEditable(weekStr) && (
-            <div className="flex items-center gap-3 justify-end">
+            <div className="flex items-center gap-3 justify-end flex-wrap">
+              {/* Indicador de estado */}
+              {scheduleId && scheduleStatus === 'published' && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  Publicado
+                </span>
+              )}
+              {scheduleId && scheduleStatus === 'draft' && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  Borrador
+                </span>
+              )}
+              {!scheduleId && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-500/15 text-gray-400 border border-gray-500/30">
+                  Sin cronograma
+                </span>
+              )}
+
+              {/* Guardar — siempre disponible, guarda sin publicar */}
               <button
                 onClick={handleSave}
                 disabled={saving}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
-                  bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border-default)]
-                  hover:bg-[var(--bg-hover)] disabled:opacity-50"
+                  bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50"
               >
                 <FloppyDisk size={16} />
                 {saving ? 'Guardando...' : 'Guardar'}
               </button>
+
+              {/* Publicar — solo si es draft */}
               {scheduleId && scheduleStatus === 'draft' && (
                 <button
                   onClick={handlePublish}
@@ -533,18 +529,7 @@ export default function ShiftSchedulePanel() {
                     bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   <PaperPlaneTilt size={16} />
-                  Publicar cronograma
-                </button>
-              )}
-              {scheduleId && scheduleStatus === 'published' && (
-                <button
-                  onClick={handlePublish}
-                  disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
-                    bg-[var(--color-ak-borgona)] text-white hover:opacity-90 disabled:opacity-50"
-                >
-                  <FloppyDisk size={16} />
-                  Guardar y notificar
+                  Publicar
                 </button>
               )}
             </div>
@@ -552,11 +537,6 @@ export default function ShiftSchedulePanel() {
           {!isWeekEditable(weekStr) && (
             <p className="text-xs text-[var(--text-secondary)] text-right">
               No se pueden editar semanas pasadas
-            </p>
-          )}
-          {scheduleId && scheduleStatus === 'published' && (
-            <p className="text-xs text-[var(--text-secondary)] text-right">
-              Cronograma publicado
             </p>
           )}
         </div>

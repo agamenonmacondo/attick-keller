@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Warning, ClockAfternoon, Coffee } from '@phosphor-icons/react';
 import type { ShiftType, StaffMemberForShift, ShiftAssignment, ShiftAlert } from '@/lib/types/shifts';
 import { calcularCostoTurno, calcularCostoSemanal, formatCOP, getWeekDates, dayIndexToDateIndex, dateToDayIndex } from '@/lib/utils/costCalculator';
@@ -12,7 +12,10 @@ interface ShiftGridProps {
   assignments: ShiftAssignment[];
   scheduleId: string | null;
   weekStr: string;
-  onAssignmentsChange: (assignments: Record<string, Record<number, string>>) => void;
+  /** The grid state (controlled) — key is employee_id, value maps day_index to shift_code */
+  grid: Record<string, Record<number, string>>;
+  /** Callback when the user changes a cell in the grid */
+  onGridChange: (newGrid: Record<string, Record<number, string>>) => void;
   readOnly?: boolean;
 }
 
@@ -22,73 +25,10 @@ export default function ShiftGrid({
   assignments,
   scheduleId,
   weekStr,
-  onAssignmentsChange,
+  grid,
+  onGridChange,
   readOnly = false,
 }: ShiftGridProps) {
-  // Estado local de la grilla
-  const [localGrid, setLocalGrid] = useState<Record<string, Record<number, string>>>(() => {
-    const initial: Record<string, Record<number, string>> = {};
-    for (const s of staff) {
-      initial[s.id] = {};
-    }
-    for (const a of assignments) {
-      if (!initial[a.employee_id]) initial[a.employee_id] = {};
-      initial[a.employee_id][a.day_index] = a.shift_code;
-    }
-    return initial;
-  });
-
-  // Ref para trackear si el usuario ha hecho cambios locales
-  const hasLocalChanges = useRef(false);
-
-  // Reset hasLocalChanges cuando se incrementa la cantidad de asignaciones (post-save)
-  const prevAssignmentCount = useRef(assignments.length);
-  useEffect(() => {
-    // Si assignments crecio y antes habia cambios locales, es porque se guardo exitosamente
-    if (assignments.length >= prevAssignmentCount.current && assignments.length > 0 && hasLocalChanges.current) {
-      hasLocalChanges.current = false;
-    }
-    prevAssignmentCount.current = assignments.length;
-  }, [assignments.length]);
-
-  // Sincronizar cuando assignments cambia externamente (solo si no hay cambios locales sin guardar)
-  const prevAssignmentsRef = useRef(assignments);
-  useEffect(() => {
-    if (assignments === prevAssignmentsRef.current) return;
-    prevAssignmentsRef.current = assignments;
-
-    // Si el usuario hizo cambios locales, no sobreescribir
-    if (hasLocalChanges.current) return;
-
-    const newGrid: Record<string, Record<number, string>> = {};
-    for (const s of staff) {
-      newGrid[s.id] = {};
-    }
-    for (const a of assignments) {
-      if (!newGrid[a.employee_id]) newGrid[a.employee_id] = {};
-      newGrid[a.employee_id][a.day_index] = a.shift_code;
-    }
-    setLocalGrid(newGrid);
-  }, [assignments, staff]);
-
-  // Sincronizar cuando staff cambia (agregar/eliminar empleados)
-  const prevStaffRef = useRef(staff);
-  useEffect(() => {
-    if (staff === prevStaffRef.current) return;
-    prevStaffRef.current = staff;
-
-    setLocalGrid((prev) => {
-      const newGrid: Record<string, Record<number, string>> = {};
-      for (const s of staff) {
-        newGrid[s.id] = prev[s.id] || {};
-      }
-      return newGrid;
-    });
-  }, [staff]);
-
-  // Grid que se pasa al padre - siempre usa la versión más reciente
-  const grid = localGrid;
-
   const weekDates = useMemo(() => getWeekDates(weekStr), [weekStr]);
 
   const COLUMNS = useMemo(() => [
@@ -204,21 +144,17 @@ export default function ShiftGrid({
 
   const handleCellChange = useCallback(
     (employeeId: string, dayIndex: number, shiftCode: string) => {
-      hasLocalChanges.current = true;
-      setLocalGrid((prev) => {
-        const newGrid = { ...prev };
-        if (!newGrid[employeeId]) newGrid[employeeId] = {};
-        newGrid[employeeId] = { ...newGrid[employeeId] };
-        if (shiftCode === '') {
-          delete newGrid[employeeId][dayIndex];
-        } else {
-          newGrid[employeeId][dayIndex] = shiftCode;
-        }
-        onAssignmentsChange(newGrid);
-        return newGrid;
-      });
+      const newGrid = { ...grid };
+      if (!newGrid[employeeId]) newGrid[employeeId] = {};
+      newGrid[employeeId] = { ...newGrid[employeeId] };
+      if (shiftCode === '') {
+        delete newGrid[employeeId][dayIndex];
+      } else {
+        newGrid[employeeId][dayIndex] = shiftCode;
+      }
+      onGridChange(newGrid);
     },
-    [onAssignmentsChange]
+    [grid, onGridChange]
   );
 
   const shiftOptions = useMemo(() => [
@@ -306,7 +242,7 @@ export default function ShiftGrid({
                 </div>
               )}
 
-              {/* Selects por día */}
+              {/* Selects por dia */}
               <div className="grid grid-cols-7 gap-1">
                 {COLUMNS.map(({ dayIndex, dateIndex, label }) => {
                   const code = grid[emp.id]?.[dayIndex] || '';

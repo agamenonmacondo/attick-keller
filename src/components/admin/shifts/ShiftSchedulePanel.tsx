@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, ChartBar, PencilSimple, IdentificationBadge, Trash } from '@phosphor-icons/react';
-import { motion } from 'framer-motion';
 import { SectionHeading } from '../shared/SectionHeading';
-import { supabase } from '@/lib/supabase/client';
+
 import type { ShiftType, StaffMemberForShift, ShiftAssignment } from '@/lib/types/shifts';
 import { getWeekStr, getWeekDates, dayIndexToDateIndex, calcularCostoTurno } from '@/lib/utils/costCalculator';
 import { getLocalDate } from '@/lib/utils/formatDate';
@@ -57,12 +56,14 @@ export default function ShiftSchedulePanel() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
+  // Track whether grid has unsaved local changes
+  const gridDirtyRef = useRef(false);
+
   // Compute heatmap days from assignments
   const days = useMemo(() => {
     const d: Record<string, number> = {};
     const weekDates = getWeekDates(weekStr);
     for (const a of assignments) {
-      // day_index 0=Sunday maps to weekDates[6] (Monday-first array)
       const dateIndex = dayIndexToDateIndex(a.day_index);
       const date = weekDates[dateIndex];
       if (date) {
@@ -143,8 +144,9 @@ export default function ShiftSchedulePanel() {
   const isWeekEditable = (wStr: string) => wStr >= currentWeekStr;
 
   const handleDayClick = (dateStr: string) => {
-    // Convert clicked date to weekStr
-    const clickedDate = new Date(dateStr + 'T12:00:00');
+    // Convert clicked date to weekStr — use noon to avoid timezone issues
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const clickedDate = new Date(y, m - 1, d, 12, 0, 0);
     const clickedWeek = getWeekStr(clickedDate);
     // Solo permitir semana actual y futuras
     if (clickedWeek < currentWeekStr) return;
@@ -167,7 +169,7 @@ export default function ShiftSchedulePanel() {
       setScheduleId(data.schedule?.id || null);
       setScheduleStatus(data.schedule?.status || 'draft');
 
-      // Inicializar grid desde asignaciones
+      // Inicializar grid desde asignaciones — only when data comes from server (not local edits)
       const initialGrid: Record<string, Record<number, string>> = {};
       for (const s of data.staff || []) {
         initialGrid[s.id] = {};
@@ -177,6 +179,7 @@ export default function ShiftSchedulePanel() {
         initialGrid[a.employee_id][a.day_index] = a.shift_code;
       }
       setGrid(initialGrid);
+      gridDirtyRef.current = false;
     } catch (err) {
       console.error('Error loading shift data:', err);
     }
@@ -308,8 +311,9 @@ export default function ShiftSchedulePanel() {
     }
   };
 
-  // Cambios en la grilla
+  // Handle grid changes from ShiftGrid — directly update parent state
   const handleGridChange = useCallback((newGrid: Record<string, Record<number, string>>) => {
+    gridDirtyRef.current = true;
     setGrid(newGrid);
   }, []);
 
@@ -409,28 +413,31 @@ export default function ShiftSchedulePanel() {
           ))}
         </div>
 
-        {/* Day grid */}
+        {/* Day grid — using plain buttons to avoid motion animation interference */}
         <div className="grid grid-cols-7 gap-1">
-          {calendarDays.map((cell, i) => {
+          {calendarDays.map((cell) => {
             const count = days[cell.date] || 0;
             const isInSelectedWeek = selectedWeekDates.has(cell.date);
             const isToday = cell.date === today;
-            const isWeekend = i % 7 === 5 || i % 7 === 6;
-            const cellWeek = getWeekStr(new Date(cell.date + 'T12:00:00'));
+            const isWeekend = (() => {
+              const [y, m, d] = cell.date.split('-').map(Number);
+              const dow = new Date(y, m - 1, d).getDay();
+              return dow === 0 || dow === 6;
+            })();
+            const [cy, cm, cd] = cell.date.split('-').map(Number);
+            const cellWeek = getWeekStr(new Date(cy, cm - 1, cd, 12, 0, 0));
             const isPastWeek = cellWeek < currentWeekStr;
             const heat = getHeatClasses(count, isDark);
 
             return (
-              <motion.button
+              <button
                 key={cell.date}
                 type="button"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.15, delay: i * 0.008 }}
                 onClick={() => handleDayClick(cell.date)}
                 disabled={isPastWeek}
                 className={cn(
-                  'relative rounded-lg py-1.5 text-center text-xs font-medium cursor-pointer active:scale-[0.95]',
+                  'relative rounded-lg py-1.5 text-center text-xs font-medium transition-all duration-100',
+                  !isPastWeek && 'cursor-pointer active:scale-[0.95]',
                   heat.bg,
                   heat.text,
                   !cell.inMonth && 'opacity-40',
@@ -438,14 +445,13 @@ export default function ShiftSchedulePanel() {
                   isInSelectedWeek && cell.inMonth && !isPastWeek && 'ring-2 ring-[var(--color-ak-borgona)] ring-offset-1 ring-offset-[var(--bg-card)]',
                   isWeekend && cell.inMonth && !isPastWeek && 'font-semibold',
                 )}
-                style={{ transition: 'transform 120ms ease-out' }}
                 title={isPastWeek ? 'Semana pasada' : count > 0 ? `${count} turnos asignados` : 'Sin turnos'}
               >
                 {cell.day}
                 {isToday && !isInSelectedWeek && (
                   <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-[var(--color-ak-borgona)]" />
                 )}
-              </motion.button>
+              </button>
             );
           })}
         </div>
@@ -480,10 +486,10 @@ export default function ShiftSchedulePanel() {
             assignments={assignments}
             scheduleId={scheduleId}
             weekStr={weekStr}
-            onAssignmentsChange={handleGridChange}
+            grid={grid}
+            onGridChange={handleGridChange}
           />
 
-          {/* Botones de accion */}
           {/* Botones de accion — solo para semana actual o futura */}
           {isWeekEditable(weekStr) && (
             <div className="flex items-center gap-3 justify-end">

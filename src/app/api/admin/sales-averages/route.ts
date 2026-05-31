@@ -32,10 +32,12 @@ export async function GET(request: NextRequest) {
   const sb = getServiceClient();
 
   // Fetch all non-cancelled sales with subtotal for accurate revenue
+  // NOTE: Supabase JS client defaults to 1000 rows. Must set explicit limit.
   const { data: sales, error } = await sb
     .from('pos_sales')
     .select('subtotal, tax_amount, total, tip_amount, opened_at, is_cancelled')
-    .eq('is_cancelled', false);
+    .eq('is_cancelled', false)
+    .limit(50000);
 
   if (error) {
     return NextResponse.json({ error: 'Error consultando ventas', detail: error.message }, { status: 500 });

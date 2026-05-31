@@ -662,7 +662,7 @@ export async function GET(request: NextRequest) {
 
   const getCachedData = unstable_cache(
     fetchDashboardData,
-    ['pos-dashboard'],
+    ['pos-dashboard', zoneParam, categoryParam, from, to],
     { revalidate: 300 }
   )
 

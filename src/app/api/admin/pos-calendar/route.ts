@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 
   const getCachedCalendarData = unstable_cache(
     fetchCalendarData,
-    ['pos-calendar'],
+    ['pos-calendar', zoneParam],
     { revalidate: 300 }
   )
 

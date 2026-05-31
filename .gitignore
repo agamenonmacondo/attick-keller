@@ -43,3 +43,4 @@ next-env.d.ts
 .vercel
 ERROR_500_CUSTOMERS_DEBUG.md
 ESTADO_BD_ATICKELLER.md
+.git-rewrite/

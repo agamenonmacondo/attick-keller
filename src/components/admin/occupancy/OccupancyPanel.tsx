@@ -88,7 +88,7 @@ export function OccupancyPanel({ selectedDate, onDateChange }: OccupancyPanelPro
   }, [dashRefetch, occRefetch])
 
   if (dashLoading && !dashData) {
-    return <div className="py-16 flex items-center justify-center"><Spinner size={32} className="animate-spin text-[#8D6E63]" /></div>
+    return <div className="py-16 flex items-center justify-center"><Spinner size={32} className="animate-spin text-[var(--text-secondary)]" /></div>
   }
 
   const occupancy = dashData?.occupancy || { totalCapacity: 0, occupiedCapacity: 0, utilizationPercent: 0, capacityPercent: 0, totalTables: 0, occupiedTables: 0, byZone: [] as Array<Record<string, unknown>> }

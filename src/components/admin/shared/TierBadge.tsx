@@ -3,23 +3,38 @@ import { cn } from '@/lib/utils/cn'
 const TIER_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
   none: {
     label: 'Nuevo',
-    bg: 'bg-zinc-100',
-    text: 'text-zinc-600',
+    bg: 'bg-[var(--text-muted)]/10',
+    text: 'text-[var(--text-secondary)]',
+  },
+  bronze: {
+    label: 'Bronce',
+    bg: 'bg-[var(--color-warning)]/10',
+    text: 'text-[var(--color-warning)]',
   },
   bronce: {
     label: 'Bronce',
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
+    bg: 'bg-[var(--color-warning)]/10',
+    text: 'text-[var(--color-warning)]',
+  },
+  silver: {
+    label: 'Plata',
+    bg: 'bg-[var(--text-secondary)]/10',
+    text: 'text-[var(--text-secondary)]',
   },
   plata: {
     label: 'Plata',
-    bg: 'bg-slate-100',
-    text: 'text-slate-600',
+    bg: 'bg-[var(--text-secondary)]/10',
+    text: 'text-[var(--text-secondary)]',
+  },
+  gold: {
+    label: 'Oro',
+    bg: 'bg-[var(--color-ak-dorado)]/15',
+    text: 'text-[var(--color-ak-dorado)]',
   },
   oro: {
     label: 'Oro',
-    bg: 'bg-yellow-50',
-    text: 'text-yellow-700',
+    bg: 'bg-[var(--color-ak-dorado)]/15',
+    text: 'text-[var(--color-ak-dorado)]',
   },
 }
 

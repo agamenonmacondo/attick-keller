@@ -1,25 +1,28 @@
 'use client'
 
 import { useWeeklyTrends } from '@/lib/hooks/useWeeklyTrends'
+import { useTheme } from '@/lib/ThemeProvider'
 import { AnimatedCard } from '../shared/AnimatedCard'
+import { ChartLineUp } from '@phosphor-icons/react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
 const COLORS = {
-  active: '#6B2737',
-  new: '#5C7A4D',
-  noShow: '#D4922A',
+  active: 'var(--color-accent)',
+  new: 'var(--color-success)',
+  noShow: 'var(--color-warning)',
 }
 
 export function TrendChart() {
-  const { data, loading, error } = useWeeklyTrends(8)
+  const { data, loading, error } = useWeeklyTrends()
+  const { theme } = useTheme()
 
   if (loading) {
     return (
       <AnimatedCard delay={0.5}>
         <div className="p-5">
           <div className="animate-pulse">
-            <div className="h-4 bg-[#D7CCC8] rounded w-1/3 mb-3"></div>
-            <div className="h-48 bg-[#D7CCC8] rounded"></div>
+            <div className="h-4 bg-[var(--border-default)] rounded w-1/4 mb-3"></div>
+            <div className="h-48 bg-[var(--border-default)] rounded"></div>
           </div>
         </div>
       </AnimatedCard>
@@ -30,47 +33,57 @@ export function TrendChart() {
     return (
       <AnimatedCard delay={0.5}>
         <div className="p-5">
-          <p className="text-[#6B2737] text-sm">Error: {error}</p>
+          <p className="text-[var(--color-danger)] text-sm">Error: {error}</p>
         </div>
       </AnimatedCard>
     )
   }
 
-  if (!data || data.trends.length === 0) {
+  const trends = data?.trends || []
+
+  if (trends.length === 0) {
     return (
       <AnimatedCard delay={0.5}>
         <div className="p-5">
-          <h3 className="text-xs font-semibold text-[#8D6E63] uppercase tracking-wider mb-3">
-            📈 Tendencias Semanales
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3 flex items-center gap-2">
+            <ChartLineUp size={16} weight="duotone" color="var(--color-accent)" />
+            Tendencias Semanales
           </h3>
-          <p className="text-sm text-[#8D6E63]">Datos insuficientes para mostrar tendencias</p>
+          <p className="text-[var(--text-secondary)] text-sm">Sin datos de tendencia disponibles</p>
         </div>
       </AnimatedCard>
     )
   }
+
+  const isDark = theme === 'dark'
+  const gridColor = isDark ? '#4A3A30' : '#E8DDD0'
+  const tickColor = isDark ? '#A89080' : '#8D6E63'
+  const tooltipBg = isDark ? '#2C2018' : '#FFFFFF'
+  const tooltipBorder = isDark ? '#4A3A30' : '#D7CCC8'
+  const lineActive = isDark ? '#C44D63' : '#6B2737'
+  const lineNew = isDark ? '#7BA86A' : '#5C7A4D'
+  const lineNoShow = isDark ? '#E8A840' : '#D4922A'
 
   return (
     <AnimatedCard delay={0.5}>
       <div className="p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xs font-semibold text-[#8D6E63] uppercase tracking-wider">
-            📈 Tendencias Semanales
-          </h3>
-          <span className="text-[10px] text-[#8D6E63]">Últimas {data.trends.length} semanas</span>
-        </div>
-
-        <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={data.trends} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#D7CCC8" />
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-4 flex items-center gap-2">
+          <ChartLineUp size={16} weight="duotone" color="var(--color-accent)" />
+          Tendencias Semanales
+        </h3>
+        <ResponsiveContainer width="100%" height={280}>
+          <LineChart data={trends} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 10, fill: '#8D6E63' }}
-              axisLine={{ stroke: '#D7CCC8' }}
+              tick={{ fontSize: 11, fill: tickColor }}
+              angle={-30}
+              textAnchor="end"
+              height={50}
             />
-            <YAxis tick={{ fontSize: 10, fill: '#8D6E63' }} />
+            <YAxis tick={{ fontSize: 11, fill: tickColor }} />
             <Tooltip
-              contentStyle={{ borderRadius: '8px', border: '1px solid #D7CCC8', fontSize: '12px', backgroundColor: '#F5EDE0' }}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              contentStyle={{ borderRadius: '8px', border: `1px solid ${tooltipBorder}`, fontSize: '12px', background: tooltipBg, color: isDark ? '#E8DDD0' : '#3E2723' }}
               formatter={((value: any, name: any) => {
                 const labels: Record<string, string> = {
                   activeCount: 'Clientes activos',
@@ -81,7 +94,6 @@ export function TrendChart() {
               }) as any}
             />
             <Legend
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={((value: any) => {
                 const labels: Record<string, string> = {
                   activeCount: 'Activos',
@@ -91,28 +103,9 @@ export function TrendChart() {
                 return labels[value] || value
               }) as any}
             />
-            <Line
-              type="monotone"
-              dataKey="activeCount"
-              stroke={COLORS.active}
-              strokeWidth={2}
-              dot={{ r: 3, fill: COLORS.active }}
-            />
-            <Line
-              type="monotone"
-              dataKey="newCount"
-              stroke={COLORS.new}
-              strokeWidth={2}
-              dot={{ r: 3, fill: COLORS.new }}
-            />
-            <Line
-              type="monotone"
-              dataKey="noShowCount"
-              stroke={COLORS.noShow}
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              dot={{ r: 3, fill: COLORS.noShow }}
-            />
+            <Line type="monotone" dataKey="activeCount" stroke={lineActive} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+            <Line type="monotone" dataKey="newCount" stroke={lineNew} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+            <Line type="monotone" dataKey="noShowCount" stroke={lineNoShow} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>

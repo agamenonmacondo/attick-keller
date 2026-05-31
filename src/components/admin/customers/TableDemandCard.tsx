@@ -1,19 +1,22 @@
 'use client'
 
 import { useTableDemand } from '@/lib/hooks/useTableDemand'
+import { useTheme } from '@/lib/ThemeProvider'
 import { AnimatedCard } from '../shared/AnimatedCard'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { Armchair, Warning } from '@phosphor-icons/react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts'
 
 export function TableDemandCard() {
   const { data, loading, error } = useTableDemand()
+  const { theme } = useTheme()
 
   if (loading) {
     return (
       <AnimatedCard delay={0.6}>
         <div className="p-5">
           <div className="animate-pulse">
-            <div className="h-4 bg-[#D7CCC8] rounded w-1/3 mb-3"></div>
-            <div className="h-48 bg-[#D7CCC8] rounded"></div>
+            <div className="h-4 bg-[var(--border-default)] rounded w-1/3 mb-3"></div>
+            <div className="h-48 bg-[var(--border-default)] rounded"></div>
           </div>
         </div>
       </AnimatedCard>
@@ -24,65 +27,74 @@ export function TableDemandCard() {
     return (
       <AnimatedCard delay={0.6}>
         <div className="p-5">
-          <p className="text-[#6B2737] text-sm">Error: {error}</p>
+          <p className="text-[var(--color-danger)] text-sm">Error: {error}</p>
         </div>
       </AnimatedCard>
     )
   }
 
-  if (!data) {
-    return (
-      <AnimatedCard delay={0.6}>
-        <div className="p-5">
-          <h3 className="text-xs font-semibold text-[#8D6E63] uppercase tracking-wider mb-3">
-            🪑 Demanda vs Mesas
-          </h3>
-          <p className="text-sm text-[#8D6E63]">Datos insuficientes</p>
-        </div>
-      </AnimatedCard>
-    )
-  }
+  if (!data) return null
 
-  // Transform flat {demand: {size2, size4, ...}, supply: {size2, size4, ...}} into chart data
+  const isDark = theme === 'dark'
+  const DEMAND_COLORS = isDark ? ['#C44D63', '#7BA86A', '#E8A840', '#E8DDD0'] : ['#6B2737', '#5C7A4D', '#D4922A', '#3E2723']
+  const SUPPLY_COLORS = isDark ? ['#7a4a56', '#5a7049', '#b89050', '#6a5a48'] : ['#a87891', '#9ab88d', '#e6b86a', '#7a6654']
+  const gridColor = isDark ? '#4A3A30' : '#E8DDD0'
+  const tickColor = isDark ? '#A89080' : '#8D6E63'
+  const tooltipBg = isDark ? '#2C2018' : '#FFFFFF'
+  const tooltipBorder = isDark ? '#4A3A30' : '#D7CCC8'
+
   const chartData = [
-    { label: '2 personas', demanda: data.demand.size2, mesas: data.supply.size2 },
-    { label: '3-4 personas', demanda: data.demand.size4, mesas: data.supply.size4 },
-    { label: '5-6 personas', demanda: data.demand.size6, mesas: data.supply.size6 },
-    { label: '7+ personas', demanda: data.demand.size8plus, mesas: data.supply.size8plus },
+    { name: '2', demanda: data.demand.size2, oferta: data.supply.size2 },
+    { name: '3-4', demanda: data.demand.size4, oferta: data.supply.size4 },
+    { name: '5-6', demanda: data.demand.size6, oferta: data.supply.size6 },
+    { name: '7+', demanda: data.demand.size8plus, oferta: data.supply.size8plus },
   ]
 
   return (
     <AnimatedCard delay={0.6}>
       <div className="p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xs font-semibold text-[#8D6E63] uppercase tracking-wider">
-            🪑 Demanda vs Mesas
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+            <Armchair size={16} weight="duotone" color="var(--color-accent)" />
+            Demanda vs Mesas
           </h3>
+          {data.mismatch && (
+            <span className="text-xs bg-[var(--color-warning)]/15 text-[var(--color-warning)] px-2 py-1 rounded-full font-medium flex items-center gap-1">
+              <Warning size={12} /> Desbalance
+            </span>
+          )}
         </div>
 
-        {data.mismatch && data.recommendation && (
-          <div className="bg-[#D4922A]/10 border border-[#D4922A]/20 rounded-lg p-2.5 mb-3">
-            <p className="text-xs text-[#3E2723]">
-              ⚡ {data.recommendation}
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: tickColor }} label={{ value: 'Personas', position: 'insideBottom', offset: -2, fontSize: 11, fill: tickColor }} />
+            <YAxis tick={{ fontSize: 11, fill: tickColor }} unit="%" />
+            <Tooltip
+              contentStyle={{ borderRadius: '8px', border: `1px solid ${tooltipBorder}`, fontSize: '12px', background: tooltipBg, color: isDark ? '#E8DDD0' : '#3E2723' }}
+              formatter={((value: any, name: any) => [`${value}%`, name === 'demanda' ? 'Demanda' : 'Oferta de mesas']) as any}
+            />
+            <Legend formatter={(value: string) => value === 'demanda' ? 'Demanda' : 'Mesas disponibles'} />
+            <Bar dataKey="demanda" radius={[4, 4, 0, 0]}>
+              {chartData.map((_, index) => (
+                <Cell key={`demand-${index}`} fill={DEMAND_COLORS[index]} />
+              ))}
+            </Bar>
+            <Bar dataKey="oferta" radius={[4, 4, 0, 0]}>
+              {chartData.map((_, index) => (
+                <Cell key={`supply-${index}`} fill={SUPPLY_COLORS[index]} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+
+        {data.recommendation && (
+          <div className="bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 rounded-lg p-3 mt-3">
+            <p className="text-sm text-[var(--text-primary)]">
+              <span className="font-semibold">Recomendacion:</span> {data.recommendation}
             </p>
           </div>
         )}
-
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#D7CCC8" />
-            <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#8D6E63' }} />
-            <YAxis tick={{ fontSize: 11, fill: '#8D6E63' }} unit="%" />
-            <Tooltip
-              contentStyle={{ borderRadius: '8px', border: '1px solid #D7CCC8', fontSize: '12px', backgroundColor: '#F5EDE0' }}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={((value: any, name: any) => [`${value}%`, name === 'demanda' ? 'Demanda' : 'Oferta de mesas'] as any)}
-            />
-            <Legend formatter={(value: string) => value === 'demanda' ? 'Demanda' : 'Mesas disponibles'} />
-            <Bar dataKey="demanda" fill="#6B273799" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="mesas" fill="#5C7A4D80" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
       </div>
     </AnimatedCard>
   )

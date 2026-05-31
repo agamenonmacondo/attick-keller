@@ -8,11 +8,15 @@ import { AdminTabBar, type AdminTab } from './AdminTabBar'
 import { ReservationsPanel } from './reservations/ReservationsPanel'
 import { OccupancyPanel } from './occupancy/OccupancyPanel'
 import { MetricsPanel } from './metrics/MetricsPanel'
+import { POSDashboardPanel } from './pos-dashboard/POSDashboardPanel'
 import { CustomersPanel } from './customers/CustomersPanel'
 import { MenuPanel } from './menu/MenuPanel'
 import { TeamPanel } from './team/TeamPanel'
 import { TablesPanel } from './inventory/TablesPanel'
 import { FloorPlanMap } from './floorplan/FloorPlanMap'
+import { NominaUnifiedPanel } from './nomina/NominaUnifiedPanel'
+import { RodriPanel } from './rodri/RodriPanel'
+import ShiftSchedulePanel from './shifts/ShiftSchedulePanel'
 import { Spinner } from '@phosphor-icons/react'
 
 export function AdminShell() {
@@ -26,8 +30,8 @@ export function AdminShell() {
 
   if (authLoading || roleLoading) {
     return (
-      <div className="min-h-[100dvh] bg-[#F5EDE0] flex items-center justify-center">
-        <Spinner size={32} className="animate-spin text-[#8D6E63]" />
+      <div className="min-h-[100dvh] bg-[var(--bg-primary)] flex items-center justify-center">
+        <Spinner size={32} className="animate-spin text-[var(--text-secondary)]" />
       </div>
     )
   }
@@ -43,7 +47,7 @@ export function AdminShell() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#F5EDE0]">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <AdminHeader />
       <AdminTabBar active={activeTab} onChange={setActiveTab} />
       <main className="max-w-[1400px] mx-auto px-4 md:px-6 py-6">
@@ -56,9 +60,13 @@ export function AdminShell() {
         {activeTab === 'mesas' && <TablesPanel />}
         {activeTab === 'plano' && <FloorPlanMap />}
         {activeTab === 'metricas' && <MetricsPanel />}
+        {activeTab === 'operacion' && <POSDashboardPanel />}
         {activeTab === 'clientes' && <CustomersPanel />}
         {activeTab === 'menu' && <MenuPanel />}
         {activeTab === 'equipo' && <TeamPanel />}
+        {activeTab === 'nomina' && <NominaUnifiedPanel />}
+        {activeTab === 'turnos' && <ShiftSchedulePanel />}
+        {activeTab === 'app-rodri' && <RodriPanel />}
       </main>
     </div>
   )

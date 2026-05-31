@@ -27,6 +27,12 @@ interface CustomerFiltersProps {
     q: string; tag_ids: string; has_email: string; min_visits: number; last_visit_days: number
   }) => void
   onCreateTag: () => void
+  quickFilters?: {
+    isRecurring: string | null
+    tiers: string[]
+    lastActivity: number | null
+    hasEmail: string | null
+  }
 }
 
 const LAST_VISIT_PRESETS = [
@@ -36,7 +42,7 @@ const LAST_VISIT_PRESETS = [
   { label: '90 dias', value: 90 },
 ]
 
-export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: CustomerFiltersProps) {
+export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag, quickFilters }: CustomerFiltersProps) {
   const [filters, setFilters] = useState<FiltersState>({
     q: initialFilters?.q || '',
     selectedTagIds: initialFilters?.tag_ids ? initialFilters.tag_ids.split(',').filter(Boolean) : [],
@@ -56,6 +62,16 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
       })
     }
   }, [initialFilters])
+
+  // Sync quick filter changes into internal state (one-way: quickFilters → filters)
+  useEffect(() => {
+    if (!quickFilters) return
+    setFilters(prev => ({
+      ...prev,
+      hasEmail: quickFilters.hasEmail ?? '',
+      lastVisitDays: quickFilters.lastActivity ?? 0,
+    }))
+  }, [quickFilters?.hasEmail, quickFilters?.lastActivity])
 
   const toggleTag = useCallback((tagId: string) => {
     setFilters(prev => ({
@@ -85,7 +101,7 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
   return (
     <div className="space-y-5">
       <div>
-        <label className="flex items-center gap-1.5 text-xs font-medium text-[#8D6E63] mb-1.5">
+        <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] mb-1.5">
           <MagnifyingGlass size={14} /> Buscar
         </label>
         <input
@@ -94,26 +110,26 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
           onChange={(e) => setFilters(prev => ({ ...prev, q: e.target.value }))}
           onKeyDown={(e) => e.key === 'Enter' && apply()}
           placeholder="Nombre, telefono o email..."
-          className="w-full rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-2 text-sm text-[#3E2723] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
+          className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
         />
       </div>
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="flex items-center gap-1.5 text-xs font-medium text-[#8D6E63]">
+          <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)]">
             <Tag size={14} /> Etiquetas
           </label>
           <button
             type="button"
             onClick={onCreateTag}
-            className="text-[10px] text-[#6B2737] font-medium hover:underline"
+            className="text-[10px] text-[var(--color-ak-borgona)] font-medium hover:underline"
           >
             + Nueva
           </button>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {tags.length === 0 && (
-            <p className="text-[10px] text-[#BCAAA4] py-1">Sin etiquetas creadas</p>
+            <p className="text-[10px] text-[var(--text-muted)] py-1">Sin etiquetas creadas</p>
           )}
           {tags.map(tag => (
             <button
@@ -124,10 +140,10 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
                 'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium border transition-colors duration-150',
                 filters.selectedTagIds.includes(tag.id)
                   ? 'text-white border-transparent'
-                  : 'text-[#3E2723] border-[#D7CCC8] hover:border-[#BCAAA4]'
+                  : 'text-[var(--text-primary)] border-[var(--border-default)] hover:border-[var(--text-muted)]'
               )}
               style={{
-                backgroundColor: filters.selectedTagIds.includes(tag.id) ? tag.color : '#F5EDE0',
+                backgroundColor: filters.selectedTagIds.includes(tag.id) ? tag.color : 'var(--bg-input)',
               }}
             >
               {tag.name}
@@ -138,10 +154,10 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
       </div>
 
       <div>
-        <label className="flex items-center gap-1.5 text-xs font-medium text-[#8D6E63] mb-1.5">
+        <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] mb-1.5">
           <Envelope size={14} /> Email
         </label>
-        <div className="flex rounded-lg border border-[#D7CCC8] overflow-hidden">
+        <div className="flex rounded-lg border border-[var(--border-default)] overflow-hidden">
           {[
             { label: 'Todos', value: '' },
             { label: 'Con email', value: 'true' },
@@ -154,8 +170,8 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
               className={cn(
                 'flex-1 py-1.5 text-[11px] font-medium transition-colors duration-150',
                 filters.hasEmail === opt.value
-                  ? 'bg-[#6B2737] text-white'
-                  : 'bg-white text-[#8D6E63] hover:bg-[#EFEBE9]'
+                  ? 'bg-[var(--color-ak-borgona)] text-white'
+                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-input)]'
               )}
             >
               {opt.label}
@@ -165,7 +181,7 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
       </div>
 
       <div>
-        <label className="flex items-center gap-1.5 text-xs font-medium text-[#8D6E63] mb-1.5">
+        <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] mb-1.5">
           <CalendarBlank size={14} /> Ultima visita
         </label>
         <div className="flex flex-wrap gap-1.5">
@@ -177,8 +193,8 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
               className={cn(
                 'rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors duration-150',
                 filters.lastVisitDays === p.value
-                  ? 'border-[#6B2737] bg-[#6B2737]/10 text-[#6B2737]'
-                  : 'border-[#D7CCC8] text-[#8D6E63] hover:border-[#BCAAA4]'
+                  ? 'border-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)]'
+                  : 'border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--text-muted)]'
               )}
             >
               {p.label}
@@ -188,7 +204,7 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
       </div>
 
       <div>
-        <label className="flex items-center gap-1.5 text-xs font-medium text-[#8D6E63] mb-1.5">
+        <label className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] mb-1.5">
           <ChartBar size={14} /> Minimo de visitas
         </label>
         <input
@@ -197,15 +213,15 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
           value={filters.minVisits || ''}
           onChange={(e) => setFilters(prev => ({ ...prev, minVisits: parseInt(e.target.value) || 0 }))}
           placeholder="Ej: 3"
-          className="w-full rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-2 text-sm text-[#3E2723] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
+          className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
         />
       </div>
 
-      <div className="flex gap-2 pt-2 border-t border-[#D7CCC8]">
+      <div className="flex gap-2 pt-2 border-t border-[var(--border-default)]">
         <button
           type="button"
           onClick={apply}
-          className="flex-1 rounded-lg bg-[#6B2737] py-2 text-xs font-medium text-white hover:bg-[#6B2737]/90 active:scale-[0.97] transition-transform"
+          className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] py-2 text-xs font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] transition-transform"
         >
           <Funnel size={12} className="inline mr-1" />
           Aplicar
@@ -213,7 +229,7 @@ export function CustomerFilters({ tags, initialFilters, onApply, onCreateTag }: 
         <button
           type="button"
           onClick={clear}
-          className="flex-1 rounded-lg border border-[#D7CCC8] py-2 text-xs font-medium text-[#8D6E63] hover:bg-[#EFEBE9] active:scale-[0.97] transition-transform"
+          className="flex-1 rounded-lg border border-[var(--border-default)] py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-transform"
         >
           Limpiar
         </button>

@@ -63,21 +63,21 @@ export function ConfirmDialog({
 
           {/* Dialog */}
           <motion.div
-            className="relative z-10 w-full max-w-md rounded-2xl bg-[#F5EDE0] p-6 shadow-xl"
+            className="relative z-10 w-full max-w-md rounded-2xl bg-[var(--bg-primary)] p-6 shadow-xl"
             variants={dialogVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
             <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50">
-                <Warning className="h-5 w-5 text-red-600" weight="fill" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-danger)]/10">
+                <Warning className="h-5 w-5 text-[var(--color-danger)]" weight="fill" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-semibold text-[#3E2723]">
+                <h3 className="text-base font-semibold text-[var(--text-primary)]">
                   {title}
                 </h3>
-                <p className="mt-1 text-sm text-[#8D6E63]">
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
                   {description}
                 </p>
               </div>
@@ -87,7 +87,7 @@ export function ConfirmDialog({
               <button
                 type="button"
                 onClick={onCancel}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-[#3E2723] transition-colors hover:bg-[#3E2723]/5 active:scale-[0.97]"
+                className="rounded-lg px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--color-ak-madera)]/5 active:scale-[0.97]"
                 style={{ transition: 'transform 160ms ease-out' }}
               >
                 Cancelar
@@ -98,8 +98,8 @@ export function ConfirmDialog({
                 className={cn(
                   'rounded-lg px-4 py-2 text-sm font-medium text-white active:scale-[0.97]',
                   confirmVariant === 'danger'
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-[#6B2737] hover:bg-[#6B2737]/90',
+                    ? 'bg-[var(--color-danger)] hover:bg-red-700'
+                    : 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/90',
                 )}
                 style={{ transition: 'transform 160ms ease-out' }}
               >

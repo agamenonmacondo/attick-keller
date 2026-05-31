@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { CaretLeft, CaretRight } from '@phosphor-icons/react'
 import { addDays, getLocalDate } from '@/lib/utils/formatDate'
 import { cn } from '@/lib/utils/cn'
+import { useTheme } from '@/lib/ThemeProvider'
 
 interface ReservationCalendarProps {
   selectedDate: string
@@ -18,29 +19,17 @@ const MONTH_NAMES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ]
 
-// Design MD palette: Madera #3E2723, Borgoña #6B2737, Cal #F5EDE0, Oliva #5C7A4D, Ámbar #D4922A
-// Heat levels for 210 tables: 0→vacío, 1-30→bajo (≤14%), 31-80→medio (15-38%), 81-150→alto (39-71%), 151+→pico (>72%)
-function getHeatClass(count: number): string {
-  if (count === 0) return 'bg-[#F5EDE0]/40 border border-[#D7CCC8]/60'
-  if (count <= 30) return 'bg-[#5C7A4D]/15 border border-[#5C7A4D]/20'
-  if (count <= 80) return 'bg-[#D4922A]/25 border border-[#D4922A]/30'
-  if (count <= 150) return 'bg-[#6B2737]/45 border border-[#6B2737]/30'
-  return 'bg-[#6B2737]/80 border border-[#6B2737]/50'
-}
-
-function getHeatTextClass(count: number): string {
-  if (count >= 151) return 'text-white font-bold'
-  if (count >= 81) return 'text-[#3E2723] font-semibold'
-  if (count >= 31) return 'text-[#3E2723] font-medium'
-  return 'text-[#3E2723]'
-}
-
-function getHeatLabel(count: number): string {
-  if (count === 0) return 'Sin reservas'
-  if (count <= 30) return `${count} reservas — Baja demanda`
-  if (count <= 80) return `${count} reservas — Media demanda`
-  if (count <= 150) return `${count} reservas — Alta demanda`
-  return `${count} reservas — Pico`
+function getHeatClasses(count: number, isDark: boolean): { bg: string; text: string } {
+  if (isDark) {
+    if (count === 0) return { bg: 'bg-[var(--bg-input)]', text: 'text-[var(--text-muted)]' }
+    if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/25', text: 'text-[var(--border-light)]' }
+    if (count <= 5) return { bg: 'bg-[var(--color-ak-borgona)]/45', text: 'text-white' }
+    return { bg: 'bg-[var(--color-ak-borgona)]/70', text: 'text-white' }
+  }
+  if (count === 0) return { bg: 'bg-[var(--bg-input)]', text: 'text-[var(--text-secondary)]' }
+  if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/15', text: 'text-[var(--text-primary)]' }
+  if (count <= 5) return { bg: 'bg-[var(--color-ak-borgona)]/35', text: 'text-[var(--text-primary)]' }
+  return { bg: 'bg-[var(--color-ak-borgona)]/60', text: 'text-white' }
 }
 
 export function ReservationCalendar({
@@ -48,6 +37,8 @@ export function ReservationCalendar({
   onDateChange,
   days,
 }: ReservationCalendarProps) {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const today = getLocalDate()
 
   const viewYear = parseInt(selectedDate.substring(0, 4), 10)
@@ -64,7 +55,7 @@ export function ReservationCalendar({
     const prevMonthDays = new Date(viewYear, viewMonth, 0).getDate()
     for (let i = startDow - 1; i >= 0; i--) {
       const d = prevMonthDays - i
-      const m = viewMonth === 0 ? 12 : viewMonth + 1
+      const m = viewMonth === 0 ? 12 : viewMonth
       const y = viewMonth === 0 ? viewYear - 1 : viewYear
       const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
       cells.push({ date: dateStr, day: d, inMonth: false })
@@ -103,13 +94,13 @@ export function ReservationCalendar({
   const handleToday = () => onDateChange(today)
 
   return (
-    <div className="mb-4 rounded-xl border border-[#D7CCC8] bg-white p-4 shadow-sm">
+    <div className="mb-4 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4">
       {/* Month header */}
       <div className="flex items-center justify-between mb-3">
         <button
           type="button"
           onClick={handlePrevMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D7CCC8] text-[#3E2723] hover:bg-[#D7CCC8]/50 active:scale-[0.97]"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
           aria-label="Mes anterior"
         >
@@ -117,13 +108,13 @@ export function ReservationCalendar({
         </button>
 
         <div className="flex items-center gap-3">
-          <span className="font-['Playfair_Display'] text-base font-semibold text-[#3E2723]">
+          <span className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
             {MONTH_NAMES[viewMonth]} {viewYear}
           </span>
           <button
             type="button"
             onClick={handleToday}
-            className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[#6B2737]/30 text-[#6B2737] hover:bg-[#6B2737]/10 active:scale-[0.97]"
+            className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[var(--color-ak-borgona)]/30 text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
             style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
           >
             Hoy
@@ -133,7 +124,7 @@ export function ReservationCalendar({
         <button
           type="button"
           onClick={handleNextMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D7CCC8] text-[#3E2723] hover:bg-[#D7CCC8]/50 active:scale-[0.97]"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
           aria-label="Mes siguiente"
         >
@@ -144,7 +135,7 @@ export function ReservationCalendar({
       {/* Weekday headers */}
       <div className="grid grid-cols-7 mb-1">
         {WEEKDAYS.map(d => (
-          <div key={d} className="text-center text-[10px] font-semibold text-[#8D6E63] py-1 tracking-wider">
+          <div key={d} className="text-center text-[10px] font-medium text-[var(--text-secondary)] py-1">
             {d}
           </div>
         ))}
@@ -157,6 +148,7 @@ export function ReservationCalendar({
           const isSelected = cell.date === selectedDate
           const isToday = cell.date === today
           const isWeekend = i % 7 === 5 || i % 7 === 6
+          const heat = getHeatClasses(count, isDark)
 
           return (
             <motion.button
@@ -167,19 +159,19 @@ export function ReservationCalendar({
               transition={{ duration: 0.15, delay: i * 0.008 }}
               onClick={() => onDateChange(cell.date)}
               className={cn(
-                'relative rounded-lg py-1.5 text-center text-xs cursor-pointer active:scale-[0.95]',
-                getHeatClass(count),
-                getHeatTextClass(count),
+                'relative rounded-lg py-1.5 text-center text-xs font-medium cursor-pointer active:scale-[0.95]',
+                heat.bg,
+                heat.text,
                 !cell.inMonth && 'opacity-40',
-                isSelected && 'ring-2 ring-[#6B2737] ring-offset-1 ring-offset-white',
+                isSelected && 'ring-2 ring-[var(--color-ak-borgona)] ring-offset-1 ring-offset-[var(--bg-card)]',
                 isWeekend && cell.inMonth && 'font-semibold',
               )}
               style={{ transition: 'transform 120ms ease-out' }}
-              title={getHeatLabel(count)}
+              title={count > 0 ? `${count} reservas` : 'Sin reservas'}
             >
               {cell.day}
               {isToday && !isSelected && (
-                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-[#D4922A]" />
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-[var(--color-ak-borgona)]" />
               )}
             </motion.button>
           )
@@ -189,24 +181,20 @@ export function ReservationCalendar({
       {/* Legend */}
       <div className="flex items-center justify-center gap-3 mt-3">
         <div className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm bg-[#F5EDE0]/60 border border-[#D7CCC8]/60" />
-          <span className="text-[9px] text-[#8D6E63]">0</span>
+          <span className="h-2.5 w-2.5 rounded-sm bg-[var(--bg-input)]" />
+          <span className="text-[9px] text-[var(--text-secondary)]">0</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm bg-[#5C7A4D]/15 border border-[#5C7A4D]/20" />
-          <span className="text-[9px] text-[#8D6E63]">1-30</span>
+          <span className="h-2.5 w-2.5 rounded-sm bg-[var(--color-ak-borgona)]/15" />
+          <span className="text-[9px] text-[var(--text-secondary)]">1-2</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm bg-[#D4922A]/25 border border-[#D4922A]/30" />
-          <span className="text-[9px] text-[#8D6E63]">31-80</span>
+          <span className="h-2.5 w-2.5 rounded-sm bg-[var(--color-ak-borgona)]/35" />
+          <span className="text-[9px] text-[var(--text-secondary)]">3-5</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm bg-[#6B2737]/45 border border-[#6B2737]/30" />
-          <span className="text-[9px] text-[#8D6E63]">81-150</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="h-2.5 w-2.5 rounded-sm bg-[#6B2737]/80 border border-[#6B2737]/50" />
-          <span className="text-[9px] text-[#8D6E63]">151+</span>
+          <span className="h-2.5 w-2.5 rounded-sm bg-[var(--color-ak-borgona)]/60" />
+          <span className="text-[9px] text-[var(--text-secondary)]">6+</span>
         </div>
       </div>
     </div>

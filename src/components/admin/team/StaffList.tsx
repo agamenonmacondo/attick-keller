@@ -10,6 +10,8 @@ interface StaffMember {
   role: string
   is_active: boolean
   created_at: string
+  pos_nomina_staff_id?: string | null
+  area?: string | null
 }
 
 interface StaffListProps {
@@ -22,6 +24,16 @@ const ROLE_LABELS: Record<string, string> = {
   host: 'Host',
   store_admin: 'Administrador',
   super_admin: 'Super Admin',
+  lider_area: 'Lider de Area',
+  colaborador: 'Colaborador',
+}
+
+const ROLE_COLORS: Record<string, string> = {
+  super_admin: 'bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)]',
+  store_admin: 'bg-[var(--color-ak-ambar)]/15 text-[var(--color-ak-ambar)]',
+  lider_area: 'bg-emerald-500/10 text-emerald-400',
+  colaborador: 'bg-sky-500/10 text-sky-400',
+  host: 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)]',
 }
 
 export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
@@ -34,38 +46,39 @@ export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
 
   if (staff.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-[#D7CCC8] p-8 text-center text-[#8D6E63]">
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-8 text-center text-[var(--text-secondary)]">
         No hay personal asignado. Agrega un miembro del equipo arriba.
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-xl border border-[#D7CCC8] overflow-hidden">
-      <div className="px-6 py-4 border-b border-[#D7CCC8]">
-        <h2 className="font-['Playfair_Display'] text-xl font-bold text-[#3E2723]">
+    <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+      <div className="px-6 py-4 border-b border-[var(--border-default)]">
+        <h2 className="font-['Playfair_Display'] text-xl font-bold text-[var(--text-primary)]">
           Equipo ({staff.length})
         </h2>
       </div>
-      <div className="divide-y divide-[#D7CCC8]">
+      <div className="divide-y divide-[var(--border-default)]">
         {staff.map(member => (
           <div key={member.id} className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
-              <div className="w-9 h-9 rounded-full bg-[#EFEBE9] flex items-center justify-center text-[#5D4037] font-bold text-sm">
+              <div className="w-9 h-9 rounded-full bg-[var(--bg-input)] flex items-center justify-center text-[var(--text-primary)] font-bold text-sm">
                 {(member.email || '?')[0].toUpperCase()}
               </div>
               <div>
-                <p className="text-sm font-medium text-[#3E2723]">{member.email || 'Sin email'}</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">{member.email || 'Sin email'}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    member.role === 'super_admin' ? 'bg-[#6B2737]/10 text-[#6B2737]' :
-                    member.role === 'store_admin' ? 'bg-[#D4922A]/15 text-[#D4922A]' :
-                    'bg-[#5C7A4D]/10 text-[#5C7A4D]'
-                  }`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[member.role] || 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)]'}`}>
                     {ROLE_LABELS[member.role] || member.role}
                   </span>
+                  {member.area && (
+                    <span className="text-xs text-[var(--text-secondary)]">
+                      {member.area}
+                    </span>
+                  )}
                   {!member.is_active && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-danger)]/10 text-[var(--color-danger)] font-medium">
                       Inactivo
                     </span>
                   )}
@@ -76,7 +89,7 @@ export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
               <button
                 onClick={() => onToggleActive(member.id, !member.is_active)}
                 className={`p-2 rounded-lg transition-colors ${
-                  member.is_active ? 'text-[#5C7A4D] hover:bg-[#5C7A4D]/10' : 'text-[#8D6E63] hover:bg-[#8D6E63]/10'
+                  member.is_active ? 'text-[var(--color-ak-oliva)] hover:bg-[var(--color-ak-oliva)]/10' : 'text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/10'
                 }`}
                 title={member.is_active ? 'Desactivar' : 'Activar'}
               >
@@ -84,16 +97,16 @@ export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
               </button>
               {confirmDeleteId === member.id ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-red-700">Confirmar?</span>
+                  <span className="text-xs text-[var(--color-danger)]">Confirmar?</span>
                   <button
                     onClick={() => handleDelete(member.id)}
-                    className="px-3 py-1.5 text-xs rounded-lg bg-red-700 text-white hover:bg-red-800 transition-colors"
+                    className="px-3 py-1.5 text-xs rounded-lg bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger)]/80 transition-colors"
                   >
                     Si, eliminar
                   </button>
                   <button
                     onClick={() => setConfirmDeleteId(null)}
-                    className="px-3 py-1.5 text-xs rounded-lg bg-[#EFEBE9] text-[#3E2723] hover:bg-[#D7CCC8] transition-colors"
+                    className="px-3 py-1.5 text-xs rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] hover:bg-[var(--border-default)] transition-colors"
                   >
                     No
                   </button>
@@ -101,7 +114,7 @@ export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
               ) : (
                 <button
                   onClick={() => setConfirmDeleteId(member.id)}
-                  className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                  className="p-2 rounded-lg text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 transition-colors"
                   title="Eliminar rol"
                 >
                   <Trash size={18} />

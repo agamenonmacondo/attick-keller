@@ -58,46 +58,46 @@ export function ZoneEditor({ zone, onClose, onSave }: ZoneEditorProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl bg-[#F5EDE0] border border-[#D7CCC8] shadow-xl p-5" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-md rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-default)] shadow-xl p-5" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[#3E2723]">
+          <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">
             {isEditing ? 'Editar Zona' : 'Nueva Zona'}
           </h2>
-          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8D6E63] hover:bg-[#D7CCC8]/50">
+          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50">
             <X size={18} />
           </button>
         </div>
 
-        {error && <div className="mb-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">{error}</div>}
+        {error && <div className="mb-3 rounded-lg bg-[var(--color-danger)]/10 border border-red-200 px-3 py-2 text-sm text-[var(--color-danger)]">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-[#8D6E63]">Nombre</label>
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Nombre</label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               placeholder="Ej: Terraza, Salon Principal..."
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-[#8D6E63]">Descripcion</label>
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Descripcion</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               rows={2}
-              className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               placeholder="Descripcion opcional de la zona"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-[#8D6E63]">Orden</label>
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Orden</label>
             <input
               type="number"
               value={sortOrder}
               onChange={e => setSortOrder(Number(e.target.value))}
-              className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               min={0}
             />
           </div>
@@ -105,7 +105,7 @@ export function ZoneEditor({ zone, onClose, onSave }: ZoneEditorProps) {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-lg bg-[#6B2737] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#6B2737]/90 disabled:opacity-50 active:scale-[0.97]"
+              className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 disabled:opacity-50 active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out' }}
             >
               {saving ? 'Guardando...' : isEditing ? 'Guardar' : 'Crear Zona'}
@@ -113,7 +113,7 @@ export function ZoneEditor({ zone, onClose, onSave }: ZoneEditorProps) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[#D7CCC8] px-4 py-2.5 text-sm font-medium text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97]"
+              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out' }}
             >
               Cancelar

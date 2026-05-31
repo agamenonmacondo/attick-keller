@@ -19,7 +19,7 @@ export function CustomerAnalyticsPanel() {
   if (loading && !overview) {
     return (
       <div className="py-16 flex items-center justify-center">
-        <Spinner size={32} className="animate-spin text-[#8D6E63]" />
+        <Spinner size={32} className="animate-spin text-[var(--text-secondary)]" />
       </div>
     )
   }
@@ -27,8 +27,8 @@ export function CustomerAnalyticsPanel() {
   if (error) {
     return (
       <div className="py-8 text-center">
-        <p className="text-sm text-red-600">{error}</p>
-        <p className="text-xs text-[#8D6E63] mt-1">Verifica que la migración SQL esté aplicada</p>
+        <p className="text-sm text-[var(--color-danger)]">{error}</p>
+        <p className="text-xs text-[var(--text-secondary)] mt-1">Verifica que la migracion SQL este aplicada</p>
       </div>
     )
   }

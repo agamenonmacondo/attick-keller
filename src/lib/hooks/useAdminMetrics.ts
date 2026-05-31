@@ -11,6 +11,8 @@ interface MetricsData {
   noShow: { total: number; no_shows: number; rate: number }
   avgPartySize: number
   dailyTrend: Array<{ date: string; total: number; confirmed: number }>
+  totalCapacity: number
+  totalTables: number
 }
 
 export function useAdminMetrics() {

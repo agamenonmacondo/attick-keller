@@ -11,10 +11,73 @@
   --color-ak-carbon: #1E1E1E;
   --color-ak-ladrillo: #A0522D;
 
+  /* Dark mode palette */
+  --color-ak-night: #1A1412;
+  --color-ak-night-card: #2C2018;
+  --color-ak-night-input: #362A22;
+  --color-ak-night-border: #4A3A30;
+  --color-ak-night-text: #E8DDD0;
+  --color-ak-night-muted: #A89080;
+  --color-ak-borgona-light: #C44D63;
+  --color-ak-oliva-light: #7BA86A;
+  --color-ak-ambar-light: #E8A840;
+
   /* Fonts */
   --font-display: 'Playfair Display', serif;
   --font-body: 'DM Sans', sans-serif;
   --font-accent: 'Caveat', cursive;
+}
+
+/* Light theme (default) */
+:root {
+  color-scheme: light;
+  --bg-primary: #F5EDE0;
+  --bg-card: #FFFFFF;
+  --bg-input: #F5EDE0;
+  --bg-hover: rgba(62, 39, 35, 0.06);
+  --text-primary: #3E2723;
+  --text-secondary: #8D6E63;
+  --text-muted: #A1887F;
+  --border-default: #D7CCC8;
+  --border-light: #E8DDD0;
+  --shadow-sm: 0 1px 2px rgba(62, 39, 35, 0.06);
+  --shadow-md: 0 4px 12px rgba(62, 39, 35, 0.08);
+  --accent-primary: #6B2737;
+  --color-accent: #6B2737;
+  --color-success: #5C7A4D;
+  --color-warning: #D4922A;
+  --color-danger: #C62828;
+  --badge-bg: rgba(107, 39, 55, 0.08);
+  --chart-grid: #E8DDD0;
+  --chart-text: #8D6E63;
+  --chart-tooltip-bg: #FFFFFF;
+  --chart-tooltip-border: #D7CCC8;
+}
+
+/* Dark theme */
+.dark {
+  color-scheme: dark;
+  --bg-primary: #1A1412;
+  --bg-card: #2C2018;
+  --bg-input: #362A22;
+  --bg-hover: rgba(232, 221, 208, 0.06);
+  --text-primary: #E8DDD0;
+  --text-secondary: #A89080;
+  --text-muted: #7A6A5E;
+  --border-default: #4A3A30;
+  --border-light: #3A2E24;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --accent-primary: #C44D63;
+  --color-accent: #C44D63;
+  --color-success: #7BA86A;
+  --color-warning: #E8A840;
+  --color-danger: #EF5350;
+  --badge-bg: rgba(196, 77, 99, 0.15);
+  --chart-grid: #4A3A30;
+  --chart-text: #A89080;
+  --chart-tooltip-bg: #2C2018;
+  --chart-tooltip-border: #4A3A30;
 }
 
 @keyframes float-orb-1 {
@@ -56,6 +119,24 @@
 .animate-fade-up { animation: fade-up 0.8s ease-out forwards; }
 
 body {
-  background-color: var(--color-ak-cal);
-  color: var(--color-ak-carbon);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode specific overrides for elements that can't use CSS vars */
+.dark img { opacity: 0.9; }
+.dark img:hover { opacity: 1; }
+
+/* Smooth theme transitions on interactive elements */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 0ms;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .theme-transition *, .theme-transition *::before, .theme-transition *::after {
+    transition-duration: 300ms;
+    transition-timing-function: ease;
+  }
 }

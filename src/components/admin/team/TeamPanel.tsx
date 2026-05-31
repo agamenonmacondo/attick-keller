@@ -12,6 +12,8 @@ interface StaffMember {
   role: string
   is_active: boolean
   created_at: string
+  pos_nomina_staff_id?: string | null
+  area?: string | null
 }
 
 export function TeamPanel() {
@@ -34,11 +36,11 @@ export function TeamPanel() {
 
   useEffect(() => { fetchStaff() }, [fetchStaff])
 
-  const handleAddStaff = async (email: string, role: string) => {
+  const handleAddStaff = async (email: string, role: string, posNominaStaffId?: string, area?: string) => {
     const res = await fetch('/api/admin/staff', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, role }),
+      body: JSON.stringify({ email, role, pos_nomina_staff_id: posNominaStaffId, area }),
     })
     if (res.ok) {
       fetchStaff()
@@ -68,7 +70,7 @@ export function TeamPanel() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 text-[#8D6E63]">
+      <div className="flex items-center justify-center py-12 text-[var(--text-secondary)]">
         Cargando equipo...
       </div>
     )

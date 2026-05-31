@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { sanitizeLike } from '@/lib/utils/sanitize'
 
 export async function POST(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -81,6 +82,9 @@ export async function GET(request: NextRequest) {
     const minVisits = parseInt(searchParams.get('min_visits') || '0') || 0
     const lastVisitDays = parseInt(searchParams.get('last_visit_days') || '0') || 0
     const tagIds = searchParams.get('tag_ids') || ''
+    const visitsRange = searchParams.get('visits_range') || ''
+    const isRecurring = searchParams.get('is_recurring') || ''
+    const loyaltyTier = searchParams.get('loyalty_tier') || ''
 
     // Step 1: Build base customers query with text/email filters
     let customersQuery = sb
@@ -89,7 +93,8 @@ export async function GET(request: NextRequest) {
       .eq('restaurant_id', RESTAURANT_ID)
 
     if (q) {
-      customersQuery = customersQuery.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`)
+      const safeQ = sanitizeLike(q)
+      customersQuery = customersQuery.or(`full_name.ilike.%${safeQ}%,phone.ilike.%${safeQ}%,email.ilike.%${safeQ}%`)
     }
 
     if (hasEmail === 'true') {
@@ -106,17 +111,51 @@ export async function GET(request: NextRequest) {
     // Step 2: If filtering by stats or tags, resolve matching customer IDs first
     let filteredIds: Set<string> | null = null
 
-    if (minVisits > 0 || lastVisitDays > 0) {
+    const hasStatsFilters = minVisits > 0 || lastVisitDays > 0 || visitsRange || isRecurring || loyaltyTier
+
+    if (hasStatsFilters) {
       try {
         let statsQuery = sb
           .from('customer_stats')
           .select('customer_id')
-          .gte('total_visits', minVisits)
+
+        if (minVisits > 0) {
+          statsQuery = statsQuery.gte('total_visits', minVisits)
+        }
 
         if (lastVisitDays > 0) {
           const cutoff = new Date()
           cutoff.setDate(cutoff.getDate() - lastVisitDays)
           statsQuery = statsQuery.gte('last_visit_date', cutoff.toISOString().split('T')[0])
+        }
+
+        if (visitsRange) {
+          const parts = visitsRange.split('-')
+          const visitsMin = parseInt(parts[0], 10)
+          if (!isNaN(visitsMin)) {
+            statsQuery = statsQuery.gte('total_visits', visitsMin)
+            if (parts[1] && parts[1] !== '+') {
+              const visitsMax = parseInt(parts[1], 10)
+              if (!isNaN(visitsMax)) {
+                statsQuery = statsQuery.lte('total_visits', visitsMax)
+              }
+            }
+          }
+        }
+
+        if (isRecurring === 'true') {
+          statsQuery = statsQuery.eq('is_recurring', true)
+        } else if (isRecurring === 'false') {
+          statsQuery = statsQuery.eq('is_recurring', false)
+        }
+
+        if (loyaltyTier) {
+          const tiers = loyaltyTier.split(',')
+          if (tiers.length === 1) {
+            statsQuery = statsQuery.eq('loyalty_tier', tiers[0])
+          } else {
+            statsQuery = statsQuery.in('loyalty_tier', tiers)
+          }
         }
 
         const { data: statsData, error: statsError } = await statsQuery

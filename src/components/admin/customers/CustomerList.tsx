@@ -1,11 +1,12 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { User, CheckSquare, Square, CaretLeft, CaretRight } from '@phosphor-icons/react'
+import { User, CheckSquare, Square } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils/cn'
 import { TierBadge } from '../shared/TierBadge'
 import { EmptyState } from '../shared/EmptyState'
 import { Spinner, Users } from '@phosphor-icons/react'
+import { Pagination } from './Pagination'
 
 interface Customer {
   id: string
@@ -25,6 +26,7 @@ interface CustomerListProps {
   page: number
   total: number
   totalPages: number
+  perPage: number
   selectedIds: Set<string>
   onToggleSelect: (id: string) => void
   onSelectAll: () => void
@@ -34,13 +36,14 @@ interface CustomerListProps {
   activeCustomerId: string | null
   onSelectAllFiltered?: () => void
   selectingAll?: boolean
+  onPerPageChange?: (n: number) => void
 }
 
 export function CustomerList({
-  customers, loading, error, page, total, totalPages,
+  customers, loading, error, page, total, totalPages, perPage,
   selectedIds, onToggleSelect, onSelectAll, onClearSelection,
   onPageChange, onCustomerClick, activeCustomerId,
-  onSelectAllFiltered, selectingAll,
+  onSelectAllFiltered, selectingAll, onPerPageChange,
 }: CustomerListProps) {
   const allSelected = customers.length > 0 && customers.every(c => selectedIds.has(c.id))
   const someSelected = customers.some(c => selectedIds.has(c.id))
@@ -54,12 +57,12 @@ export function CustomerList({
           <button
             type="button"
             onClick={allSelected ? onClearSelection : onSelectAll}
-            className="flex items-center gap-1 text-[#8D6E63] hover:text-[#3E2723]"
+            className="flex items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           >
             {allSelected ? (
-              <CheckSquare size={16} weight="fill" className="text-[#6B2737]" />
+              <CheckSquare size={16} weight="fill" className="text-[var(--color-ak-borgona)]" />
             ) : someSelected ? (
-              <CheckSquare size={16} weight="fill" className="text-[#6B2737]/50" />
+              <CheckSquare size={16} weight="fill" className="text-[var(--color-ak-borgona)]/50" />
             ) : (
               <Square size={16} />
             )}
@@ -69,7 +72,7 @@ export function CustomerList({
             <button
               type="button"
               onClick={onSelectAllFiltered}
-              className="text-[#6B2737] font-medium hover:underline"
+              className="text-[var(--color-ak-borgona)] font-medium hover:underline"
             >
               Seleccionar todos ({total})
             </button>
@@ -77,36 +80,36 @@ export function CustomerList({
         </div>
         <div className="flex items-center gap-2">
           {totalSelected > 0 && (
-            <span className="text-[#6B2737] font-medium">
+            <span className="text-[var(--color-ak-borgona)] font-medium">
               {totalSelected} seleccionado{totalSelected !== 1 ? 's' : ''}
             </span>
           )}
-          <span className="text-[#BCAAA4]">{total} clientes</span>
+          <span className="text-[var(--text-muted)]">{total} clientes</span>
         </div>
       </div>
 
       {isCrossPageSelection && (
-        <div className="rounded-lg bg-[#6B2737]/5 border border-[#6B2737]/20 px-3 py-2 text-xs text-[#6B2737]">
+        <div className="rounded-lg bg-[var(--color-ak-borgona)]/5 border border-[var(--color-ak-borgona)]/20 px-3 py-2 text-xs text-[var(--color-ak-borgona)]">
           Has seleccionado {totalSelected} clientes en total (incluyendo otras paginas).
         </div>
       )}
 
       {selectingAll && (
-        <div className="rounded-lg bg-[#EFEBE9] border border-[#D7CCC8] px-3 py-2 text-xs text-[#8D6E63] flex items-center gap-2">
+        <div className="rounded-lg bg-[var(--bg-input)] border border-[var(--border-default)] px-3 py-2 text-xs text-[var(--text-secondary)] flex items-center gap-2">
           <Spinner size={14} className="animate-spin" />
           Seleccionando todos los clientes...
         </div>
       )}
 
       {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg bg-[var(--color-danger)]/10 border border-red-200 px-4 py-3 text-sm text-[var(--color-danger)]">
           Error al cargar clientes: {error}
         </div>
       )}
 
       {loading && (
         <div className="flex items-center justify-center py-12">
-          <Spinner size={24} className="animate-spin text-[#8D6E63]" />
+          <Spinner size={24} className="animate-spin text-[var(--text-secondary)]" />
         </div>
       )}
 
@@ -127,10 +130,10 @@ export function CustomerList({
           className={cn(
             'flex items-center gap-3 rounded-xl border p-3 cursor-pointer group transition-colors duration-200',
             activeCustomerId === c.id
-              ? 'border-[#6B2737] bg-[#6B2737]/5'
+              ? 'border-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/5'
               : selectedIds.has(c.id)
-                ? 'border-[#6B2737]/50 bg-[#6B2737]/3'
-                : 'border-[#D7CCC8] bg-white hover:border-[#BCAAA4]'
+                ? 'border-[var(--color-ak-borgona)]/50 bg-[var(--color-ak-borgona)]/3'
+                : 'border-[var(--border-default)] bg-[var(--bg-card)] hover:border-[var(--text-muted)]'
           )}
         >
           <button
@@ -139,8 +142,8 @@ export function CustomerList({
             className="shrink-0"
           >
             {selectedIds.has(c.id)
-              ? <CheckSquare size={18} weight="fill" className="text-[#6B2737]" />
-              : <Square size={18} className="text-[#BCAAA4] group-hover:text-[#8D6E63]" />
+              ? <CheckSquare size={18} weight="fill" className="text-[var(--color-ak-borgona)]" />
+              : <Square size={18} className="text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]" />
             }
           </button>
 
@@ -149,12 +152,12 @@ export function CustomerList({
             onClick={() => onCustomerClick(c.id)}
             className="flex-1 text-left min-w-0"
           >
-            <p className="truncate text-sm font-medium text-[#3E2723]">
+            <p className="truncate text-sm font-medium text-[var(--text-primary)]">
               {c.full_name || 'Sin nombre'}
             </p>
-            <div className="flex items-center gap-1.5 text-[11px] text-[#8D6E63] mt-0.5">
+            <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-secondary)] mt-0.5">
               {c.phone && <span className="truncate">{c.phone}</span>}
-              {c.phone && c.email && <span className="text-[#D7CCC8]">·</span>}
+              {c.phone && c.email && <span className="text-[var(--border-default)]">·</span>}
               {c.email && <span className="truncate">{c.email}</span>}
               {!c.phone && !c.email && <span>Sin contacto</span>}
             </div>
@@ -162,33 +165,20 @@ export function CustomerList({
 
           <div className="flex flex-col items-end gap-1 shrink-0">
             <TierBadge tier={c.loyalty_tier} />
-            <span className="text-[10px] text-[#8D6E63]">{c.total_visits}v</span>
+            <span className="text-[10px] text-[var(--text-secondary)]">{c.total_visits}v</span>
           </div>
         </motion.div>
       ))}
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-2">
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={() => onPageChange(page - 1)}
-            className="flex items-center justify-center h-8 w-8 rounded-lg border border-[#D7CCC8] text-[#8D6E63] hover:bg-[#EFEBE9] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <CaretLeft size={14} />
-          </button>
-          <span className="text-xs text-[#8D6E63]">
-            {page} de {totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={page >= totalPages}
-            onClick={() => onPageChange(page + 1)}
-            className="flex items-center justify-center h-8 w-8 rounded-lg border border-[#D7CCC8] text-[#8D6E63] hover:bg-[#EFEBE9] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <CaretRight size={14} />
-          </button>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          perPage={perPage}
+          onPageChange={onPageChange}
+          onPerPageChange={onPerPageChange || ((n: number) => {})}
+        />
       )}
     </div>
   )

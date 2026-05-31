@@ -103,10 +103,10 @@ function getTableCardStyle(table: TableItem): CardStyle {
   // Occupied (seated) — burgundy
   if (table.reservations?.some((r: any) => r.is_current && r.status === 'seated') || table.reservations?.some((r: any) => r.is_upcoming && r.status === 'seated')) {
     return {
-      border: 'border-[#6B2737]/30',
-      bg: 'bg-[#6B2737]/8',
-      dot: 'bg-[#6B2737]',
-      hoverBorder: 'hover:border-[#6B2737]/50',
+      border: 'border-[var(--color-ak-borgona)]/30',
+      bg: 'bg-[var(--color-ak-borgona)]/8',
+      dot: 'bg-[var(--color-ak-borgona)]',
+      hoverBorder: 'hover:border-[var(--color-ak-borgona)]/50',
       badge: '',
       pulse: '',
     }
@@ -117,49 +117,49 @@ function getTableCardStyle(table: TableItem): CardStyle {
   switch (urgency) {
     case 'urgent':
       return {
-        border: 'border-[#C62828]',
-        bg: 'bg-[#C62828]/8',
-        dot: 'bg-[#C62828]',
-        hoverBorder: 'hover:border-[#C62828]/50',
-        badge: 'bg-[#C62828] text-white',
+        border: 'border-[var(--color-danger)]',
+        bg: 'bg-[var(--color-danger)]/8',
+        dot: 'bg-[var(--color-danger)]',
+        hoverBorder: 'hover:border-[var(--color-danger)]/50',
+        badge: 'bg-[var(--color-danger)] text-white',
         pulse: 'animate-pulse',
       }
     case 'warning':
       return {
-        border: 'border-[#E65100]',
-        bg: 'bg-[#E65100]/8',
-        dot: 'bg-[#E65100]',
-        hoverBorder: 'hover:border-[#E65100]/50',
-        badge: 'bg-[#E65100] text-white',
+        border: 'border-[var(--color-warning)]',
+        bg: 'bg-[var(--color-warning)]/8',
+        dot: 'bg-[var(--color-warning)]',
+        hoverBorder: 'hover:border-[var(--color-warning)]/50',
+        badge: 'bg-[var(--color-warning)] text-white',
         pulse: '',
       }
     case 'info':
       return {
-        border: 'border-[#1565C0]',
-        bg: 'bg-[#1565C0]/8',
-        dot: 'bg-[#1565C0]',
-        hoverBorder: 'hover:border-[#1565C0]/50',
-        badge: 'bg-[#1565C0] text-white',
+        border: 'border-[var(--color-accent)]',
+        bg: 'bg-[var(--color-accent)]/8',
+        dot: 'bg-[var(--color-accent)]',
+        hoverBorder: 'hover:border-[var(--color-accent)]/50',
+        badge: 'bg-[var(--color-accent)] text-white',
         pulse: '',
       }
     default: {
       // Has upcoming reservation but >60min away → amber
       if (table.next_reservation) {
         return {
-          border: 'border-[#D4922A]/30',
-          bg: 'bg-[#D4922A]/8',
-          dot: 'bg-[#D4922A]',
-          hoverBorder: 'hover:border-[#D4922A]/50',
+          border: 'border-[var(--color-ak-ambar)]/30',
+          bg: 'bg-[var(--color-ak-ambar)]/8',
+          dot: 'bg-[var(--color-ak-ambar)]',
+          hoverBorder: 'hover:border-[var(--color-ak-ambar)]/50',
           badge: '',
           pulse: '',
         }
       }
       // Available — green
       return {
-        border: 'border-[#5C7A4D]/30',
-        bg: 'bg-[#5C7A4D]/5',
-        dot: 'bg-[#5C7A4D]',
-        hoverBorder: 'hover:border-[#5C7A4D]/50',
+        border: 'border-[var(--color-ak-oliva)]/30',
+        bg: 'bg-[var(--color-ak-oliva)]/5',
+        dot: 'bg-[var(--color-ak-oliva)]',
+        hoverBorder: 'hover:border-[var(--color-ak-oliva)]/50',
         badge: '',
         pulse: '',
       }
@@ -193,7 +193,7 @@ function MiniTimeline({
   const nowMins = timeToMinutes(currentTime)
 
   return (
-    <div className="relative h-2 bg-[#EFEBE9] rounded-full overflow-hidden mt-1.5">
+    <div className="relative h-2 bg-[var(--bg-input)] rounded-full overflow-hidden mt-1.5">
       {active.map(r => {
         const left = ((timeToMinutes(r.time_start) - minTime) / range) * 100
         const w = Math.max(((timeToMinutes(r.time_end) - timeToMinutes(r.time_start)) / range) * 100, 2)
@@ -202,7 +202,7 @@ function MiniTimeline({
             key={r.id}
             className={cn(
               'absolute top-0 h-full rounded-full transition-colors',
-              r.is_current ? 'bg-[#6B2737]' : 'bg-[#D4922A]/40 border border-[#D4922A]/60'
+              r.is_current ? 'bg-[var(--color-ak-borgona)]' : 'bg-[var(--color-ak-ambar)]/40 border border-[var(--color-ak-ambar)]/60'
             )}
             style={{ left: `${left}%`, width: `${w}%` }}
           />
@@ -221,13 +221,13 @@ function MiniTimeline({
 
 function StatusDot({ status }: { status: ReservationTimeline['status'] }) {
   const dotMap: Record<string, string> = {
-    confirmed: 'bg-green-600',
-    pre_paid: 'bg-green-600',
-    seated: 'bg-green-600',
-    pending: 'bg-[#D4922A]',
-    no_show: 'bg-red-600',
-    cancelled: 'bg-gray-400',
-    completed: 'bg-gray-400',
+    confirmed: 'bg-[var(--color-success)]',
+    pre_paid: 'bg-[var(--color-success)]',
+    seated: 'bg-[var(--color-success)]',
+    pending: 'bg-[var(--color-ak-ambar)]',
+    no_show: 'bg-[var(--color-danger)]',
+    cancelled: 'bg-[var(--text-muted)]',
+    completed: 'bg-[var(--text-muted)]',
   }
   const labelMap: Record<string, string> = {
     confirmed: 'Confirmado',
@@ -239,8 +239,8 @@ function StatusDot({ status }: { status: ReservationTimeline['status'] }) {
     completed: 'Completado',
   }
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] text-[#8D6E63] uppercase tracking-wider">
-      <span className={cn('w-1.5 h-1.5 rounded-full', dotMap[status] || 'bg-gray-400')} />
+    <span className="inline-flex items-center gap-1 text-[10px] text-[var(--text-secondary)] uppercase tracking-wider">
+      <span className={cn('w-1.5 h-1.5 rounded-full', dotMap[status] || 'bg-[var(--text-muted)]')} />
       {labelMap[status] || status}
     </span>
   )
@@ -359,29 +359,29 @@ export function HostTableMap({ zones, reservations, onAction, currentTime, onRea
       <SectionHeading>Mapa de Mesas</SectionHeading>
 
       {/* Status legend */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-[#8D6E63]">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#5C7A4D]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-ak-oliva)]" />
           Libre
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#6B2737]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-ak-borgona)]" />
           Ocupada
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#D4922A]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-ak-ambar)]" />
           Reservada
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#1565C0]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-accent)]" />
           1h
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#E65100]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-warning)]" />
           30m
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#C62828]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-danger)]" />
           15m
         </span>
       </div>
@@ -390,7 +390,7 @@ export function HostTableMap({ zones, reservations, onAction, currentTime, onRea
         <motion.div
           initial={prefersReduced ? false : { opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700"
+          className="rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 px-3 py-2 text-xs text-[var(--color-danger)]"
         >
           {error}
         </motion.div>
@@ -398,7 +398,7 @@ export function HostTableMap({ zones, reservations, onAction, currentTime, onRea
 
       {zones.map(zone => (
         <div key={zone.id}>
-          <h3 className="text-sm font-medium text-[#5D4037] uppercase tracking-wider mb-2">
+          <h3 className="text-sm font-medium text-[var(--text-primary)] uppercase tracking-wider mb-2">
             {zone.name}
           </h3>
           <motion.div
@@ -433,10 +433,10 @@ export function HostTableMap({ zones, reservations, onAction, currentTime, onRea
 
       {zones.length === 0 && (
         <EmptyState
-          icon={<Table size={40} weight="duotone" className="text-[#D7CCC8]" />}
+          icon={<Table size={40} weight="duotone" className="text-[var(--border-default)]" />}
           title="No hay zonas configuradas"
           description="Contacta al administrador para configurar mesas y zonas."
-          className="bg-white rounded-xl border border-[#D7CCC8]"
+          className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)]"
         />
       )}
     </div>
@@ -494,7 +494,7 @@ function HostTableCard({
           style.bg,
           style.hoverBorder,
           style.pulse,
-          isActive && 'ring-2 ring-[#D4922A] ring-offset-1'
+          isActive && 'ring-2 ring-[var(--color-ak-ambar)] ring-offset-1'
         )}
         style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out' }}
         whileTap={prefersReduced ? undefined : { scale: 0.97 }}
@@ -502,11 +502,11 @@ function HostTableCard({
         {/* Top row: name + urgency badge */}
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-sm md:text-base font-bold text-[#3E2723] truncate">
+            <span className="text-sm md:text-base font-bold text-[var(--text-primary)] truncate">
               {table.name_attick || `Mesa ${table.number}`}
             </span>
             {table.name_attick && (
-              <span className="text-[10px] text-[#8D6E63] shrink-0">({table.number})</span>
+              <span className="text-[10px] text-[var(--text-secondary)] shrink-0">({table.number})</span>
             )}
           </div>
           <div className="flex items-center gap-1 shrink-0">
@@ -520,9 +520,9 @@ function HostTableCard({
         </div>
 
         {/* Capacity */}
-        <div className="flex items-center gap-1 text-xs text-[#8D6E63]">
+        <div className="flex items-center gap-1 text-xs text-[var(--text-secondary)]">
           <Users size={12} weight="bold" />
-          <span className="font-semibold text-[#3E2723]">{table.capacity}p</span>
+          <span className="font-semibold text-[var(--text-primary)]">{table.capacity}p</span>
         </div>
 
         {/* Mini-timeline bar */}
@@ -532,19 +532,19 @@ function HostTableCard({
 
         {/* Current/upcoming customer info */}
         {(table.is_occupied || table.reservations?.some(r => r.is_upcoming)) && table.current_customer_name && (
-          <p className="text-xs text-[#3E2723] font-medium truncate mt-1">
+          <p className="text-xs text-[var(--text-primary)] font-medium truncate mt-1">
             {table.current_customer_name}
           </p>
         )}
         {(table.is_occupied || table.reservations?.some(r => r.is_upcoming)) && table.current_time && (
-          <p className="text-[10px] text-[#8D6E63] mt-0.5">
+          <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
             {formatTime12(table.current_time)}
           </p>
         )}
 
         {/* Next reservation preview — show when no current/upcoming customer name displayed and there's an upcoming reservation */}
         {!table.current_customer_name && nextRes && (
-          <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[#8D6E63]">
+          <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[var(--text-secondary)]">
             <Clock size={10} weight="bold" />
             <span className="truncate">
               {formatTime12(nextRes.time_start)} – {nextRes.customer_name || 'Sin nombre'} ({nextRes.party_size}p)
@@ -569,7 +569,7 @@ function HostTableCard({
           exit={{ opacity: 0, translateY: 40, transform: 'translateY(40px)' }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className={cn(
-            'fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl overflow-y-auto',
+            'fixed inset-x-0 bottom-0 z-50 bg-[var(--bg-card)] rounded-t-2xl shadow-2xl overflow-y-auto',
             'max-h-[80vh]',
             (reservationsList.length > 0) ? 'p-5' : 'p-4'
           )}
@@ -577,13 +577,13 @@ function HostTableCard({
         >
           {/* Drag handle */}
           <div className="flex justify-center mb-3">
-            <div className="w-10 h-1 rounded-full bg-[#D7CCC8]" />
+            <div className="w-10 h-1 rounded-full bg-[var(--border-default)]" />
           </div>
 
           {/* Dismiss */}
           <button
             onClick={(e) => { e.stopPropagation(); onClick(); suggestion.clear() }}
-            className="absolute top-3 right-4 text-[#8D6E63] hover:text-[#3E2723] transition-colors z-10 p-1"
+            className="absolute top-3 right-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors z-10 p-1"
           >
             <X size={16} />
           </button>
@@ -601,21 +601,21 @@ function HostTableCard({
           ) : (table.is_occupied || table.reservations?.some(r => r.is_upcoming)) && table.current_reservation_id ? (
             /* ═══ OCCUPIED (backward compat — old API data without reservations[]) ═══ */
             <div>
-              <p className="text-sm font-medium text-[#3E2723] mb-1">
+              <p className="text-sm font-medium text-[var(--text-primary)] mb-1">
                 {table.current_customer_name || 'Ocupada'}
               </p>
-              <p className="text-xs text-[#8D6E63] mb-1">
+              <p className="text-xs text-[var(--text-secondary)] mb-1">
                 {table.current_party_size}p
                 {table.current_time ? ` · ${formatTime12(table.current_time)}` : ''}
               </p>
               {table.reservation_status && (
-                <p className="text-[10px] uppercase tracking-wider text-[#8D6E63] mb-3">
+                <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] mb-3">
                   {table.reservation_status === 'seated' ? 'Sentados' : table.reservation_status}
                 </p>
               )}
               <button
                 onClick={(e) => { e.stopPropagation(); onUnassign(table.current_reservation_id!) }}
-                className="w-full py-2 text-sm font-medium rounded-lg bg-[#6B2737] text-white hover:bg-[#5C2230] active:scale-[0.97] transition-all"
+                className="w-full py-2 text-sm font-medium rounded-lg bg-[var(--color-ak-borgona)] text-white hover:bg-[var(--color-ak-borgona)] active:scale-[0.97] transition-all"
                 style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
               >
                 Liberar mesa
@@ -673,33 +673,33 @@ function TimelinePopover({
       {/* Popover header */}
       <div className="flex items-center justify-between mb-3 pr-6">
         <div className="flex items-center gap-2">
-          <Armchair size={16} className="text-[#6B2737]" />
-          <span className="font-bold text-base text-[#3E2723] font-['Playfair_Display']">
+          <Armchair size={16} className="text-[var(--color-ak-borgona)]" />
+          <span className="font-bold text-base text-[var(--text-primary)] font-['Playfair_Display']">
             {table.name_attick || `Mesa ${table.number}`}
           </span>
           {table.zone_name && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[#6B2737]/10 text-[#6B2737] font-medium">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)] font-medium">
               {table.zone_name}
             </span>
           )}
         </div>
-        <span className="text-sm text-[#8D6E63] font-medium">{table.capacity}p</span>
+        <span className="text-sm text-[var(--text-secondary)] font-medium">{table.capacity}p</span>
       </div>
 
       {/* Current reservation */}
       {currentRes && (
         <div>
-          <h4 className="text-[10px] font-semibold text-[#6B2737] uppercase tracking-wider mb-1.5 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#6B2737]" />
+          <h4 className="text-[10px] font-semibold text-[var(--color-ak-borgona)] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-ak-borgona)]" />
             AHORA
           </h4>
-          <div className="bg-[#6B2737]/5 rounded-lg border border-[#6B2737]/20 p-3 space-y-2">
+          <div className="bg-[var(--color-ak-borgona)]/5 rounded-lg border border-[var(--color-ak-borgona)]/20 p-3 space-y-2">
             <ReservationDetail reservation={currentRes} />
             <div className="flex gap-1.5 pt-1">
               {currentRes.status === 'seated' && onStatusChange && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onStatusChange(currentRes.id, 'completed') }}
-                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[#6B2737] text-white hover:bg-[#5C2230] active:scale-[0.97] transition-all"
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[var(--color-ak-borgona)] text-white hover:bg-[var(--color-ak-borgona)] active:scale-[0.97] transition-all"
                 >
                   Liberar mesa
                 </button>
@@ -707,7 +707,7 @@ function TimelinePopover({
               {currentRes.status === 'confirmed' && onStatusChange && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onStatusChange(currentRes.id, 'seated') }}
-                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[#5C7A4D] text-white hover:bg-[#4A6640] active:scale-[0.97] transition-all"
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[var(--color-ak-oliva)] text-white hover:bg-[var(--color-ak-oliva)] active:scale-[0.97] transition-all"
                 >
                   Sentar
                 </button>
@@ -715,7 +715,7 @@ function TimelinePopover({
               {onReassign && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onReassign(currentRes, tableInfo) }}
-                  className="py-2.5 px-3 text-xs font-medium rounded-xl border border-[#D7CCC8] text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97] transition-all"
+                  className="py-2.5 px-3 text-xs font-medium rounded-xl border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-all"
                 >
                   <ArrowsLeftRight size={12} />
                 </button>
@@ -728,26 +728,26 @@ function TimelinePopover({
       {/* Next reservation */}
       {nextRes && !nextRes.is_current && (
         <div>
-          <h4 className="text-[11px] font-semibold text-[#D4922A] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-            <Clock size={11} weight="fill" className="text-[#D4922A]" />
+          <h4 className="text-[11px] font-semibold text-[var(--color-ak-ambar)] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+            <Clock size={11} weight="fill" className="text-[var(--color-ak-ambar)]" />
             PRÓXIMA
             {currentTime && (() => {
               const diff = timeToMinutes(nextRes.time_start) - timeToMinutes(currentTime)
               if (diff > 0 && diff <= 60) return (
-                <span className="text-[10px] font-bold text-[#E65100] bg-[#E65100]/10 px-1.5 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold text-[var(--color-warning)] bg-[var(--color-warning)]/10 px-1.5 py-0.5 rounded-full">
                   {diff} min
                 </span>
               )
               return null
             })()}
           </h4>
-          <div className="bg-[#D4922A]/5 rounded-lg border border-[#D4922A]/20 p-3 space-y-2">
+          <div className="bg-[var(--color-ak-ambar)]/5 rounded-lg border border-[var(--color-ak-ambar)]/20 p-3 space-y-2">
             <ReservationDetail reservation={nextRes} />
             <div className="flex gap-1.5 pt-1">
               {nextRes.status === 'confirmed' && onStatusChange && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onStatusChange(nextRes.id, 'seated') }}
-                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[#5C7A4D] text-white hover:bg-[#4A6640] active:scale-[0.97] transition-all"
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[var(--color-ak-oliva)] text-white hover:bg-[var(--color-ak-oliva)] active:scale-[0.97] transition-all"
                 >
                   Sentar
                 </button>
@@ -755,7 +755,7 @@ function TimelinePopover({
               {onReassign && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onReassign(nextRes, tableInfo) }}
-                  className="py-2.5 px-3 text-xs font-medium rounded-xl border border-[#D7CCC8] text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97] transition-all"
+                  className="py-2.5 px-3 text-xs font-medium rounded-xl border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-all"
                 >
                   <ArrowsLeftRight size={12} />
                 </button>
@@ -768,18 +768,18 @@ function TimelinePopover({
       {/* Later reservations */}
       {laterRes.length > 0 && (
         <div>
-          <h4 className="text-[10px] font-semibold text-[#8D6E63] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+          <h4 className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5 flex items-center gap-1">
             <Clock size={10} />
             MÁS TARDE
           </h4>
           <div className="space-y-2">
             {laterRes.map(r => (
-              <div key={r.id} className="bg-[#F5EDE0] rounded-lg border border-[#D7CCC8]/50 p-2.5 space-y-1">
+              <div key={r.id} className="bg-[var(--bg-primary)] rounded-lg border border-[var(--border-default)]/50 p-2.5 space-y-1">
                 <ReservationDetail reservation={r} />
                 {onReassign && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onReassign(r, tableInfo) }}
-                    className="w-full py-1 text-xs font-medium rounded-lg border border-[#D7CCC8] text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97] transition-all mt-1"
+                    className="w-full py-1 text-xs font-medium rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-all mt-1"
                   >
                     <span className="flex items-center justify-center gap-1">
                       <ArrowsLeftRight size={10} />
@@ -795,7 +795,7 @@ function TimelinePopover({
 
       {/* No reservations message */}
       {sorted.length === 0 && (
-        <p className="text-xs text-[#8D6E63] py-2 text-center">
+        <p className="text-xs text-[var(--text-secondary)] py-2 text-center">
           {reservations.some(r => r.is_past) ? 'Todas las reservas de esta mesa han finalizado' : 'Sin reservas'}
         </p>
       )}
@@ -826,43 +826,43 @@ function AssignmentPopover({
 }) {
   return (
     <div>
-      <p className="text-sm font-medium text-[#3E2723] mb-2">
+      <p className="text-sm font-medium text-[var(--text-primary)] mb-2">
         Asignar reserva
         {tableId ? ` (Mesa)` : ''}
       </p>
       {unassignedReservations.length === 0 ? (
-        <p className="text-xs text-[#8D6E63]">Sin reservas pendientes</p>
+        <p className="text-xs text-[var(--text-secondary)]">Sin reservas pendientes</p>
       ) : selectedReservationId ? (
         <div className="space-y-3">
           {suggestion.loading && (
-            <div className="flex items-center gap-2 text-xs text-[#8D6E63] py-2">
-              <Sparkle size={14} className="animate-pulse text-[#D4922A]" />
+            <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)] py-2">
+              <Sparkle size={14} className="animate-pulse text-[var(--color-ak-ambar)]" />
               Calculando mejor mesa...
             </div>
           )}
           {suggestion.error && (
-            <p className="text-xs text-red-600">{suggestion.error}</p>
+            <p className="text-xs text-[var(--color-danger)]">{suggestion.error}</p>
           )}
           {suggestion.result && !suggestion.loading && (
             <>
               {suggestion.result.suggested_table_id && (
-                <div className="rounded-lg border-2 border-[#D4922A]/40 bg-[#D4922A]/5 p-3">
+                <div className="rounded-lg border-2 border-[var(--color-ak-ambar)]/40 bg-[var(--color-ak-ambar)]/5 p-3">
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <Lightbulb size={14} weight="fill" className="text-[#D4922A]" />
-                    <span className="text-xs font-semibold text-[#D4922A] uppercase tracking-wider">Sugerencia</span>
+                    <Lightbulb size={14} weight="fill" className="text-[var(--color-ak-ambar)]" />
+                    <span className="text-xs font-semibold text-[var(--color-ak-ambar)] uppercase tracking-wider">Sugerencia</span>
                   </div>
-                  <p className="text-sm font-bold text-[#3E2723] mb-1">
+                  <p className="text-sm font-bold text-[var(--text-primary)] mb-1">
                     {suggestion.result.alternatives[0]?.table_numbers.join(' + ')}
-                    <span className="font-normal text-[#8D6E63] ml-1.5">
+                    <span className="font-normal text-[var(--text-secondary)] ml-1.5">
                       {suggestion.result.alternatives[0]?.zone_name}
                     </span>
                   </p>
-                  <p className="text-[11px] text-[#8D6E63] mb-2">{suggestion.result.reason}</p>
+                  <p className="text-[11px] text-[var(--text-secondary)] mb-2">{suggestion.result.reason}</p>
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-[#D7CCC8] overflow-hidden">
-                      <div className="h-full rounded-full bg-[#D4922A]" style={{ width: `${Math.min(suggestion.result.score, 100)}%` }} />
+                    <div className="flex-1 h-1.5 rounded-full bg-[var(--border-default)] overflow-hidden">
+                      <div className="h-full rounded-full bg-[var(--color-ak-ambar)]" style={{ width: `${Math.min(suggestion.result.score, 100)}%` }} />
                     </div>
-                    <span className="text-[10px] font-medium text-[#8D6E63]">{Math.round(suggestion.result.score)}%</span>
+                    <span className="text-[10px] font-medium text-[var(--text-secondary)]">{Math.round(suggestion.result.score)}%</span>
                   </div>
                   <button
                     onClick={(e) => {
@@ -877,8 +877,8 @@ function AssignmentPopover({
                     className={cn(
                       'w-full py-2 text-sm font-semibold rounded-lg text-white active:scale-[0.97] disabled:opacity-50',
                       tableId === suggestion.result!.suggested_table_id
-                        ? 'bg-[#6B2737] hover:bg-[#5C2230]'
-                        : 'bg-[#D4922A] hover:bg-[#D4922A]/90'
+                        ? 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]'
+                        : 'bg-[var(--color-ak-ambar)] hover:bg-[var(--color-ak-ambar)]/90'
                     )}
                   >
                     {tableId === suggestion.result!.suggested_table_id
@@ -888,13 +888,13 @@ function AssignmentPopover({
                 </div>
               )}
               {!suggestion.result.suggested_table_id && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-                  <p className="text-xs text-red-700">{suggestion.result.reason}</p>
+                <div className="rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 p-3">
+                  <p className="text-xs text-[var(--color-danger)]">{suggestion.result.reason}</p>
                 </div>
               )}
               {suggestion.result.alternatives.length > 1 && (
                 <div>
-                  <p className="text-[10px] font-medium text-[#8D6E63] uppercase tracking-wider mb-1.5">Alternativas</p>
+                  <p className="text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Alternativas</p>
                   <div className="space-y-1 max-h-32 overflow-y-auto">
                     {suggestion.result.alternatives.slice(1, 4).map((alt, i) => (
                       <button
@@ -903,10 +903,10 @@ function AssignmentPopover({
                           e.stopPropagation()
                           onAssign(selectedReservationId, alt.table_id, suggestion.result!.suggested_table_id)
                         }}
-                        className="w-full flex items-center gap-2 text-left p-2 rounded-lg bg-[#F5EDE0] hover:bg-[#D7CCC8]/50 text-xs transition-colors active:scale-[0.97]"
+                        className="w-full flex items-center gap-2 text-left p-2 rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--border-default)]/50 text-xs transition-colors active:scale-[0.97]"
                       >
-                        <span className="font-medium text-[#3E2723]">{alt.table_numbers.join(' + ')}</span>
-                        <span className="text-[#8D6E63]">{alt.zone_name} · {Math.round(alt.score)}%</span>
+                        <span className="font-medium text-[var(--text-primary)]">{alt.table_numbers.join(' + ')}</span>
+                        <span className="text-[var(--text-secondary)]">{alt.zone_name} · {Math.round(alt.score)}%</span>
                       </button>
                     ))}
                   </div>
@@ -914,7 +914,7 @@ function AssignmentPopover({
               )}
               <button
                 onClick={(e) => { e.stopPropagation(); suggestionClear() }}
-                className="w-full text-xs text-[#8D6E63] hover:text-[#3E2723] py-1 transition-colors"
+                className="w-full text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-1 transition-colors"
               >
                 ← Ver todas las reservas
               </button>
@@ -927,14 +927,14 @@ function AssignmentPopover({
             <button
               key={r.id}
               onClick={(e) => { e.stopPropagation(); onSelectReservation(r.id) }}
-              className="w-full text-left p-2 rounded-lg bg-[#F5EDE0] hover:bg-[#D7CCC8]/50 text-xs transition-colors active:scale-[0.97]"
+              className="w-full text-left p-2 rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--border-default)]/50 text-xs transition-colors active:scale-[0.97]"
             >
               <div className="flex items-center gap-2">
-                <Sparkle size={12} className="text-[#D4922A] shrink-0" />
-                <span className="font-medium text-[#3E2723] truncate">{r.customers?.full_name || 'Sin nombre'}</span>
-                <span className="text-[#8D6E63] ml-auto shrink-0">{r.party_size}p · {r.time_start?.slice(0, 5)}</span>
+                <Sparkle size={12} className="text-[var(--color-ak-ambar)] shrink-0" />
+                <span className="font-medium text-[var(--text-primary)] truncate">{r.customers?.full_name || 'Sin nombre'}</span>
+                <span className="text-[var(--text-secondary)] ml-auto shrink-0">{r.party_size}p · {r.time_start?.slice(0, 5)}</span>
               </div>
-              <p className="text-[10px] text-[#8D6E63] mt-0.5 ml-5">Toca para ver sugerencia</p>
+              <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 ml-5">Toca para ver sugerencia</p>
             </button>
           ))}
         </div>

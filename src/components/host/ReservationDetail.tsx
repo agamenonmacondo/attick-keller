@@ -19,13 +19,13 @@ const STATUS_CONFIG: Record<
   ReservationTimeline['status'],
   { label: string; dotClass: string; bgClass: string }
 > = {
-  confirmed: { label: 'Confirmada', dotClass: 'bg-[#D4922A]', bgClass: 'bg-[#D4922A]/5' },
-  pre_paid: { label: 'Confirmada', dotClass: 'bg-[#D4922A]', bgClass: 'bg-[#D4922A]/5' },
-  seated: { label: 'Sentados', dotClass: 'bg-[#6B2737]', bgClass: 'bg-[#6B2737]/5' },
-  pending: { label: 'Pendiente', dotClass: 'bg-[#D4922A]', bgClass: 'bg-[#D4922A]/5' },
-  no_show: { label: 'No asistió', dotClass: 'bg-red-600', bgClass: 'bg-red-50' },
-  cancelled: { label: 'Cancelada', dotClass: 'bg-gray-400', bgClass: 'bg-gray-50' },
-  completed: { label: 'Completado', dotClass: 'bg-gray-400', bgClass: 'bg-gray-50' },
+  confirmed: { label: 'Confirmada', dotClass: 'bg-[var(--color-ak-ambar)]', bgClass: 'bg-[var(--color-ak-ambar)]/5' },
+  pre_paid: { label: 'Confirmada', dotClass: 'bg-[var(--color-ak-ambar)]', bgClass: 'bg-[var(--color-ak-ambar)]/5' },
+  seated: { label: 'Sentados', dotClass: 'bg-[var(--color-ak-borgona)]', bgClass: 'bg-[var(--color-ak-borgona)]/5' },
+  pending: { label: 'Pendiente', dotClass: 'bg-[var(--color-ak-ambar)]', bgClass: 'bg-[var(--color-ak-ambar)]/5' },
+  no_show: { label: 'No asistió', dotClass: 'bg-[var(--color-danger)]', bgClass: 'bg-[var(--color-danger)]/10' },
+  cancelled: { label: 'Cancelada', dotClass: 'bg-[var(--text-muted)]', bgClass: 'bg-[var(--bg-primary)]' },
+  completed: { label: 'Completado', dotClass: 'bg-[var(--text-muted)]', bgClass: 'bg-[var(--bg-primary)]' },
 }
 
 function getWhatsAppUrl(phone: string): string {
@@ -58,24 +58,24 @@ export function ReservationDetail({ reservation, compact = false }: ReservationD
       >
         <div className="flex items-center gap-1.5 min-w-0">
           {reservation.is_current && (
-            <span className="w-2 h-2 rounded-full bg-[#6B2737] shrink-0" />
+            <span className="w-2 h-2 rounded-full bg-[var(--color-ak-borgona)] shrink-0" />
           )}
           {reservation.is_upcoming && !reservation.is_current && (
-            <Clock size={12} className="text-[#D4922A] shrink-0" />
+            <Clock size={12} className="text-[var(--color-ak-ambar)] shrink-0" />
           )}
-          <span className="font-medium text-[#3E2723] break-words">
+          <span className="font-medium text-[var(--text-primary)] break-words">
             {reservation.customer_name || 'Sin nombre'}
           </span>
-          <span className="text-[#8D6E63] shrink-0">
+          <span className="text-[var(--text-secondary)] shrink-0">
             {reservation.party_size}p
           </span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-[11px] font-medium text-[#8D6E63]">
+          <span className="text-[11px] font-medium text-[var(--text-secondary)]">
             {formatTime12(reservation.time_start)} – {formatTime12(reservation.time_end)}
           </span>
           {hasDetails && (
-            expanded ? <CaretUp size={12} className="text-[#8D6E63]" /> : <CaretDown size={12} className="text-[#8D6E63]" />
+            expanded ? <CaretUp size={12} className="text-[var(--text-secondary)]" /> : <CaretDown size={12} className="text-[var(--text-secondary)]" />
           )}
         </div>
       </button>
@@ -83,7 +83,7 @@ export function ReservationDetail({ reservation, compact = false }: ReservationD
       {/* Status row */}
       <div className="flex items-center gap-1.5 mt-0.5">
         <span className={cn('w-1.5 h-1.5 rounded-full', config.dotClass)} />
-        <span className="text-[10px] uppercase tracking-wider text-[#8D6E63]">{config.label}</span>
+        <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)]">{config.label}</span>
       </div>
 
       {/* Expanded details */}
@@ -96,13 +96,13 @@ export function ReservationDetail({ reservation, compact = false }: ReservationD
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="mt-1.5 space-y-1 pl-1 border-l-2 border-[#D7CCC8] ml-0.5">
+            <div className="mt-1.5 space-y-1 pl-1 border-l-2 border-[var(--border-default)] ml-0.5">
               {reservation.customer_phone && (
                 <a
                   href={getWhatsAppUrl(reservation.customer_phone)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs text-[#25D366] hover:text-[#128C7E] transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-[var(--color-success)] hover:text-[var(--color-success)] transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <WhatsappLogo size={12} weight="fill" />
@@ -112,7 +112,7 @@ export function ReservationDetail({ reservation, compact = false }: ReservationD
               {reservation.customer_email && (
                 <a
                   href={`mailto:${reservation.customer_email}`}
-                  className="flex items-center gap-1.5 text-xs text-[#1565C0] hover:text-[#0D47A1] transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <EnvelopeSimple size={12} />
@@ -121,9 +121,9 @@ export function ReservationDetail({ reservation, compact = false }: ReservationD
               )}
               {reservation.special_requests && (
                 <div
-                  className="flex items-start gap-1.5 text-xs text-[#5D4037] bg-[#F5EDE0] rounded-md px-2 py-1"
+                  className="flex items-start gap-1.5 text-xs text-[var(--text-primary)] bg-[var(--bg-primary)] rounded-md px-2 py-1"
                 >
-                  <Note size={12} className="mt-0.5 shrink-0 text-[#D4922A]" />
+                  <Note size={12} className="mt-0.5 shrink-0 text-[var(--color-ak-ambar)]" />
                   <span>{reservation.special_requests}</span>
                 </div>
               )}

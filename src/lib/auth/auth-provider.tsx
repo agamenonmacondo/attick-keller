@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean
   isAdmin: boolean
   isHost: boolean
+  isEmployee: boolean
   adminRole: string | null
   roleLoading: boolean
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>
@@ -25,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isHost, setIsHost] = useState(false)
+  const [isEmployee, setIsEmployee] = useState(false)
   const [adminRole, setAdminRole] = useState<string | null>(null)
   const [roleLoading, setRoleLoading] = useState(true)
 
@@ -41,17 +43,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await res.json()
         const admin = data.role === 'store_admin' || data.role === 'super_admin'
         const host = data.role === 'host'
+        const employee = data.role === 'lider_area' || data.role === 'colaborador' || data.role === 'reservante'
         setIsAdmin(admin)
         setIsHost(host)
+        setIsEmployee(employee)
         setAdminRole(data.role)
       } else {
         setIsAdmin(false)
         setIsHost(false)
+        setIsEmployee(false)
         setAdminRole(null)
       }
     } catch {
       setIsAdmin(false)
       setIsHost(false)
+      setIsEmployee(false)
       setAdminRole(null)
     } finally {
       setRoleLoading(false)
@@ -61,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearRole = useCallback(() => {
     setIsAdmin(false)
     setIsHost(false)
+    setIsEmployee(false)
     setAdminRole(null)
     setRoleLoading(false)
   }, [])
@@ -157,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, isHost, adminRole, roleLoading, signInWithEmail, signUpWithEmail, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, isHost, isEmployee, adminRole, roleLoading, signInWithEmail, signUpWithEmail, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   )

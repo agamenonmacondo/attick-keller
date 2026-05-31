@@ -23,14 +23,14 @@ export function DailyTrendChart({ trend }: DailyTrendChartProps) {
 
           return (
             <div key={date} className="flex-1 flex flex-col items-center gap-0.5 group relative">
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#3E2723] text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10"
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[var(--color-ak-madera)] text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10"
                 style={{ transition: 'opacity 150ms ease-out' }}>
                 {total} reservas ({confirmed} conf.)
               </div>
               <div className="w-full flex flex-col justify-end" style={{ height: 100 }}>
                 <div className="w-full rounded-t" style={{
                   height: `${heightPct}%`,
-                  backgroundColor: isToday ? '#C9A94E' : '#6B2737',
+                  backgroundColor: isToday ? 'var(--color-ak-dorado)' : 'var(--color-ak-borgona)',
                   transition: 'height 500ms cubic-bezier(0.23, 1, 0.32, 1)',
                   minHeight: total > 0 ? 4 : 0,
                   position: 'relative',
@@ -38,15 +38,15 @@ export function DailyTrendChart({ trend }: DailyTrendChartProps) {
                   {total > 0 && <div className="absolute bottom-0 left-0 right-0 rounded-b" style={{ height: `${confirmedPct}%`, backgroundColor: isToday ? 'rgba(92, 122, 77, 0.5)' : 'rgba(92, 122, 77, 0.3)' }} />}
                 </div>
               </div>
-              <span className={isToday ? 'text-[10px] font-bold text-[#C9A94E]' : 'text-[9px] text-[#8D6E63]'}>{dayLabel}</span>
+              <span className={isToday ? 'text-[10px] font-bold text-[var(--color-ak-dorado)]' : 'text-[9px] text-[var(--text-secondary)]'}>{dayLabel}</span>
             </div>
           )
         })}
       </div>
       <div className="flex items-center gap-4 mt-3">
-        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-[#6B2737]" /><span className="text-[10px] text-[#8D6E63]">Total</span></div>
-        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-[#5C7A4D]/30" /><span className="text-[10px] text-[#8D6E63]">Confirmadas</span></div>
-        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-[#C9A94E]" /><span className="text-[10px] text-[#8D6E63]">Hoy</span></div>
+        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-borgona)]" /><span className="text-[10px] text-[var(--text-secondary)]">Total</span></div>
+        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-oliva)]/30" /><span className="text-[10px] text-[var(--text-secondary)]">Confirmadas</span></div>
+        <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-dorado)]" /><span className="text-[10px] text-[var(--text-secondary)]">Hoy</span></div>
       </div>
     </div>
   )

@@ -1,12 +1,14 @@
 'use client'
 
 import { useAuth } from '@/lib/auth/auth-provider'
+import { useTheme } from '@/lib/ThemeProvider'
 import Link from 'next/link'
-import { SignOut, Clock } from '@phosphor-icons/react'
+import { SignOut, Clock, Sun, Moon } from '@phosphor-icons/react'
 import { useState, useEffect } from 'react'
 
 export function HostHeader() {
   const { signOut, isAdmin } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const [time, setTime] = useState(new Date())
 
   useEffect(() => {
@@ -17,32 +19,41 @@ export function HostHeader() {
   const timeStr = time.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <header className="bg-[#3E2723] text-[#F5EDE0] px-4 md:px-6 py-3">
-      <div className="max-w-[1600px] mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="font-['Playfair_Display'] text-lg md:text-xl font-bold">Attick & Keller</h1>
-          <span className="hidden sm:inline-block px-2.5 py-1 text-xs font-medium bg-[#5C7A4D]/30 text-[#8FBF6A] rounded-full border border-[#5C7A4D]/40">
+    <header className="sticky top-0 z-20 bg-[var(--color-ak-madera)]/95 backdrop-blur-sm border-b border-[var(--border-default)]">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="font-['Playfair_Display'] text-xl font-bold text-[var(--color-ak-dorado)]">Attick & Keller</h1>
+          <span className="text-[10px] text-[var(--text-primary)] bg-[var(--color-ak-madera)]/60 px-2 py-0.5 rounded font-medium uppercase tracking-wider">
             Host
           </span>
           {isAdmin && (
             <Link
               href="/admin"
-              className="hidden sm:inline text-xs text-[#8D6E63] hover:text-white transition-colors duration-200"
+              className="hidden sm:inline text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"
             >
               Panel
             </Link>
           )}
         </div>
-        <div className="flex items-center gap-4 md:gap-6">
-          <div className="flex items-center gap-2 text-[#D7CCC8]">
-            <Clock size={18} />
-            <span className="font-mono text-base md:text-lg font-bold text-[#F5EDE0]">{timeStr}</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--color-ak-dorado)] hover:bg-[var(--bg-hover)] transition-all duration-200 active:scale-[0.95]"
+            aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+          >
+            {theme === 'dark' ? <Sun size={18} weight="duotone" /> : <Moon size={18} weight="duotone" />}
+          </button>
+          <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+            <Clock size={16} />
+            <span className="font-mono text-sm font-bold text-[var(--color-ak-dorado)]">{timeStr}</span>
           </div>
           <button
             onClick={signOut}
-            className="flex items-center gap-1.5 text-sm text-[#D7CCC8] hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors active:scale-[0.97]"
+            style={{ transition: 'transform 160ms ease-out, color 200ms ease-out' }}
           >
-            <SignOut size={18} />
+            <SignOut size={16} />
             <span className="hidden sm:inline">Salir</span>
           </button>
         </div>

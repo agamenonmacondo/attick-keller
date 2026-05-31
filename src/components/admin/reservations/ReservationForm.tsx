@@ -150,16 +150,16 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-[#F5EDE0] border border-[#D7CCC8] shadow-xl"
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-default)] shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#D7CCC8] px-5 py-4">
-          <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[#3E2723]">Nueva Reserva</h2>
+        <div className="flex items-center justify-between border-b border-[var(--border-default)] px-5 py-4">
+          <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">Nueva Reserva</h2>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8D6E63] hover:bg-[#D7CCC8]/50 active:scale-[0.97]"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
             style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
           >
             <X size={18} />
@@ -168,58 +168,58 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
 
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-5">
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
+            <div className="rounded-lg bg-[var(--color-danger)]/10 border border-red-200 px-3 py-2 text-sm text-[var(--color-danger)]">
               {error}
             </div>
           )}
 
           {/* Customer selection */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[#3E2723]">Cliente</label>
+            <label className="mb-1.5 block text-sm font-medium text-[var(--text-primary)]">Cliente</label>
 
             {selectedCustomer ? (
-              <div className="flex items-center justify-between rounded-lg border border-[#6B2737]/30 bg-[#6B2737]/5 px-3 py-2">
+              <div className="flex items-center justify-between rounded-lg border border-[var(--color-ak-borgona)]/30 bg-[var(--color-ak-borgona)]/5 px-3 py-2">
                 <div>
-                  <p className="text-sm font-medium text-[#3E2723]">{selectedCustomer.full_name || 'Sin nombre'}</p>
-                  <p className="text-xs text-[#8D6E63]">{selectedCustomer.phone || selectedCustomer.email}</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{selectedCustomer.full_name || 'Sin nombre'}</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{selectedCustomer.phone || selectedCustomer.email}</p>
                 </div>
-                <button type="button" onClick={() => { setCustomerId('') }} className="text-xs text-[#6B2737] hover:underline">Cambiar</button>
+                <button type="button" onClick={() => { setCustomerId('') }} className="text-xs text-[var(--color-ak-borgona)] hover:underline">Cambiar</button>
               </div>
             ) : (
               <>
                 <div className="flex gap-2">
                   <div className="flex-1 relative">
-                    <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" />
+                    <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
                     <input
                       type="text"
                       value={customerSearch}
                       onChange={(e) => setCustomerSearch(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && searchCustomers()}
                       placeholder="Buscar por nombre o telefono..."
-                      className="w-full rounded-lg border border-[#D7CCC8] bg-white py-2 pl-9 pr-3 text-sm text-[#3E2723] placeholder:text-[#BCAAA4] focus:border-[#6B2737] focus:outline-none"
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] py-2 pl-9 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={searchCustomers}
                     disabled={searching}
-                    className="rounded-lg bg-[#6B2737] px-4 py-2 text-sm font-medium text-white hover:bg-[#6B2737]/90 disabled:opacity-50"
+                    className="rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 disabled:opacity-50"
                   >
                     {searching ? <Spinner size={16} className="animate-spin" /> : 'Buscar'}
                   </button>
                 </div>
 
                 {customerResults.length > 0 && (
-                  <div className="mt-2 max-h-32 overflow-y-auto rounded-lg border border-[#D7CCC8] bg-white">
+                  <div className="mt-2 max-h-32 overflow-y-auto rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)]">
                     {customerResults.map(c => (
                       <button
                         key={c.id}
                         type="button"
                         onClick={() => { setCustomerId(c.id); setCustomerResults([]); }}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-[#EFEBE9] border-b border-[#D7CCC8]/50 last:border-0"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--bg-input)] border-b border-[var(--border-default)]/50 last:border-0"
                       >
-                        <span className="font-medium text-[#3E2723]">{c.full_name || 'Sin nombre'}</span>
-                        <span className="ml-2 text-xs text-[#8D6E63]">{c.phone || c.email}</span>
+                        <span className="font-medium text-[var(--text-primary)]">{c.full_name || 'Sin nombre'}</span>
+                        <span className="ml-2 text-xs text-[var(--text-secondary)]">{c.phone || c.email}</span>
                       </button>
                     ))}
                   </div>
@@ -228,34 +228,34 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
                 <button
                   type="button"
                   onClick={() => setShowNewCustomer(!showNewCustomer)}
-                  className="mt-2 flex items-center gap-1 text-xs text-[#6B2737] hover:underline"
+                  className="mt-2 flex items-center gap-1 text-xs text-[var(--color-ak-borgona)] hover:underline"
                 >
                   <Plus size={14} />
                   Crear nuevo cliente
                 </button>
 
                 {showNewCustomer && (
-                  <div className="mt-2 space-y-2 rounded-lg border border-[#D7CCC8] bg-white p-3">
+                  <div className="mt-2 space-y-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-3">
                     <input
                       type="text"
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
                       placeholder="Nombre completo"
-                      className="w-full rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                     />
                     <input
                       type="tel"
                       value={newPhone}
                       onChange={(e) => setNewPhone(e.target.value)}
                       placeholder="Telefono *"
-                      className="w-full rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                     />
                     <input
                       type="email"
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
                       placeholder="Email (opcional)"
-                      className="w-full rounded-lg border border-[#D7CCC8] bg-[#EFEBE9] px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                     />
                   </div>
                 )}
@@ -266,20 +266,20 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
           {/* Date & Time */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#3E2723]">Fecha</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--text-primary)]">Fecha</label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#3E2723]">Desde</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--text-primary)]">Desde</label>
               <select
                 value={timeStart}
                 onChange={(e) => setTimeStart(e.target.value)}
-                className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               >
                 {SERVICE_HOURS.map(h => (
                   <option key={h} value={h}>{formatTime(h)}</option>
@@ -287,11 +287,11 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#3E2723]">Hasta</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--text-primary)]">Hasta</label>
               <select
                 value={timeEnd}
                 onChange={(e) => setTimeEnd(e.target.value)}
-                className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               >
                 {SERVICE_HOURS.map(h => (
                   <option key={h} value={h}>{formatTime(h)}</option>
@@ -303,22 +303,22 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
           {/* Party size & Zone */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#3E2723]">Invitados</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--text-primary)]">Invitados</label>
               <input
                 type="number"
                 min={1}
                 max={20}
                 value={partySize}
                 onChange={(e) => setPartySize(parseInt(e.target.value) || 1)}
-                className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#3E2723]">Zona</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--text-primary)]">Zona</label>
               <select
                 value={zoneId}
                 onChange={(e) => setZoneId(e.target.value)}
-                className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               >
                 <option value="">Sin preferencia</option>
                 {zones.map(z => (
@@ -330,11 +330,11 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
 
           {/* Source */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[#3E2723]">Origen</label>
+            <label className="mb-1.5 block text-sm font-medium text-[var(--text-primary)]">Origen</label>
             <select
               value={source}
               onChange={(e) => setSource(e.target.value)}
-              className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
             >
               <option value="phone">Telefono</option>
               <option value="web">Web</option>
@@ -346,12 +346,12 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
 
           {/* Special requests */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[#3E2723]">Peticiones especiales</label>
+            <label className="mb-1.5 block text-sm font-medium text-[var(--text-primary)]">Peticiones especiales</label>
             <textarea
               value={specialRequests}
               onChange={(e) => setSpecialRequests(e.target.value)}
               rows={2}
-              className="w-full rounded-lg border border-[#D7CCC8] bg-white px-3 py-2 text-sm text-[#3E2723] focus:border-[#6B2737] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
               placeholder="Cumpleanos, alergias, etc."
             />
           </div>
@@ -361,7 +361,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 rounded-lg bg-[#6B2737] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#6B2737]/90 active:scale-[0.97] disabled:opacity-50"
+              className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] disabled:opacity-50"
               style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
             >
               {submitting ? 'Creando...' : 'Crear Reserva'}
@@ -369,7 +369,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[#D7CCC8] px-4 py-2.5 text-sm font-medium text-[#3E2723] hover:bg-[#EFEBE9] active:scale-[0.97]"
+              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
               style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
             >
               Cancelar

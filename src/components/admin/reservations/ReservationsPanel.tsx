@@ -97,7 +97,7 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Spinner size={32} className="animate-spin text-[#8D6E63]" />
+        <Spinner size={32} className="animate-spin text-[var(--text-secondary)]" />
       </div>
     )
   }
@@ -114,7 +114,7 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
         <button
           type="button"
           onClick={() => setShowNewForm(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-[#6B2737] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#6B2737]/90 active:scale-[0.97]"
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         >
           <Plus size={16} weight="bold" />

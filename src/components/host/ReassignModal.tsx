@@ -160,19 +160,19 @@ export function ReassignModal({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
-        className="bg-[#F5EDE0] rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        className="bg-[var(--bg-primary)] rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-[#F5EDE0] border-b border-[#D7CCC8] px-6 py-4 rounded-t-2xl">
+        <div className="sticky top-0 bg-[var(--bg-primary)] border-b border-[var(--border-default)] px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ArrowsLeftRight size={18} className="text-[#6B2737]" />
-              <h2 className="font-['Playfair_Display'] text-lg font-bold text-[#3E2723]">
+              <ArrowsLeftRight size={18} className="text-[var(--color-ak-borgona)]" />
+              <h2 className="font-['Playfair_Display'] text-lg font-bold text-[var(--text-primary)]">
                 Reasignar Reserva
               </h2>
             </div>
-            <button onClick={onClose} className="p-1 text-[#8D6E63] hover:text-[#3E2723] transition-colors">
+            <button onClick={onClose} className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
               <X size={20} />
             </button>
           </div>
@@ -180,30 +180,30 @@ export function ReassignModal({
 
         <div className="p-6 space-y-4">
           {/* Current reservation info */}
-          <div className="bg-white rounded-xl border border-[#D7CCC8] p-4">
-            <p className="text-sm font-semibold text-[#3E2723]">
+          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
               {reservation.customer_name || 'Sin nombre'}
             </p>
-            <p className="text-xs text-[#8D6E63] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               {reservation.party_size} personas · {reservation.time_start.slice(0, 5)}–{reservation.time_end.slice(0, 5)}
             </p>
-            <p className="text-xs text-[#8D6E63]">
+            <p className="text-xs text-[var(--text-secondary)]">
               {currentTableName} · {currentZoneName}
             </p>
           </div>
 
           {error && (
-            <p className="text-sm text-red-700 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">{error}</p>
+            <p className="text-sm text-[var(--color-danger)] bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 px-3 py-2 rounded-lg">{error}</p>
           )}
 
           {/* Available tables list */}
           <div>
-            <p className="text-sm font-medium text-[#3E2723] mb-2">
+            <p className="text-sm font-medium text-[var(--text-primary)] mb-2">
               Mover a:
             </p>
             {availableTables.length === 0 ? (
-              <div className="bg-white rounded-xl border border-[#D7CCC8] p-4 text-center">
-                <p className="text-sm text-[#8D6E63]">No hay mesas disponibles para esta reserva</p>
+              <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4 text-center">
+                <p className="text-sm text-[var(--text-secondary)]">No hay mesas disponibles para esta reserva</p>
               </div>
             ) : (
               <div className="space-y-1.5 max-h-56 overflow-y-auto">
@@ -214,26 +214,26 @@ export function ReassignModal({
                     className={cn(
                       'w-full text-left p-3 rounded-xl border transition-all',
                       selectedTableId === t.id
-                        ? 'border-[#6B2737] bg-[#6B2737]/5 ring-1 ring-[#6B2737]'
-                        : 'border-[#D7CCC8] bg-white hover:border-[#8D6E63]'
+                        ? 'border-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/5 ring-1 ring-[var(--color-ak-borgona)]'
+                        : 'border-[var(--border-default)] bg-[var(--bg-card)] hover:border-[var(--text-secondary)]'
                     )}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-[#3E2723]">{t.name}</span>
-                        <span className="text-xs text-[#8D6E63]">· {t.zoneName}</span>
+                        <span className="font-semibold text-sm text-[var(--text-primary)]">{t.name}</span>
+                        <span className="text-xs text-[var(--text-secondary)]">· {t.zoneName}</span>
                         <span className={cn(
                           'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
-                          t.isSameZone ? 'bg-green-100 text-green-700' : 'bg-[#F5EDE0] text-[#8D6E63]'
+                          t.isSameZone ? 'bg-[var(--color-success)]/10 text-[var(--color-success)]' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)]'
                         )}>
                           {t.capacity}p
                         </span>
                       </div>
                       {selectedTableId === t.id && (
-                        <Check size={14} weight="bold" className="text-[#6B2737]" />
+                        <Check size={14} weight="bold" className="text-[var(--color-ak-borgona)]" />
                       )}
                     </div>
-                    <p className="text-[10px] text-[#8D6E63] mt-0.5">
+                    <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
                       {t.availableUntil
                         ? `Libre hasta las ${t.availableUntil.slice(0, 5)}`
                         : 'Libre toda la noche'}
@@ -248,14 +248,14 @@ export function ReassignModal({
           <div className="flex gap-3 pt-2">
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl border border-[#D7CCC8] text-sm font-medium text-[#3E2723] bg-white hover:bg-[#EFEBE9] transition-colors active:scale-[0.97]"
+              className="flex-1 py-2.5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--text-primary)] bg-[var(--bg-card)] hover:bg-[var(--bg-input)] transition-colors active:scale-[0.97]"
             >
               Cancelar
             </button>
             <button
               onClick={handleConfirm}
               disabled={!selectedTableId || submitting}
-              className="flex-1 py-2.5 rounded-xl bg-[#6B2737] text-white text-sm font-medium hover:bg-[#5C2230] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] transition-all"
+              className="flex-1 py-2.5 rounded-xl bg-[var(--color-ak-borgona)] text-white text-sm font-medium hover:bg-[var(--color-ak-borgona)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] transition-all"
             >
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">

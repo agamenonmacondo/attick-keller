@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     // Get all confirmed reservations for the date
     const { data: reservations, error: resError } = await sb
       .from('reservations')
-      .select('id, customer_id, time, party_size, status')
+      .select('id, customer_id, time_start, party_size, status')
       .eq('restaurant_id', RESTAURANT_ID)
       .eq('date', date)
       .eq('status', 'confirmed')
@@ -39,10 +39,13 @@ export async function GET(request: NextRequest) {
       for (let i = 0; i < customerIds.length; i += 999) {
         const batch = customerIds.slice(i, i + 999)
 
-        const { data: customers } = await sb
+        const { data: customers, error: custError } = await sb
           .from('customers')
           .select('id, full_name, phone')
           .in('id', batch)
+          .eq('restaurant_id', RESTAURANT_ID)
+
+        if (custError) throw custError
 
         for (const c of customers || []) {
           customerNames[c.id] = { name: c.full_name || 'Sin nombre', phone: c.phone }
@@ -70,7 +73,7 @@ export async function GET(request: NextRequest) {
           id: r.id,
           customerName: customer?.name || 'Sin nombre',
           customerPhone: customer?.phone || null,
-          reservationTime: r.time,
+          reservationTime: r.time_start,
           partySize: r.party_size,
           noShowCount,
           riskLevel,

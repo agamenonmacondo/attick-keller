@@ -117,7 +117,6 @@ async function fetchDashboardData(
   }
 
   // ── Trim item product IDs for in-memory lookups ──
-  const originalProductIds = allItems.map((i: any) => i.pos_product_id)
   for (const item of allItems) {
     if (item.pos_product_id && typeof item.pos_product_id === 'string') {
       item.pos_product_id = item.pos_product_id.trim()
@@ -125,7 +124,11 @@ async function fetchDashboardData(
   }
 
   // ── 3. Product info & group names ──
-  const productIdsForQuery = [...new Set(originalProductIds.filter(Boolean))]
+  // IMPORTANT: Use trimmed IDs (AFTER the trim above) for DB queries.
+  // Using untrimmed IDs causes missed matches when pos_product_id has
+  // leading/trailing spaces — those items get no category and revenue
+  // is silently lost from category breakdowns.
+  const productIdsForQuery = [...new Set(allItems.map((i: any) => i.pos_product_id).filter(Boolean))]
   const productInfo = new Map<string, { name: string; groupId: string }>()
   if (productIdsForQuery.length > 0) {
     const prodBatches: string[][] = []

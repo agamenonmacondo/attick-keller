@@ -38,16 +38,21 @@ export async function GET(request: NextRequest) {
     .eq('is_cancelled', false);
 
   if (error) {
-    return NextResponse.json({ error: 'Error consultando ventas' }, { status: 500 });
+    return NextResponse.json({ error: 'Error consultando ventas', detail: error.message }, { status: 500 });
   }
 
   if (!sales || sales.length === 0) {
-    return NextResponse.json({ days: [], weekly_total: { avg_per_week: 0, total_days: 0, total_revenue: 0 } });
+    return NextResponse.json({ days: [], weekly_total: { avg_per_week: 0, total_days: 0, total_revenue: 0 }, debug: 'No sales returned from Supabase' });
   }
 
   // Group sales by date in Colombia timezone
   // Using America/Bogota (UTC-5) timezone conversion
   const dailyMap = new Map<string, { dayIndex: number; revenue: number; tips: number; txCount: number }>();
+
+  // Debug: count how many have opened_at
+  const withOpenedAt = sales.filter(s => s.opened_at).length;
+  const firstSale = sales.find(s => s.opened_at);
+  console.log(`[sales-averages] Total: ${sales.length}, with opened_at: ${withOpenedAt}, first: ${JSON.stringify(firstSale)}`);
 
   // Helper: extract date parts in Colombia timezone WITHOUT the toLocaleString→new Date bug.
   // new Date(localeString) re-interprets as UTC, shifting day boundaries in UTC-5.

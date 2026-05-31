@@ -53,8 +53,7 @@ export function useProductCostCatalog() {
     try {
       const res = await fetch('/api/admin/product-costs', {
         signal: controller.signal,
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' },
+        next: { revalidate: 300 },
       })
 
       if (!res.ok) {

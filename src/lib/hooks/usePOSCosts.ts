@@ -84,8 +84,8 @@ export function usePOSCosts(filters: POSCostsFilters) {
       setLoading(true)
       setError(null)
       try {
-        const url = `/api/admin/pos-costs?${params}&_t=${Date.now()}`
-        const res = await fetch(url, { signal, cache: 'no-store' })
+        const url = `/api/admin/pos-costs?${params}`
+        const res = await fetch(url, { signal, next: { revalidate: 300 } })
         if (signal.aborted) return
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))
@@ -120,8 +120,8 @@ export function usePOSCosts(filters: POSCostsFilters) {
       setLoading(true)
       setError(null)
       try {
-        const url = `/api/admin/pos-costs?${params}&_t=${Date.now()}`
-        const res = await fetch(url, { cache: 'no-store' })
+        const url = `/api/admin/pos-costs?${params}`
+        const res = await fetch(url, { next: { revalidate: 300 } })
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))
           setError(d.error || 'Error cargando datos de costos')

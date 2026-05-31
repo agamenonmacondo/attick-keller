@@ -221,8 +221,8 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
       // DON'T setData(null) — it hides ALL components during re-fetch, causing the "empty" flash.
       // Instead, show a loading overlay over existing data.
       try {
-        const url = `/api/admin/pos-dashboard?${params}&_t=${Date.now()}`
-        const res = await fetch(url, { signal, cache: 'no-store' })
+        const url = `/api/admin/pos-dashboard?${params}`
+        const res = await fetch(url, { signal, next: { revalidate: 300 } })
         if (signal.aborted) return
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))
@@ -263,8 +263,8 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
       setLoading(true)
       setError(null)
       try {
-        const url = `/api/admin/pos-dashboard?${params}&_t=${Date.now()}`
-        const res = await fetch(url, { cache: 'no-store' })
+        const url = `/api/admin/pos-dashboard?${params}`
+        const res = await fetch(url, { next: { revalidate: 300 } })
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))
           setError(d.error || 'Error cargando datos')
@@ -297,7 +297,7 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
       p.set('to', to)
       p.set('zone', filters.zone || 'all')
       p.set('category', filters.category || 'all')
-      const res = await fetch(`/api/admin/pos-dashboard/detail?${p.toString()}&_t=${Date.now()}`, { cache: 'no-store' })
+      const res = await fetch(`/api/admin/pos-dashboard/detail?${p.toString()}`, { next: { revalidate: 300 } })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
         setDrillDownError(d.error || 'Error cargando detalle')

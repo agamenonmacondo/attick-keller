@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache } from 'next/cache'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
 
 function qparam(request: NextRequest, key: string): string | null {
   return request.nextUrl.searchParams.get(key)
 }
 
-/** Lightweight endpoint: returns ONLY dailyTrend + availableMonths for the calendar */
-export async function GET(request: NextRequest) {
-  const admin = await getAdminUser(request)
-  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
-
+async function fetchCalendarData(zoneParam: string) {
   const sb = getServiceClient()
-  const zoneParam = qparam(request, 'zone') || 'all'
 
   // Fetch ALL non-cancelled paid sales (no date filter — calendar shows everything)
   let allSales: any[] = []
@@ -29,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     const { data: batch, error } = await query
     if (error) {
-      return NextResponse.json({ error: 'Error cargando ventas: ' + error.message }, { status: 500 })
+      throw new Error('Error cargando ventas: ' + error.message)
     }
     if (batch && batch.length > 0) {
       allSales.push(...batch)
@@ -73,5 +69,27 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ dailyTrend, availableMonths, zone: zoneParam })
+  return { dailyTrend, availableMonths, zone: zoneParam }
+}
+
+/** Lightweight endpoint: returns ONLY dailyTrend + availableMonths for the calendar.
+ *  Cached for 5 minutes — calendar data changes infrequently (only on new data uploads). */
+export async function GET(request: NextRequest) {
+  const admin = await getAdminUser(request)
+  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+
+  const zoneParam = qparam(request, 'zone') || 'all'
+
+  const getCachedCalendarData = unstable_cache(
+    (zone: string) => fetchCalendarData(zone),
+    ['pos-calendar'],
+    { revalidate: 300 }
+  )
+
+  try {
+    const data = await getCachedCalendarData(zoneParam)
+    return NextResponse.json(data)
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || 'Error cargando calendario' }, { status: 500 })
+  }
 }

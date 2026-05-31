@@ -2,13 +2,10 @@
 
 import { useState, useCallback, useMemo, useRef } from 'react'
 import { usePOSDashboard, type POSDashboardFilters } from '@/lib/hooks/usePOSDashboard'
-import { usePOSCosts } from '@/lib/hooks/usePOSCosts'
 import { usePOSCalendar } from '@/lib/hooks/usePOSCalendar'
-import { useProductCostCatalog, type ProductCostItem } from '@/lib/hooks/useProductCostCatalog'
 import { AnimatedCard } from '../shared/AnimatedCard'
 import { Spinner, ChartBar, ChartLine, Receipt } from '@phosphor-icons/react'
 import { POSFiltersBar } from './POSFiltersBar'
-import { POSCostPanel } from './POSCostPanel'
 import { RevenueHeatmapCalendar } from './RevenueHeatmapCalendar'
 import { DayKPIBar } from './DayKPIBar'
 import { ZoneRevenueChart } from './ZoneRevenueChart'
@@ -26,8 +23,8 @@ import { DrillDownPanel } from './DrillDownPanel'
 import { CategoryCompanionsCard } from './CategoryCompanionsCard'
 import { ShiftReconciliation } from './ShiftReconciliation'
 import { CategoryPerformersCard } from './CategoryPerformersCard'
-import ProductCostTable from './ProductCostTable'
-import ProductRecipeDetail from './ProductRecipeDetail'
+import { POSCostsTabContent } from './POSCostsTabContent'
+import { POSCatalogTabContent } from './POSCatalogTabContent'
 
 type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 
@@ -45,18 +42,6 @@ export function POSDashboardPanel() {
   const [filters, setFilters] = useState<POSDashboardFilters>(DEFAULT_FILTERS)
   const [heatmapMetric, setHeatmapMetric] = useState<HeatmapMetric>('revenue')
   const [calendarMonth, setCalendarMonth] = useState<string | undefined>(undefined) // 'YYYY-MM' for calendar view month
-
-  // ── Cost tab hook ──
-  const costsFilters = useMemo(() => ({
-    from: filters.from,
-    to: filters.to,
-    group: filters.category,
-  }), [filters.from, filters.to, filters.category])
-  const { data: costsData, loading: costsLoading, error: costsError } = usePOSCosts(costsFilters)
-
-  // ── Catalog tab hook ──
-  const { data: catalogData, loading: catalogLoading, error: catalogError, refetch: catalogRefetch } = useProductCostCatalog()
-  const [catalogSelectedProduct, setCatalogSelectedProduct] = useState<ProductCostItem | null>(null)
 
   // When in month mode, derive from/to from calendarMonth so the dashboard
   // data follows the month the user is viewing (not always "latest month").
@@ -316,13 +301,14 @@ export function POSDashboardPanel() {
         </div>
       )}
 
-      {/* Cost panel */}
+      {/* Cost panel — lazy-loaded only when tab is active */}
       {activeTab === 'costs' && (
-        <POSCostPanel
-          data={costsData}
-          loading={costsLoading}
-          error={costsError}
-          selectedDate={isSingleDay ? filters.from : undefined}
+        <POSCostsTabContent
+          from={filters.from}
+          to={filters.to}
+          category={filters.category}
+          isSingleDay={isSingleDay}
+          selectedDate={filters.from}
           onDayClick={handleDayClick}
           calendarMonth={calendarMonth}
           onCalendarMonthChange={setCalendarMonth}
@@ -331,24 +317,8 @@ export function POSDashboardPanel() {
         />
       )}
 
-      {/* Catalog panel */}
-      {activeTab === 'catalog' && (
-        <>
-          <ProductCostTable
-            data={catalogData}
-            loading={catalogLoading}
-            error={catalogError}
-            onProductClick={(product) => setCatalogSelectedProduct(product)}
-            refetch={catalogRefetch}
-          />
-          {catalogSelectedProduct && (
-            <ProductRecipeDetail
-              product={catalogSelectedProduct}
-              onClose={() => setCatalogSelectedProduct(null)}
-            />
-          )}
-        </>
-      )}
+      {/* Catalog panel — lazy-loaded only when tab is active */}
+      {activeTab === 'catalog' && <POSCatalogTabContent />}
 
       {data && activeTab === 'operation' && (
         <>

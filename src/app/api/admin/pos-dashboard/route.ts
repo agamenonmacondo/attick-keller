@@ -16,7 +16,8 @@ async function fetchDashboardData(
   availableMonths: string[],
 ) {
   const sb = getServiceClient()
-  const BATCH = 900
+  const PAGE_SIZE = 900  // for .range() pagination — no limit
+  const IN_BATCH = 200   // for .in() clauses — Supabase fails silently beyond ~200 UUIDs
 
   // ── 1. Parallel: all RPCs + shifts + groups + sale IDs ──
   const rpcParams = { p_from: from, p_to: to }
@@ -66,7 +67,6 @@ async function fetchDashboardData(
   const allGroups = (groupsResult.data || []) as any[]
 
   // ── 1b. Fetch all sale IDs for the period (lightweight) ──
-  // We need them for items fetching (categories section).
   let allSaleIds: string[] = []
   let saleOffset = 0
   while (true) {
@@ -76,22 +76,22 @@ async function fetchDashboardData(
       .gte('opened_at', `${from}T00:00:00`)
       .lte('opened_at', `${to}T23:59:59`)
       .eq('is_cancelled', false)
-      .range(saleOffset, saleOffset + BATCH - 1)
+      .range(saleOffset, saleOffset + PAGE_SIZE - 1)
       .order('opened_at', { ascending: true })
     if (saleIdsBatch && saleIdsBatch.length > 0) {
       allSaleIds.push(...saleIdsBatch.map((s: any) => s.id))
-      saleOffset += BATCH
-      if (saleIdsBatch.length < BATCH) break
+      saleOffset += PAGE_SIZE
+      if (saleIdsBatch.length < PAGE_SIZE) break
     } else break
   }
 
   // ── 2. Fetch all items for categories (parallelized by sale batches) ──
   let allItems: any[] = []
   if (allSaleIds.length > 0) {
-    const itemBatchSize = BATCH
+    // Split sales into batches of IN_BATCH for the .in() clause
     const saleBatches: string[][] = []
-    for (let i = 0; i < allSaleIds.length; i += itemBatchSize) {
-      saleBatches.push(allSaleIds.slice(i, i + itemBatchSize))
+    for (let i = 0; i < allSaleIds.length; i += IN_BATCH) {
+      saleBatches.push(allSaleIds.slice(i, i + IN_BATCH))
     }
 
     // Fetch items for each sale batch in parallel
@@ -103,11 +103,11 @@ async function fetchDashboardData(
           .from('pos_sale_items')
           .select('pos_sale_id, pos_product_id, quantity, unit_price')
           .in('pos_sale_id', saleBatch)
-          .range(itemOffset, itemOffset + BATCH - 1)
+          .range(itemOffset, itemOffset + PAGE_SIZE - 1)
         if (batch && batch.length > 0) {
           items.push(...batch)
-          itemOffset += BATCH
-          if (batch.length < BATCH) break
+          itemOffset += PAGE_SIZE
+          if (batch.length < PAGE_SIZE) break
         } else break
       }
       return items
@@ -124,16 +124,12 @@ async function fetchDashboardData(
   }
 
   // ── 3. Product info & group names ──
-  // IMPORTANT: Use trimmed IDs (AFTER the trim above) for DB queries.
-  // Using untrimmed IDs causes missed matches when pos_product_id has
-  // leading/trailing spaces — those items get no category and revenue
-  // is silently lost from category breakdowns.
   const productIdsForQuery = [...new Set(allItems.map((i: any) => i.pos_product_id).filter(Boolean))]
   const productInfo = new Map<string, { name: string; groupId: string }>()
   if (productIdsForQuery.length > 0) {
     const prodBatches: string[][] = []
-    for (let i = 0; i < productIdsForQuery.length; i += BATCH) {
-      prodBatches.push(productIdsForQuery.slice(i, i + BATCH))
+    for (let i = 0; i < productIdsForQuery.length; i += IN_BATCH) {
+      prodBatches.push(productIdsForQuery.slice(i, i + IN_BATCH))
     }
     const prodPromises = prodBatches.map(async (batch) => {
       const { data: prods } = await sb
@@ -152,8 +148,8 @@ async function fetchDashboardData(
   const groupNames = new Map<string, string>()
   if (groupIds.length > 0) {
     const groupBatches: string[][] = []
-    for (let i = 0; i < groupIds.length; i += BATCH) {
-      groupBatches.push(groupIds.slice(i, i + BATCH))
+    for (let i = 0; i < groupIds.length; i += IN_BATCH) {
+      groupBatches.push(groupIds.slice(i, i + IN_BATCH))
     }
     const groupPromises = groupBatches.map(async (batch) => {
       const { data: groups } = await sb
@@ -209,15 +205,15 @@ async function fetchDashboardData(
     d.cheques.add(item.pos_sale_id)
   }
 
-  // For category enrichment (tip, party_size, service_time), query sale-level data for category cheques
+  // For category enrichment (tip, party_size, service_time), query sale-level data
   const allCategorySaleIds = [...new Set(
     [...categoryRevenueMap.values()].flatMap(d => [...d.cheques])
   )]
   const saleEnrichment = new Map<string, { tip: number; partySize: number; serviceMin: number }>()
   if (allCategorySaleIds.length > 0) {
     const enrichBatches: string[][] = []
-    for (let i = 0; i < allCategorySaleIds.length; i += BATCH) {
-      enrichBatches.push(allCategorySaleIds.slice(i, i + BATCH))
+    for (let i = 0; i < allCategorySaleIds.length; i += IN_BATCH) {
+      enrichBatches.push(allCategorySaleIds.slice(i, i + IN_BATCH))
     }
     const enrichPromises = enrichBatches.map(async (batch) => {
       const { data: sales } = await sb
@@ -491,7 +487,6 @@ async function fetchDashboardData(
   }
 
   // ── 13. Client Tiers ──
-  // Get distinct customer IDs from sales for the period
   let customerIdSet = new Set<string>()
   {
     let custOffset = 0
@@ -502,14 +497,14 @@ async function fetchDashboardData(
         .gte('opened_at', `${from}T00:00:00`)
         .lte('opened_at', `${to}T23:59:59`)
         .eq('is_cancelled', false)
-        .range(custOffset, custOffset + BATCH - 1)
+        .range(custOffset, custOffset + PAGE_SIZE - 1)
       if (custBatch && custBatch.length > 0) {
         for (const r of custBatch) {
           const cid = r.customer_id || r.pos_customer_id
           if (cid) customerIdSet.add(cid)
         }
-        custOffset += BATCH
-        if (custBatch.length < BATCH) break
+        custOffset += PAGE_SIZE
+        if (custBatch.length < PAGE_SIZE) break
       } else break
     }
   }
@@ -517,8 +512,8 @@ async function fetchDashboardData(
   const tierMap = new Map<string, { count: number; totalSpent: number }>()
   if (customerIds.length > 0) {
     const custBatches: string[][] = []
-    for (let i = 0; i < customerIds.length; i += BATCH) {
-      custBatches.push(customerIds.slice(i, i + BATCH))
+    for (let i = 0; i < customerIds.length; i += IN_BATCH) {
+      custBatches.push(customerIds.slice(i, i + IN_BATCH))
     }
     const tierPromises = custBatches.map(async (batch) => {
       const { data: tierData } = await sb
@@ -593,7 +588,6 @@ async function fetchDashboardData(
       return totalB - totalA
     })
 
-  // ── 17. Assemble response ──
   return {
     kpis: {
       revenue: Math.round(totalRevenue),

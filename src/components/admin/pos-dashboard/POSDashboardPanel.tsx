@@ -58,13 +58,23 @@ export function POSDashboardPanel() {
   const { data: catalogData, loading: catalogLoading, error: catalogError, refetch: catalogRefetch } = useProductCostCatalog()
   const [catalogSelectedProduct, setCatalogSelectedProduct] = useState<ProductCostItem | null>(null)
 
-  // When in month mode, clear date filters so data covers the full month
+  // When in month mode, derive from/to from calendarMonth so the dashboard
+  // data follows the month the user is viewing (not always "latest month").
+  // If calendarMonth is undefined (initial state), leave from/to empty so the
+  // server auto-detects the latest month.
   const effectiveFilters = useMemo<POSDashboardFilters>(() => {
     if (viewMode === 'month') {
+      if (calendarMonth) {
+        const [yStr, mStr] = calendarMonth.split('-')
+        const y = parseInt(yStr, 10)
+        const m = parseInt(mStr, 10) // 1-based
+        const lastDay = new Date(y, m, 0).getDate()
+        return { ...filters, from: `${calendarMonth}-01`, to: `${calendarMonth}-${lastDay}` }
+      }
       return { ...filters, from: undefined, to: undefined }
     }
     return filters
-  }, [viewMode, filters])
+  }, [viewMode, filters, calendarMonth])
 
   const { data, loading, error, refetch, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown } = usePOSDashboard(effectiveFilters)
   // Calendar shows ALL days regardless of month filter
@@ -78,14 +88,19 @@ export function POSDashboardPanel() {
 
   const handleToggleViewMode = useCallback(() => {
     if (viewMode === 'day') {
-      // Switching to month mode — clear date selection
+      // Switching to month mode — use the month from the current date filter
+      // or default to the latest available
+      const monthFromFilter = filters.from ? filters.from.substring(0, 7) : undefined
+      if (monthFromFilter && !calendarMonth) {
+        setCalendarMonth(monthFromFilter)
+      }
       setFilters(f => ({ ...f, from: undefined, to: undefined }))
       setViewMode('month')
     } else {
       // Back to day mode — server auto-detects latest month
       setViewMode('day')
     }
-  }, [viewMode])
+  }, [viewMode, filters.from, calendarMonth])
 
   // Calculate period averages for day comparison
   const periodAverages = useMemo(() => {
@@ -127,6 +142,7 @@ export function POSDashboardPanel() {
     // If clicking a date, always switch to day mode
     setViewMode('day')
     setFilters(prev => ({ ...prev, from: date, to: date }))
+    setCalendarMonth(date.substring(0, 7))
   }, [])
 
   const handleBackToPeriod = useCallback(() => {

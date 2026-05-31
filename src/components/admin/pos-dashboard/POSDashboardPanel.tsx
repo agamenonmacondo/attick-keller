@@ -38,7 +38,8 @@ type DashboardTab = 'operation' | 'costs' | 'catalog'
 
 export function POSDashboardPanel() {
   const [activeTab, setActiveTab] = useState<DashboardTab>('operation')
-  const [viewMode, setViewMode] = useState<'day' | 'month'>('day')
+  // Default view is 'month' (consolidado) — user only switches to 'day' when clicking a specific date
+  const [viewMode, setViewMode] = useState<'day' | 'month'>('month')
   const [filters, setFilters] = useState<POSDashboardFilters>(DEFAULT_FILTERS)
   const [heatmapMetric, setHeatmapMetric] = useState<HeatmapMetric>('revenue')
   const [calendarMonth, setCalendarMonth] = useState<string | undefined>(undefined) // 'YYYY-MM' for calendar view month
@@ -73,19 +74,17 @@ export function POSDashboardPanel() {
 
   const handleToggleViewMode = useCallback(() => {
     if (viewMode === 'day') {
-      // Switching to month mode — derive month from selected date or current month
+      // Switching back to month mode — derive month from selected date or current month
       const monthFromFilter = filters.from ? filters.from.substring(0, 7) : undefined
-      const newMonth = monthFromFilter || (() => {
+      const newMonth = monthFromFilter || calendarMonth || (() => {
         const now = new Date()
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
       })()
       setCalendarMonth(newMonth)
       setViewMode('month')
-    } else {
-      // Back to day mode — server auto-detects latest month
-      setViewMode('day')
     }
-  }, [viewMode, filters.from])
+    // If already in month mode, do nothing (button stays active)
+  }, [viewMode, filters.from, calendarMonth])
 
   // Calculate period averages for day comparison
   const periodAverages = useMemo(() => {
@@ -130,9 +129,10 @@ export function POSDashboardPanel() {
     setCalendarMonth(date.substring(0, 7))
   }, [])
 
-  const handleBackToPeriod = useCallback(() => {
-    // Clear date filters — server auto-detects latest month
-    setFilters(prev => ({ ...prev, from: undefined, to: undefined }))
+  const handleCalendarMonthChange = useCallback((month: string) => {
+    // Navigating months in the calendar always switches to consolidated view
+    setCalendarMonth(month)
+    setViewMode('month')
   }, [])
 
   const handleZoneClick = useCallback((zone: string) => {
@@ -268,14 +268,6 @@ export function POSDashboardPanel() {
           >
             Consolidado
           </button>
-          {isSingleDay && (
-            <button
-              onClick={handleBackToPeriod}
-              className="text-[10px] text-[var(--color-ak-borgona)] hover:underline font-medium"
-            >
-              Ver todo el periodo
-            </button>
-          )}
           <POSFiltersBar
             filters={effectiveFilters}
             onChange={handleFilterChange}
@@ -311,7 +303,7 @@ export function POSDashboardPanel() {
           selectedDate={filters.from}
           onDayClick={handleDayClick}
           calendarMonth={calendarMonth}
-          onCalendarMonthChange={setCalendarMonth}
+          onCalendarMonthChange={handleCalendarMonthChange}
           heatmapMetric={heatmapMetric}
           onHeatmapMetricChange={setHeatmapMetric}
         />
@@ -329,7 +321,7 @@ export function POSDashboardPanel() {
               selectedDate={isSingleDay ? filters.from : undefined}
               onDayClick={handleDayClick}
               viewMonth={calendarMonth}
-              onMonthChange={setCalendarMonth}
+              onMonthChange={handleCalendarMonthChange}
               metric={heatmapMetric}
               onMetricChange={setHeatmapMetric}
             />

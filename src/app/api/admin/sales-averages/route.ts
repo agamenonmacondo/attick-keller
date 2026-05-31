@@ -204,5 +204,13 @@ export async function GET(request: NextRequest) {
       total_days: totalDays,
       total_revenue: Math.round(totalRevenueAll),
     },
+    _debug: {
+      salesCount: sales.length,
+      withOpenedAt,
+      dailyMapSize: dailyMap.size,
+      firstSaleOpenedAt: firstSale?.opened_at || null,
+      firstDateKey: allDates[0] || null,
+      lastDateKey: allDates[allDates.length - 1] || null,
+    },
   });
 }

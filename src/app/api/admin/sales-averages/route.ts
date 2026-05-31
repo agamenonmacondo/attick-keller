@@ -49,21 +49,47 @@ export async function GET(request: NextRequest) {
   // Using America/Bogota (UTC-5) timezone conversion
   const dailyMap = new Map<string, { dayIndex: number; revenue: number; tips: number; txCount: number }>();
 
+  // Helper: extract date parts in Colombia timezone WITHOUT the toLocaleString→new Date bug.
+  // new Date(localeString) re-interprets as UTC, shifting day boundaries in UTC-5.
+  // Instead, use Intl.DateTimeFormat to get year/month/day directly.
+  function getColombiaDateParts(isoStr: string): { year: number; month: number; day: number; dayIndex: number } | null {
+    try {
+      const utcDate = new Date(isoStr);
+      if (isNaN(utcDate.getTime())) return null;
+      const fmt = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        weekday: 'short',
+      });
+      const parts = fmt.formatToParts(utcDate);
+      const get = (type: string) => parts.find(p => p.type === type)?.value || '';
+      return {
+        year: parseInt(get('year')),
+        month: parseInt(get('month')),
+        day: parseInt(get('day')),
+        dayIndex: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(get('weekday')),
+      };
+    } catch {
+      return null;
+    }
+  }
+
   for (const sale of sales) {
     if (!sale.opened_at) continue;
 
-    // Convert to Colombia timezone
-    const localDateStr = new Date(sale.opened_at).toLocaleString('en-US', { timeZone: 'America/Bogota' });
-    const localDate = new Date(localDateStr);
-    const dayIndex = localDate.getDay(); // 0=Sunday ... 6=Saturday
+    const parts = getColombiaDateParts(sale.opened_at);
+    if (!parts) continue;
+
+    const { year, month, day, dayIndex } = parts;
+    const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
     // Use subtotal + tax as revenue (total may have discounts applied)
     const subtotal = sale.subtotal || 0;
     const tax = sale.tax_amount || 0;
     const revenue = subtotal + tax;
     const tip = sale.tip_amount || 0;
-
-    const dateKey = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
 
     const existing = dailyMap.get(dateKey);
     if (existing) {
@@ -77,18 +103,28 @@ export async function GET(request: NextRequest) {
 
   // Determine the full date range (including days with no sales as $0)
   const allDates = [...dailyMap.keys()].sort();
-  const firstDate = new Date(allDates[0]);
-  const lastDate = new Date(allDates[allDates.length - 1]);
+
+  // Parse first/last date safely (they are YYYY-MM-DD in Colombia timezone)
+  function parseDateKey(key: string): Date {
+    const [y, m, d] = key.split('-').map(Number);
+    // Use noon UTC to avoid any DST/offset issues with date arithmetic
+    return new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+  }
+
+  const firstDate = parseDateKey(allDates[0]);
+  const lastDate = parseDateKey(allDates[allDates.length - 1]);
 
   // Add missing days in range as $0 revenue (closed days)
   const current = new Date(firstDate);
   while (current <= lastDate) {
-    const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+    // Format key from UTC noon date (still represents the correct calendar day)
+    const key = `${current.getUTCFullYear()}-${String(current.getUTCMonth() + 1).padStart(2, '0')}-${String(current.getUTCDate()).padStart(2, '0')}`;
     if (!dailyMap.has(key)) {
-      const dayIndex = current.getDay();
+      // getDay() on UTC noon = correct weekday for that calendar date in Colombia
+      const dayIndex = current.getUTCDay();
       dailyMap.set(key, { dayIndex, revenue: 0, tips: 0, txCount: 0 });
     }
-    current.setDate(current.getDate() + 1);
+    current.setUTCDate(current.getUTCDate() + 1);
   }
 
   // Group by day-of-week (including $0 days for closed days)

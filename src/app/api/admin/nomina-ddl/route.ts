@@ -168,9 +168,10 @@ ON CONFLICT (periodo, sede) DO NOTHING;
 `
 
 export async function POST(request: NextRequest) {
-  // Simple token auth
+  // Simple token auth — loaded from env for security
   const token = request.headers.get('X-Import-Token')
-  if (token !== '***') {
+  const validToken = process.env.NOMINA_IMPORT_TOKEN
+  if (!validToken || token !== validToken) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   }
 

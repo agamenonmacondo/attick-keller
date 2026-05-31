@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth';
 
-export const revalidate = 3600; // 1 hour cache
+export const dynamic = 'force-dynamic';
 
-// Percentile helper
+// Percentile helper (linear interpolation)
 function percentile(arr: number[], p: number): number {
   if (arr.length === 0) return 0;
   const sorted = [...arr].sort((a, b) => a - b);
@@ -17,8 +17,11 @@ function percentile(arr: number[], p: number): number {
 // Day names: 0=Dom, 1=Lun, 2=Mar, 3=Mie, 4=Jue, 5=Vie, 6=Sab
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
 
-// Display order: Lun(1)=0, Mar(2)=1, Mie(3)=2, Jue(4)=3, Vie(5)=4, Sab(6)=5, Dom(0)=6
+// Display order: Lun(1), Mar(2), Mie(3), Jue(4), Vie(5), Sab(6), Dom(0)
 const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+// Minimum daily revenue to consider a day "open" (filters out adjustments/noise)
+const MIN_DAILY_REVENUE = 100_000; // $100K COP
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request);
@@ -28,10 +31,10 @@ export async function GET(request: NextRequest) {
 
   const sb = getServiceClient();
 
-  // Fetch all non-cancelled sales
+  // Fetch all non-cancelled sales with subtotal for accurate revenue
   const { data: sales, error } = await sb
     .from('pos_sales')
-    .select('total, tip_amount, opened_at, is_cancelled')
+    .select('subtotal, tax_amount, total, tip_amount, opened_at, is_cancelled')
     .eq('is_cancelled', false);
 
   if (error) {
@@ -42,35 +45,53 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ days: [], weekly_total: { avg_per_week: 0, total_days: 0, total_revenue: 0 } });
   }
 
-  // Group sales by (date in Colombia timezone, day_of_week)
+  // Group sales by date in Colombia timezone
   // Using America/Bogota (UTC-5) timezone conversion
   const dailyMap = new Map<string, { dayIndex: number; revenue: number; tips: number; txCount: number }>();
 
   for (const sale of sales) {
     if (!sale.opened_at) continue;
 
-    // Convert to Colombia timezone using toLocaleString
+    // Convert to Colombia timezone
     const localDateStr = new Date(sale.opened_at).toLocaleString('en-US', { timeZone: 'America/Bogota' });
     const localDate = new Date(localDateStr);
     const dayIndex = localDate.getDay(); // 0=Sunday ... 6=Saturday
 
-    // Create a date key for grouping by day
+    // Use subtotal + tax as revenue (total may have discounts applied)
+    const subtotal = sale.subtotal || 0;
+    const tax = sale.tax_amount || 0;
+    const revenue = subtotal + tax;
+    const tip = sale.tip_amount || 0;
+
     const dateKey = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
 
     const existing = dailyMap.get(dateKey);
-    const total = sale.total || 0;
-    const tip = sale.tip_amount || 0;
-
     if (existing) {
-      existing.revenue += total;
+      existing.revenue += revenue;
       existing.tips += tip;
       existing.txCount += 1;
     } else {
-      dailyMap.set(dateKey, { dayIndex, revenue: total, tips: tip, txCount: 1 });
+      dailyMap.set(dateKey, { dayIndex, revenue, tips: tip, txCount: 1 });
     }
   }
 
-  // Group by day-of-week
+  // Determine the full date range (including days with no sales as $0)
+  const allDates = [...dailyMap.keys()].sort();
+  const firstDate = new Date(allDates[0]);
+  const lastDate = new Date(allDates[allDates.length - 1]);
+
+  // Add missing days in range as $0 revenue (closed days)
+  const current = new Date(firstDate);
+  while (current <= lastDate) {
+    const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+    if (!dailyMap.has(key)) {
+      const dayIndex = current.getDay();
+      dailyMap.set(key, { dayIndex, revenue: 0, tips: 0, txCount: 0 });
+    }
+    current.setDate(current.getDate() + 1);
+  }
+
+  // Group by day-of-week (including $0 days for closed days)
   const dayOfWeekData: Record<number, { revenues: number[]; tips: number[]; txCounts: number[] }> = {};
   for (let i = 0; i < 7; i++) {
     dayOfWeekData[i] = { revenues: [], tips: [], txCounts: [] };
@@ -82,7 +103,7 @@ export async function GET(request: NextRequest) {
     dayOfWeekData[data.dayIndex].txCounts.push(data.txCount);
   }
 
-  // Calculate statistics for each day
+  // Calculate statistics for each day using MEDIAN as primary metric
   const days = DISPLAY_ORDER.map(dayIndex => {
     const d = dayOfWeekData[dayIndex];
     const revenues = d.revenues;
@@ -90,15 +111,22 @@ export async function GET(request: NextRequest) {
     const txCounts = d.txCounts;
     const count = revenues.length;
 
-    const totalRevenue = revenues.reduce((s, v) => s + v, 0);
-    const avg = count > 0 ? totalRevenue / count : 0;
+    // Filter: only consider "open" days (revenue >= threshold) for tx/tip averages
+    const openDays = revenues.filter(r => r >= MIN_DAILY_REVENUE);
+    const openCount = openDays.length;
+
     const median = percentile(revenues, 50);
+    const avg = count > 0 ? revenues.reduce((s, v) => s + v, 0) / count : 0;
     const q1 = percentile(revenues, 25);
     const q3 = percentile(revenues, 75);
     const min = count > 0 ? Math.min(...revenues) : 0;
     const max = count > 0 ? Math.max(...revenues) : 0;
-    const tx_avg = count > 0 ? txCounts.reduce((s, v) => s + v, 0) / count : 0;
-    const tip_avg = count > 0 ? tips.reduce((s, v) => s + v, 0) / count : 0;
+
+    // tx/tip averages only from open days (not $0 closed days)
+    const openTxCounts = txCounts.filter((_, i) => revenues[i] >= MIN_DAILY_REVENUE);
+    const openTips = tips.filter((_, i) => revenues[i] >= MIN_DAILY_REVENUE);
+    const tx_avg = openCount > 0 ? openTxCounts.reduce((s, v) => s + v, 0) / openCount : 0;
+    const tip_avg = openCount > 0 ? openTips.reduce((s, v) => s + v, 0) / openCount : 0;
 
     return {
       day_index: dayIndex,
@@ -110,23 +138,28 @@ export async function GET(request: NextRequest) {
       min: Math.round(min),
       max: Math.round(max),
       count,
+      open_days: openCount,
       tx_avg: Math.round(tx_avg * 10) / 10,
       tip_avg: Math.round(tip_avg),
     };
   });
 
-  // Weekly totals
+  // Weekly total: sum of medians (more robust than sum of means)
+  const medianPerWeek = days.reduce((s, d) => s + d.median, 0);
+
+  // Also provide the mean-based weekly for comparison
+  const avgPerWeek = days.reduce((s, d) => s + d.avg, 0);
+
+  // Total revenue across all days
   const allRevenues = [...dailyMap.values()].map(d => d.revenue);
   const totalDays = allRevenues.length;
   const totalRevenueAll = allRevenues.reduce((s, v) => s + v, 0);
-  // Average per week: total revenue / number of weeks spanned
-  // Approximate: sum of daily averages for all 7 days
-  const avgPerWeek = days.reduce((s, d) => s + d.avg, 0);
 
   return NextResponse.json({
     days,
     weekly_total: {
       avg_per_week: Math.round(avgPerWeek),
+      median_per_week: Math.round(medianPerWeek),
       total_days: totalDays,
       total_revenue: Math.round(totalRevenueAll),
     },

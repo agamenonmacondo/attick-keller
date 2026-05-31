@@ -11,6 +11,7 @@ export interface DayOfWeekAverage {
   min: number;
   max: number;
   count: number;
+  open_days: number; // days that were actually open (revenue >= threshold)
   tx_avg: number;
   tip_avg: number;
 }
@@ -19,6 +20,7 @@ export interface SalesAverages {
   days: DayOfWeekAverage[];
   weekly_total: {
     avg_per_week: number;
+    median_per_week: number;
     total_days: number;
     total_revenue: number;
   };

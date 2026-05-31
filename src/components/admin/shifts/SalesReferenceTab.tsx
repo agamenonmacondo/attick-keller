@@ -73,8 +73,9 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
   // Display order: Lun(1), Mar(2), Mie(3), Jue(4), Vie(5), Sab(6), Dom(0)
   const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
+  // Use MEDIAN for weekly ratio (robust against outliers)
   const weeklyRatio = weeklyNomina.totalNomina > 0
-    ? (salesData?.weekly_total.avg_per_week || 0) / weeklyNomina.totalNomina
+    ? (salesData?.weekly_total.median_per_week || 0) / weeklyNomina.totalNomina
     : 0;
 
   if (salesLoading) {
@@ -98,12 +99,12 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
       {/* Row 1: KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
-          <div className="text-xs text-[var(--text-secondary)]">Ventas promedio semana</div>
+          <div className="text-xs text-[var(--text-secondary)]">Ventas mediana semana</div>
           <div className="text-lg font-mono font-semibold text-[var(--text-primary)]">
-            {formatCOP(salesData.weekly_total.avg_per_week)}
+            {formatCOP(salesData.weekly_total.median_per_week)}
           </div>
           <div className="text-[10px] text-[var(--text-secondary)]">
-            Basado en {salesData.weekly_total.total_days} dias de data
+            Mediana de {salesData.weekly_total.total_days} dias de data (sin outliers)
           </div>
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
@@ -134,7 +135,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           <thead>
             <tr className="border-b border-[var(--border-default)]">
               <th className="text-left p-2 text-[var(--text-secondary)]">Dia</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">Ventas Prom</th>
+              <th className="text-right p-2 text-[var(--text-secondary)]">Ventas Mediana</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Rango Inf (Q1)</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Rango Sup (Q3)</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Tx/dia</th>
@@ -148,7 +149,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               const salesDay = salesData.days.find(d => d.day_index === dayIndex);
               if (!salesDay) return null;
               const nomDay = nominaByDay[dayIndex];
-              const ratio = nomDay.costoNomina > 0 ? salesDay.avg / nomDay.costoNomina : 0;
+              const ratio = nomDay.costoNomina > 0 ? salesDay.median / nomDay.costoNomina : 0;
 
               return (
                 <tr key={dayIndex} className="border-b border-[var(--border-default)]/50">
@@ -156,7 +157,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                     {salesDay.day_name}
                   </td>
                   <td className="p-2 text-right font-mono text-[var(--text-primary)]">
-                    {formatCOP(salesDay.avg)}
+                    {formatCOP(salesDay.median)}
                   </td>
                   <td className="p-2 text-right font-mono text-[var(--text-secondary)]">
                     {formatCOP(salesDay.q1)}
@@ -184,7 +185,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
             <tr className="border-t-2 border-[var(--border-default)] font-semibold">
               <td className="p-2 text-[var(--text-primary)]">TOTAL</td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">
-                {formatCOP(salesData.weekly_total.avg_per_week)}
+                {formatCOP(salesData.weekly_total.median_per_week)}
               </td>
               <td className="p-2 text-right font-mono text-[var(--text-secondary)]">-</td>
               <td className="p-2 text-right font-mono text-[var(--text-secondary)]">-</td>
@@ -209,7 +210,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           const salesDay = salesData.days.find(d => d.day_index === dayIndex);
           if (!salesDay) return null;
           const nomDay = nominaByDay[dayIndex];
-          const ratio = nomDay.costoNomina > 0 ? salesDay.avg / nomDay.costoNomina : 0;
+          const ratio = nomDay.costoNomina > 0 ? salesDay.median / nomDay.costoNomina : 0;
 
           return (
             <div key={dayIndex} className="bg-[var(--bg-card)] rounded-lg p-3">
@@ -220,8 +221,8 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                <div className="text-[var(--text-secondary)]">Ventas prom</div>
-                <div className="text-right font-mono text-[var(--text-primary)]">{formatCOP(salesDay.avg)}</div>
+                <div className="text-[var(--text-secondary)]">Ventas mediana</div>
+                <div className="text-right font-mono text-[var(--text-primary)]">{formatCOP(salesDay.median)}</div>
                 <div className="text-[var(--text-secondary)]">Rango</div>
                 <div className="text-right font-mono text-[var(--text-secondary)]">{formatCOP(salesDay.q1)} - {formatCOP(salesDay.q3)}</div>
                 <div className="text-[var(--text-secondary)]">Tx/dia</div>
@@ -242,7 +243,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           <div className="flex justify-between items-center">
             <span className="text-[var(--text-primary)]">TOTAL SEMANA</span>
             <div className="text-right">
-              <div className="font-mono text-[var(--text-primary)]">{formatCOP(salesData.weekly_total.avg_per_week)}</div>
+              <div className="font-mono text-[var(--text-primary)]">{formatCOP(salesData.weekly_total.median_per_week)}</div>
               <div className={`font-mono font-bold ${weeklyNomina.totalNomina > 0 ? ratioColor(weeklyRatio) : 'text-[var(--text-secondary)]'}`}>
                 {weeklyNomina.totalNomina > 0 ? `Ratio: ${weeklyRatio.toFixed(2)}` : 'Sin nomina'}
               </div>

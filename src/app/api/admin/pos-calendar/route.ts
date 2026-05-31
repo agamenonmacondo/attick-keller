@@ -80,8 +80,9 @@ export async function GET(request: NextRequest) {
 
   const zoneParam = qparam(request, 'zone') || 'all'
 
+  // Cache per zone — unstable_cache serializes args into the key automatically
   const getCachedCalendarData = unstable_cache(
-    (zone: string) => fetchCalendarData(zone),
+    fetchCalendarData,
     ['pos-calendar'],
     { revalidate: 300 }
   )

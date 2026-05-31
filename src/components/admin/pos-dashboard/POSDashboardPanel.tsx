@@ -45,18 +45,18 @@ export function POSDashboardPanel() {
 
   // When in month mode, derive from/to from calendarMonth so the dashboard
   // data follows the month the user is viewing (not always "latest month").
-  // If calendarMonth is undefined (initial state), leave from/to empty so the
-  // server auto-detects the latest month.
+  // If calendarMonth is undefined (initial state), derive from current date.
   const effectiveFilters = useMemo<POSDashboardFilters>(() => {
     if (viewMode === 'month') {
-      if (calendarMonth) {
-        const [yStr, mStr] = calendarMonth.split('-')
-        const y = parseInt(yStr, 10)
-        const m = parseInt(mStr, 10) // 1-based
-        const lastDay = new Date(y, m, 0).getDate()
-        return { ...filters, from: `${calendarMonth}-01`, to: `${calendarMonth}-${lastDay}` }
-      }
-      return { ...filters, from: undefined, to: undefined }
+      const monthStr = calendarMonth || (() => {
+        const now = new Date()
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      })()
+      const [yStr, mStr] = monthStr.split('-')
+      const y = parseInt(yStr, 10)
+      const m = parseInt(mStr, 10) // 1-based
+      const lastDay = new Date(y, m, 0).getDate()
+      return { ...filters, from: `${monthStr}-01`, to: `${monthStr}-${lastDay}` }
     }
     return filters
   }, [viewMode, filters, calendarMonth])
@@ -73,19 +73,19 @@ export function POSDashboardPanel() {
 
   const handleToggleViewMode = useCallback(() => {
     if (viewMode === 'day') {
-      // Switching to month mode — use the month from the current date filter
-      // or default to the latest available
+      // Switching to month mode — derive month from selected date or current month
       const monthFromFilter = filters.from ? filters.from.substring(0, 7) : undefined
-      if (monthFromFilter && !calendarMonth) {
-        setCalendarMonth(monthFromFilter)
-      }
-      setFilters(f => ({ ...f, from: undefined, to: undefined }))
+      const newMonth = monthFromFilter || (() => {
+        const now = new Date()
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      })()
+      setCalendarMonth(newMonth)
       setViewMode('month')
     } else {
       // Back to day mode — server auto-detects latest month
       setViewMode('day')
     }
-  }, [viewMode, filters.from, calendarMonth])
+  }, [viewMode, filters.from])
 
   // Calculate period averages for day comparison
   const periodAverages = useMemo(() => {

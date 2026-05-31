@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache } from 'next/cache'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
 
 // ── Helpers ──────────────────────────────────────────────
@@ -6,363 +7,177 @@ function qparam(request: NextRequest, key: string): string | null {
   return request.nextUrl.searchParams.get(key)
 }
 
-/** Format COP compact: $1.2M, $890K, $12.500 */
-function formatCOPDisplay(n: number): string {
-  const abs = Math.abs(n)
-  const sign = n < 0 ? '-' : ''
-  if (abs >= 1_000_000) {
-    const m = abs / 1_000_000
-    const str = m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)
-    return `${sign}$${str}M`
-  }
-  if (abs >= 1_000) {
-    const k = abs / 1_000
-    const str = k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)
-    return `${sign}$${str}K`
-  }
-  return `${sign}$${abs.toLocaleString('es-CO')}`
-}
-
-// ── Main handler ─────────────────────────────────────────
-export async function GET(request: NextRequest) {
-  const admin = await getAdminUser(request)
-  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
-
+// ── Core data fetching (cached) ──────────────────────────
+async function fetchDashboardData(
+  zoneParam: string,
+  categoryParam: string,
+  from: string,
+  to: string,
+  availableMonths: string[],
+) {
   const sb = getServiceClient()
-  const BATCH = 200  // Supabase .in() with UUIDs fails silently beyond ~200 IDs
+  const BATCH = 900
 
-  // ── Parse filters ──
-  const zoneParam = qparam(request, 'zone') || 'all'
-  const categoryParam = qparam(request, 'category') || 'all'
-  const fromParam = qparam(request, 'from') || ''
-  const toParam = qparam(request, 'to') || ''
+  // ── 1. Parallel: all RPCs + shifts + groups + sale IDs ──
+  const rpcParams = { p_from: from, p_to: to }
+  const rpcParamsZone = { ...rpcParams, p_zone: zoneParam }
+  const rpcParamsCat = { ...rpcParamsZone, p_category: categoryParam }
 
-  // ── Auto-detect date range when not specified ──
-  let from = fromParam
-  let to = toParam
+  const [
+    kpiResult,
+    zoneResult,
+    hourlyResult,
+    dailyResult,
+    staffResult,
+    paymentsResult,
+    clientSplitResult,
+    paymentsByZoneResult,
+    shiftsResult,
+    groupsResult,
+  ] = await Promise.all([
+    sb.rpc('pos_dashboard_kpis', rpcParamsCat),
+    sb.rpc('pos_dashboard_by_zone', rpcParamsCat),
+    sb.rpc('pos_dashboard_hourly', rpcParamsCat),
+    sb.rpc('pos_dashboard_daily', rpcParamsCat),
+    sb.rpc('pos_dashboard_staff', rpcParamsCat),
+    sb.rpc('pos_dashboard_payments', rpcParamsCat),
+    sb.rpc('pos_dashboard_client_split', rpcParamsCat),
+    sb.rpc('pos_dashboard_payments_by_zone', rpcParamsCat),
+    sb.from('pos_shifts')
+      .select('pos_shift_id, station, cashier, cash_total, card_total, credit_total, opened_at, closed_at, is_closed')
+      .gte('opened_at', `${from}T00:00:00`)
+      .lte('opened_at', `${to}T23:59:59`)
+      .order('opened_at', { ascending: false })
+      .range(0, 9),
+    sb.from('pos_product_groups')
+      .select('pos_group_id, name')
+      .order('pos_group_id'),
+  ])
 
-  // ── Fetch available months for period selector ──
-  const { data: monthData } = await sb
-    .from('pos_sales')
-    .select('opened_at')
-    .eq('is_paid', true)
-    .eq('is_cancelled', false)
-    .order('opened_at', { ascending: true })
-    .limit(2000)
+  const kpiData = kpiResult.data
+  const zonesData = (zoneResult.data || []) as any[]
+  const hourlyData = (hourlyResult.data || []) as any[]
+  const dailyData = (dailyResult.data || []) as any[]
+  const staffData = (staffResult.data || []) as any[]
+  const paymentsData = (paymentsResult.data || []) as any[]
+  const clientSplitData = (clientSplitResult.data || []) as any[]
+  const paymentsByZoneData = (paymentsByZoneResult.data || []) as any[]
+  const shiftsData = (shiftsResult.data || []) as any[]
+  const allGroups = (groupsResult.data || []) as any[]
 
-  const availableMonths: string[] = []
-  if (monthData && monthData.length > 0) {
-    const seen = new Set<string>()
-    for (const row of monthData) {
-      const d = new Date(row.opened_at)
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-      if (!seen.has(key)) {
-        seen.add(key)
-        availableMonths.push(key)
-      }
-    }
-  }
-
-  if (!from || !to) {
-    if (monthData && monthData.length > 0) {
-      const latest = new Date(monthData[monthData.length - 1].opened_at)
-      // Default to the month of the latest data point
-      const y = latest.getFullYear()
-      const m = latest.getMonth() // 0-indexed
-      from = from || `${y}-${String(m + 1).padStart(2, '0')}-01`
-      // End of month
-      const lastDay = new Date(y, m + 1, 0).getDate()
-      to = to || `${y}-${String(m + 1).padStart(2, '0')}-${lastDay}`
-    } else {
-      from = from || '2026-01-01'
-      to = to || '2026-12-31'
-    }
-  }
-
-  // ── Fetch ALL sales (paginated) ──
-  let allSales: any[] = []
-  let salesOffset = 0
-  let salesHasMore = true
-  while (salesHasMore) {
-    const { data: batch, error } = await sb
+  // ── 1b. Fetch all sale IDs for the period (lightweight) ──
+  // We need them for items fetching (categories section).
+  let allSaleIds: string[] = []
+  let saleOffset = 0
+  while (true) {
+    const { data: saleIdsBatch } = await sb
       .from('pos_sales')
-      .select('id, total, tip_amount, subtotal, tax_amount, item_count, party_size, opened_at, closed_at, derived_zone_name, is_cancelled, pos_staff_id, pos_customer_id, customer_id, card_paid, cash_paid')
+      .select('id')
       .gte('opened_at', `${from}T00:00:00`)
       .lte('opened_at', `${to}T23:59:59`)
       .eq('is_cancelled', false)
-      .range(salesOffset, salesOffset + BATCH - 1)
+      .range(saleOffset, saleOffset + BATCH - 1)
       .order('opened_at', { ascending: true })
-
-    if (error) {
-      return NextResponse.json({ error: 'Error cargando ventas: ' + error.message }, { status: 500 })
-    }
-    if (batch && batch.length > 0) {
-      allSales.push(...batch)
-      salesOffset += BATCH
-      salesHasMore = batch.length === BATCH
-    } else {
-      salesHasMore = false
-    }
+    if (saleIdsBatch && saleIdsBatch.length > 0) {
+      allSaleIds.push(...saleIdsBatch.map((s: any) => s.id))
+      saleOffset += BATCH
+      if (saleIdsBatch.length < BATCH) break
+    } else break
   }
 
-  // ── Category filter: find sale IDs with items from given category ──
-  let categorySaleIds: Set<string> | null = null
-  if (categoryParam !== 'all') {
-    const { data: catProducts } = await sb
-      .from('pos_products')
-      .select('pos_product_id')
-      .eq('pos_group_id', categoryParam)
-
-    if (catProducts && catProducts.length > 0) {
-      const productIds = catProducts.map((p: any) => p.pos_product_id)
-      let allSaleIdsList: string[] = []
-      for (let i = 0; i < productIds.length; i += BATCH) {
-        const pidBatch = productIds.slice(i, i + BATCH)
-        let offset = 0
-        let hasMore = true
-        while (hasMore) {
-          const { data: items } = await sb
-            .from('pos_sale_items')
-            .select('pos_sale_id')
-            .in('pos_product_id', pidBatch)
-            .range(offset, offset + BATCH - 1)
-          if (items && items.length > 0) {
-            allSaleIdsList.push(...items.map((it: any) => it.pos_sale_id))
-            offset += BATCH
-            hasMore = items.length === BATCH
-          } else {
-            hasMore = false
-          }
-        }
-      }
-      categorySaleIds = new Set(allSaleIdsList)
-    } else {
-      categorySaleIds = new Set()
-    }
-  }
-
-  // ── Apply filters ──
-  let filteredSales = allSales
-  if (zoneParam !== 'all') {
-    filteredSales = filteredSales.filter((s: any) => s.derived_zone_name === zoneParam)
-  }
-  if (categorySaleIds !== null) {
-    filteredSales = filteredSales.filter((s: any) => categorySaleIds.has(s.id))
-  }
-
-  const salesForKPIs = filteredSales
-  const salesForZone = zoneParam !== 'all' || categoryParam !== 'all' ? allSales.filter((s: any) => {
-    if (categorySaleIds !== null && !categorySaleIds.has(s.id)) return false
-    return true
-  }) : filteredSales
-
-  // ── KPIs ──
-  const totalRevenue = salesForKPIs.reduce((s: number, r: any) => s + (Number(r.total) || 0), 0)
-  const totalTip = salesForKPIs.reduce((s: number, r: any) => s + (Number(r.tip_amount) || 0), 0)
-  const totalParty = salesForKPIs.reduce((s: number, r: any) => s + (Number(r.party_size) || 0), 0)
-  const cardPaidTotal = salesForKPIs.reduce((s: number, r: any) => s + (Number(r.card_paid) || 0), 0)
-  const cashPaidTotal = salesForKPIs.reduce((s: number, r: any) => s + (Number(r.cash_paid) || 0), 0)
-  const cheques = salesForKPIs.length
-
-  // avgServiceTime: only from sales with closed_at
-  const salesWithBothTimestamps = salesForKPIs.filter((s: any) => s.opened_at && s.closed_at)
-  const totalServiceTime = salesWithBothTimestamps.reduce((s: number, r: any) => {
-    const diff = (new Date(r.closed_at).getTime() - new Date(r.opened_at).getTime()) / 60000
-    return s + (diff > 0 ? diff : 0)
-  }, 0)
-  const avgServiceTime = salesWithBothTimestamps.length > 0 ? totalServiceTime / salesWithBothTimestamps.length : 0
-
-  const ticketPromedio = cheques > 0 ? totalRevenue / cheques : 0
-  const propinaPromedio = cheques > 0 ? totalTip / cheques : 0
-  const partySizePromedio = cheques > 0 ? totalParty / cheques : 0
-
-  // ── By Zone (ENRICHED: avgServiceTime) ──
-  const zoneMap = new Map<string, { revenue: number; cheques: number; propina: number; serviceTimeSum: number; serviceTimeCount: number }>()
-  for (const s of salesForZone) {
-    const z = s.derived_zone_name || 'Desconocido'
-    if (!zoneMap.has(z)) zoneMap.set(z, { revenue: 0, cheques: 0, propina: 0, serviceTimeSum: 0, serviceTimeCount: 0 })
-    const d = zoneMap.get(z)!
-    d.revenue += Number(s.total) || 0
-    d.cheques += 1
-    d.propina += Number(s.tip_amount) || 0
-    if (s.opened_at && s.closed_at) {
-      const diff = (new Date(s.closed_at).getTime() - new Date(s.opened_at).getTime()) / 60000
-      if (diff > 0) {
-        d.serviceTimeSum += diff
-        d.serviceTimeCount += 1
-      }
-    }
-  }
-  // ── BUG-03 FIX: Separate "Desconocido" from regular zones ──
-  const unknownZoneData = zoneMap.get('Desconocido')
-  const unknownZone = unknownZoneData ? {
-    revenue: Math.round(unknownZoneData.revenue),
-    cheques: unknownZoneData.cheques,
-    pct: totalRevenue > 0 ? Math.round((unknownZoneData.revenue / totalRevenue) * 100) : 0,
-  } : { revenue: 0, cheques: 0, pct: 0 }
-
-  const knownZoneEntries = [...zoneMap.entries()].filter(([zone]) => zone !== 'Desconocido')
-  const totalZoneRevenue = knownZoneEntries.reduce((s, [, d]) => s + d.revenue, 0)
-  const byZone = knownZoneEntries
-    .map(([zone, d]) => ({
-      zone,
-      revenue: Math.round(d.revenue),
-      cheques: d.cheques,
-      ticketPromedio: d.cheques > 0 ? Math.round(d.revenue / d.cheques) : 0,
-      propinaTotal: Math.round(d.propina),
-      pct: totalZoneRevenue > 0 ? Math.round((d.revenue / totalZoneRevenue) * 100) : 0,
-      avgServiceTime: d.serviceTimeCount > 0 ? Math.round(d.serviceTimeSum / d.serviceTimeCount) : 0,
-    }))
-    .sort((a, b) => b.revenue - a.revenue)
-
-  // ── Hourly Revenue (ENRICHED: tipTotal, cardPaidTotal, cashPaidTotal) ──
-  const hourMap = new Map<string, { revenue: number; cheques: number; tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }>()
-  for (const s of salesForKPIs) {
-    const opened = s.opened_at
-    if (!opened) continue
-    const hour = new Date(opened).getHours().toString()
-    if (!hourMap.has(hour)) hourMap.set(hour, { revenue: 0, cheques: 0, tipTotal: 0, cardPaidTotal: 0, cashPaidTotal: 0 })
-    const d = hourMap.get(hour)!
-    d.revenue += Number(s.total) || 0
-    d.cheques += 1
-    d.tipTotal += Number(s.tip_amount) || 0
-    d.cardPaidTotal += Number(s.card_paid) || 0
-    d.cashPaidTotal += Number(s.cash_paid) || 0
-  }
-  const hourlyRevenue = [...hourMap.entries()]
-    .map(([hour, d]) => ({
-      hour,
-      revenue: Math.round(d.revenue),
-      cheques: d.cheques,
-      tipTotal: Math.round(d.tipTotal),
-      cardPaidTotal: Math.round(d.cardPaidTotal),
-      cashPaidTotal: Math.round(d.cashPaidTotal),
-    }))
-    .sort((a, b) => Number(a.hour) - Number(b.hour))
-
-  // ── Daily Trend ──
-  const dayMap = new Map<string, { revenue: number; cheques: number; propina: number; personas: number }>()
-  for (const s of salesForKPIs) {
-    const opened = s.opened_at
-    if (!opened) continue
-    const date = opened.slice(0, 10)
-    if (!dayMap.has(date)) dayMap.set(date, { revenue: 0, cheques: 0, propina: 0, personas: 0 })
-    const d = dayMap.get(date)!
-    d.revenue += Number(s.total) || 0
-    d.cheques += 1
-    d.propina += Number(s.tip_amount) || 0
-    d.personas += Number(s.party_size) || 0
-  }
-  const dailyTrend = [...dayMap.entries()]
-    .map(([date, d]) => ({
-      date,
-      revenue: Math.round(d.revenue),
-      cheques: d.cheques,
-      propina: Math.round(d.propina),
-      personas: Math.round(d.personas),
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date))
-
-  // ── Sale items for products/categories ──
-  // CRITICAL: Supabase returns max 1000 rows per query.
-  // Previous bug: .in('pos_sale_id', batch) without .range() silently truncated at 1000 rows,
-  // so only ~1000 items were fetched instead of ~17000.
-  // Fix: paginate items within each sale batch using .range().
-  const allSaleIds = allSales.map((s: any) => s.id)
+  // ── 2. Fetch all items for categories (parallelized by sale batches) ──
   let allItems: any[] = []
   if (allSaleIds.length > 0) {
-    for (let i = 0; i < allSaleIds.length; i += BATCH) {
-      const batch = allSaleIds.slice(i, i + BATCH)
+    const itemBatchSize = BATCH
+    const saleBatches: string[][] = []
+    for (let i = 0; i < allSaleIds.length; i += itemBatchSize) {
+      saleBatches.push(allSaleIds.slice(i, i + itemBatchSize))
+    }
+
+    // Fetch items for each sale batch in parallel
+    const itemPromises = saleBatches.map(async (saleBatch) => {
+      let items: any[] = []
       let itemOffset = 0
-      let itemsHasMore = true
-      while (itemsHasMore) {
-        const { data: itemsData } = await sb
+      while (true) {
+        const { data: batch } = await sb
           .from('pos_sale_items')
           .select('pos_sale_id, pos_product_id, quantity, unit_price')
-          .in('pos_sale_id', batch)
+          .in('pos_sale_id', saleBatch)
           .range(itemOffset, itemOffset + BATCH - 1)
-        if (itemsData && itemsData.length > 0) {
-          allItems.push(...itemsData)
+        if (batch && batch.length > 0) {
+          items.push(...batch)
           itemOffset += BATCH
-          itemsHasMore = itemsData.length === BATCH
-        } else {
-          itemsHasMore = false
-        }
+          if (batch.length < BATCH) break
+        } else break
       }
-    }
+      return items
+    })
+    const itemArrays = await Promise.all(itemPromises)
+    allItems = itemArrays.flat()
   }
 
-  // ── Product info (CORRECT column: pos_group_id) ──
-  // CRITICAL: pos_sale_items AND pos_products BOTH have pos_product_id padded with
-  // trailing spaces (POS system artifact, up to 15 chars). We must query the DB with
-  // original (padded) IDs so .in() matches, then trim BOTH sides for the in-memory map.
+  // ── Trim item product IDs for in-memory lookups ──
   const originalProductIds = allItems.map((i: any) => i.pos_product_id)
   for (const item of allItems) {
     if (item.pos_product_id && typeof item.pos_product_id === 'string') {
       item.pos_product_id = item.pos_product_id.trim()
     }
   }
-  // Query DB with ORIGINAL (padded) IDs so .in() matches padded DB values
+
+  // ── 3. Product info & group names ──
   const productIdsForQuery = [...new Set(originalProductIds.filter(Boolean))]
   const productInfo = new Map<string, { name: string; groupId: string }>()
   if (productIdsForQuery.length > 0) {
+    const prodBatches: string[][] = []
     for (let i = 0; i < productIdsForQuery.length; i += BATCH) {
-      const batch = productIdsForQuery.slice(i, i + BATCH)
+      prodBatches.push(productIdsForQuery.slice(i, i + BATCH))
+    }
+    const prodPromises = prodBatches.map(async (batch) => {
       const { data: prods } = await sb
         .from('pos_products')
         .select('pos_product_id, name, pos_group_id')
         .in('pos_product_id', batch)
-      if (prods) {
-        for (const p of prods) {
-          // Trim DB key so lookups with trimmed item IDs match
-          productInfo.set((p.pos_product_id || '').trim(), { name: p.name, groupId: p.pos_group_id || '' })
-        }
-      }
+      return prods || []
+    })
+    const prodArrays = await Promise.all(prodPromises)
+    for (const p of prodArrays.flat()) {
+      productInfo.set((p.pos_product_id || '').trim(), { name: p.name, groupId: p.pos_group_id || '' })
     }
   }
 
-  // ── Group names (CORRECT column: pos_group_id) ──
   const groupIds = [...new Set([...productInfo.values()].map(p => p.groupId).filter(Boolean))]
   const groupNames = new Map<string, string>()
   if (groupIds.length > 0) {
+    const groupBatches: string[][] = []
     for (let i = 0; i < groupIds.length; i += BATCH) {
-      const batch = groupIds.slice(i, i + BATCH)
+      groupBatches.push(groupIds.slice(i, i + BATCH))
+    }
+    const groupPromises = groupBatches.map(async (batch) => {
       const { data: groups } = await sb
         .from('pos_product_groups')
         .select('pos_group_id, name')
         .in('pos_group_id', batch)
-      if (groups) {
-        for (const g of groups) {
-          groupNames.set(g.pos_group_id, g.name)
-        }
-      }
+      return groups || []
+    })
+    const groupArrays = await Promise.all(groupPromises)
+    for (const g of groupArrays.flat()) {
+      groupNames.set(g.pos_group_id, g.name)
     }
   }
 
-  // ── BUG FIX: Build ALL category/product data BEFORE applying category filter ──
-  // This ensures topCategories, topProductByCategory, productsByCategory, etc.
-  // always show ALL categories regardless of the selected category filter.
-
-  // ── Top Products (revenue = quantity * unit_price, NO 'total' column) ──
-  const productRevenueMap = new Map<string, { name: string; category: string; quantity: number; revenue: number }>()
-  for (const item of allItems) {
-    const info = productInfo.get(item.pos_product_id)
-    if (!info) continue
-    const cat = groupNames.get(info.groupId) || 'Sin categoria'
-    const key = item.pos_product_id
-    if (!productRevenueMap.has(key)) {
-      productRevenueMap.set(key, { name: info.name, category: cat, quantity: 0, revenue: 0 })
+  // Also merge groups from the full groups list (some may not be in items)
+  for (const g of allGroups) {
+    if (g.pos_group_id && !groupNames.has(g.pos_group_id)) {
+      groupNames.set(g.pos_group_id, g.name)
     }
-    const d = productRevenueMap.get(key)!
-    d.quantity += Number(item.quantity) || 0
-    d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
   }
-  // ── Items-based revenue total (for transparency: differs from KPI cheque-based total) ──
-  const itemsRevenueTotal = Math.round([...productRevenueMap.values()].reduce((s, d) => s + d.revenue, 0))
-  // ── Note: topProducts will be recomputed AFTER category filter (see below) ──
 
-  // ── Top Categories (UNFILTERED — always shows ALL categories)
-  // First, map each sale to its categories via items, so we can pull sale-level data (tip, party_size, service time)
+  // ── 4. Build category data from items ──
+  const itemsRevenueTotal = Math.round(
+    allItems.reduce((s, item) => s + (Number(item.quantity) || 0) * (Number(item.unit_price) || 0), 0)
+  )
+
+  // Sale -> categories map (for companions)
   const saleToCategories = new Map<string, Set<string>>()
   for (const item of allItems) {
     const info = productInfo.get(item.pos_product_id)
@@ -371,56 +186,92 @@ export async function GET(request: NextRequest) {
     saleToCategories.get(item.pos_sale_id)!.add(info.groupId)
   }
 
-  // Build sale lookup for category enrichment
-  const saleLookup = new Map<string, any>()
-  for (const s of salesForKPIs) saleLookup.set(s.id, s)
-
-  const categoryRevenueMap = new Map<string, { categoryName: string; quantity: number; revenue: number; cheques: Set<string>; tipTotal: number; partySizeSum: number; partySizeCount: number; serviceTimeSum: number; serviceTimeCount: number }>()
+  // Per-category aggregation
+  const categoryRevenueMap = new Map<string, {
+    categoryName: string; quantity: number; revenue: number; cheques: Set<string>
+  }>()
   for (const item of allItems) {
     const info = productInfo.get(item.pos_product_id)
     if (!info) continue
     const catName = groupNames.get(info.groupId) || 'Sin categoria'
     const catKey = info.groupId || catName
     if (!categoryRevenueMap.has(catKey)) {
-      categoryRevenueMap.set(catKey, { categoryName: catName, quantity: 0, revenue: 0, cheques: new Set(), tipTotal: 0, partySizeSum: 0, partySizeCount: 0, serviceTimeSum: 0, serviceTimeCount: 0 })
+      categoryRevenueMap.set(catKey, {
+        categoryName: catName, quantity: 0, revenue: 0, cheques: new Set(),
+      })
     }
     const d = categoryRevenueMap.get(catKey)!
     d.quantity += Number(item.quantity) || 0
     d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
     d.cheques.add(item.pos_sale_id)
   }
-  // Enrich categories with sale-level data (tip, party_size, service_time)
-  for (const [catKey, d] of categoryRevenueMap.entries()) {
-    for (const saleId of d.cheques) {
-      const sale = saleLookup.get(saleId)
-      if (!sale) continue
-      d.tipTotal += Number(sale.tip_amount) || 0
-      d.partySizeSum += Number(sale.party_size) || 0
-      d.partySizeCount += 1
-      if (sale.opened_at && sale.closed_at) {
-        const diff = (new Date(sale.closed_at).getTime() - new Date(sale.opened_at).getTime()) / 60000
-        if (diff > 0) {
-          d.serviceTimeSum += diff
-          d.serviceTimeCount += 1
-        }
+
+  // For category enrichment (tip, party_size, service_time), query sale-level data for category cheques
+  const allCategorySaleIds = [...new Set(
+    [...categoryRevenueMap.values()].flatMap(d => [...d.cheques])
+  )]
+  const saleEnrichment = new Map<string, { tip: number; partySize: number; serviceMin: number }>()
+  if (allCategorySaleIds.length > 0) {
+    const enrichBatches: string[][] = []
+    for (let i = 0; i < allCategorySaleIds.length; i += BATCH) {
+      enrichBatches.push(allCategorySaleIds.slice(i, i + BATCH))
+    }
+    const enrichPromises = enrichBatches.map(async (batch) => {
+      const { data: sales } = await sb
+        .from('pos_sales')
+        .select('id, tip_amount, party_size, opened_at, closed_at')
+        .in('id', batch)
+      return sales || []
+    })
+    const enrichArrays = await Promise.all(enrichPromises)
+    for (const s of enrichArrays.flat()) {
+      let serviceMin = 0
+      if (s.opened_at && s.closed_at) {
+        const diff = (new Date(s.closed_at).getTime() - new Date(s.opened_at).getTime()) / 60000
+        if (diff > 0) serviceMin = diff
       }
+      saleEnrichment.set(s.id, {
+        tip: Number(s.tip_amount) || 0,
+        partySize: Number(s.party_size) || 0,
+        serviceMin,
+      })
     }
   }
+
+  // Enrich categories
   const topCategories = [...categoryRevenueMap.entries()]
-    .map(([categoryId, d]) => ({
-      categoryId,
-      categoryName: d.categoryName,
-      quantity: d.quantity,
-      revenue: Math.round(d.revenue),
-      cheques: d.cheques.size,
-      tipTotal: Math.round(d.tipTotal),
-      tipAvg: d.cheques.size > 0 ? Math.round(d.tipTotal / d.cheques.size) : 0,
-      avgServiceTime: d.serviceTimeCount > 0 ? Math.round(d.serviceTimeSum / d.serviceTimeCount) : 0,
-      partySizeAvg: d.partySizeCount > 0 ? Math.round((d.partySizeSum / d.partySizeCount) * 10) / 10 : 0,
-    }))
+    .map(([categoryId, d]) => {
+      let tipTotal = 0
+      let partySizeSum = 0
+      let partySizeCount = 0
+      let serviceTimeSum = 0
+      let serviceTimeCount = 0
+      for (const saleId of d.cheques) {
+        const enrich = saleEnrichment.get(saleId)
+        if (!enrich) continue
+        tipTotal += enrich.tip
+        partySizeSum += enrich.partySize
+        partySizeCount += 1
+        if (enrich.serviceMin > 0) {
+          serviceTimeSum += enrich.serviceMin
+          serviceTimeCount += 1
+        }
+      }
+      return {
+        categoryId,
+        categoryName: d.categoryName,
+        quantity: d.quantity,
+        revenue: Math.round(d.revenue),
+        cheques: d.cheques.size,
+        tipTotal: Math.round(tipTotal),
+        tipAvg: d.cheques.size > 0 ? Math.round(tipTotal / d.cheques.size) : 0,
+        avgServiceTime: serviceTimeCount > 0 ? Math.round(serviceTimeSum / serviceTimeCount) : 0,
+        partySizeAvg: partySizeCount > 0 ? Math.round((partySizeSum / partySizeCount) * 10) / 10 : 0,
+      }
+    })
     .sort((a, b) => b.revenue - a.revenue)
 
-  // ── Top Product BY Category (#1 product in each category) ──
+  // Per-category product ranking
   const perCatProduct = new Map<string, Map<string, { quantity: number; revenue: number }>>()
   for (const item of allItems) {
     const info = productInfo.get(item.pos_product_id)
@@ -432,6 +283,15 @@ export async function GET(request: NextRequest) {
     d.quantity += Number(item.quantity) || 0
     d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
   }
+
+  // Product-level cheques
+  const productSaleIds = new Map<string, Set<string>>()
+  for (const item of allItems) {
+    const pid = item.pos_product_id
+    if (!productSaleIds.has(pid)) productSaleIds.set(pid, new Set())
+    productSaleIds.get(pid)!.add(item.pos_sale_id)
+  }
+
   const topProductByCategory = [...perCatProduct.entries()]
     .map(([groupId, prodMap]) => {
       let topProd = { productId: '', productName: '', quantity: 0, revenue: 0 }
@@ -451,16 +311,7 @@ export async function GET(request: NextRequest) {
     .filter(c => c.categoryName !== 'Sin categoria')
     .sort((a, b) => b.revenue - a.revenue)
 
-  // ── Products by Category (ALL products, not just top 1, for inline expand) ──
-  // Also need cheques per product: count unique sale IDs
-  const productSaleIds = new Map<string, Set<string>>()
-  for (const item of allItems) {
-    const pid = item.pos_product_id
-    if (!productSaleIds.has(pid)) productSaleIds.set(pid, new Set())
-    productSaleIds.get(pid)!.add(item.pos_sale_id)
-  }
-
-  // Build productsByCategory for ALL categories (not just top 15)
+  // Products by Category
   const productsByCategory: Record<string, Array<{ productId: string; productName: string; quantity: number; revenue: number; cheques: number }>> = {}
   for (const [catId, prodMap] of perCatProduct.entries()) {
     const products = [...prodMap.entries()]
@@ -478,7 +329,7 @@ export async function GET(request: NextRequest) {
     productsByCategory[String(catId)] = products
   }
 
-  // ── Top & Bottom Performers per Category ──
+  // Top & Bottom Performers per Category
   const topPerformersByCategory: Record<string, Array<{ productId: string; productName: string; quantity: number; revenue: number; cheques: number }>> = {}
   const bottomPerformersByCategory: Record<string, Array<{ productId: string; productName: string; quantity: number; revenue: number; cheques: number }>> = {}
   for (const [catId, prodMap] of perCatProduct.entries()) {
@@ -499,12 +350,11 @@ export async function GET(request: NextRequest) {
     bottomPerformersByCategory[key] = allProds.length > 2 ? allProds.slice(-2).reverse() : []
   }
 
-  // ── Category Companions (built from UNFILTERED data) ──
+  // Category Companions
   const pairMap = new Map<string, { cat1Id: string; cat1Name: string; cat2Id: string; cat2Name: string; sharedCheques: number }>()
-  for (const [saleId, catSet] of saleToCategories.entries()) {
+  for (const [, catSet] of saleToCategories.entries()) {
     const catIds = [...catSet.values()]
     if (catIds.length < 2) continue
-    // Sort to create consistent pair keys (lower id first)
     catIds.sort()
     for (let i = 0; i < catIds.length; i++) {
       for (let j = i + 1; j < catIds.length; j++) {
@@ -526,19 +376,20 @@ export async function GET(request: NextRequest) {
     .sort((a, b) => b.sharedCheques - a.sharedCheques)
     .slice(0, 20)
 
-  // ── NOW filter items by selected category (only affects KPIs, byZone, hourlyRevenue, dailyTrend, staffPerformance, topProducts, etc.) ──
+  // ── 5. Apply category filter to items (for filtered topProducts) ──
+  let filteredItems = allItems
   if (categoryParam && categoryParam !== 'all') {
     const categoryProductIds = new Set(
       [...productInfo.entries()]
         .filter(([, info]) => info.groupId === categoryParam)
         .map(([pid]) => pid)
     )
-    allItems = allItems.filter((item: any) => categoryProductIds.has(String(item.pos_product_id)))
+    filteredItems = allItems.filter((item: any) => categoryProductIds.has(String(item.pos_product_id)))
   }
 
-  // ── Top Products (FILTERED by category — recomputed after category filter) ──
+  // Filtered Top Products
   const filteredProductRevenueMap = new Map<string, { name: string; category: string; quantity: number; revenue: number }>()
-  for (const item of allItems) {
+  for (const item of filteredItems) {
     const info = productInfo.get(item.pos_product_id)
     if (!info) continue
     const cat = groupNames.get(info.groupId) || 'Sin categoria'
@@ -551,121 +402,137 @@ export async function GET(request: NextRequest) {
     d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
   }
   const topProducts = [...filteredProductRevenueMap.entries()]
-    .sort(([,a], [,b]) => b.revenue - a.revenue)
+    .sort(([, a], [, b]) => b.revenue - a.revenue)
     .slice(0, 15)
     .map(([productId, p]) => ({ productId, productName: p.name || 'Sin nombre', category: p.category, quantity: p.quantity, revenue: Math.round(p.revenue) }))
 
-  // ── Staff Performance (ENRICHED: staff_type) ──
-  const staffMap = new Map<string, { cheques: number; revenue: number; propinaTotal: number }>()
-  for (const s of salesForKPIs) {
-    const sid = s.pos_staff_id
-    if (!sid) continue
-    if (!staffMap.has(sid)) staffMap.set(sid, { cheques: 0, revenue: 0, propinaTotal: 0 })
-    const d = staffMap.get(sid)!
-    d.cheques += 1
-    d.revenue += Number(s.total) || 0
-    d.propinaTotal += Number(s.tip_amount) || 0
+  // ── 6. Assemble KPIs from RPC ──
+  const kpi = kpiData && kpiData.length > 0 ? kpiData[0] : null
+  const totalRevenue = Number(kpi?.revenue) || 0
+  const cheques = Number(kpi?.cheques) || 0
+  const totalTip = Number(kpi?.tip_total) || 0
+  const totalParty = Number(kpi?.party_size_total) || 0
+  const cardPaidTotal = Number(kpi?.card_paid_total) || 0
+  const cashPaidTotal = Number(kpi?.cash_paid_total) || 0
+  const avgServiceTime = Number(kpi?.avg_service_time_min) || 0
+  const ticketPromedio = Number(kpi?.ticket_promedio) || 0
+  const propinaPromedio = Number(kpi?.tip_promedio) || 0
+  const partySizePromedio = Number(kpi?.party_size_promedio) || 0
+
+  // ── 7. By Zone from RPC ──
+  const unknownZoneRow = zonesData.find((z: any) => z.zone === 'Desconocido')
+  const unknownZone = unknownZoneRow ? {
+    revenue: Number(unknownZoneRow.revenue) || 0,
+    cheques: Number(unknownZoneRow.cheques) || 0,
+    pct: totalRevenue > 0 ? Math.round((Number(unknownZoneRow.revenue) / totalRevenue) * 100) : 0,
+  } : { revenue: 0, cheques: 0, pct: 0 }
+
+  const knownZones = zonesData.filter((z: any) => z.zone !== 'Desconocido')
+  const totalZoneRevenue = knownZones.reduce((s: number, z: any) => s + (Number(z.revenue) || 0), 0)
+  const byZone = knownZones
+    .map((z: any) => ({
+      zone: z.zone,
+      revenue: Number(z.revenue) || 0,
+      cheques: Number(z.cheques) || 0,
+      ticketPromedio: Number(z.cheques) > 0 ? Math.round(Number(z.revenue) / Number(z.cheques)) : 0,
+      propinaTotal: Number(z.tip_total) || 0,
+      pct: totalZoneRevenue > 0 ? Math.round((Number(z.revenue) / totalZoneRevenue) * 100) : 0,
+      avgServiceTime: Number(z.avg_service_time_min) || 0,
+    }))
+    .sort((a: any, b: any) => b.revenue - a.revenue)
+
+  // ── 8. Hourly from RPC ──
+  const hourlyRevenue = hourlyData.map((h: any) => ({
+    hour: String(h.hour),
+    revenue: Number(h.revenue) || 0,
+    cheques: Number(h.cheques) || 0,
+    tipTotal: Number(h.tip_total) || 0,
+    cardPaidTotal: Number(h.card_paid_total) || 0,
+    cashPaidTotal: Number(h.cash_paid_total) || 0,
+  }))
+
+  // ── 9. Daily from RPC ──
+  const dailyTrend = dailyData.map((d: any) => ({
+    date: d.date,
+    revenue: Number(d.revenue) || 0,
+    cheques: Number(d.cheques) || 0,
+    propina: Number(d.propina) || 0,
+    personas: Number(d.personas) || 0,
+  }))
+
+  // ── 10. Staff from RPC ──
+  const staffPerformance = staffData.map((s: any) => ({
+    staffId: s.staff_id,
+    staffName: s.staff_name,
+    staffType: Number(s.staff_type) || 0,
+    cheques: Number(s.cheques) || 0,
+    revenue: Number(s.revenue) || 0,
+    propinaTotal: Number(s.tip_total) || 0,
+    ticketPromedio: Number(s.ticket_promedio) || 0,
+  }))
+
+  // ── 11. Payments from RPC ──
+  const paymentMethods = paymentsData.map((p: any) => ({
+    method: p.method,
+    amount: Number(p.amount) || 0,
+    count: Number(p.count) || 0,
+    pct: Number(p.pct) || 0,
+  }))
+
+  // ── 12. Client Split from RPC ──
+  const cfRow = clientSplitData.find((c: any) => c.consumer_type === 'consumidor_final')
+  const idRow = clientSplitData.find((c: any) => c.consumer_type === 'identificados')
+  const clientSplit = {
+    consumidorFinal: { cheques: Number(cfRow?.cheques) || 0, revenue: Number(cfRow?.revenue) || 0 },
+    identificados: { cheques: Number(idRow?.cheques) || 0, revenue: Number(idRow?.revenue) || 0 },
   }
-  const staffIds = [...staffMap.keys()]
-  const staffNames = new Map<string, string>()
-  const staffTypes = new Map<string, number>()
-  if (staffIds.length > 0) {
-    for (let i = 0; i < staffIds.length; i += BATCH) {
-      const batch = staffIds.slice(i, i + BATCH)
-      const { data: staffData } = await sb
-        .from('pos_staff')
-        .select('pos_staff_id, name, staff_type')
-        .in('pos_staff_id', batch)
-      if (staffData) {
-        for (const st of staffData) {
-          staffNames.set(st.pos_staff_id, st.name)
-          staffTypes.set(st.pos_staff_id, st.staff_type)
+
+  // ── 13. Client Tiers ──
+  // Get distinct customer IDs from sales for the period
+  let customerIdSet = new Set<string>()
+  {
+    let custOffset = 0
+    while (true) {
+      const { data: custBatch } = await sb
+        .from('pos_sales')
+        .select('customer_id, pos_customer_id')
+        .gte('opened_at', `${from}T00:00:00`)
+        .lte('opened_at', `${to}T23:59:59`)
+        .eq('is_cancelled', false)
+        .range(custOffset, custOffset + BATCH - 1)
+      if (custBatch && custBatch.length > 0) {
+        for (const r of custBatch) {
+          const cid = r.customer_id || r.pos_customer_id
+          if (cid) customerIdSet.add(cid)
         }
-      }
+        custOffset += BATCH
+        if (custBatch.length < BATCH) break
+      } else break
     }
   }
-  const staffPerformance = [...staffMap.entries()]
-    .map(([staffId, d]) => ({
-      staffId,
-      staffName: staffNames.get(staffId) || 'Desconocido',
-      staffType: staffTypes.get(staffId) || 0,
-      cheques: d.cheques,
-      revenue: Math.round(d.revenue),
-      propinaTotal: Math.round(d.propinaTotal),
-      ticketPromedio: d.cheques > 0 ? Math.round(d.revenue / d.cheques) : 0,
-    }))
-    .sort((a, b) => b.revenue - a.revenue)
-
-  // ── Payment Methods (CORRECT columns: pos_sale_id, pos_payment_method_id) ──
-  let allPayments: any[] = []
-  if (allSaleIds.length > 0) {
-    for (let i = 0; i < allSaleIds.length; i += BATCH) {
-      const batch = allSaleIds.slice(i, i + BATCH)
-      const { data: payData } = await sb
-        .from('pos_sale_payments')
-        .select('pos_sale_id, pos_payment_method_id, amount, tip')
-        .in('pos_sale_id', batch)
-      if (payData) allPayments.push(...payData)
-    }
-  }
-
-  const methodIds = [...new Set(allPayments.map((p: any) => p.pos_payment_method_id).filter(Boolean))]
-  const methodNames = new Map<string, string>()
-  if (methodIds.length > 0) {
-    for (let i = 0; i < methodIds.length; i += BATCH) {
-      const batch = methodIds.slice(i, i + BATCH)
-      const { data: methods } = await sb
-        .from('pos_payment_methods')
-        .select('pos_payment_method_id, name')
-        .in('pos_payment_method_id', batch)
-      if (methods) {
-        for (const m of methods) methodNames.set(m.pos_payment_method_id, m.name)
-      }
-    }
-  }
-
-  const paymentMap = new Map<string, { amount: number; count: number }>()
-  for (const p of allPayments) {
-    const mName = methodNames.get(p.pos_payment_method_id) || 'Otro'
-    if (!paymentMap.has(mName)) paymentMap.set(mName, { amount: 0, count: 0 })
-    const d = paymentMap.get(mName)!
-    d.amount += Number(p.amount) || 0
-    d.count += 1
-  }
-  const totalPaymentAmount = [...paymentMap.values()].reduce((s, d) => s + d.amount, 0)
-  const paymentMethods = [...paymentMap.entries()]
-    .map(([method, d]) => ({
-      method,
-      amount: Math.round(d.amount),
-      count: d.count,
-      pct: totalPaymentAmount > 0 ? Math.round((d.amount / totalPaymentAmount) * 100) : 0,
-    }))
-    .sort((a, b) => b.amount - a.amount)
-
-  // ── Client Tiers ──
-  // Filter by customer_ids from the period's sales to avoid all-time data
-  const periodCustomerIds = [...new Set(
-    allSales.map((s: any) => s.customer_id || s.pos_customer_id).filter(Boolean)
-  )]
+  const customerIds = [...customerIdSet]
   const tierMap = new Map<string, { count: number; totalSpent: number }>()
-  if (periodCustomerIds.length > 0) {
-    for (let i = 0; i < periodCustomerIds.length; i += BATCH) {
-      const batch = periodCustomerIds.slice(i, i + BATCH)
+  if (customerIds.length > 0) {
+    const custBatches: string[][] = []
+    for (let i = 0; i < customerIds.length; i += BATCH) {
+      custBatches.push(customerIds.slice(i, i + BATCH))
+    }
+    const tierPromises = custBatches.map(async (batch) => {
       const { data: tierData } = await sb
         .from('customer_stats')
         .select('loyalty_tier, total_spent')
         .in('customer_id', batch)
         .not('loyalty_tier', 'is', null)
-      if (tierData) {
-        for (const t of tierData) {
-          const tier = t.loyalty_tier
-          if (!tier) continue
-          if (!tierMap.has(tier)) tierMap.set(tier, { count: 0, totalSpent: 0 })
-          const d = tierMap.get(tier)!
-          d.count += 1
-          d.totalSpent += Number(t.total_spent) || 0
-        }
-      }
+      return tierData || []
+    })
+    const tierArrays = await Promise.all(tierPromises)
+    for (const t of tierArrays.flat()) {
+      const tier = t.loyalty_tier
+      if (!tier) continue
+      if (!tierMap.has(tier)) tierMap.set(tier, { count: 0, totalSpent: 0 })
+      const d = tierMap.get(tier)!
+      d.count += 1
+      d.totalSpent += Number(t.total_spent) || 0
     }
   }
   const clientTiers = [...tierMap.entries()]
@@ -675,44 +542,14 @@ export async function GET(request: NextRequest) {
       return order.indexOf(a.tier.toLowerCase()) - order.indexOf(b.tier.toLowerCase())
     })
 
-  // ── Client Split ──
-  let consumidorFinal = { cheques: 0, revenue: 0 }
-  let identificados = { cheques: 0, revenue: 0 }
-  for (const s of salesForKPIs) {
-    if (s.customer_id || s.pos_customer_id) {
-      identificados.cheques += 1
-      identificados.revenue += Number(s.total) || 0
-    } else {
-      consumidorFinal.cheques += 1
-      consumidorFinal.revenue += Number(s.total) || 0
-    }
-  }
-  const clientSplit = {
-    consumidorFinal: { cheques: consumidorFinal.cheques, revenue: Math.round(consumidorFinal.revenue) },
-    identificados: { cheques: identificados.cheques, revenue: Math.round(identificados.revenue) },
-  }
-
-  // ── Category list for filters (CORRECT column: pos_group_id) ──
-  const { data: allGroups } = await sb
-    .from('pos_product_groups')
-    .select('pos_group_id, name')
-    .order('pos_group_id')
-  // Only include categories that have at least one product assigned
-  const categoriesWithProducts = new Set(Array.from(productInfo.values()).map((v: any) => v.groupId).filter(Boolean))
-  const categoryList = (allGroups || [])
+  // ── 14. Category List ──
+  const categoriesWithProducts = new Set(Array.from(productInfo.values()).map(v => v.groupId).filter(Boolean))
+  const categoryList = allGroups
     .filter((g: any) => g.pos_group_id && !g.pos_group_id.startsWith('SG_') && categoriesWithProducts.has(g.pos_group_id))
     .map((g: any) => ({ id: g.pos_group_id, name: g.name }))
 
-  // ── NEW: Shifts (last 10) ──
-  const { data: shiftData } = await sb
-    .from('pos_shifts')
-    .select('pos_shift_id, station, cashier, cash_total, card_total, credit_total, opened_at, closed_at, is_closed')
-    .gte('opened_at', `${from}T00:00:00`)
-    .lte('opened_at', `${to}T23:59:59`)
-    .order('opened_at', { ascending: false })
-    .range(0, 9)
-
-  const shifts = (shiftData || []).map((s: any) => ({
+  // ── 15. Shifts ──
+  const shifts = shiftsData.map((s: any) => ({
     shiftId: s.pos_shift_id,
     station: s.station,
     cashier: s.cashier,
@@ -724,36 +561,26 @@ export async function GET(request: NextRequest) {
     isClosed: s.is_closed,
   }))
 
-  // ── NEW: Payment methods by zone ──
-  // Map saleId -> zone from saleLookup
-  const zonePaymentMap = new Map<string, Map<string, { amount: number; count: number }>>()
-  for (const p of allPayments) {
-    const sale = saleLookup.get(p.pos_sale_id)
-    if (!sale) continue
-    const zone = sale.derived_zone_name || 'Desconocido'
-    const mName = methodNames.get(p.pos_payment_method_id) || 'Otro'
-    if (!zonePaymentMap.has(zone)) zonePaymentMap.set(zone, new Map())
-    const zMap = zonePaymentMap.get(zone)!
-    if (!zMap.has(mName)) zMap.set(mName, { amount: 0, count: 0 })
-    const d = zMap.get(mName)!
-    d.amount += Number(p.amount) || 0
-    d.count += 1
+  // ── 16. By Zone Payment from RPC ──
+  const zonePaymentGrouped = new Map<string, Array<{ method: string; amount: number; count: number }>>()
+  for (const p of paymentsByZoneData) {
+    const z = p.zone
+    if (!zonePaymentGrouped.has(z)) zonePaymentGrouped.set(z, [])
+    zonePaymentGrouped.get(z)!.push({
+      method: p.method,
+      amount: Number(p.amount) || 0,
+      count: Number(p.count) || 0,
+    })
   }
-  const byZonePayment = [...zonePaymentMap.entries()]
+  const byZonePayment = [...zonePaymentGrouped.entries()]
     .map(([zone, methods]) => {
-      const methodsArr = [...methods.entries()]
-        .map(([method, d]) => ({
-          method,
-          amount: Math.round(d.amount),
-          count: d.count,
-        }))
-        .sort((a, b) => b.amount - a.amount)
-      const totalMethodAmount = methodsArr.reduce((s, m) => s + m.amount, 0)
+      const sorted = methods.sort((a, b) => b.amount - a.amount)
+      const total = sorted.reduce((s, m) => s + m.amount, 0)
       return {
         zone,
-        methods: methodsArr.map(m => ({
+        methods: sorted.map(m => ({
           ...m,
-          pct: totalMethodAmount > 0 ? Math.round((m.amount / totalMethodAmount) * 100) : 0,
+          pct: total > 0 ? Math.round((m.amount / total) * 100) : 0,
         })),
       }
     })
@@ -763,7 +590,8 @@ export async function GET(request: NextRequest) {
       return totalB - totalA
     })
 
-  return NextResponse.json({
+  // ── 17. Assemble response ──
+  return {
     kpis: {
       revenue: Math.round(totalRevenue),
       cheques,
@@ -797,5 +625,48 @@ export async function GET(request: NextRequest) {
     bottomPerformersByCategory,
     filters: { zone: zoneParam, category: categoryParam, from, to },
     availableMonths,
-  })
+  }
+}
+
+// ── Main handler ─────────────────────────────────────────
+export async function GET(request: NextRequest) {
+  const admin = await getAdminUser(request)
+  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+
+  const zoneParam = qparam(request, 'zone') || 'all'
+  const categoryParam = qparam(request, 'category') || 'all'
+  let from = qparam(request, 'from') || ''
+  let to = qparam(request, 'to') || ''
+
+  const sb = getServiceClient()
+
+  // Resolve date range and available months (single RPC call)
+  const { data: months } = await sb.rpc('pos_dashboard_months')
+  const monthsList = (months || []).map((m: any) => m.month)
+
+  if (!from || !to) {
+    if (monthsList.length > 0) {
+      const latest = monthsList[monthsList.length - 1]
+      const [y, m] = latest.split('-').map(Number)
+      from = from || `${y}-${String(m).padStart(2, '0')}-01`
+      const lastDay = new Date(y, m, 0).getDate()
+      to = to || `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    } else {
+      from = from || '2026-01-01'
+      to = to || '2026-12-31'
+    }
+  }
+
+  const getCachedData = unstable_cache(
+    fetchDashboardData,
+    ['pos-dashboard'],
+    { revalidate: 300 }
+  )
+
+  try {
+    const data = await getCachedData(zoneParam, categoryParam, from, to, monthsList)
+    return NextResponse.json(data)
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || 'Error cargando dashboard' }, { status: 500 })
+  }
 }

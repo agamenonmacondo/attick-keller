@@ -9,65 +9,34 @@ function qparam(request: NextRequest, key: string): string | null {
 async function fetchCalendarData(zoneParam: string) {
   const sb = getServiceClient()
 
-  // Fetch ALL non-cancelled paid sales (no date filter — calendar shows everything)
-  let allSales: any[] = []
-  let offset = 0
-  const BATCH = 1000
-  let hasMore = true
-  while (hasMore) {
-    let query = sb
-      .from('pos_sales')
-      .select('opened_at, total, tip_amount, party_size, derived_zone_name, is_cancelled')
-      .eq('is_paid', true)
-      .eq('is_cancelled', false)
-      .range(offset, offset + BATCH - 1)
-      .order('opened_at', { ascending: true })
+  // Fetch daily trend from RPC (all-time: from 2024 to 2030 covers everything, paid only)
+  const { data: dailyData, error: dailyError } = await sb.rpc('pos_dashboard_daily', {
+    p_from: '2024-01-01',
+    p_to: '2030-12-31',
+    p_zone: zoneParam,
+    p_is_paid_only: true,
+  })
 
-    const { data: batch, error } = await query
-    if (error) {
-      throw new Error('Error cargando ventas: ' + error.message)
-    }
-    if (batch && batch.length > 0) {
-      allSales.push(...batch)
-      offset += BATCH
-      hasMore = batch.length === BATCH
-    } else {
-      hasMore = false
-    }
+  if (dailyError) {
+    throw new Error('Error cargando tendencia diaria: ' + dailyError.message)
   }
 
-  // Filter by zone if specified
-  const filtered = zoneParam !== 'all'
-    ? allSales.filter((s: any) => s.derived_zone_name === zoneParam)
-    : allSales
+  const dailyTrend = (dailyData || []).map((d: any) => ({
+    date: d.date,
+    revenue: Number(d.revenue) || 0,
+    cheques: Number(d.cheques) || 0,
+    propina: Number(d.propina) || 0,
+    personas: Number(d.personas) || 0,
+  }))
 
-  // Build dailyTrend
-  const dayMap = new Map<string, { revenue: number; cheques: number; propina: number; personas: number }>()
-  for (const s of filtered) {
-    const dt = new Date(s.opened_at)
-    const dayStr = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
-    const d = dayMap.get(dayStr) || { revenue: 0, cheques: 0, propina: 0, personas: 0 }
-    d.revenue += Number(s.total) || 0
-    d.cheques += 1
-    d.propina += Number(s.tip_amount) || 0
-    d.personas += Number(s.party_size) || 0
-    dayMap.set(dayStr, d)
-  }
-  const dailyTrend = [...dayMap.entries()]
-    .map(([date, d]) => ({ date, ...d }))
-    .sort((a, b) => a.date.localeCompare(b.date))
+  // Fetch available months from RPC
+  const { data: monthsData, error: monthsError } = await sb.rpc('pos_dashboard_months')
 
-  // Build availableMonths
-  const seen = new Set<string>()
-  const availableMonths: string[] = []
-  for (const s of allSales) {
-    const d = new Date(s.opened_at)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    if (!seen.has(key)) {
-      seen.add(key)
-      availableMonths.push(key)
-    }
+  if (monthsError) {
+    throw new Error('Error cargando meses: ' + monthsError.message)
   }
+
+  const availableMonths = (monthsData || []).map((m: any) => m.month)
 
   return { dailyTrend, availableMonths, zone: zoneParam }
 }
@@ -80,7 +49,6 @@ export async function GET(request: NextRequest) {
 
   const zoneParam = qparam(request, 'zone') || 'all'
 
-  // Cache per zone — unstable_cache serializes args into the key automatically
   const getCachedCalendarData = unstable_cache(
     fetchCalendarData,
     ['pos-calendar'],

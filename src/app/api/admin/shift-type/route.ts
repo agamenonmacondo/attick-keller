@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
 
-const RESTAURANT_ID = 'a0000000-0000-0000-0000-000000000001'
-
 // POST /api/admin/shift-type — crear un nuevo tipo de turno
 export async function POST(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -29,7 +27,6 @@ export async function POST(request: NextRequest) {
   const { data, error } = await sb
     .from('shift_types')
     .insert({
-      restaurant_id: RESTAURANT_ID,
       code,
       name,
       entrada,

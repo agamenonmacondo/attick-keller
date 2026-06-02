@@ -568,19 +568,22 @@ function ShiftTypeEditor({
   const handleNew = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/shift-schedules', {
+      const res = await fetch('/api/admin/shift-type', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create_shift_type', ...form }),
+        body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error('Error creando tipo de turno');
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error creando tipo de turno');
+      }
       setForm({ code: '', name: '', entrada: '', salida: '', ordinarias: 0, nocturnas: 0, area });
       setEditing(null);
       onRefresh();
     } catch (err) {
       console.error(err);
-      alert('Error creando tipo de turno');
+      alert(err instanceof Error ? err.message : 'Error creando tipo de turno');
     } finally {
       setSaving(false);
     }

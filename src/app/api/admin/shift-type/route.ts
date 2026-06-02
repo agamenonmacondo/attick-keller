@@ -1,6 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
 
+const RESTAURANT_ID = 'a0000000-0000-0000-0000-000000000001'
+
+// POST /api/admin/shift-type — crear un nuevo tipo de turno
+export async function POST(request: NextRequest) {
+  const admin = await getAdminUser(request)
+  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+
+  const sb = getServiceClient()
+  const body = await request.json()
+  const { code, name, entrada, salida, ordinarias, nocturnas, is_split, description, area } = body
+
+  if (!code || !name || !entrada || !salida) {
+    return NextResponse.json(
+      { error: 'code, name, entrada y salida son requeridos' },
+      { status: 400 }
+    )
+  }
+
+  if (!area) {
+    return NextResponse.json(
+      { error: 'area es requerido' },
+      { status: 400 }
+    )
+  }
+
+  const { data, error } = await sb
+    .from('shift_types')
+    .insert({
+      restaurant_id: RESTAURANT_ID,
+      code,
+      name,
+      entrada,
+      salida,
+      ordinarias: ordinarias ?? 0,
+      nocturnas: nocturnas ?? 0,
+      is_split: is_split ?? false,
+      description: description || null,
+      area,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json(data, { status: 201 })
+}
+
 // PATCH /api/admin/shift-type — actualizar un tipo de turno existente
 export async function PATCH(request: NextRequest) {
   const admin = await getAdminUser(request)

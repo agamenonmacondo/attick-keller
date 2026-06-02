@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import type { StaffMemberForShift, ShiftType } from '@/lib/types/shifts';
-import { calcularCostoTurno, formatCOP } from '@/lib/utils/costCalculator';
+import { calcularCostoTurno, calcularCostoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
 import { useSalesAverages } from '@/lib/hooks/useSalesAverages';
 
 interface SalesReferenceTabProps {
@@ -13,17 +13,24 @@ interface SalesReferenceTabProps {
   area: string;
 }
 
-// Ratio color helper
-function ratioColor(ratio: number): string {
-  if (ratio >= 3.0) return 'text-emerald-400';
-  if (ratio >= 1.5) return 'text-amber-400';
+// Ratio color helper — now based on COSTO NÓMINA / VENTAS (lower = better)
+// < 20% → green (efficient), 20-35% → amber (moderate), > 35% → red (heavy cost)
+function ratioColor(pct: number): string {
+  if (pct <= 20) return 'text-emerald-400';
+  if (pct <= 35) return 'text-amber-400';
   return 'text-red-400';
+}
+
+function ratioLabel(pct: number): string {
+  if (pct <= 20) return 'Eficiente';
+  if (pct <= 35) return 'Moderado';
+  return 'Costo alto';
 }
 
 export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, area }: SalesReferenceTabProps) {
   const { data: salesData, loading: salesLoading } = useSalesAverages();
 
-  // Calculate nomina per day and total
+  // Calculate nomina per day and total — using COSTO EMPRESA (salary + prestaciones + aportes)
   const nominaByDay = useMemo(() => {
     const dayData: Record<number, { personas: number; costoNomina: number }> = {};
     for (let i = 0; i < 7; i++) {
@@ -39,6 +46,15 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
       const empGrid = grid[emp.id];
       if (!empGrid) continue;
 
+      // Calculate costo empresa for this employee (salary + prestaciones + aportes patronales)
+      // If salary is missing or absurdly high, fall back to SMLV so the position still counts
+      const rawSalario = emp.salario_mensual || 0;
+      const salario = rawSalario > 50000000 ? 1750905 : (rawSalario || 1750905);
+      const costoEmp = calcularCostoEmpresa(salario);
+      // Use the REAL hourly cost: costoMensualTotal / 30 / 8 (includes all legal surcharges)
+      // Instead of raw salario / 30 / 8 which underestimates by ~67%
+      const valorHoraEmpresa = costoEmp.costoMensualTotal / 30 / 8;
+
       for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
         const code = empGrid[dayIdx];
         if (!code || code === 'OFF') continue;
@@ -47,13 +63,15 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
         if (!st) continue;
 
         const isSunday = dayIdx === SUNDAY_DAY_INDEX;
-        const salario = emp.salario_mensual && emp.salario_mensual > 50000000
-          ? 0
-          : (emp.salario_mensual || 0);
         const costo = calcularCostoTurno(st, salario, isSunday);
 
+        // Scale up: costo.total is based on raw salario/hour.
+        // Multiply by (costoEmpresa/salario) ratio to get real employer cost.
+        const scaleFactor = costoEmp.costoMensualTotal / salario;
+        const costoEmpresa = costo.total * scaleFactor;
+
         dayData[dayIdx].personas += 1;
-        dayData[dayIdx].costoNomina += costo.total;
+        dayData[dayIdx].costoNomina += costoEmpresa;
       }
     }
 
@@ -73,9 +91,10 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
   // Display order: Lun(1), Mar(2), Mie(3), Jue(4), Vie(5), Sab(6), Dom(0)
   const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
-  // Use MEDIAN for weekly ratio (robust against outliers)
-  const weeklyRatio = weeklyNomina.totalNomina > 0
-    ? (salesData?.weekly_total.median_per_week || 0) / weeklyNomina.totalNomina
+  // Use MEDIAN for weekly ratio — now shows % COSTO NÓMINA / VENTAS (lower = better)
+  // >35% → red (nómina pesada), 20-35% → ámbar (moderado), <20% → verde (eficiente)
+  const weeklyPct = weeklyNomina.totalNomina > 0 && salesData && (salesData.weekly_total.median_per_week || 0) > 0
+    ? (weeklyNomina.totalNomina / salesData.weekly_total.median_per_week) * 100
     : 0;
 
   if (salesLoading) {
@@ -108,22 +127,22 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           </div>
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
-          <div className="text-xs text-[var(--text-secondary)]">Nomina estimada semana</div>
+          <div className="text-xs text-[var(--text-secondary)]">Nómina costo empresa</div>
           <div className="text-lg font-mono font-semibold text-[var(--text-primary)]">
             {weeklyNomina.totalNomina > 0 ? formatCOP(weeklyNomina.totalNomina) : '-'}
           </div>
           <div className="text-[10px] text-[var(--text-secondary)]">
-            {weeklyNomina.totalPersonas} turnos asignados
+            {weeklyNomina.totalPersonas} turnos · Incluye prestaciones + aportes
           </div>
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
-          <div className="text-xs text-[var(--text-secondary)]">Ratio Ventas/Nomina</div>
-          <div className={`text-lg font-mono font-semibold ${weeklyNomina.totalNomina > 0 ? ratioColor(weeklyRatio) : 'text-[var(--text-secondary)]'}`}>
-            {weeklyNomina.totalNomina > 0 ? weeklyRatio.toFixed(2) : 'Sin datos de nomina'}
+          <div className="text-xs text-[var(--text-secondary)]">Nómina / Ventas</div>
+          <div className={`text-lg font-mono font-semibold ${weeklyNomina.totalNomina > 0 ? ratioColor(weeklyPct) : 'text-[var(--text-secondary)]'}`}>
+            {weeklyNomina.totalNomina > 0 ? `${weeklyPct.toFixed(1)}%` : 'Sin datos'}
           </div>
           {weeklyNomina.totalNomina > 0 && (
             <div className="text-[10px] text-[var(--text-secondary)]">
-              {weeklyRatio >= 3.0 ? 'Productividad alta' : weeklyRatio >= 1.5 ? 'Productividad moderada' : 'Productividad baja'}
+              {ratioLabel(weeklyPct)} · Ley: 20-30% es saludable
             </div>
           )}
         </div>
@@ -140,8 +159,8 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <th className="text-right p-2 text-[var(--text-secondary)]">Rango Sup (Q3)</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Tx/dia</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Personas</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">Costo Nomina</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">Ratio V/N</th>
+              <th className="text-right p-2 text-[var(--text-secondary)]">Costo Empresa</th>
+              <th className="text-right p-2 text-[var(--text-secondary)]">% Nóm/Ventas</th>
             </tr>
           </thead>
           <tbody>
@@ -149,7 +168,9 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               const salesDay = salesData.days.find(d => d.day_index === dayIndex);
               if (!salesDay) return null;
               const nomDay = nominaByDay[dayIndex];
-              const ratio = nomDay.costoNomina > 0 ? salesDay.median / nomDay.costoNomina : 0;
+              const pct = salesDay.median > 0 && nomDay.costoNomina > 0
+                ? (nomDay.costoNomina / salesDay.median) * 100
+                : 0;
 
               return (
                 <tr key={dayIndex} className="border-b border-[var(--border-default)]/50">
@@ -174,8 +195,8 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                   <td className="p-2 text-right font-mono text-[var(--text-primary)]">
                     {nomDay.costoNomina > 0 ? formatCOP(Math.round(nomDay.costoNomina)) : '-'}
                   </td>
-                  <td className={`p-2 text-right font-mono font-semibold ${nomDay.costoNomina > 0 ? ratioColor(ratio) : 'text-[var(--text-secondary)]'}`}>
-                    {nomDay.costoNomina > 0 ? ratio.toFixed(2) : '-'}
+                  <td className={`p-2 text-right font-mono font-semibold ${nomDay.costoNomina > 0 && salesDay.median > 0 ? ratioColor(pct) : 'text-[var(--text-secondary)]'}`}>
+                    {nomDay.costoNomina > 0 && salesDay.median > 0 ? `${pct.toFixed(1)}%` : '-'}
                   </td>
                 </tr>
               );
@@ -196,8 +217,8 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">
                 {weeklyNomina.totalNomina > 0 ? formatCOP(weeklyNomina.totalNomina) : '-'}
               </td>
-              <td className={`p-2 text-right font-mono font-bold ${weeklyNomina.totalNomina > 0 ? ratioColor(weeklyRatio) : 'text-[var(--text-secondary)]'}`}>
-                {weeklyNomina.totalNomina > 0 ? weeklyRatio.toFixed(2) : '-'}
+              <td className={`p-2 text-right font-mono font-bold ${weeklyNomina.totalNomina > 0 ? ratioColor(weeklyPct) : 'text-[var(--text-secondary)]'}`}>
+                {weeklyNomina.totalNomina > 0 ? `${weeklyPct.toFixed(1)}%` : '-'}
               </td>
             </tr>
           </tfoot>
@@ -210,14 +231,16 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           const salesDay = salesData.days.find(d => d.day_index === dayIndex);
           if (!salesDay) return null;
           const nomDay = nominaByDay[dayIndex];
-          const ratio = nomDay.costoNomina > 0 ? salesDay.median / nomDay.costoNomina : 0;
+          const pct = salesDay.median > 0 && nomDay.costoNomina > 0
+            ? (nomDay.costoNomina / salesDay.median) * 100
+            : 0;
 
           return (
             <div key={dayIndex} className="bg-[var(--bg-card)] rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="font-semibold text-[var(--text-primary)] text-sm">{salesDay.day_name}</div>
-                <div className={`font-mono font-semibold text-sm ${nomDay.costoNomina > 0 ? ratioColor(ratio) : ''}`}>
-                  {nomDay.costoNomina > 0 ? `V/N ${ratio.toFixed(2)}` : '-'}
+                <div className={`font-mono font-semibold text-sm ${nomDay.costoNomina > 0 && salesDay.median > 0 ? ratioColor(pct) : ''}`}>
+                  {nomDay.costoNomina > 0 && salesDay.median > 0 ? `${pct.toFixed(1)}%` : '-'}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
@@ -229,7 +252,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                 <div className="text-right font-mono text-[var(--text-primary)]">{salesDay.tx_avg}</div>
                 <div className="text-[var(--text-secondary)]">Personas</div>
                 <div className="text-right font-mono text-[var(--text-primary)]">{nomDay.personas}</div>
-                <div className="text-[var(--text-secondary)]">Nomina est.</div>
+                <div className="text-[var(--text-secondary)]">Costo empresa</div>
                 <div className="text-right font-mono text-[var(--text-primary)]">
                   {nomDay.costoNomina > 0 ? formatCOP(Math.round(nomDay.costoNomina)) : '-'}
                 </div>
@@ -244,8 +267,8 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
             <span className="text-[var(--text-primary)]">TOTAL SEMANA</span>
             <div className="text-right">
               <div className="font-mono text-[var(--text-primary)]">{formatCOP(salesData.weekly_total.median_per_week)}</div>
-              <div className={`font-mono font-bold ${weeklyNomina.totalNomina > 0 ? ratioColor(weeklyRatio) : 'text-[var(--text-secondary)]'}`}>
-                {weeklyNomina.totalNomina > 0 ? `Ratio: ${weeklyRatio.toFixed(2)}` : 'Sin nomina'}
+              <div className={`font-mono font-bold ${weeklyNomina.totalNomina > 0 ? ratioColor(weeklyPct) : 'text-[var(--text-secondary)]'}`}>
+                {weeklyNomina.totalNomina > 0 ? `Nóm/Ventas: ${weeklyPct.toFixed(1)}%` : 'Sin nomina'}
               </div>
             </div>
           </div>

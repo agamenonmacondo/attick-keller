@@ -3,9 +3,8 @@ import { getServiceClient, getAdminUser } from '@/lib/utils/admin-auth'
 
 // ── Nómina Import API ──────────────────────────────────
 // Accepts imports via X-Import-Token header (for scripts) or admin session cookie
-// Secret token for script access (not the Supabase key)
-
-const IMPORT_TOKEN = 'nomina-import-ak-2026'
+// Secret token for script access — loaded from env for security
+const IMPORT_TOKEN = process.env.NOMINA_IMPORT_TOKEN || ''
 
 function isAuthorized(request: NextRequest): boolean {
   // Check import token header (for scripts)

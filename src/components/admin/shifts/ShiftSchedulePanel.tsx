@@ -13,6 +13,7 @@ import ShiftGrid from './ShiftGrid';
 import CostEstimationBar from './CostEstimationBar';
 import StaffPanel from './StaffPanel';
 import ShiftTimelineView from './ShiftTimelineView';
+import ShiftTypeModal from './ShiftTypeModal';
 
 import SalesReferenceTab from './SalesReferenceTab';
 
@@ -48,6 +49,8 @@ function getHeatClasses(count: number, isDark: boolean): { bg: string; text: str
 export default function ShiftSchedulePanel() {
   const [area, setArea] = useState<Area>('cocina');
   const [tab, setTab] = useState<Tab>('cronograma');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingShiftType, setEditingShiftType] = useState<ShiftType | null>(null);
 
   // Cuando se cambia a "todos", forzar tab de costos
   useEffect(() => {
@@ -530,14 +533,104 @@ export default function ShiftSchedulePanel() {
           shiftTypes={shiftTypes}
           area={area}
           onRefresh={loadData}
+          onNewShiftType={() => { setEditingShiftType(null); setModalOpen(true); }}
+          onEditShiftType={(st) => { setEditingShiftType(st); setModalOpen(true); }}
         />
       )}
 
       {tab === 'personal' && (
         <StaffPanel area={area} />
       )}
+
+      {/* Modal para crear/editar turno */}
+      <ShiftTypeModal
+        isOpen={modalOpen}
+        onClose={() => { setModalOpen(false); setEditingShiftType(null); }}
+        area={area as unknown as 'cocina' | 'barra' | 'servicio'}
+        shiftType={editingShiftType}
+        onSave={async (data) => {
+          const method = editingShiftType ? 'PATCH' : 'POST';
+          const res = await fetch('/api/admin/shift-type', {
+            method,
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Error guardando turno');
+          }
+          loadData();
+        }}
+      />
     </div>
   );
+}
+
+// ── Turno predefinidos por area ──
+const TURNOS_PREDETERMINADOS: Record<string, { code: string; name: string; entrada: string; salida: string }[]> = {
+  cocina: [
+    { code: 'A', name: 'Apertura', entrada: '06:00', salida: '14:00' },
+    { code: 'S', name: 'Seguido', entrada: '10:00', salida: '22:00' },
+    { code: 'C', name: 'Cierre', entrada: '14:00', salida: '22:00' },
+    { code: 'CD', name: 'Cierre 14h', entrada: '14:00', salida: '22:00' },
+    { code: 'CS', name: 'Cierre Steward', entrada: '16:00', salida: '22:30' },
+    { code: 'P1', name: 'Partido 9', entrada: '09:00', salida: '22:00' },
+    { code: 'P2', name: 'Partido 10', entrada: '10:00', salida: '22:30' },
+  ],
+  barra: [
+    { code: 'A', name: 'Apertura', entrada: '09:00', salida: '17:00' },
+    { code: 'S', name: 'Seguido', entrada: '10:00', salida: '22:00' },
+    { code: 'C', name: 'Cierre', entrada: '15:00', salida: '23:00' },
+    { code: 'P1', name: 'Partido', entrada: '10:00', salida: '22:00' },
+  ],
+  servicio: [
+    { code: 'A', name: 'Apertura', entrada: '09:00', salida: '16:00' },
+    { code: 'S', name: 'Seguido', entrada: '11:00', salida: '22:00' },
+    { code: 'C', name: 'Cierre', entrada: '16:00', salida: '23:00' },
+    { code: 'P1', name: 'Partido', entrada: '11:00', salida: '22:30' },
+  ],
+};
+
+// Horas en intervalos de 30 min para select
+const TIME_OPTIONS = (() => {
+  const opts: string[] = [];
+  for (let h = 5; h <= 23; h++) {
+    for (const m of ['00', '30']) {
+      opts.push(`${String(h).padStart(2, '0')}:${m}`);
+    }
+  }
+  opts.push('00:00'); // medianoche
+  return opts;
+})();
+
+// Ley colombiana: nocturno = 21:00 (21) a 06:00 (6)
+const NOC_INICIO = 21;
+const NOC_FIN = 6;
+const JORNADA_DIARIA = 8;
+
+// Calcular horas ordinarias y nocturnas a partir de entrada/salida
+function calcularHoras(entrada: string, salida: string): { ordinarias: number; nocturnas: number; total: number } {
+  if (!entrada || !salida) return { ordinarias: 0, nocturnas: 0, total: 0 };
+  const [eh, em] = entrada.split(':').map(Number);
+  const [sh, sm] = salida.split(':').map(Number);
+  let entMin = eh * 60 + em;
+  let salMin = sh * 60 + sm;
+  if (salMin <= entMin) salMin += 1440; // cruza medianoche
+
+  const totalMin = salMin - entMin;
+  const total = Math.round((totalMin / 60) * 10) / 10;
+
+  // Calcular minutos nocturnos (21:00-06:00 = 1260-1440 y 0-360)
+  let nocMin = 0;
+  for (let m = entMin; m < salMin; m += 30) {
+    const h = (m / 60) % 24;
+    if (h >= NOC_INICIO || h < NOC_FIN) nocMin += 30;
+  }
+  const nocturnas = Math.round((nocMin / 60) * 10) / 10;
+  const ordinarias = Math.round((total - nocturnas) * 10) / 10;
+
+  return { ordinarias, nocturnas, total };
 }
 
 // Componente para editar tipos de turno
@@ -545,10 +638,14 @@ function ShiftTypeEditor({
   shiftTypes: initialTypes,
   area,
   onRefresh,
+  onNewShiftType,
+  onEditShiftType,
 }: {
   shiftTypes: ShiftType[];
   area: string;
   onRefresh: () => void;
+  onNewShiftType: () => void;
+  onEditShiftType: (st: ShiftType) => void;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -564,23 +661,48 @@ function ShiftTypeEditor({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const filteredTypes = initialTypes.filter((t) => t.area === area);
+  const presetOptions = TURNOS_PREDETERMINADOS[area] || TURNOS_PREDETERMINADOS.cocina;
+
+  // Calculo automatico cuando cambian entrada/salida
+  const horasCalc = useMemo(() => calcularHoras(form.entrada, form.salida), [form.entrada, form.salida]);
+
+  // Actualizar ordinarias/nocturnas automaticamente
+  useEffect(() => {
+    if (form.entrada && form.salida && horasCalc.total > 0) {
+      setForm(prev => ({ ...prev, ordinarias: horasCalc.ordinarias, nocturnas: horasCalc.nocturnas }));
+    }
+  }, [horasCalc.ordinarias, horasCalc.nocturnas, form.entrada, form.salida]);
+
+  const aplicarPreset = (preset: typeof presetOptions[0]) => {
+    setForm(prev => ({
+      ...prev,
+      code: preset.code,
+      name: preset.name,
+      entrada: preset.entrada,
+      salida: preset.salida,
+    }));
+  };
 
   const handleNew = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/shift-schedules', {
+      const payload = { ...form, area };
+      const res = await fetch('/api/admin/shift-type', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create_shift_type', ...form }),
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Error creando tipo de turno');
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error creando tipo de turno');
+      }
       setForm({ code: '', name: '', entrada: '', salida: '', ordinarias: 0, nocturnas: 0, area });
       setEditing(null);
       onRefresh();
     } catch (err) {
       console.error(err);
-      alert('Error creando tipo de turno');
+      alert(err instanceof Error ? err.message : 'Error creando tipo de turno');
     } finally {
       setSaving(false);
     }
@@ -593,7 +715,7 @@ function ShiftTypeEditor({
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, ...form }),
+        body: JSON.stringify({ id, ...form, area }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -632,12 +754,65 @@ function ShiftTypeEditor({
     setForm({
       code: st.code,
       name: st.name,
-      entrada: st.entrada.slice(0, 5), // HH:MM from HH:MM:00
+      entrada: st.entrada.slice(0, 5),
       salida: st.salida.slice(0, 5),
       ordinarias: st.ordinarias,
       nocturnas: st.nocturnas,
       area: st.area,
     });
+  };
+
+  // Componente Select de hora
+  const TimeSelect = ({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) => (
+    <div className="flex flex-col gap-1">
+      <label className="text-xs text-[var(--text-secondary)]">{label}</label>
+      <div className="flex items-center gap-1">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1 px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs appearance-none"
+        >
+          <option value="">--:--</option>
+          {TIME_OPTIONS.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+        <input
+          type="time"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-[72px] px-1 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs text-center"
+        />
+      </div>
+    </div>
+  );
+
+  // Resumen visual de horas calculadas
+  const HorasSummary = () => {
+    if (!form.entrada || !form.salida) return null;
+    const esExtra = horasCalc.total > JORNADA_DIARIA;
+    return (
+      <div className="flex items-center gap-3 text-xs py-1.5 px-3 rounded-lg"
+        style={{ background: esExtra ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', border: `1px solid ${esExtra ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'}` }}>
+        <span style={{ color: 'var(--text-primary)' }}>
+          {form.entrada} - {form.salida}
+        </span>
+        <span className="font-semibold" style={{ color: esExtra ? '#ef4444' : '#22c55e' }}>
+          {horasCalc.total}h total
+        </span>
+        <span style={{ color: '#34d399' }}>
+          HO: {horasCalc.ordinarias}h
+        </span>
+        <span style={{ color: '#fbbf24' }}>
+          HN: {horasCalc.nocturnas}h
+        </span>
+        {esExtra && (
+          <span className="font-bold" style={{ color: '#ef4444' }}>
+            +{Number((horasCalc.total - JORNADA_DIARIA).toFixed(1))}h extra
+          </span>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -648,10 +823,7 @@ function ShiftTypeEditor({
         </h3>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => {
-              setForm({ code: '', name: '', entrada: '', salida: '', ordinarias: 0, nocturnas: 0, area });
-              setEditing('new');
-            }}
+            onClick={onNewShiftType}
             className="text-xs px-3 py-1.5 rounded-lg bg-[var(--accent-primary)] text-white hover:opacity-90"
           >
             + Nuevo horario
@@ -666,32 +838,38 @@ function ShiftTypeEditor({
       <div className="space-y-2">
         {filteredTypes.map((st) => {
           const isEditing = editing === st.id;
+          const stHoras = calcularHoras(st.entrada.slice(0, 5), st.salida.slice(0, 5));
           return (
             <div key={st.id} className="bg-[var(--bg-card)] rounded-lg p-3 space-y-3">
               {/* Vista normal */}
               {!isEditing ? (
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <span className="font-mono font-bold text-[var(--text-primary)] w-8">{st.code}</span>
                     <span className="text-sm text-[var(--text-primary)]">{st.name}</span>
+                    {st.is_split && st.segments && st.segments.length > 1 && (
+                      <div className="text-[10px] text-amber-400 flex flex-col">
+                        {st.segments.map((seg, i) => (
+                          <span key={i}>{seg.entrada}-{seg.salida}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
+                    <div className="flex items-center gap-3 text-xs text-[var(--text-secondary)]">
                       <span>{st.entrada.slice(0, 5)} - {st.salida.slice(0, 5)}</span>
-                      <span>{st.ordinarias + st.nocturnas}h</span>
-                      <span className={st.ordinarias > 0 ? 'text-emerald-400' : ''}>
-                        HO:{st.ordinarias}
+                      <span className="font-semibold" style={{ color: stHoras.total > 8 ? '#ef4444' : 'var(--text-primary)' }}>
+                        {stHoras.total}h
                       </span>
-                      <span className={st.nocturnas > 0 ? 'text-amber-400' : ''}>
-                        HN:{st.nocturnas}
-                      </span>
-                      {st.ordinarias + st.nocturnas > 8 && (
-                        <span className="text-red-400 font-bold">+HE</span>
+                      <span className="text-emerald-400">HO:{st.ordinarias}</span>
+                      <span className={st.nocturnas > 0 ? 'text-amber-400' : ''}>HN:{st.nocturnas}</span>
+                      {st.is_split && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400">PARTIDO</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => startEdit(st)}
+                        onClick={() => onEditShiftType(st)}
                         className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
                         title="Editar"
                       >
@@ -726,62 +904,22 @@ function ShiftTypeEditor({
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      value={form.code}
-                      onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                      placeholder="Codigo"
-                      className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-                    />
-                    <input
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="Nombre"
-                      className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-                    />
-                    <input
-                      value={form.entrada}
-                      onChange={(e) => setForm({ ...form, entrada: e.target.value })}
-                      placeholder=" Entrada HH:MM"
-                      className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-                    />
-                    <input
-                      value={form.salida}
-                      onChange={(e) => setForm({ ...form, salida: e.target.value })}
-                      placeholder="Salida HH:MM"
-                      className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-                    />
-                    <input
-                      type="number"
-                      value={form.ordinarias}
-                      onChange={(e) => setForm({ ...form, ordinarias: Number(e.target.value) })}
-                      placeholder="Ordinarias"
-                      className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-                    />
-                    <input
-                      type="number"
-                      value={form.nocturnas}
-                      onChange={(e) => setForm({ ...form, nocturnas: Number(e.target.value) })}
-                      placeholder="Nocturnas"
-                      className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-                    />
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() => setEditing(null)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-[var(--bg-hover)] text-[var(--text-secondary)]"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={() => handleEdit(st.id)}
-                      disabled={saving}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-ak-borgona)] text-white hover:opacity-90 disabled:opacity-50"
-                    >
-                      {saving ? 'Guardando...' : 'Guardar'}
-                    </button>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-[var(--text-primary)]">{st.code}</span>
+                  <span className="text-sm text-[var(--text-primary)]">{st.name}</span>
+                  <span className="text-xs text-[var(--text-secondary)]">Editando...</span>
+                  <button
+                    onClick={() => onEditShiftType(st)}
+                    className="text-xs px-2 py-1 rounded bg-[var(--color-ak-borgona)] text-white hover:opacity-90"
+                  >
+                    Abrir editor
+                  </button>
+                  <button
+                    onClick={() => setEditing(null)}
+                    className="text-xs px-2 py-1 rounded bg-[var(--bg-hover)] text-[var(--text-secondary)]"
+                  >
+                    Cancelar
+                  </button>
                 </div>
               )}
             </div>
@@ -789,66 +927,6 @@ function ShiftTypeEditor({
         })}
       </div>
 
-      {/* Nuevo turno */}
-      {editing === 'new' && (
-        <div className="bg-[var(--bg-card)] rounded-lg p-3 space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              value={form.code}
-              onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-              placeholder="Codigo"
-              className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-            />
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Nombre"
-              className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-            />
-            <input
-              value={form.entrada}
-              onChange={(e) => setForm({ ...form, entrada: e.target.value })}
-              placeholder="Entrada HH:MM"
-              className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-            />
-            <input
-              value={form.salida}
-              onChange={(e) => setForm({ ...form, salida: e.target.value })}
-              placeholder="Salida HH:MM"
-              className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-            />
-            <input
-              type="number"
-              value={form.ordinarias}
-              onChange={(e) => setForm({ ...form, ordinarias: Number(e.target.value) })}
-              placeholder="Ordinarias"
-              className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-            />
-            <input
-              type="number"
-              value={form.nocturnas}
-              onChange={(e) => setForm({ ...form, nocturnas: Number(e.target.value) })}
-              placeholder="Nocturnas"
-              className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-            />
-          </div>
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={() => setEditing(null)}
-              className="text-xs px-3 py-1.5 rounded-lg bg-[var(--bg-hover)] text-[var(--text-secondary)]"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleNew}
-              disabled={saving}
-              className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-ak-borgona)] text-white hover:opacity-90 disabled:opacity-50"
-            >
-              {saving ? 'Creando...' : 'Crear'}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -42,6 +42,15 @@ export interface ShiftType {
   nocturnas: number;
   is_split: boolean;
   description: string | null;
+  segments?: ShiftTypeSegment[]; // solo poblado si is_split = true
+}
+
+export interface ShiftTypeSegment {
+  id?: string;
+  shift_type_id?: string;
+  segment_index: number; // 1 o 2
+  entrada: string; // HH:MM
+  salida: string; // HH:MM
 }
 
 export interface ShiftSchedule {

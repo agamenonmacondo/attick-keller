@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { WarningCircle, PaperPlaneTilt } from '@phosphor-icons/react';
+import { getLocalDate } from '@/lib/utils/formatDate';
 
 interface ContingencyReportProps {
   employeeId: string;
@@ -18,7 +19,7 @@ const NOVEDAD_TYPES = [
 
 export default function ContingencyReport({ employeeId, scheduleId, onSubmitted }: ContingencyReportProps) {
   const [type, setType] = useState<string>('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getLocalDate());
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);

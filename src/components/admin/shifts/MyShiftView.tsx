@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ClockAfternoon, MapPin } from '@phosphor-icons/react';
 import { formatCOP, getWeekDates } from '@/lib/utils/costCalculator';
+import { getLocalDate } from '@/lib/utils/formatDate';
 import type { ShiftType } from '@/lib/types/shifts';
 import { DAY_NAMES } from '@/lib/types/shifts';
 
@@ -107,7 +108,7 @@ export default function MyShiftView({ userId, weekStr }: MyShiftViewProps) {
           const assignment = assignmentMap.get(i);
           const st = assignment ? shiftTypes.find((t) => t.code === assignment.shift_code) : null;
           const date = weekDates[i];
-          const isToday = date && new Date().toDateString() === date.toDateString();
+          const isToday = date && getLocalDate() === getLocalDate(date);
 
           return (
             <div

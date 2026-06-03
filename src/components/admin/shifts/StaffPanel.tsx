@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, PencilSimple, Check, X, User, CaretDown, CaretRight } from '@phosphor-icons/react';
-import { formatCOP } from '@/lib/utils/costCalculator';
+import { formatCOP, calcularCostoEmpresa } from '@/lib/utils/costCalculator';
 
 const AREAS: { value: string; label: string; color: string }[] = [
   { value: '', label: 'Todas las areas', color: '' },
@@ -19,20 +19,12 @@ const CONTRACT_LABELS: Record<string, { label: string; className: string }> = {
 };
 
 // Costo para empresa segun ley colombiana (prestaciones + aportes patronales)
-// Basado en el salario real de la BD + auxilio_no_salarial + aplica_propinas
+// Wrapper de calcularCostoEmpresa() que respeta el auxilio_no_salarial de la BD
 function costoEmpresaMensual(salario: number, auxilioNoSalarial: number): number {
-  const primaServicios = salario * 8.33 / 100;
-  const cesantias = salario * 8.33 / 100;
-  const interesesCesantias = salario * 1 / 100;
-  const vacaciones = salario * 4.17 / 100;
-  const aporteSalud = salario * 8.5 / 100;
-  const aportePension = salario * 12 / 100;
-  const aporteARL = salario * 0.522 / 100;
-  const aporteCaja = salario * 4 / 100;
-  const aporteSena = salario * 2 / 100;
-  const aporteICBF = salario * 3 / 100;
-  return salario + auxilioNoSalarial + primaServicios + cesantias + interesesCesantias
-    + vacaciones + aporteSalud + aportePension + aporteARL + aporteCaja + aporteSena + aporteICBF;
+  const base = calcularCostoEmpresa(salario);
+  // Si la BD tiene un auxilio diferente al estandar del SMLV, ajustar
+  const ajusteAuxilio = auxilioNoSalarial - base.auxilioTransporte;
+  return base.costoMensualTotal + ajusteAuxilio;
 }
 
 interface StaffPanelProps {
@@ -240,7 +232,13 @@ export default function StaffPanel({ area }: StaffPanelProps) {
             <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Contrato</label><select value={addForm.contrato} onChange={(e) => setAddForm((f) => ({ ...f, contrato: e.target.value as 'fijo' | 'turnante' }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm"><option value="fijo">Fijo</option><option value="turnante">Turnante</option></select></div>
             <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cedula</label><input type="text" value={addForm.cedula} onChange={(e) => setAddForm((f) => ({ ...f, cedula: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
             <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Correo</label><input type="email" value={addForm.correo} onChange={(e) => setAddForm((f) => ({ ...f, correo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Salario mensual</label><input type="number" value={addForm.salario_mensual || ''} onChange={(e) => setAddForm((f) => ({ ...f, salario_mensual: Number(e.target.value) || 0 }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
+            {addForm.contrato === 'turnante' ? (
+              <>
+                <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Pago por turno (COP)</label><input type="number" value={addForm.salario_mensual || ''} onChange={(e) => setAddForm((f) => ({ ...f, salario_mensual: Number(e.target.value) || 0 }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" placeholder="Dejar 0 para usar SMLV" /><p className="text-[10px] text-[var(--text-muted)] mt-0.5">Si es 0, se usa SMLV ($1.750.905)</p></div>
+              </>
+            ) : (
+              <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Salario mensual</label><input type="number" value={addForm.salario_mensual || ''} onChange={(e) => setAddForm((f) => ({ ...f, salario_mensual: Number(e.target.value) || 0 }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
+            )}
             <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Alias</label><input type="text" value={addForm.alias} onChange={(e) => setAddForm((f) => ({ ...f, alias: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
           </div>
           <div className="flex justify-end gap-2">

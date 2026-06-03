@@ -30,6 +30,14 @@ function ratioLabel(pct: number): string {
 export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, area }: SalesReferenceTabProps) {
   const { data: salesData, loading: salesLoading } = useSalesAverages();
 
+  // Filter staff by area — used by both nominaByDay and proyección mensual
+  const filteredStaff = useMemo(() =>
+    area === 'todos'
+      ? staff
+      : staff.filter(s => s.area === area || (s.secondary_areas || []).includes(area)),
+    [staff, area]
+  );
+
   // Calculate nomina per day and total — using COSTO EMPRESA (salary + prestaciones + aportes)
   const nominaByDay = useMemo(() => {
     const dayData: Record<number, { personas: number; costoNomina: number }> = {};
@@ -38,9 +46,6 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
     }
 
     const SUNDAY_DAY_INDEX = 0;
-    const filteredStaff = area === 'todos'
-      ? staff
-      : staff.filter(s => s.area === area || (s.secondary_areas || []).includes(area));
 
     for (const emp of filteredStaff) {
       const empGrid = grid[emp.id];
@@ -62,7 +67,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
     }
 
     return dayData;
-  }, [staff, shiftTypes, grid, area]);
+  }, [filteredStaff, shiftTypes, grid]);
 
   const weeklyNomina = useMemo(() => {
     let totalNomina = 0;
@@ -77,16 +82,36 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
   // Display order: Lun(1), Mar(2), Mie(3), Jue(4), Vie(5), Sab(6), Dom(0)
   const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
-  // Use MEDIAN for weekly ratio — now shows % COSTO NÓMINA / VENTAS (lower = better)
-  // >35% → red (nómina pesada), 20-35% → ámbar (moderado), <20% → verde (eficiente)
   const weeklyPct = weeklyNomina.totalNomina > 0 && salesData && (salesData.weekly_total.median_per_week || 0) > 0
     ? (weeklyNomina.totalNomina / salesData.weekly_total.median_per_week) * 100
     : 0;
 
-  // Total row uses sum_of_medians so it matches the visual sum of daily medians
   const sumOfMedians = salesData?.weekly_total?.sum_of_medians || 0;
   const totalRowPct = weeklyNomina.totalNomina > 0 && sumOfMedians > 0
     ? (weeklyNomina.totalNomina / sumOfMedians) * 100
+    : 0;
+
+  // === PROYECCIÓN MENSUAL ===
+  const WEEKS_PER_MONTH = 52 / 12;
+
+  const salarioBaseMensual = useMemo(() =>
+    filteredStaff.reduce((s, e) => s + (e.salario_mensual || 0), 0),
+    [filteredStaff]
+  );
+
+  const nominaMensual = weeklyNomina.totalNomina > 0
+    ? Math.round(weeklyNomina.totalNomina * WEEKS_PER_MONTH)
+    : 0;
+
+  const ventasMensuales = salesData && (salesData.weekly_total.median_per_week || 0) > 0
+    ? Math.round(salesData.weekly_total.median_per_week * WEEKS_PER_MONTH)
+    : 0;
+
+  const provisionesMensuales = nominaMensual - salarioBaseMensual;
+  const factorReal = salarioBaseMensual > 0 ? nominaMensual / salarioBaseMensual : 0;
+
+  const nominaVentasMensualPct = nominaMensual > 0 && ventasMensuales > 0
+    ? (nominaMensual / ventasMensuales) * 100
     : 0;
 
   if (salesLoading) {
@@ -140,7 +165,59 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
         </div>
       </div>
 
-      {/* Row 2: Table — Desktop */}
+      {/* Row 2: Proyección Mensual */}
+      {weeklyNomina.totalNomina > 0 && (
+        <div className="space-y-2">
+          <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
+            Proyección Mensual (×{WEEKS_PER_MONTH.toFixed(2)} semanas/mes)
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
+              <div className="text-[11px] text-[var(--text-secondary)]">Nómina mensual</div>
+              <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">
+                {formatCOP(nominaMensual)}
+              </div>
+            </div>
+            <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
+              <div className="text-[11px] text-[var(--text-secondary)]">Ventas mensuales</div>
+              <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">
+                {formatCOP(ventasMensuales)}
+              </div>
+              <div className="text-[10px] text-[var(--text-secondary)]">Mediana semanal × 4.33</div>
+            </div>
+            <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
+              <div className="text-[11px] text-[var(--text-secondary)]">% Nóm/Ventas</div>
+              <div className={`text-sm font-mono font-semibold ${ratioColor(nominaVentasMensualPct)}`}>
+                {nominaVentasMensualPct.toFixed(1)}%
+              </div>
+              <div className="text-[10px] text-[var(--text-secondary)]">{ratioLabel(nominaVentasMensualPct)}</div>
+            </div>
+            <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
+              <div className="text-[11px] text-[var(--text-secondary)]">Salario base</div>
+              <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">
+                {formatCOP(salarioBaseMensual)}
+              </div>
+              <div className="text-[10px] text-[var(--text-secondary)]">{filteredStaff.length} empleados</div>
+            </div>
+            <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
+              <div className="text-[11px] text-[var(--text-secondary)]">Provisiones</div>
+              <div className="text-sm font-mono font-semibold text-amber-400">
+                {formatCOP(provisionesMensuales)}
+              </div>
+              <div className="text-[10px] text-[var(--text-secondary)]">Prestaciones + aportes</div>
+            </div>
+            <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--accent-primary)]/30">
+              <div className="text-[11px] text-[var(--accent-primary)]">Factor real</div>
+              <div className="text-sm font-mono font-bold text-[var(--accent-primary)]">
+                {factorReal.toFixed(2)}×
+              </div>
+              <div className="text-[10px] text-[var(--text-secondary)]">Nómina ÷ salario base</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Row 3: Table — Desktop */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-xs">
           <thead>

@@ -469,7 +469,7 @@ export default function ShiftSchedulePanel() {
                 </span>
               )}
               {!scheduleId && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-500/15 text-gray-400 border border-gray-500/30">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--bg-input)] text-[var(--text-muted)] border border-[var(--border-default)]">
                   Sin cronograma
                 </span>
               )}

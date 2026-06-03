@@ -44,7 +44,3 @@ next-env.d.ts
 ERROR_500_CUSTOMERS_DEBUG.md
 ESTADO_BD_ATICKELLER.md
 .git-rewrite/
-web/
-_web_archived/
-.env.local.raiz.bak
-.vercel.raiz.bak/

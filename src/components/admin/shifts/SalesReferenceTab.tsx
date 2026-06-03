@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import type { StaffMemberForShift, ShiftType } from '@/lib/types/shifts';
-import { calcularCostoTurno, calcularCostoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
+import { calcularCostoTurnoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
 import { useSalesAverages } from '@/lib/hooks/useSalesAverages';
 
 interface SalesReferenceTabProps {
@@ -46,15 +46,6 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
       const empGrid = grid[emp.id];
       if (!empGrid) continue;
 
-      // Calculate costo empresa for this employee (salary + prestaciones + aportes patronales)
-      // If salary is missing or absurdly high, fall back to SMLV so the position still counts
-      const rawSalario = emp.salario_mensual || 0;
-      const salario = rawSalario > 50000000 ? 1750905 : (rawSalario || 1750905);
-      const costoEmp = calcularCostoEmpresa(salario);
-      // Use the REAL hourly cost: costoMensualTotal / 30 / 8 (includes all legal surcharges)
-      // Instead of raw salario / 30 / 8 which underestimates by ~67%
-      const valorHoraEmpresa = costoEmp.costoMensualTotal / 30 / 8;
-
       for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
         const code = empGrid[dayIdx];
         if (!code || code === 'OFF') continue;
@@ -63,15 +54,10 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
         if (!st) continue;
 
         const isSunday = dayIdx === SUNDAY_DAY_INDEX;
-        const costo = calcularCostoTurno(st, salario, isSunday);
-
-        // Scale up: costo.total is based on raw salario/hour.
-        // Multiply by (costoEmpresa/salario) ratio to get real employer cost.
-        const scaleFactor = costoEmp.costoMensualTotal / salario;
-        const costoEmpresa = costo.total * scaleFactor;
+        const costo = calcularCostoTurnoEmpresa(st, emp.salario_mensual, isSunday);
 
         dayData[dayIdx].personas += 1;
-        dayData[dayIdx].costoNomina += costoEmpresa;
+        dayData[dayIdx].costoNomina += costo.total;
       }
     }
 

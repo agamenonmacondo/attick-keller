@@ -3,7 +3,7 @@
 import { useMemo, useCallback } from 'react';
 import { Warning, ClockAfternoon, Coffee } from '@phosphor-icons/react';
 import type { ShiftType, StaffMemberForShift, ShiftAssignment, ShiftAlert } from '@/lib/types/shifts';
-import { calcularCostoTurno, calcularCostoSemanal, formatCOP, getWeekDates, dayIndexToDateIndex, dateToDayIndex } from '@/lib/utils/costCalculator';
+import { calcularCostoTurnoEmpresa, formatCOP, getWeekDates, dayIndexToDateIndex, dateToDayIndex } from '@/lib/utils/costCalculator';
 import { LEGAL_PARAMS, DAY_NAMES } from '@/lib/types/shifts';
 
 interface ShiftGridProps {
@@ -79,7 +79,7 @@ export default function ShiftGrid({
         diasTrabajados++;
 
         const isSunday = dayIdx === 0;
-        const costo = calcularCostoTurno(st, emp.salario_mensual, isSunday);
+        const costo = calcularCostoTurnoEmpresa(st, emp.salario_mensual, isSunday);
         cost += costo.total;
         baseTotal += costo.base_pay;
         rnTotal += costo.night_surcharge;

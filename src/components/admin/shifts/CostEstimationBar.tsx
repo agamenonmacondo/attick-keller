@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import type { StaffMemberForShift, ShiftType } from '@/lib/types/shifts';
-import { calcularCostoTurno, calcularCostoEmpresa, formatCOP, getWeekDates, dayIndexToDateIndex } from '@/lib/utils/costCalculator';
+import { calcularCostoTurnoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
 import { LEGAL_PARAMS } from '@/lib/types/shifts';
 
 interface CostEstimationBarProps {
@@ -28,19 +28,12 @@ export default function CostEstimationBar({
       id: string; alias: string; area: string; totalHours: number;
       ho: number; hn: number; he: number; base: number;
       recargoNocturno: number; recargoDominical: number; horasExtra: number; total: number;
-      costoEmpresa: number; // total scaled to employer cost (salary + prestaciones + aportes)
     }[] = [];
 
     for (const emp of staff) {
       const empGrid = grid[emp.id] || {};
       let totalHours = 0, ho = 0, hn = 0, he = 0;
       let base = 0, rn = 0, rd = 0, heTotal = 0, total = 0;
-
-      // Calculate employer cost scale factor (same formula as SalesReferenceTab)
-      const rawSalario = emp.salario_mensual || 0;
-      const salario = rawSalario > 50000000 ? 1750905 : (rawSalario || 1750905);
-      const costoEmp = calcularCostoEmpresa(salario);
-      const scaleFactor = costoEmp.costoMensualTotal / salario;
 
       for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
         const code = empGrid[dayIdx];
@@ -53,13 +46,12 @@ export default function CostEstimationBar({
         if (hours > LEGAL_PARAMS.MAX_DAILY_HOURS) he += hours - LEGAL_PARAMS.MAX_DAILY_HOURS;
         totalHours += hours;
         const isSunday = dayIdx === SUNDAY_DAY_INDEX;
-        const costo = calcularCostoTurno(st, salario, isSunday);
-        // Scale all components to employer cost
-        base += costo.base_pay * scaleFactor;
-        rn += costo.night_surcharge * scaleFactor;
-        rd += costo.sunday_surcharge * scaleFactor;
-        heTotal += costo.overtime_surcharge * scaleFactor;
-        total += costo.total * scaleFactor;
+        const costo = calcularCostoTurnoEmpresa(st, emp.salario_mensual, isSunday);
+        base += costo.base_pay;
+        rn += costo.night_surcharge;
+        rd += costo.sunday_surcharge;
+        heTotal += costo.overtime_surcharge;
+        total += costo.total;
       }
 
       results.push({
@@ -67,7 +59,6 @@ export default function CostEstimationBar({
         ho, hn, he, base: Math.round(base),
         recargoNocturno: Math.round(rn), recargoDominical: Math.round(rd),
         horasExtra: Math.round(heTotal), total: Math.round(total),
-        costoEmpresa: Math.round(total),
       });
     }
     return results;

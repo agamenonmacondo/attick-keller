@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStaffOrLeaderUser, getServiceClient } from '@/lib/utils/admin-auth'
 import type { ShiftType } from '@/lib/types/shifts'
-import { calcularCostoTurno, calcularValorHora } from '@/lib/utils/costCalculator'
+import { calcularCostoTurnoEmpresa } from '@/lib/utils/costCalculator'
 import { sendShiftChangeEmail } from '@/lib/email/send'
 
 // Force dynamic — never cache shift data
@@ -90,7 +90,7 @@ export async function PUT(request: NextRequest) {
     if (shiftType) {
       estimated_hours = shiftType.ordinarias + shiftType.nocturnas
       is_overtime = estimated_hours > 8
-      estimated_cost = calcularCostoTurno(shiftType, salario, isSunday).total
+      estimated_cost = calcularCostoTurnoEmpresa(shiftType, salario, isSunday).total
     }
 
     return {

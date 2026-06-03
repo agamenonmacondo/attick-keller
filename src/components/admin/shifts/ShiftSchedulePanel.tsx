@@ -5,7 +5,7 @@ import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, Char
 import { SectionHeading } from '../shared/SectionHeading';
 
 import type { ShiftType, StaffMemberForShift, ShiftAssignment } from '@/lib/types/shifts';
-import { getWeekStr, getWeekDates, dayIndexToDateIndex, calcularCostoTurno } from '@/lib/utils/costCalculator';
+import { getWeekStr, getWeekDates, dayIndexToDateIndex, calcularCostoTurnoEmpresa } from '@/lib/utils/costCalculator';
 import { getLocalDate } from '@/lib/utils/formatDate';
 import { cn } from '@/lib/utils/cn';
 import { useTheme } from '@/lib/ThemeProvider';
@@ -243,8 +243,7 @@ export default function ShiftSchedulePanel() {
 
           const hours = st.ordinarias + st.nocturnas;
           const isSunday = Number(dayIdx) === 0;
-          const salario = (emp.salario_mensual && emp.salario_mensual > 50000000) ? 0 : (emp.salario_mensual || 0);
-          const cost = calcularCostoTurno(st, salario, isSunday);
+          const cost = calcularCostoTurnoEmpresa(st, emp.salario_mensual, isSunday);
 
           payload.push({
             employee_id: empId,

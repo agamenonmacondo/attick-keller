@@ -177,6 +177,34 @@ export function calcularCostoTurno(
 }
 
 /**
+ * Calcula el costo de un turno para la EMPRESA (salario + prestaciones + aportes).
+ * Wrapper de seguridad: sanitiza salarios y escala a costo empresa real.
+ * 
+ * Usar SIEMPRE esta funcion en el sistema de turnos, nunca calcularCostoTurno() directamente.
+ * Es la unica fuente de verdad para el costo real para la organizacion.
+ */
+export function calcularCostoTurnoEmpresa(
+  shiftType: ShiftType,
+  rawSalario: number | null | undefined,
+  esDomingo: boolean = false
+): ShiftCostEstimate {
+  // Sanitizar salario (misma logica en todo el sistema)
+  const salarioFallback = rawSalario && rawSalario > 50000000 ? 1750905 : (rawSalario || 1750905);
+  const costoEmp = calcularCostoEmpresa(salarioFallback);
+  const scaleFactor = costoEmp.costoMensualTotal / salarioFallback;
+  
+  const costo = calcularCostoTurno(shiftType, salarioFallback, esDomingo);
+  
+  return {
+    base_pay: Math.round(costo.base_pay * scaleFactor),
+    night_surcharge: Math.round(costo.night_surcharge * scaleFactor),
+    overtime_surcharge: Math.round(costo.overtime_surcharge * scaleFactor),
+    sunday_surcharge: Math.round(costo.sunday_surcharge * scaleFactor),
+    total: Math.round(costo.total * scaleFactor),
+  };
+}
+
+/**
  * Calcula el costo semanal estimado para un empleado
  */
 export function calcularCostoSemanal(

@@ -21,6 +21,7 @@ export interface SalesAverages {
   weekly_total: {
     avg_per_week: number;
     median_per_week: number;
+    sum_of_medians: number;
     total_days: number;
     total_revenue: number;
   };

@@ -97,6 +97,12 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
     ? (weeklyNomina.totalNomina / salesData.weekly_total.median_per_week) * 100
     : 0;
 
+  // Total row uses sum_of_medians so it matches the visual sum of daily medians
+  const sumOfMedians = salesData?.weekly_total?.sum_of_medians || 0;
+  const totalRowPct = weeklyNomina.totalNomina > 0 && sumOfMedians > 0
+    ? (weeklyNomina.totalNomina / sumOfMedians) * 100
+    : 0;
+
   if (salesLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -206,7 +212,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
             <tr className="border-t-2 border-[var(--border-default)] font-semibold">
               <td className="p-2 text-[var(--text-primary)]">TOTAL</td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">
-                {formatCOP(salesData.weekly_total.median_per_week)}
+                {formatCOP(sumOfMedians)}
               </td>
               <td className="p-2 text-right font-mono text-[var(--text-secondary)]">-</td>
               <td className="p-2 text-right font-mono text-[var(--text-secondary)]">-</td>
@@ -217,8 +223,8 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">
                 {weeklyNomina.totalNomina > 0 ? formatCOP(weeklyNomina.totalNomina) : '-'}
               </td>
-              <td className={`p-2 text-right font-mono font-bold ${weeklyNomina.totalNomina > 0 ? ratioColor(weeklyPct) : 'text-[var(--text-secondary)]'}`}>
-                {weeklyNomina.totalNomina > 0 ? `${weeklyPct.toFixed(1)}%` : '-'}
+              <td className={`p-2 text-right font-mono font-bold ${weeklyNomina.totalNomina > 0 ? ratioColor(totalRowPct) : 'text-[var(--text-secondary)]'}`}>
+                {weeklyNomina.totalNomina > 0 ? `${totalRowPct.toFixed(1)}%` : '-'}
               </td>
             </tr>
           </tfoot>
@@ -266,9 +272,9 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           <div className="flex justify-between items-center">
             <span className="text-[var(--text-primary)]">TOTAL SEMANA</span>
             <div className="text-right">
-              <div className="font-mono text-[var(--text-primary)]">{formatCOP(salesData.weekly_total.median_per_week)}</div>
-              <div className={`font-mono font-bold ${weeklyNomina.totalNomina > 0 ? ratioColor(weeklyPct) : 'text-[var(--text-secondary)]'}`}>
-                {weeklyNomina.totalNomina > 0 ? `Nóm/Ventas: ${weeklyPct.toFixed(1)}%` : 'Sin nomina'}
+              <div className="font-mono text-[var(--text-primary)]">{formatCOP(sumOfMedians)}</div>
+              <div className={`font-mono font-bold ${weeklyNomina.totalNomina > 0 ? ratioColor(totalRowPct) : 'text-[var(--text-secondary)]'}`}>
+                {weeklyNomina.totalNomina > 0 ? `Nóm/Ventas: ${totalRowPct.toFixed(1)}%` : 'Sin nomina'}
               </div>
             </div>
           </div>

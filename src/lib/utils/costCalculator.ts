@@ -1,4 +1,53 @@
-import { LEGAL_PARAMS, ShiftType, ShiftCostEstimate } from '@/lib/types/shifts';
+import { LEGAL_PARAMS, ShiftType, ShiftTypeSegment, ShiftCostEstimate } from '@/lib/types/shifts';
+
+/**
+ * Calcula horas ordinarias y nocturnas de un segmento de horario (entrada → salida)
+ */
+export function calcularHorasSegmento(entrada: string, salida: string): { ordinarias: number; nocturnas: number; total: number } {
+  if (!entrada || !salida) return { ordinarias: 0, nocturnas: 0, total: 0 };
+  const [eh, em] = entrada.split(':').map(Number);
+  const [sh, sm] = salida.split(':').map(Number);
+  let entMin = eh * 60 + em;
+  let salMin = sh * 60 + sm;
+  if (salMin <= entMin) salMin += 1440; // cruza medianoche
+
+  const totalMin = salMin - entMin;
+  const total = Math.round((totalMin / 60) * 10) / 10;
+
+  // Minutos nocturnos (21:00-06:00)
+  const NOC_INICIO = 21;
+  const NOC_FIN = 6;
+  let nocMin = 0;
+  for (let m = entMin; m < salMin; m += 30) {
+    const h = (m / 60) % 24;
+    if (h >= NOC_INICIO || h < NOC_FIN) nocMin += 30;
+  }
+  const nocturnas = Math.round((nocMin / 60) * 10) / 10;
+  const ordinarias = Math.round((total - nocturnas) * 10) / 10;
+
+  return { ordinarias, nocturnas, total };
+}
+
+/**
+ * Calcula horas totales de un turno (simple o partido)
+ * Para turnos partidos, suma los segmentos
+ */
+export function calcularHorasTurno(shiftType: ShiftType): { ordinarias: number; nocturnas: number; total: number } {
+  if (shiftType.is_split && shiftType.segments && shiftType.segments.length > 0) {
+    let ordinarias = 0;
+    let nocturnas = 0;
+    for (const seg of shiftType.segments) {
+      const h = calcularHorasSegmento(seg.entrada, seg.salida);
+      ordinarias += h.ordinarias;
+      nocturnas += h.nocturnas;
+    }
+    // Redondear a 1 decimal
+    ordinarias = Math.round(ordinarias * 10) / 10;
+    nocturnas = Math.round(nocturnas * 10) / 10;
+    return { ordinarias, nocturnas, total: Math.round((ordinarias + nocturnas) * 10) / 10 };
+  }
+  return { ordinarias: shiftType.ordinarias, nocturnas: shiftType.nocturnas, total: shiftType.ordinarias + shiftType.nocturnas };
+}
 
 /**
  * Calcula el valor hora de un empleado (salario / 30 / 8)

@@ -59,13 +59,34 @@ export async function GET(request: NextRequest) {
       (aliases || []).map((a: Record<string, unknown>) => [a.employee_id as string, a.alias as string])
     )
 
+    // Cargar segmentos para turnos partidos
+    let segmentsByType: Record<string, Array<{ id: string; segment_index: number; entrada: string; salida: string }>> = {}
+    const splitTypeIds = (shiftTypes || []).filter((st: Record<string, unknown>) => st.is_split).map((st: Record<string, unknown>) => st.id as string)
+    if (splitTypeIds.length > 0) {
+      const { data: segments } = await sb
+        .from('shift_type_segments')
+        .select('id, shift_type_id, segment_index, entrada, salida')
+        .in('shift_type_id', splitTypeIds)
+        .order('segment_index')
+      for (const seg of (segments || [])) {
+        const typeId = seg.shift_type_id as string
+        if (!segmentsByType[typeId]) segmentsByType[typeId] = []
+        segmentsByType[typeId].push({ id: seg.id, segment_index: seg.segment_index, entrada: seg.entrada, salida: seg.salida })
+      }
+    }
+
     const enrichedStaff = (staff || []).map((s: Record<string, unknown>) => ({
       ...s,
       salario_mensual: s.salario ?? 0,
       alias: aliasMap.get(s.id as string) || (s.nombre_completo as string).split(' ')[0],
     }))
 
-    return NextResponse.json({ schedule: null, assignments: [], staff: enrichedStaff, shift_types: shiftTypes || [] })
+    const enrichedShiftTypes = (shiftTypes || []).map((st: Record<string, unknown>) => ({
+      ...st,
+      segments: st.is_split ? (segmentsByType[st.id as string] || []) : undefined,
+    }))
+
+    return NextResponse.json({ schedule: null, assignments: [], staff: enrichedStaff, shift_types: enrichedShiftTypes })
   }
 
   // Obtener asignaciones
@@ -104,17 +125,38 @@ export async function GET(request: NextRequest) {
     (aliases || []).map((a: Record<string, unknown>) => [a.employee_id as string, a.alias as string])
   )
 
+  // Cargar segmentos para turnos partidos
+  let segmentsByType: Record<string, Array<{ id: string; segment_index: number; entrada: string; salida: string }>> = {}
+  const splitTypeIds = (shiftTypes || []).filter((st: Record<string, unknown>) => st.is_split).map((st: Record<string, unknown>) => st.id as string)
+  if (splitTypeIds.length > 0) {
+    const { data: segments } = await sb
+      .from('shift_type_segments')
+      .select('id, shift_type_id, segment_index, entrada, salida')
+      .in('shift_type_id', splitTypeIds)
+      .order('segment_index')
+    for (const seg of (segments || [])) {
+      const typeId = seg.shift_type_id as string
+      if (!segmentsByType[typeId]) segmentsByType[typeId] = []
+      segmentsByType[typeId].push({ id: seg.id, segment_index: seg.segment_index, entrada: seg.entrada, salida: seg.salida })
+    }
+  }
+
   const enrichedStaff = (staff || []).map((s: Record<string, unknown>) => ({
     ...s,
     salario_mensual: s.salario ?? 0,
     alias: aliasMap.get(s.id as string) || (s.nombre_completo as string).split(' ')[0],
   }))
 
+  const enrichedShiftTypes = (shiftTypes || []).map((st: Record<string, unknown>) => ({
+    ...st,
+    segments: st.is_split ? (segmentsByType[st.id as string] || []) : undefined,
+  }))
+
   return NextResponse.json({
     schedule,
     assignments: assignments || [],
     staff: enrichedStaff,
-    shift_types: shiftTypes || [],
+    shift_types: enrichedShiftTypes,
   })
 }
 

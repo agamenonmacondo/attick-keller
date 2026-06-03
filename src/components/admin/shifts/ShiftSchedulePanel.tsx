@@ -13,6 +13,7 @@ import ShiftGrid from './ShiftGrid';
 import CostEstimationBar from './CostEstimationBar';
 import StaffPanel from './StaffPanel';
 import ShiftTimelineView from './ShiftTimelineView';
+import ShiftTypeModal from './ShiftTypeModal';
 
 import SalesReferenceTab from './SalesReferenceTab';
 
@@ -48,6 +49,8 @@ function getHeatClasses(count: number, isDark: boolean): { bg: string; text: str
 export default function ShiftSchedulePanel() {
   const [area, setArea] = useState<Area>('cocina');
   const [tab, setTab] = useState<Tab>('cronograma');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingShiftType, setEditingShiftType] = useState<ShiftType | null>(null);
 
   // Cuando se cambia a "todos", forzar tab de costos
   useEffect(() => {
@@ -530,12 +533,36 @@ export default function ShiftSchedulePanel() {
           shiftTypes={shiftTypes}
           area={area}
           onRefresh={loadData}
+          onNewShiftType={() => { setEditingShiftType(null); setModalOpen(true); }}
+          onEditShiftType={(st) => { setEditingShiftType(st); setModalOpen(true); }}
         />
       )}
 
       {tab === 'personal' && (
         <StaffPanel area={area} />
       )}
+
+      {/* Modal para crear/editar turno */}
+      <ShiftTypeModal
+        isOpen={modalOpen}
+        onClose={() => { setModalOpen(false); setEditingShiftType(null); }}
+        area={area as unknown as 'cocina' | 'barra' | 'servicio'}
+        shiftType={editingShiftType}
+        onSave={async (data) => {
+          const method = editingShiftType ? 'PATCH' : 'POST';
+          const res = await fetch('/api/admin/shift-type', {
+            method,
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Error guardando turno');
+          }
+          loadData();
+        }}
+      />
     </div>
   );
 }
@@ -611,10 +638,14 @@ function ShiftTypeEditor({
   shiftTypes: initialTypes,
   area,
   onRefresh,
+  onNewShiftType,
+  onEditShiftType,
 }: {
   shiftTypes: ShiftType[];
   area: string;
   onRefresh: () => void;
+  onNewShiftType: () => void;
+  onEditShiftType: (st: ShiftType) => void;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -792,10 +823,7 @@ function ShiftTypeEditor({
         </h3>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => {
-              setForm({ code: '', name: '', entrada: '', salida: '', ordinarias: 0, nocturnas: 0, area });
-              setEditing('new');
-            }}
+            onClick={onNewShiftType}
             className="text-xs px-3 py-1.5 rounded-lg bg-[var(--accent-primary)] text-white hover:opacity-90"
           >
             + Nuevo horario
@@ -819,6 +847,13 @@ function ShiftTypeEditor({
                   <div className="flex items-center gap-3">
                     <span className="font-mono font-bold text-[var(--text-primary)] w-8">{st.code}</span>
                     <span className="text-sm text-[var(--text-primary)]">{st.name}</span>
+                    {st.is_split && st.segments && st.segments.length > 1 && (
+                      <div className="text-[10px] text-amber-400 flex flex-col">
+                        {st.segments.map((seg, i) => (
+                          <span key={i}>{seg.entrada}-{seg.salida}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-3 text-xs text-[var(--text-secondary)]">
@@ -834,7 +869,7 @@ function ShiftTypeEditor({
                     </div>
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => startEdit(st)}
+                        onClick={() => onEditShiftType(st)}
                         className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
                         title="Editar"
                       >
@@ -869,62 +904,22 @@ function ShiftTypeEditor({
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {/* Presets para edicion */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {presetOptions.map((p) => (
-                      <button
-                        key={p.code}
-                        onClick={() => aplicarPreset(p)}
-                        className={`text-[11px] px-2 py-1 rounded-md transition-all ${
-                          form.code === p.code
-                            ? 'bg-[var(--color-ak-borgona)] text-white'
-                            : 'bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:bg-[var(--color-ak-borgona)]/20 hover:text-[var(--text-primary)]'
-                        }`}
-                      >
-                        {p.code} {p.name}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs text-[var(--text-secondary)]">Codigo</label>
-                      <input
-                        value={form.code}
-                        onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase().slice(0, 3) })}
-                        placeholder="A, S, C..."
-                        maxLength={3}
-                        className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs text-[var(--text-secondary)]">Nombre</label>
-                      <input
-                        value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        placeholder="Apertura, Seguido..."
-                        className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-                      />
-                    </div>
-                    <TimeSelect value={form.entrada} onChange={(v) => setForm({ ...form, entrada: v })} label="Entrada" />
-                    <TimeSelect value={form.salida} onChange={(v) => setForm({ ...form, salida: v })} label="Salida" />
-                  </div>
-                  <HorasSummary />
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() => setEditing(null)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-[var(--bg-hover)] text-[var(--text-secondary)]"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={() => handleEdit(st.id)}
-                      disabled={saving || !form.code || !form.name || !form.entrada || !form.salida}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-ak-borgona)] text-white hover:opacity-90 disabled:opacity-50"
-                    >
-                      {saving ? 'Guardando...' : 'Guardar'}
-                    </button>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-[var(--text-primary)]">{st.code}</span>
+                  <span className="text-sm text-[var(--text-primary)]">{st.name}</span>
+                  <span className="text-xs text-[var(--text-secondary)]">Editando...</span>
+                  <button
+                    onClick={() => onEditShiftType(st)}
+                    className="text-xs px-2 py-1 rounded bg-[var(--color-ak-borgona)] text-white hover:opacity-90"
+                  >
+                    Abrir editor
+                  </button>
+                  <button
+                    onClick={() => setEditing(null)}
+                    className="text-xs px-2 py-1 rounded bg-[var(--bg-hover)] text-[var(--text-secondary)]"
+                  >
+                    Cancelar
+                  </button>
                 </div>
               )}
             </div>
@@ -932,91 +927,6 @@ function ShiftTypeEditor({
         })}
       </div>
 
-      {/* Nuevo turno */}
-      {editing === 'new' && (
-        <div className="bg-[var(--bg-card)] rounded-lg p-4 space-y-4 border border-[var(--color-ak-borgona)]/30">
-          <h4 className="text-sm font-semibold text-[var(--text-primary)]">Crear tipo de turno</h4>
-
-          {/* Presets */}
-          <div>
-            <label className="text-xs text-[var(--text-secondary)] mb-1.5 block">Seleccionar turno predefinido</label>
-            <div className="flex flex-wrap gap-1.5">
-              {presetOptions.map((p) => (
-                <button
-                  key={p.code}
-                  onClick={() => aplicarPreset(p)}
-                  className={`text-[11px] px-2.5 py-1.5 rounded-md transition-all ${
-                    form.code === p.code && form.entrada === p.entrada
-                      ? 'bg-[var(--color-ak-borgona)] text-white font-semibold'
-                      : 'bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:bg-[var(--color-ak-borgona)]/20 hover:text-[var(--text-primary)]'
-                  }`}
-                >
-                  {p.code} — {p.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Campos del formulario */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-[var(--text-secondary)]">Codigo</label>
-              <input
-                value={form.code}
-                onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase().slice(0, 3) })}
-                placeholder="A, S, C..."
-                maxLength={3}
-                className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-[var(--text-secondary)]">Nombre</label>
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Apertura, Seguido..."
-                className="px-2 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs"
-              />
-            </div>
-            <TimeSelect value={form.entrada} onChange={(v) => setForm({ ...form, entrada: v })} label="Hora entrada" />
-            <TimeSelect value={form.salida} onChange={(v) => setForm({ ...form, salida: v })} label="Hora salida" />
-          </div>
-
-          {/* Resumen de horas calculadas */}
-          <HorasSummary />
-
-          {/* Indicador de horas (solo lectura, se calcula automaticamente) */}
-          {form.entrada && form.salida && (
-            <div className="grid grid-cols-2 gap-2 opacity-60">
-              <div className="text-xs text-[var(--text-secondary)]">
-                Ordinarias: <span className="font-medium text-[var(--text-primary)]">{horasCalc.ordinarias}h</span>
-                <span className="text-[10px] ml-1">(auto)</span>
-              </div>
-              <div className="text-xs text-[var(--text-secondary)]">
-                Nocturnas: <span className="font-medium text-[var(--text-primary)]">{horasCalc.nocturnas}h</span>
-                <span className="text-[10px] ml-1">(auto)</span>
-              </div>
-            </div>
-          )}
-
-          {/* Botones */}
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={() => setEditing(null)}
-              className="text-xs px-3 py-1.5 rounded-lg bg-[var(--bg-hover)] text-[var(--text-secondary)]"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleNew}
-              disabled={saving || !form.code || !form.name || !form.entrada || !form.salida}
-              className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-ak-borgona)] text-white hover:opacity-90 disabled:opacity-50"
-            >
-              {saving ? 'Creando...' : 'Crear turno'}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

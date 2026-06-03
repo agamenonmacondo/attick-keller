@@ -91,11 +91,9 @@ export default function ShiftTypeModal({ isOpen, onClose, area, shiftType, onSav
     { entrada: '', salida: '' }
   ])
 
-  // Modal cerrado = no renderizar
-  if (!isOpen) return null
-
   // Inicializar si editando
   useEffect(() => {
+    if (!isOpen) return
     if (shiftType) {
       setCode(shiftType.code)
       setName(shiftType.name)
@@ -112,6 +110,9 @@ export default function ShiftTypeModal({ isOpen, onClose, area, shiftType, onSav
       setSegments([{ entrada: '', salida: '' }])
     }
   }, [shiftType, area, isOpen])
+
+  // Modal cerrado = no renderizar (DESPUES de todos los hooks)
+  if (!isOpen) return null
 
   const isSplit = segments.length > 1
 

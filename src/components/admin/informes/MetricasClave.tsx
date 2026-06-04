@@ -1,0 +1,117 @@
+'use client'
+
+import { useMemo } from 'react'
+
+interface KPICardProps {
+  label: string
+  value: string
+  delta?: number | null
+  subtitle?: string
+  icon: React.ReactNode
+}
+
+function formatCOP(n: number): string {
+  if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+  if (Math.abs(n) >= 1_000) return `$${(n / 1_000).toFixed(1)}K`
+  return `$${Math.round(n).toLocaleString('es-CO')}`
+}
+
+function formatNum(n: number): string {
+  if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+  return Math.round(n).toLocaleString('es-CO')
+}
+
+export function MetricasClave({ data, comparison }: { data: any; comparison: { kpis: any } | null }) {
+  const cards = useMemo(() => {
+    if (!data) return []
+
+    const kpi = Array.isArray(data) ? data[0] : data
+    const compKpi = comparison?.kpis ? (Array.isArray(comparison.kpis) ? comparison.kpis[0] : comparison.kpis) : null
+
+    const revenue = Number(kpi?.total_ventas ?? kpi?.revenue ?? 0)
+    const cheques = Number(kpi?.total_cheques ?? 0)
+    const avgTicket = cheques > 0 ? revenue / cheques : 0
+    const personas = Number(kpi?.personas ?? 0)
+    const propina = Number(kpi?.propina_total ?? kpi?.tip_total ?? 0)
+    const propinaPerCapita = personas > 0 ? propina / personas : 0
+
+    const compRevenue = compKpi ? Number(compKpi?.total_ventas ?? compKpi?.revenue ?? 0) : 0
+    const compCheques = compKpi ? Number(compKpi?.total_cheques ?? 0) : 0
+    const compPersonas = compKpi ? Number(compKpi?.personas ?? 0) : 0
+    const compPropina = compKpi ? Number(compKpi?.propina_total ?? compKpi?.tip_total ?? 0) : 0
+
+    const pct = (cur: number, prev: number) => prev > 0 ? ((cur - prev) / prev) * 100 : null
+
+    return [
+      {
+        label: 'Ventas',
+        value: formatCOP(revenue),
+        delta: compRevenue > 0 ? pct(revenue, compRevenue) : null,
+        subtitle: cheques > 0 ? `${formatNum(cheques)} cheques` : undefined,
+        icon: '💰',
+      },
+      {
+        label: 'Cheques',
+        value: formatNum(cheques),
+        delta: compCheques > 0 ? pct(cheques, compCheques) : null,
+        subtitle: personas > 0 ? `${formatNum(personas)} personas` : undefined,
+        icon: '🍽️',
+      },
+      {
+        label: 'Ticket Prom.',
+        value: formatCOP(avgTicket),
+        delta: compRevenue > 0 && compCheques > 0 ? pct(avgTicket, compRevenue / compCheques) : null,
+        icon: '📊',
+      },
+      {
+        label: 'Personas',
+        value: formatNum(personas),
+        delta: compPersonas > 0 ? pct(personas, compPersonas) : null,
+        icon: '👥',
+      },
+      {
+        label: 'Propina',
+        value: formatCOP(propina),
+        delta: compPropina > 0 ? pct(propina, compPropina) : null,
+        icon: '🎁',
+      },
+      {
+        label: 'Propina/Persona',
+        value: formatCOP(propinaPerCapita),
+        delta: null,
+        icon: '💵',
+      },
+    ]
+  }, [data, comparison])
+
+  if (!data) return null
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {cards.map((card) => (
+        <div
+          key={card.label}
+          className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4 hover:border-[var(--color-ak-borgona)]/30 transition-colors"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+              {card.label}
+            </span>
+            <span className="text-base">{card.icon}</span>
+          </div>
+          <div className="text-xl font-bold text-[var(--text-primary)] leading-tight">
+            {card.value}
+          </div>
+          {card.subtitle && (
+            <div className="text-[10px] text-[var(--text-muted)] mt-0.5">{card.subtitle}</div>
+          )}
+          {card.delta !== null && card.delta !== undefined && (
+            <div className={`text-xs font-medium mt-1 ${card.delta >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+              {card.delta >= 0 ? '↑' : '↓'} {Math.abs(card.delta).toFixed(1)}%
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}

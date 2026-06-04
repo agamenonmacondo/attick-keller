@@ -17,6 +17,7 @@ import { FloorPlanMap } from './floorplan/FloorPlanMap'
 import { NominaUnifiedPanel } from './nomina/NominaUnifiedPanel'
 import { RodriPanel } from './rodri/RodriPanel'
 import ShiftSchedulePanel from './shifts/ShiftSchedulePanel'
+import { InformesRayoPanel } from './informes/InformesRayoPanel'
 import { Spinner } from '@phosphor-icons/react'
 
 export function AdminShell() {
@@ -67,6 +68,7 @@ export function AdminShell() {
         {activeTab === 'nomina' && <NominaUnifiedPanel />}
         {activeTab === 'turnos' && <ShiftSchedulePanel />}
         {activeTab === 'app-rodri' && <RodriPanel />}
+        {activeTab === 'informes' && <InformesRayoPanel />}
       </main>
     </div>
   )

@@ -5,7 +5,7 @@ import { useInformesRayo } from '@/lib/hooks/useInformesRayo'
 import { MetricasClave } from './MetricasClave'
 import { AnalisisIA } from './AnalisisIA'
 import { PDFExportButton } from './PDFExportButton'
-import { Lightning, CaretLeft, CaretRight, Spinner, Warning, Funnel, Sparkle, TrendUp, TrendDown, Lightbulb, ClipboardText, UsersThree, HandCoins } from '@phosphor-icons/react'
+import { Lightning, CaretLeft, CaretRight, Spinner, Warning, Funnel, Sparkle, TrendUp, TrendDown, Lightbulb, ClipboardText, Package, HandCoins } from '@phosphor-icons/react'
 
 type PeriodPreset = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'custom'
 type CompareMode = 'previousPeriod' | 'none'
@@ -49,7 +49,6 @@ function endOfMonth(d: Date): Date {
 function calculatePeriod(preset: PeriodPreset, customFrom?: string, customTo?: string) {
   const now = getColombiaDate()
   let from: string, to: string
-  let compFrom = '', compTo = ''
 
   switch (preset) {
     case 'today':
@@ -109,6 +108,16 @@ const PRESETS: { key: PeriodPreset; label: string }[] = [
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
+function formatCOP(n: number): string {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
+  return `$${n.toLocaleString('es-CO')}`
+}
+
+function formatNum(n: number): string {
+  return n.toLocaleString('es-CO')
+}
+
 export function InformesRayoPanel() {
   const { data, loading, error, fetchReport } = useInformesRayo()
   const [preset, setPreset] = useState<PeriodPreset>('thisWeek')
@@ -154,20 +163,21 @@ export function InformesRayoPanel() {
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[var(--color-ak-borgona)]/10 flex items-center justify-center">
-          <Lightning size={22} weight="fill" className="text-[var(--color-ak-dorado)]" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[var(--color-ak-borgona)]/10 flex items-center justify-center">
+            <Lightning size={22} weight="fill" className="text-[var(--color-ak-dorado)]" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-[var(--text-primary)]">Informes Rayo</h2>
+            <p className="text-xs text-[var(--text-secondary)]">Reportes rápidos con datos en vivo</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-bold text-[var(--text-primary)]">Informes Rayo</h2>
-          <p className="text-xs text-[var(--text-secondary)]">Reportes rápidos con datos en vivo</p>
-        </div>
+        {data && !loading && (
+          <PDFExportButton data={data} from={from} to={to} analysis={null} />
+        )}
       </div>
 
-      {/* ── PDF Export (shown when data is loaded) ── */}
-      {data && !loading && (
-        <PDFExportButton data={data} from={from} to={to} analysis={null} />
-      )}
       <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4 space-y-4">
         {/* Preset buttons */}
         <div className="flex flex-wrap gap-2">
@@ -249,6 +259,40 @@ export function InformesRayoPanel() {
         <MetricasClave data={data.kpis} comparison={data.comparison as { kpis: any } | null} />
       )}
 
+      {/* ── Section: Top Products ── */}
+      {data && data.topProducts && data.topProducts.length > 0 && !loading && (
+        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+            <Package size={16} className="text-[var(--color-ak-dorado)]" weight="fill" />
+            Top Productos
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-[var(--border-default)]">
+                  <th className="text-left py-2 text-[var(--text-secondary)] font-medium">#</th>
+                  <th className="text-left py-2 text-[var(--text-secondary)] font-medium">Producto</th>
+                  <th className="text-left py-2 text-[var(--text-secondary)] font-medium">Categoría</th>
+                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Und.</th>
+                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Ventas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.topProducts.slice(0, 15).map((p: any, i: number) => (
+                  <tr key={p.product_id || i} className="border-b border-[var(--border-default)]/50">
+                    <td className="py-2 text-[var(--text-secondary)]">{i + 1}</td>
+                    <td className="py-2 text-[var(--text-primary)] font-medium">{p.product_name}</td>
+                    <td className="py-2 text-[var(--text-secondary)]">{p.category_name}</td>
+                    <td className="py-2 text-right text-[var(--text-primary)]">{formatNum(p.quantity)}</td>
+                    <td className="py-2 text-right text-[var(--text-primary)]">{formatCOP(p.revenue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* ── Section: Zones table ── */}
       {data && data.zones && data.zones.length > 0 && !loading && (
         <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
@@ -264,21 +308,17 @@ export function InformesRayoPanel() {
                   <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Ventas</th>
                   <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Cheques</th>
                   <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Ticket Prom.</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Personas</th>
                 </tr>
               </thead>
               <tbody>
                 {data.zones.map((z: any) => (
-                  <tr key={z.zone || z.derived_zone_name || z.name} className="border-b border-[var(--border-default)]/50">
-                    <td className="py-2 text-[var(--text-primary)] font-medium">{z.zone || z.derived_zone_name || z.name}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">{Number(z.total_ventas || z.revenue || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">{z.total_cheques ?? z.cheques ?? '-'}</td>
+                  <tr key={z.zone} className="border-b border-[var(--border-default)]/50">
+                    <td className="py-2 text-[var(--text-primary)] font-medium">{z.zone}</td>
+                    <td className="py-2 text-right text-[var(--text-primary)]">{formatCOP(z.total_ventas)}</td>
+                    <td className="py-2 text-right text-[var(--text-primary)]">{z.total_cheques}</td>
                     <td className="py-2 text-right text-[var(--text-primary)]">
-                      {z.total_cheques > 0 || z.cheques > 0
-                        ? (Number(z.total_ventas || z.revenue || 0) / Number(z.total_cheques || z.cheques || 1)).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
-                        : '-'}
+                      {z.total_cheques > 0 ? formatCOP(Math.round(z.total_ventas / z.total_cheques)) : '-'}
                     </td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">{z.personas ?? '-'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -290,7 +330,10 @@ export function InformesRayoPanel() {
       {/* ── Section: Payments ── */}
       {data && data.payments && data.payments.length > 0 && !loading && (
         <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Métodos de Pago</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+            <HandCoins size={16} className="text-[var(--color-ak-dorado)]" weight="fill" />
+            Métodos de Pago
+          </h3>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
@@ -298,58 +341,16 @@ export function InformesRayoPanel() {
                   <th className="text-left py-2 text-[var(--text-secondary)] font-medium">Método</th>
                   <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Total</th>
                   <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Cheques</th>
+                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">%</th>
                 </tr>
               </thead>
               <tbody>
                 {data.payments.map((p: any) => (
-                  <tr key={p.payment_method || p.metodo || p.method} className="border-b border-[var(--border-default)]/50">
-                    <td className="py-2 text-[var(--text-primary)]">{p.payment_method || p.metodo || p.method}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">{Number(p.total || p.total_ventas || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">{p.cheques || p.total_cheques || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ── Section: Equipo (Top Meseros) ── */}
-      {data && data.staff && data.staff.length > 0 && !loading && (
-        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
-            <UsersThree size={16} className="text-[var(--color-ak-dorado)]" />
-            Equipo — Top Meseros
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-[var(--border-default)]">
-                  <th className="text-left py-2 text-[var(--text-secondary)] font-medium">#</th>
-                  <th className="text-left py-2 text-[var(--text-secondary)] font-medium">Mesero</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Ventas</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Cheques</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Ticket Prom.</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Propina</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.staff.slice(0, 10).map((s: any, i: number) => (
-                  <tr key={s.staff_name || s.name || i} className="border-b border-[var(--border-default)]/50">
-                    <td className="py-2 text-[var(--text-secondary)]">{i + 1}</td>
-                    <td className="py-2 text-[var(--text-primary)] font-medium">{s.staff_name || s.name || 'Sin nombre'}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">
-                      {Number(s.total_ventas || s.revenue || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
-                    </td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">{s.total_cheques ?? s.cheques ?? '-'}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">
-                      {(s.total_cheques > 0 || s.cheques > 0)
-                        ? (Number(s.total_ventas || s.revenue || 0) / Number(s.total_cheques || s.cheques || 1)).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
-                        : '-'}
-                    </td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">
-                      {Number(s.total_propina || s.tips || 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}
-                    </td>
+                  <tr key={p.payment_method || p.method} className="border-b border-[var(--border-default)]/50">
+                    <td className="py-2 text-[var(--text-primary)]">{p.payment_method}</td>
+                    <td className="py-2 text-right text-[var(--text-primary)]">{formatCOP(p.total)}</td>
+                    <td className="py-2 text-right text-[var(--text-primary)]">{p.cheques}</td>
+                    <td className="py-2 text-right text-[var(--text-secondary)]">{p.pct}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -367,64 +368,35 @@ export function InformesRayoPanel() {
           </h3>
           <div className="space-y-2 text-xs text-[var(--text-secondary)]">
             {(() => {
-              const kpi = Array.isArray(data.kpis) ? data.kpis[0] : data.kpis
-              const compKpi = data.comparison?.kpis ? (Array.isArray(data.comparison.kpis) ? data.comparison.kpis[0] : data.comparison.kpis) : null
-              const fmt = (n: number) => n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `$${(n / 1_000).toFixed(0)}K` : `$${n?.toLocaleString('es-CO') ?? 0}`
-              const pct = (c: number, p: number) => !p ? 'N/A' : `${c >= p ? '↑' : '↓'}${Math.abs(((c - p) / p) * 100).toFixed(1)}%`
+              const kpi = data.kpis
+              const compKpi = data.comparison?.kpis
+              const revenue = Number(kpi?.total_ventas ?? 0)
+              const cheques = Number(kpi?.total_cheques ?? 0)
+              const ticketProm = cheques > 0 ? Math.round(revenue / cheques) : 0
+              const personas = Number(kpi?.personas ?? 0)
+              const propina = Number(kpi?.propina_total ?? 0)
+              const propinaPerCapita = personas > 0 ? Math.round(propina / personas) : 0
 
-              const revenue = Number(kpi?.total_ventas ?? kpi?.revenue ?? 0)
-              const cheques = Number(kpi?.total_cheques ?? kpi?.cheques ?? 0)
-              const ticketProm = cheques > 0 ? revenue / cheques : 0
-              const personas = Number(kpi?.personas ?? kpi?.total_personas ?? 0)
-              const propina = Number(kpi?.total_propina ?? kpi?.tips ?? 0)
+              const cRevenue = compKpi ? Number(compKpi.total_ventas ?? 0) : 0
+              const cCheques = compKpi ? Number(compKpi.total_cheques ?? 0) : 0
+              const cPersonas = compKpi ? Number(compKpi.personas ?? 0) : 0
 
-              const cRevenue = compKpi ? Number(compKpi.total_ventas ?? compKpi.revenue ?? 0) : 0
-              const cCheques = compKpi ? Number(compKpi.total_cheques ?? compKpi.cheques ?? 0) : 0
-              const cPersonas = compKpi ? Number(compKpi.personas ?? compKpi.total_personas ?? 0) : 0
-
-              const dateLabel = `${from} al ${to}`
+              const pct = (c: number, p: number) => !p ? '' : ` (${c >= p ? '↑' : '↓'}${Math.abs(((c - p) / p) * 100).toFixed(1)}%)`
 
               return (
-                <>
-                  <p className="text-[var(--text-primary)] font-medium">
-                    Período: {dateLabel}
-                    {compKpi ? ` (vs período anterior)` : ''}
-                  </p>
-                  <ul className="space-y-1.5 pl-3">
-                    <li>
-                      <span className="text-[var(--text-primary)] font-medium">Ventas:</span>{' '}
-                      {fmt(revenue)}
-                      {compKpi && cRevenue > 0 ? ` (${pct(revenue, cRevenue)})` : ''}
-                    </li>
-                    <li>
-                      <span className="text-[var(--text-primary)] font-medium">Clientes:</span>{' '}
-                      {cheques.toLocaleString('es-CO')}
-                      {compKpi && cCheques > 0 ? ` (${pct(cheques, cCheques)})` : ''}
-                    </li>
-                    <li>
-                      <span className="text-[var(--text-primary)] font-medium">Ticket Promedio:</span>{' '}
-                      {fmt(ticketProm)}
-                    </li>
-                    {personas > 0 && (
-                      <li>
-                        <span className="text-[var(--text-primary)] font-medium">Personas:</span>{' '}
-                        {personas.toLocaleString('es-CO')}
-                        {compKpi && cPersonas > 0 ? ` (${pct(personas, cPersonas)})` : ''}
-                      </li>
-                    )}
-                    {propina > 0 && (
-                      <li>
-                        <span className="text-[var(--text-primary)] font-medium">Propina total:</span>{' '}
-                        {fmt(propina)}
-                      </li>
-                    )}
-                  </ul>
-                  <p className="text-[var(--text-secondary)] italic mt-2">
-                    Copia estos datos para el acta de junta directiva.
-                  </p>
-                </>
+                <ul className="space-y-1.5 pl-3">
+                  <li><span className="text-[var(--text-primary)] font-medium">Ventas:</span> {formatCOP(revenue)}{pct(revenue, cRevenue)}</li>
+                  <li><span className="text-[var(--text-primary)] font-medium">Cheques:</span> {formatNum(cheques)}{pct(cheques, cCheques)}</li>
+                  <li><span className="text-[var(--text-primary)] font-medium">Ticket Promedio:</span> {formatCOP(ticketProm)}</li>
+                  {personas > 0 && <li><span className="text-[var(--text-primary)] font-medium">Personas:</span> {formatNum(personas)}{pct(personas, cPersonas)}</li>}
+                  {propina > 0 && <li><span className="text-[var(--text-primary)] font-medium">Propina:</span> {formatCOP(propina)}</li>}
+                  {propinaPerCapita > 0 && <li><span className="text-[var(--text-primary)] font-medium">Propina/Persona:</span> {formatCOP(propinaPerCapita)}</li>}
+                </ul>
               )
             })()}
+            <p className="text-[var(--text-secondary)] italic mt-2">
+              Copia estos datos para el acta de junta directiva.
+            </p>
           </div>
         </div>
       )}

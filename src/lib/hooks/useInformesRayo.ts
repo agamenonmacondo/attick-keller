@@ -9,6 +9,7 @@ export interface InformesRayoData {
   staff: any[]
   payments: any[]
   clientSplit: any[]
+  topProducts: any[]
   comparison: { kpis: any } | null
   period: {
     from: string

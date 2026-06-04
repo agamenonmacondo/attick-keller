@@ -5,7 +5,7 @@ import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, Char
 import { SectionHeading } from '../shared/SectionHeading';
 
 import type { ShiftType, StaffMemberForShift, ShiftAssignment } from '@/lib/types/shifts';
-import { getWeekStr, getWeekDates, dayIndexToDateIndex, calcularCostoTurno } from '@/lib/utils/costCalculator';
+import { getWeekStr, getWeekDates, dayIndexToDateIndex, calcularCostoTurnoEmpresa } from '@/lib/utils/costCalculator';
 import { getLocalDate } from '@/lib/utils/formatDate';
 import { cn } from '@/lib/utils/cn';
 import { useTheme } from '@/lib/ThemeProvider';
@@ -72,17 +72,17 @@ export default function ShiftSchedulePanel() {
 
   // Compute heatmap days from assignments
   const days = useMemo(() => {
-    const d: Record<string, number> = {};
+    const result: Record<string, number> = {};
     const weekDates = getWeekDates(weekStr);
     for (const a of assignments) {
       const dateIndex = dayIndexToDateIndex(a.day_index);
       const date = weekDates[dateIndex];
       if (date) {
-        const dateStr = date.toISOString().split('T')[0];
-        d[dateStr] = (d[dateStr] || 0) + 1;
+        const dateStr = getLocalDate(date);
+        result[dateStr] = (result[dateStr] || 0) + 1;
       }
     }
-    return d;
+    return result;
   }, [assignments, weekStr]);
 
   const today = useMemo(() => getLocalDate(), []);
@@ -243,8 +243,7 @@ export default function ShiftSchedulePanel() {
 
           const hours = st.ordinarias + st.nocturnas;
           const isSunday = Number(dayIdx) === 0;
-          const salario = (emp.salario_mensual && emp.salario_mensual > 50000000) ? 0 : (emp.salario_mensual || 0);
-          const cost = calcularCostoTurno(st, salario, isSunday);
+          const cost = calcularCostoTurnoEmpresa(st, emp.salario_mensual, isSunday);
 
           payload.push({
             employee_id: empId,
@@ -382,7 +381,7 @@ export default function ShiftSchedulePanel() {
       {/* Week strip — 7 dias Lun-Dom + flechas */}
       <div className="flex items-stretch gap-1.5 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-3">
         {weekDates.map((date, i) => {
-          const dateStr = date.toISOString().split('T')[0];
+          const dateStr = getLocalDate(date);
           const count = days[dateStr] || 0;
           const isToday = dateStr === today;
           const isSunday = i === 6;
@@ -470,7 +469,7 @@ export default function ShiftSchedulePanel() {
                 </span>
               )}
               {!scheduleId && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-500/15 text-gray-400 border border-gray-500/30">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--bg-input)] text-[var(--text-muted)] border border-[var(--border-default)]">
                   Sin cronograma
                 </span>
               )}

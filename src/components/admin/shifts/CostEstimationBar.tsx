@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import type { StaffMemberForShift, ShiftType } from '@/lib/types/shifts';
-import { calcularCostoTurno, calcularCostoSemanal, formatCOP, getWeekDates, dayIndexToDateIndex } from '@/lib/utils/costCalculator';
+import { calcularCostoTurnoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
 import { LEGAL_PARAMS } from '@/lib/types/shifts';
 
 interface CostEstimationBarProps {
@@ -46,7 +46,7 @@ export default function CostEstimationBar({
         if (hours > LEGAL_PARAMS.MAX_DAILY_HOURS) he += hours - LEGAL_PARAMS.MAX_DAILY_HOURS;
         totalHours += hours;
         const isSunday = dayIdx === SUNDAY_DAY_INDEX;
-        const costo = calcularCostoTurno(st, emp.salario_mensual, isSunday);
+        const costo = calcularCostoTurnoEmpresa(st, emp.salario_mensual, isSunday);
         base += costo.base_pay;
         rn += costo.night_surcharge;
         rd += costo.sunday_surcharge;

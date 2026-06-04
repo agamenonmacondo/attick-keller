@@ -111,15 +111,15 @@ export default function ShiftTypeModal({ isOpen, onClose, area, shiftType, onSav
     }
   }, [shiftType, area, isOpen])
 
-  // Modal cerrado = no renderizar (DESPUES de todos los hooks)
-  if (!isOpen) return null
-
-  const isSplit = segments.length > 1
-
-  // Calcular horas por segmento
+  // Calcular horas por segmento (hook — DEBE ir antes del return condicional)
   const segmentHours = useMemo(() => {
     return segments.map(seg => calcularHorasSegmento(seg.entrada, seg.salida))
   }, [segments])
+
+  // Modal cerrado = no renderizar (DESPUES de TODOS los hooks)
+  if (!isOpen) return null
+
+  const isSplit = segments.length > 1
 
   // Totales
   const totalOrdinarias = Math.round(segmentHours.reduce((sum, h) => sum + h.ordinarias, 0) * 10) / 10

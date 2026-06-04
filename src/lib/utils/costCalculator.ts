@@ -177,6 +177,34 @@ export function calcularCostoTurno(
 }
 
 /**
+ * Calcula el costo de un turno para la EMPRESA (salario + prestaciones + aportes).
+ * Wrapper de seguridad: sanitiza salarios y escala a costo empresa real.
+ * 
+ * Usar SIEMPRE esta funcion en el sistema de turnos, nunca calcularCostoTurno() directamente.
+ * Es la unica fuente de verdad para el costo real para la organizacion.
+ */
+export function calcularCostoTurnoEmpresa(
+  shiftType: ShiftType,
+  rawSalario: number | null | undefined,
+  esDomingo: boolean = false
+): ShiftCostEstimate {
+  // Sanitizar salario (misma logica en todo el sistema)
+  const salarioFallback = rawSalario && rawSalario > 50000000 ? 1750905 : (rawSalario || 1750905);
+  const costoEmp = calcularCostoEmpresa(salarioFallback);
+  const scaleFactor = costoEmp.costoMensualTotal / salarioFallback;
+  
+  const costo = calcularCostoTurno(shiftType, salarioFallback, esDomingo);
+  
+  return {
+    base_pay: Math.round(costo.base_pay * scaleFactor),
+    night_surcharge: Math.round(costo.night_surcharge * scaleFactor),
+    overtime_surcharge: Math.round(costo.overtime_surcharge * scaleFactor),
+    sunday_surcharge: Math.round(costo.sunday_surcharge * scaleFactor),
+    total: Math.round(costo.total * scaleFactor),
+  };
+}
+
+/**
  * Calcula el costo semanal estimado para un empleado
  */
 export function calcularCostoSemanal(
@@ -361,19 +389,23 @@ export function getWeekStr(date: Date): string {
  * Esto alinea con los day_index de la BD: 0=Dom, 1=Lun, ... 6=Sab
  * NOTA: El array de fechas empieza en Lunes (ISO), no en Domingo.
  * Para usar con day_index de la BD, mapear: day_index 0 (Dom) = fechas[6], day_index 1 (Lun) = fechas[0], etc.
+ *
+ * Las fechas se construyen a medianoche LOCAL (no UTC) para que getDate()/getMonth()
+ * funcionen correctamente en cualquier zona horaria (ej: Colombia UTC-5).
  */
 export function getWeekDates(weekStr: string): Date[] {
   const [year, week] = weekStr.split('-W').map(Number);
-  // January 4th is always in ISO week 1
+  // January 4th is always in ISO week 1 — usar UTC para el cálculo del día de la semana
   const jan4 = new Date(Date.UTC(year, 0, 4));
   const dayOfWeek = jan4.getUTCDay() || 7; // Monday=1, Sunday=7
-  const monday = new Date(jan4);
-  monday.setUTCDate(jan4.getUTCDate() - dayOfWeek + 1 + (week - 1) * 7);
+  const mondayOffset = -dayOfWeek + 1 + (week - 1) * 7;
+  const monday = new Date(Date.UTC(year, 0, 4 + mondayOffset));
 
   const dates: Date[] = [];
   for (let i = 0; i < 7; i++) {
-    const d = new Date(monday);
-    d.setUTCDate(monday.getUTCDate() + i);
+    // Construir a medianoche LOCAL: usar el constructor Date(year, month, day)
+    // que crea la fecha en zona horaria local, no UTC
+    const d = new Date(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate() + i);
     dates.push(d);
   }
   return dates;

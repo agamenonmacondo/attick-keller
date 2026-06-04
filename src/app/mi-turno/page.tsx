@@ -19,6 +19,7 @@ import {
 } from '@phosphor-icons/react'
 import { DAY_NAMES } from '@/lib/types/shifts'
 import { getWeekStr, getWeekDates } from '@/lib/utils/costCalculator'
+import { getLocalDate } from '@/lib/utils/formatDate'
 import CheckInOut from '@/components/admin/shifts/CheckInOut'
 import ContingencyReport from '@/components/admin/shifts/ContingencyReport'
 
@@ -241,7 +242,7 @@ export default function MiTurnoPage() {
                 // weekDates is ISO: [0]=Mon..[6]=Sun. day_index: 0=Sun..6=Sat
                 // Map: day_index 0(Sun)->weekDates[6], 1(Mon)->weekDates[0], ..6(Sat)->weekDates[5]
                 const date = i === 0 ? weekDates[6] : weekDates[i - 1]
-                const isToday = date && new Date().toDateString() === date.toDateString()
+                const isToday = date && getLocalDate() === getLocalDate(date)
                 const hasNovedad = assignment?.novedad
 
                 return (

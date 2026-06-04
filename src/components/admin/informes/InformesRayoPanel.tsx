@@ -5,6 +5,7 @@ import { useInformesRayo } from '@/lib/hooks/useInformesRayo'
 import { MetricasClave } from './MetricasClave'
 import { AnalisisIA } from './AnalisisIA'
 import { PDFExportButton } from './PDFExportButton'
+import { InformesDashboard } from './InformesDashboard'
 import { Lightning, CaretLeft, CaretRight, Spinner, Warning, Funnel, Sparkle, TrendUp, TrendDown, Lightbulb, ClipboardText, Package, HandCoins } from '@phosphor-icons/react'
 
 type PeriodPreset = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'custom'
@@ -260,104 +261,9 @@ export function InformesRayoPanel() {
         <MetricasClave data={data.kpis} comparison={data.comparison as { kpis: any } | null} />
       )}
 
-      {/* ── Section: Top Products ── */}
-      {data && data.topProducts && data.topProducts.length > 0 && !loading && (
-        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
-            <Package size={16} className="text-[var(--color-ak-dorado)]" weight="fill" />
-            Top Productos
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-[var(--border-default)]">
-                  <th className="text-left py-2 text-[var(--text-secondary)] font-medium">#</th>
-                  <th className="text-left py-2 text-[var(--text-secondary)] font-medium">Producto</th>
-                  <th className="text-left py-2 text-[var(--text-secondary)] font-medium">Categoría</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Und.</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Ventas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.topProducts.slice(0, 15).map((p: any, i: number) => (
-                  <tr key={p.product_id || i} className="border-b border-[var(--border-default)]/50">
-                    <td className="py-2 text-[var(--text-secondary)]">{i + 1}</td>
-                    <td className="py-2 text-[var(--text-primary)] font-medium">{p.product_name}</td>
-                    <td className="py-2 text-[var(--text-secondary)]">{p.category_name}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">{formatNum(p.quantity)}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">{formatCOP(p.revenue)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ── Section: Zones table ── */}
-      {data && data.zones && data.zones.length > 0 && !loading && (
-        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
-            <Funnel size={16} className="text-[var(--color-ak-dorado)]" />
-            Por Zona
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-[var(--border-default)]">
-                  <th className="text-left py-2 text-[var(--text-secondary)] font-medium">Zona</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Ventas</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Cheques</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Ticket Prom.</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.zones.map((z: any) => (
-                  <tr key={z.zone} className="border-b border-[var(--border-default)]/50">
-                    <td className="py-2 text-[var(--text-primary)] font-medium">{z.zone}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">{formatCOP(z.total_ventas)}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">{z.total_cheques}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">
-                      {z.total_cheques > 0 ? formatCOP(Math.round(z.total_ventas / z.total_cheques)) : '-'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ── Section: Payments ── */}
-      {data && data.payments && data.payments.length > 0 && !loading && (
-        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
-            <HandCoins size={16} className="text-[var(--color-ak-dorado)]" weight="fill" />
-            Métodos de Pago
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-[var(--border-default)]">
-                  <th className="text-left py-2 text-[var(--text-secondary)] font-medium">Método</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Total</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">Cheques</th>
-                  <th className="text-right py-2 text-[var(--text-secondary)] font-medium">%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.payments.map((p: any) => (
-                  <tr key={p.payment_method || p.method} className="border-b border-[var(--border-default)]/50">
-                    <td className="py-2 text-[var(--text-primary)]">{p.payment_method}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">{formatCOP(p.total)}</td>
-                    <td className="py-2 text-right text-[var(--text-primary)]">{p.cheques}</td>
-                    <td className="py-2 text-right text-[var(--text-secondary)]">{p.pct}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      {/* ── Dashboard with Charts ── */}
+      {data && !loading && (
+        <InformesDashboard data={data} />
       )}
 
       {/* ── Section: Junta (Resumen para Acta) ── */}

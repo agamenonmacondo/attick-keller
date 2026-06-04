@@ -1,6 +1,33 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['@react-pdf/renderer'],
+  turbopack: {
+    resolveAlias: {
+      'victory-vendor/d3-shape': 'd3-shape',
+      'victory-vendor/d3-scale': 'd3-scale',
+      'victory-vendor/d3-array': 'd3-array',
+      'victory-vendor/d3-color': 'd3-color',
+      'victory-vendor/d3-ease': 'd3-ease',
+      'victory-vendor/d3-format': 'd3-format',
+      'victory-vendor/d3-interpolate': 'd3-interpolate',
+      'victory-vendor/d3-path': 'd3-path',
+    },
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'victory-vendor/d3-shape': 'd3-shape',
+      'victory-vendor/d3-scale': 'd3-scale',
+      'victory-vendor/d3-array': 'd3-array',
+      'victory-vendor/d3-color': 'd3-color',
+      'victory-vendor/d3-ease': 'd3-ease',
+      'victory-vendor/d3-format': 'd3-format',
+      'victory-vendor/d3-interpolate': 'd3-interpolate',
+      'victory-vendor/d3-path': 'd3-path',
+    };
+    return config;
+  },
   async headers() {
     return [
       {
@@ -10,7 +37,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubdomains; preload' },
         ],
       },
     ];

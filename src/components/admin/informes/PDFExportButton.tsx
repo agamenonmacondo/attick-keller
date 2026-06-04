@@ -1,19 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import dynamic from 'next/dynamic'
 import { Lightning } from '@phosphor-icons/react'
-
-// Lazy load PDF para evitar problemas SSR en Vercel serverless
-const PDFDownloadLink = dynamic(
-  () => import('@react-pdf/renderer').then(mod => mod.PDFDownloadLink),
-  { ssr: false, loading: () => <span>Cargando...</span> }
-)
-
-const InformesRayoPDF = dynamic(
-  () => import('./InformeRayoPDFDocument').then(mod => mod.InformesRayoPDF),
-  { ssr: false }
-)
 
 interface PDFExportButtonProps {
   data: any
@@ -23,12 +11,49 @@ interface PDFExportButtonProps {
 }
 
 export function PDFExportButton({ data, from, to, analysis }: PDFExportButtonProps) {
+  const [loading, setLoading] = useState(false)
+  const [ready, setReady] = useState(false)
+  const [pdfDoc, setPdfDoc] = useState<any>(null)
+  const [PDFDownloadLink, setPDFDownloadLink] = useState<any>(null)
+
   if (!data?.kpis) return null
+
+  const loadPDF = async () => {
+    if (ready && pdfDoc && PDFDownloadLink) return
+    setLoading(true)
+    try {
+      const [rendererModule, docModule] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('./InformeRayoPDFDocument')
+      ])
+      setPDFDownloadLink(() => rendererModule.PDFDownloadLink)
+      setPdfDoc(() => docModule.InformesRayoPDF)
+      setReady(true)
+    } catch (err) {
+      console.error('Error loading PDF module:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!ready) {
+    return (
+      <button
+        onClick={loadPDF}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-ak-borgona)] text-white text-sm font-medium hover:bg-[var(--color-ak-borgona)]/90 transition-colors"
+      >
+        <Lightning size={16} weight="fill" />
+        Cargar PDF
+      </button>
+    )
+  }
+
+  const DocComponent = pdfDoc
 
   return (
     <div className="flex items-center gap-3">
       <PDFDownloadLink
-        document={<InformesRayoPDF data={data} from={from} to={to} analysis={analysis} />}
+        document={<DocComponent data={data} from={from} to={to} analysis={analysis} />}
         fileName={`Informe_Rayo_${from}_al_${to}.pdf`}
         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-ak-borgona)] text-white text-sm font-medium hover:bg-[var(--color-ak-borgona)]/90 transition-colors"
       >

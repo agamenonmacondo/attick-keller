@@ -208,33 +208,46 @@ const styles = StyleSheet.create({
     color: DORADO_LIGHT,
     fontFamily: 'Helvetica-Bold',
   },
-  // ── AI Analysis — full-width stacked cards ──
+  // ── AI Analysis — full-width stacked cards with clear bullet formatting ──
   aiSection: {
     width: '100%',
     backgroundColor: SURFACE_CONTAINER,
     borderLeftWidth: 2,
     borderLeftColor: DORADO,
-    padding: '12 16',
-    marginBottom: 10,
+    padding: '14 18',
+    marginBottom: 12,
   },
   aiTitle: {
-    fontSize: 9,
+    fontSize: 10,
     color: DORADO,
     fontFamily: 'Helvetica-Bold',
     letterSpacing: 2,
-    marginBottom: 5,
+    marginBottom: 8,
   },
-  aiText: {
+  aiBullet: {
     fontSize: 8.5,
     color: ON_SURFACE_VAR,
-    lineHeight: 1.6,
-    marginBottom: 1,
+    lineHeight: 1.7,
+    marginBottom: 2,
+    paddingLeft: 10,
+  },
+  aiBulletDot: {
+    fontSize: 8.5,
+    color: ON_SURFACE_VAR,
+    lineHeight: 1.7,
+    marginBottom: 2,
+  },
+  aiParagraph: {
+    fontSize: 8.5,
+    color: ON_SURFACE_VAR,
+    lineHeight: 1.7,
+    marginBottom: 4,
   },
   aiFallback: {
     backgroundColor: SURFACE_CONTAINER,
     borderLeftWidth: 2,
     borderLeftColor: DORADO,
-    padding: '12 16',
+    padding: '14 18',
   },
   // ── Junta Box — clearer, more space ──
   juntaBox: {
@@ -282,27 +295,52 @@ const styles = StyleSheet.create({
   },
 })
 
-// ═══ Parse analysis text into sections ═══
+// ═══ Parse analysis text into structured sections ═══
+// Handles: emoji headers, ## headers, numbered bullets, dash bullets, plain text
 function parseAnalysis(text: string) {
-  const sections: { icon: string; title: string; lines: string[] }[] = []
+  const sections: { icon: string; title: string; items: { bullet: boolean; text: string }[] }[] = []
   const lines = text.split('\n')
-  let current: { icon: string; title: string; lines: string[] } | null = null
+  let current: { icon: string; title: string; items: { bullet: boolean; text: string }[] } | null = null
+
+  const EMOJIS = /[⚡📈📉💡⚠️🏆📋📊]/
 
   for (const line of lines) {
     const trimmed = line.trim()
     if (!trimmed) continue
 
-    const emojiMatch = trimmed.match(/^([⚡📈📉💡⚠️🏆📋📊])\s*\*?\*?(.+?)(?:\*?\*?)$/)
-    if (emojiMatch) {
+    // Clean markdown bold/italic
+    const cleaned = trimmed.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1')
+
+    // Match section headers: "⚡ **Diagnóstico General**" or "⚡ Diagnóstico General"
+    const emojiHeader = cleaned.match(/^([⚡📈📉💡⚠️🏆📋📊])\s+(.+)$/)
+    if (emojiHeader) {
       if (current) sections.push(current)
-      current = { icon: emojiMatch[1], title: emojiMatch[2].replace(/\*\*/g, '').trim(), lines: [] }
+      current = { icon: emojiHeader[1], title: emojiHeader[2].trim(), items: [] }
       continue
     }
 
-    const bulletMatch = trimmed.match(/^[-•]\s+(.+)$/)
-    const content = bulletMatch ? bulletMatch[1] : trimmed.replace(/\*\*/g, '')
-    if (current) {
-      current.lines.push(content)
+    // Match ## headers (some LLMs use these)
+    const mdHeader = cleaned.match(/^##\s+(.+)$/)
+    if (mdHeader) {
+      if (current) sections.push(current)
+      current = { icon: '⚡', title: mdHeader[1].trim(), items: [] }
+      continue
+    }
+
+    if (!current) {
+      // If we see text before any header, create a generic section
+      current = { icon: '⚡', title: 'Análisis', items: [] }
+    }
+
+    // Match bullet items: "- text", "• text", "1. text", "2) text"
+    const bulletMatch = cleaned.match(/^[-•]\s+(.+)$/)
+    const numMatch = cleaned.match(/^\d+[.)]\s+(.+)$/)
+    if (bulletMatch) {
+      current.items.push({ bullet: true, text: bulletMatch[1] })
+    } else if (numMatch) {
+      current.items.push({ bullet: true, text: numMatch[1] })
+    } else {
+      current.items.push({ bullet: false, text: cleaned })
     }
   }
   if (current) sections.push(current)
@@ -466,13 +504,17 @@ export function InformeRayoPDFDocument({ data, from, to, analysis }: PDFProps) {
           {sections.length > 0 ? sections.map((sec, i) => (
             <View key={i} style={styles.aiSection}>
               <Text style={styles.aiTitle}>{sec.icon} {sec.title}</Text>
-              {sec.lines.map((line, j) => (
-                <Text key={j} style={styles.aiText}>{line}</Text>
+              {sec.items.map((item, j) => (
+                item.bullet ? (
+                  <Text key={j} style={styles.aiBullet}>  • {item.text}</Text>
+                ) : (
+                  <Text key={j} style={styles.aiParagraph}>{item.text}</Text>
+                )
               ))}
             </View>
           )) : (
             <View style={styles.aiFallback}>
-              <Text style={styles.aiText}>Analisis no disponible para este periodo.</Text>
+              <Text style={styles.aiParagraph}>Analisis no disponible para este periodo.</Text>
             </View>
           )}
 

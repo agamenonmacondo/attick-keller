@@ -121,11 +121,11 @@ export function AnalisisIA({ data, from, to, onAnalysis }: AnalisisIAProps) {
               Análisis IA
             </h3>
             {source && (
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                source === 'ai' ? 'bg-[var(--color-ak-dorado)]/10 text-[var(--color-ak-dorado)]' :
-                source === 'rules' ? 'bg-[var(--text-secondary)]/10 text-[var(--text-secondary)]' :
-                'bg-red-500/10 text-red-400'
-              }`}>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={
+                source === 'ai' ? { background: 'rgba(201,169,78,0.1)', color: 'var(--color-ak-dorado)' } :
+                source === 'rules' ? { background: 'rgba(var(--text-secondary-rgb,156,163,175),0.1)', color: 'var(--text-secondary)' } :
+                { background: 'rgba(239,68,68,0.1)', color: 'var(--color-danger)' }
+              }>
                 {source === 'ai' ? 'Rayo IA' : source === 'rules' ? 'Reglas' : 'Error'}
               </span>
             )}
@@ -149,9 +149,9 @@ export function AnalisisIA({ data, from, to, onAnalysis }: AnalisisIAProps) {
           )}
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-center gap-2">
-              <Warning size={16} className="text-red-400" />
-              <span className="text-xs text-red-400">{error}</span>
+            <div className="rounded-lg p-3 flex items-center gap-2" style={{ background: 'rgba(var(--color-danger-rgb, 239,68,68), 0.1)', border: '1px solid var(--color-danger)' }}>
+              <Warning size={16} style={{ color: 'var(--color-danger)' }} />
+              <span className="text-xs" style={{ color: 'var(--color-danger)' }}>{error}</span>
             </div>
           )}
 

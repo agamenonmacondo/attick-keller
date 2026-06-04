@@ -2,18 +2,16 @@ import {
   Document, Page, Text, View, StyleSheet, Font,
 } from '@react-pdf/renderer'
 
-// ═══ A&K "Haute Sommelier" Design System (Stitch-inspired dark luxury) ═══
-const SURFACE = '#191112'       // Dark background
-const SURFACE_CONTAINER = '#261d1e' // Cards, sections
-const SURFACE_HIGH = '#312829'  // Elevated surfaces
-const SURFACE_LOW = '#22191a'  // Subtle depth
-const ON_SURFACE = '#efdfe0'   // Primary text (crema)
-const ON_SURFACE_VAR = '#d9c1c3' // Secondary text
-const BORGONA = '#5D1528'      // Brand primary
-const DORADO = '#C9A94E'       // Gold accent
-const DORADO_LIGHT = '#E5C365' // Bright gold
-const DORADO_DIM = '#C9A94E66' // Gold at 40% opacity (etched lines)
-const MADERA = '#3E2723'       // Warm brown depth
+// ═══ A&K "Haute Sommelier" Design System ═══
+const SURFACE = '#191112'
+const SURFACE_CONTAINER = '#261d1e'
+const SURFACE_HIGH = '#312829'
+const ON_SURFACE = '#efdfe0'
+const ON_SURFACE_VAR = '#d9c1c3'
+const BORGONA = '#5D1528'
+const DORADO = '#C9A94E'
+const DORADO_LIGHT = '#E5C365'
+const DORADO_DIM = '#C9A94E66'
 const BLANCO = '#FFFFFF'
 
 const fmt = (n: number) => {
@@ -25,7 +23,7 @@ const fmt = (n: number) => {
 const fmtN = (n: number) => Math.round(n).toLocaleString('es-CO')
 const fmtPct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`
 
-// ═══ Styles — Dark Luxury Theme ═══
+// ═══ Styles — Dark Luxury v2 (more breathing room) ═══
 const styles = StyleSheet.create({
   page: {
     backgroundColor: SURFACE,
@@ -90,179 +88,180 @@ const styles = StyleSheet.create({
     color: DORADO_DIM,
     letterSpacing: 3,
   },
-  // ── Content ──
+  // ── Content — generous padding ──
   content: {
-    padding: '28 36',
+    padding: '36 44',
   },
   // ── Section headers ──
   sectionLabel: {
-    fontSize: 7,
+    fontSize: 8,
     color: DORADO,
-    letterSpacing: 2.5,
+    letterSpacing: 3,
     fontFamily: 'Helvetica-Bold',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     color: ON_SURFACE,
     fontFamily: 'Helvetica-Bold',
     letterSpacing: 1,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   goldLine: {
     width: '100%',
     height: 0.5,
     backgroundColor: DORADO_DIM,
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  // ── KPI Grid ──
+  // ── KPI Grid — bigger, breathable ──
   kpiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 16,
+    gap: 8,
+    marginBottom: 20,
   },
   kpiCard: {
     width: '32%',
     backgroundColor: SURFACE_CONTAINER,
-    borderTopWidth: 1.5,
+    borderTopWidth: 2,
     borderTopColor: DORADO,
-    padding: '8 10',
+    padding: '12 14',
+    paddingBottom: 14,
   },
   kpiLabel: {
-    fontSize: 6,
+    fontSize: 7,
     color: DORADO,
-    letterSpacing: 2,
+    letterSpacing: 2.5,
     fontFamily: 'Helvetica-Bold',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   kpiValue: {
-    fontSize: 18,
+    fontSize: 20,
     color: ON_SURFACE,
     fontFamily: 'Helvetica-Bold',
     lineHeight: 1.1,
   },
   kpiDelta: {
-    fontSize: 7,
-    marginLeft: 3,
+    fontSize: 8,
+    marginLeft: 4,
   },
   kpiSub: {
-    fontSize: 6,
+    fontSize: 7,
     color: ON_SURFACE_VAR,
-    marginTop: 2,
+    marginTop: 3,
   },
-  // ── Bar chart ──
+  // ── Bar chart — taller, clearer ──
   barRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 3,
+    marginBottom: 5,
   },
   barLabel: {
-    fontSize: 6.5,
+    fontSize: 7.5,
     color: ON_SURFACE_VAR,
-    width: 85,
+    width: 100,
     textAlign: 'right',
-    paddingRight: 6,
+    paddingRight: 8,
     fontFamily: 'Helvetica-Bold',
   },
   barTrack: {
     flex: 1,
-    height: 10,
+    height: 14,
     backgroundColor: SURFACE_HIGH,
+    borderRadius: 1,
   },
   barFill: {
     height: '100%',
+    borderRadius: 1,
     justifyContent: 'center',
     alignItems: 'flex-end',
-    paddingRight: 4,
+    paddingRight: 5,
   },
   barValue: {
-    fontSize: 5.5,
-    color: SURFACE,
+    fontSize: 6.5,
+    color: BLANCO,
     fontFamily: 'Helvetica-Bold',
   },
-  // ── Detail rows ──
+  // ── Section spacer ──
+  sectionGap: {
+    marginTop: 18,
+  },
+  // ── Detail rows — more spacious ──
   twoColRow: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 24,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 2.5,
+    alignItems: 'center',
+    paddingVertical: 4,
     borderBottomWidth: 0.5,
     borderBottomColor: DORADO_DIM,
   },
   detailLabel: {
-    fontSize: 7,
+    fontSize: 8,
     color: ON_SURFACE_VAR,
   },
   detailValue: {
-    fontSize: 7,
+    fontSize: 8,
     color: DORADO_LIGHT,
     fontFamily: 'Helvetica-Bold',
   },
-  // ── AI Analysis sections ──
-  aiGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
+  // ── AI Analysis — full-width stacked cards ──
   aiSection: {
-    width: '48%',
+    width: '100%',
     backgroundColor: SURFACE_CONTAINER,
-    borderTopWidth: 0.5,
-    borderTopColor: DORADO,
-    padding: '8 10',
-    marginBottom: 4,
+    borderLeftWidth: 2,
+    borderLeftColor: DORADO,
+    padding: '12 16',
+    marginBottom: 10,
   },
   aiTitle: {
-    fontSize: 7,
+    fontSize: 9,
     color: DORADO,
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: 1.5,
-    marginBottom: 4,
+    letterSpacing: 2,
+    marginBottom: 5,
   },
   aiText: {
-    fontSize: 7,
+    fontSize: 8.5,
     color: ON_SURFACE_VAR,
-    lineHeight: 1.5,
+    lineHeight: 1.6,
+    marginBottom: 1,
   },
   aiFallback: {
     backgroundColor: SURFACE_CONTAINER,
-    borderTopWidth: 0.5,
-    borderTopColor: DORADO,
-    padding: '10 12',
+    borderLeftWidth: 2,
+    borderLeftColor: DORADO,
+    padding: '12 16',
   },
-  // ── Junta Box ──
+  // ── Junta Box — clearer, more space ──
   juntaBox: {
-    borderTopWidth: 0.5,
-    borderTopColor: DORADO,
-    paddingTop: 10,
-    marginTop: 10,
+    borderLeftWidth: 2,
+    borderLeftColor: BORGONA,
+    padding: '12 16',
+    marginTop: 8,
   },
   juntaTitle: {
-    fontSize: 10,
+    fontSize: 11,
     color: DORADO,
     fontFamily: 'Helvetica-Bold',
     letterSpacing: 3,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   juntaLine: {
-    fontSize: 7.5,
+    fontSize: 8.5,
     color: ON_SURFACE_VAR,
-    lineHeight: 1.6,
-    marginBottom: 2,
-    paddingLeft: 8,
-    borderLeftWidth: 1,
-    borderLeftColor: DORADO_DIM,
+    lineHeight: 1.7,
+    marginBottom: 3,
   },
   // ── Footer ──
   footer: {
     position: 'absolute',
     bottom: 18,
-    left: 36,
-    right: 36,
+    left: 44,
+    right: 44,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -271,41 +270,15 @@ const styles = StyleSheet.create({
     paddingTop: 5,
   },
   footerText: {
-    fontSize: 6,
+    fontSize: 6.5,
     color: ON_SURFACE_VAR,
     letterSpacing: 1,
   },
   footerBrand: {
-    fontSize: 6,
+    fontSize: 6.5,
     color: DORADO,
     fontFamily: 'Helvetica-Bold',
     letterSpacing: 2,
-  },
-  // ── Zone cards ──
-  zoneCard: {
-    flex: 1,
-    backgroundColor: SURFACE_HIGH,
-    borderTopWidth: 0.5,
-    borderTopColor: DORADO,
-    padding: '8 10',
-  },
-  zoneLabel: {
-    fontSize: 6,
-    color: DORADO,
-    letterSpacing: 2,
-    fontFamily: 'Helvetica-Bold',
-    marginBottom: 4,
-  },
-  zoneValue: {
-    fontSize: 16,
-    color: ON_SURFACE,
-    fontFamily: 'Helvetica-Bold',
-    lineHeight: 1.1,
-  },
-  zoneSub: {
-    fontSize: 6,
-    color: ON_SURFACE_VAR,
-    marginTop: 2,
   },
 })
 
@@ -378,7 +351,6 @@ export function InformeRayoPDFDocument({ data, from, to, analysis }: PDFProps) {
     { label: 'PROP/PERSONA', value: fmt(propPerPerson), delta: 0, sub: '' },
   ]
 
-  // Bar colors — monochromatic gold scale
   const barColor = (i: number) => {
     if (i < 3) return DORADO
     if (i < 6) return DORADO_LIGHT
@@ -387,7 +359,7 @@ export function InformeRayoPDFDocument({ data, from, to, analysis }: PDFProps) {
 
   return (
     <Document>
-      {/* ═══ PAGE 1: Cover — Dark Luxury ═══ */}
+      {/* ═══ PAGE 1: Cover ═══ */}
       <Page size="A4" style={styles.page}>
         <View style={styles.cover}>
           <View style={styles.coverGoldRule} />
@@ -410,10 +382,10 @@ export function InformeRayoPDFDocument({ data, from, to, analysis }: PDFProps) {
           {/* Header */}
           <Text style={styles.sectionLabel}>INFORME EJECUTIVO</Text>
           <Text style={styles.sectionTitle}>INFORME RAYO</Text>
-          <Text style={{ fontSize: 10, color: ON_SURFACE_VAR, marginBottom: 6, letterSpacing: 1 }}>{fromDate} — {toDate}</Text>
+          <Text style={{ fontSize: 11, color: ON_SURFACE_VAR, marginBottom: 6, letterSpacing: 1 }}>{fromDate} — {toDate}</Text>
           <View style={styles.goldLine} />
 
-          {/* KPIs — 2 rows of 3 */}
+          {/* KPIs */}
           <View style={styles.kpiGrid}>
             {kpiCards.map((kpi, i) => (
               <View key={i} style={styles.kpiCard}>
@@ -431,16 +403,16 @@ export function InformeRayoPDFDocument({ data, from, to, analysis }: PDFProps) {
             ))}
           </View>
 
-          {/* Top Products — gold monochrome bars */}
+          {/* Top Products */}
           <Text style={styles.sectionLabel}>TOP PRODUCTOS</Text>
-          <View style={{ ...styles.goldLine, marginBottom: 6 }} />
+          <View style={{ ...styles.goldLine, marginBottom: 8 }} />
 
           {topProducts.map((p: any, i: number) => {
             const rev = Number(p.total_revenue || p.revenue || 0)
-            const widthPct = maxRev > 0 ? Math.max(12, (rev / maxRev) * 100) : 12
+            const widthPct = maxRev > 0 ? Math.max(15, (rev / maxRev) * 100) : 15
             return (
               <View key={i} style={styles.barRow}>
-                <Text style={styles.barLabel}>{(p.product_name || '').substring(0, 16)}</Text>
+                <Text style={styles.barLabel}>{(p.product_name || '').substring(0, 18)}</Text>
                 <View style={styles.barTrack}>
                   <View style={[styles.barFill, { width: `${widthPct}%`, backgroundColor: barColor(i) }]}>
                     <Text style={styles.barValue}>{fmt(rev)}</Text>
@@ -451,11 +423,11 @@ export function InformeRayoPDFDocument({ data, from, to, analysis }: PDFProps) {
           })}
 
           {/* Payments + Zones */}
-          <View style={{ marginTop: 14 }}>
+          <View style={styles.sectionGap}>
             <View style={styles.twoColRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.sectionLabel}>METODOS DE PAGO</Text>
-                <View style={{ ...styles.goldLine, marginBottom: 4 }} />
+                <View style={{ ...styles.goldLine, marginBottom: 6 }} />
                 {payments.map((p: any, i: number) => (
                   <View key={i} style={styles.detailRow}>
                     <Text style={styles.detailLabel}>{(p.payment_method || p.method || '').charAt(0).toUpperCase() + (p.payment_method || p.method || '').slice(1).toLowerCase()}</Text>
@@ -465,7 +437,7 @@ export function InformeRayoPDFDocument({ data, from, to, analysis }: PDFProps) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.sectionLabel}>POR ZONA</Text>
-                <View style={{ ...styles.goldLine, marginBottom: 4 }} />
+                <View style={{ ...styles.goldLine, marginBottom: 6 }} />
                 {zones.map((z: any, i: number) => (
                   <View key={i} style={styles.detailRow}>
                     <Text style={{ ...styles.detailLabel, fontFamily: 'Helvetica-Bold' }}>{z.zone_name || z.zone || z.derived_zone_name || 'Sin zona'}</Text>
@@ -491,26 +463,21 @@ export function InformeRayoPDFDocument({ data, from, to, analysis }: PDFProps) {
           <Text style={styles.sectionTitle}>INFORME RAYO</Text>
           <View style={styles.goldLine} />
 
-          {sections.length > 0 ? (
-            <View style={styles.aiGrid}>
-              {sections.map((sec, i) => (
-                <View key={i} style={styles.aiSection}>
-                  <Text style={styles.aiTitle}>{sec.title}</Text>
-                  {sec.lines.map((line, j) => (
-                    <Text key={j} style={styles.aiText}>{line}</Text>
-                  ))}
-                </View>
+          {sections.length > 0 ? sections.map((sec, i) => (
+            <View key={i} style={styles.aiSection}>
+              <Text style={styles.aiTitle}>{sec.icon} {sec.title}</Text>
+              {sec.lines.map((line, j) => (
+                <Text key={j} style={styles.aiText}>{line}</Text>
               ))}
             </View>
-          ) : (
+          )) : (
             <View style={styles.aiFallback}>
               <Text style={styles.aiText}>Analisis no disponible para este periodo.</Text>
             </View>
           )}
 
-          <View style={{ height: 16 }} />
-
           {/* Junta summary */}
+          <View style={{ height: 20 }} />
           <View style={styles.goldLine} />
           <View style={styles.juntaBox}>
             <Text style={styles.juntaTitle}>RESUMEN PARA JUNTA</Text>

@@ -2,17 +2,18 @@ import {
   Document, Page, Text, View, StyleSheet, Font,
 } from '@react-pdf/renderer'
 
-// ═══ Design System A&K ═══
+// ═══ A&K Design System (from DESIGN_DARK_THEME.md) ═══
 const BORGONA = '#5D1528'
+const BORGONA_DARK = '#3E1020'
 const DORADO = '#C9A94E'
 const DORADO_LIGHT = '#E8D48B'
 const CREMA = '#FFF8E7'
+const MADERA = '#3E2723'
 const OSCURO = '#1A0A10'
 const GRIS = '#6B5B6E'
 const GRIS_CLARO = '#F5F0EB'
 const BLANCO = '#FFFFFF'
-const BG_DARK = '#0D0A0B'
-const CARD_BG = '#1A1215'
+const LADRILLO = '#A0522D'
 
 const fmt = (n: number) => {
   if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
@@ -21,8 +22,7 @@ const fmt = (n: number) => {
 }
 
 const fmtN = (n: number) => Math.round(n).toLocaleString('es-CO')
-
-const fmtPct = (n: number) => `${n >= 0 ? '↑' : '↓'}${Math.abs(n).toFixed(1)}%`
+const fmtPct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`
 
 // ═══ Styles ═══
 const styles = StyleSheet.create({
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     padding: 0,
     fontFamily: 'Helvetica',
   },
-  // ── Cover Page ──
+  // ── Cover ──
   cover: {
     backgroundColor: BORGONA,
     height: '100%',
@@ -41,173 +41,241 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: '60 40',
   },
-  coverAccent: {
-    width: 80,
-    height: 2,
+  coverLine: {
+    width: 120,
+    height: 1.5,
     backgroundColor: DORADO,
-    marginBottom: 24,
+    marginBottom: 30,
   },
   coverTitle: {
-    fontSize: 36,
+    fontSize: 42,
     color: BLANCO,
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: 2,
-    marginBottom: 8,
+    letterSpacing: 4,
+    marginBottom: 6,
   },
   coverSubtitle: {
     fontSize: 14,
-    color: DORADO,
-    letterSpacing: 4,
+    color: DORADO_LIGHT,
+    letterSpacing: 6,
     marginBottom: 40,
   },
   coverPeriod: {
-    fontSize: 16,
-    color: GRIS_CLARO,
-    marginBottom: 6,
+    fontSize: 18,
+    color: CREMA,
+    marginBottom: 4,
+    fontFamily: 'Helvetica-Bold',
   },
   coverDate: {
     fontSize: 11,
     color: GRIS,
-    marginTop: 20,
+    marginTop: 24,
+    letterSpacing: 1,
   },
-  // ── Content Pages ──
-  section: {
-    padding: '30 40',
+  coverFooter: {
+    position: 'absolute',
+    bottom: 30,
+    left: 40,
+    right: 40,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  coverFooterText: {
+    fontSize: 8,
+    color: GRIS,
+    letterSpacing: 2,
+  },
+  // ── Content ──
+  content: {
+    padding: '28 36',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+  },
+  sectionIcon: {
+    width: 20,
+    height: 20,
+    backgroundColor: BORGONA,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionIconText: {
+    fontSize: 10,
+    color: DORADO,
+    fontFamily: 'Helvetica-Bold',
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 11,
     color: BORGONA,
     fontFamily: 'Helvetica-Bold',
-    marginBottom: 12,
-    letterSpacing: 1,
+    letterSpacing: 2,
   },
   goldLine: {
     width: '100%',
-    height: 1,
+    height: 0.5,
     backgroundColor: DORADO,
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  // KPI Grid
-  kpiRow: {
+  // ── KPI Grid ──
+  kpiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
+    gap: 6,
+    marginBottom: 14,
   },
   kpiCard: {
-    width: '31%',
-    backgroundColor: '#FAF5ED',
-    borderRadius: 6,
-    padding: '10 12',
-    borderWidth: 1,
-    borderColor: '#E8DDD0',
+    width: '32%',
+    backgroundColor: CREMA,
+    borderRadius: 4,
+    padding: '8 10',
+    borderWidth: 0.5,
+    borderColor: DORADO_LIGHT,
   },
   kpiLabel: {
-    fontSize: 7,
+    fontSize: 6,
     color: GRIS,
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    fontFamily: 'Helvetica-Bold',
     marginBottom: 2,
   },
   kpiValue: {
-    fontSize: 18,
+    fontSize: 16,
     color: OSCURO,
     fontFamily: 'Helvetica-Bold',
+    lineHeight: 1.1,
   },
   kpiDelta: {
-    fontSize: 7,
-    color: '#B91C1C',
-    marginLeft: 4,
+    fontSize: 6,
+    marginLeft: 3,
   },
   kpiSub: {
-    fontSize: 7,
+    fontSize: 6,
     color: GRIS,
     marginTop: 1,
   },
-  // Products table
-  tableHeader: {
+  // ── Bar chart ──
+  barRow: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: BORGONA,
-    paddingBottom: 4,
-    marginBottom: 4,
+    alignItems: 'center',
+    marginBottom: 2,
   },
-  tableHeaderCell: {
+  barLabel: {
     fontSize: 7,
-    color: BORGONA,
-    fontFamily: 'Helvetica-Bold',
-    letterSpacing: 0.5,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#E8DDD0',
-    paddingVertical: 3,
-  },
-  tableCell: {
-    fontSize: 8,
-    color: OSCURO,
-  },
-  tableCellRight: {
-    fontSize: 8,
-    color: OSCURO,
+    color: MADERA,
+    width: 90,
     textAlign: 'right',
-  },
-  tableCellHighlight: {
-    fontSize: 8,
-    color: BORGONA,
+    paddingRight: 6,
     fontFamily: 'Helvetica-Bold',
   },
-  // ── Zones / Payments row ──
+  barTrack: {
+    flex: 1,
+    height: 10,
+    backgroundColor: '#F5F0EB',
+    borderRadius: 3,
+  },
+  barFill: {
+    height: '100%',
+    borderRadius: 3,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingRight: 4,
+  },
+  barValue: {
+    fontSize: 5.5,
+    color: BLANCO,
+    fontFamily: 'Helvetica-Bold',
+  },
+  // ── Payment / Zone rows ──
   twoColRow: {
     flexDirection: 'row',
     gap: 16,
   },
-  twoColLeft: {
-    flex: 1,
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#E8DDD0',
   },
-  twoColRight: {
-    flex: 1,
+  detailLabel: {
+    fontSize: 7,
+    color: MADERA,
+  },
+  detailValue: {
+    fontSize: 7,
+    color: BORGONA,
+    fontFamily: 'Helvetica-Bold',
+  },
+  detailSub: {
+    fontSize: 7,
+    color: GRIS,
   },
   // ── AI Analysis ──
   aiSection: {
-    backgroundColor: '#FAF5ED',
-    borderRadius: 6,
-    padding: '14 16',
-    borderWidth: 1,
-    borderColor: DORADO,
-    marginBottom: 12,
+    backgroundColor: CREMA,
+    borderRadius: 4,
+    padding: '10 12',
+    borderWidth: 0.5,
+    borderColor: DORADO_LIGHT,
+    marginBottom: 8,
   },
   aiTitle: {
-    fontSize: 11,
+    fontSize: 9,
+    color: BORGONA,
+    fontFamily: 'Helvetica-Bold',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  aiBullet: {
+    fontSize: 7,
+    color: MADERA,
+    lineHeight: 1.5,
+    marginLeft: 8,
+    marginBottom: 1,
+  },
+  aiLine: {
+    fontSize: 7,
+    color: MADERA,
+    lineHeight: 1.5,
+    marginBottom: 2,
+  },
+  // ── Junta Box ──
+  juntaBox: {
+    borderWidth: 1,
+    borderColor: BORGONA,
+    borderRadius: 4,
+    padding: '10 12',
+    marginTop: 10,
+  },
+  juntaTitle: {
+    fontSize: 10,
     color: BORGONA,
     fontFamily: 'Helvetica-Bold',
     marginBottom: 6,
+    letterSpacing: 1,
   },
-  aiText: {
-    fontSize: 8,
-    color: OSCURO,
-    lineHeight: 1.5,
-    marginBottom: 4,
-  },
-  aiBullet: {
-    fontSize: 8,
-    color: OSCURO,
-    lineHeight: 1.5,
-    marginLeft: 8,
+  juntaLine: {
+    fontSize: 7.5,
+    color: MADERA,
+    lineHeight: 1.6,
     marginBottom: 2,
   },
   // ── Footer ──
   footer: {
     position: 'absolute',
-    bottom: 20,
-    left: 40,
-    right: 40,
+    bottom: 18,
+    left: 36,
+    right: 36,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 0.5,
     borderTopColor: '#DDD',
-    paddingTop: 6,
+    paddingTop: 5,
   },
   footerText: {
     fontSize: 6,
@@ -219,66 +287,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     letterSpacing: 1,
   },
-  // Bar chart simulation
-  barRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 3,
-  },
-  barLabel: {
+  // ── Section label ──
+  sectionLabel: {
     fontSize: 7,
-    color: OSCURO,
-    width: 100,
-    textAlign: 'right',
-    paddingRight: 6,
-  },
-  barTrack: {
-    flex: 1,
-    height: 12,
-    backgroundColor: '#F5F0EB',
-    borderRadius: 3,
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: 3,
-    backgroundColor: DORADO,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingRight: 4,
-  },
-  barValue: {
-    fontSize: 6,
-    color: BLANCO,
-    fontFamily: 'Helvetica-Bold',
-  },
-  // Donut placeholder
-  donutRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 4,
+    color: GRIS,
+    letterSpacing: 1,
     marginBottom: 6,
-  },
-  donutItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    padding: '4 8',
-    backgroundColor: '#FAF5ED',
-    borderRadius: 4,
-  },
-  donutDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  donutLabel: {
-    fontSize: 7,
-    color: OSCURO,
-  },
-  donutPct: {
-    fontSize: 7,
-    color: BORGONA,
     fontFamily: 'Helvetica-Bold',
   },
 })
@@ -293,7 +307,6 @@ function parseAnalysis(text: string) {
     const trimmed = line.trim()
     if (!trimmed) continue
 
-    // Check for emoji section headers like ⚡, 📈, 📉, 💡, ⚠️, 🏆, 📋, 📊
     const emojiMatch = trimmed.match(/^([⚡📈📉💡⚠️🏆📋📊])\s*\*?\*?(.+?)(?:\*?\*?)$/)
     if (emojiMatch) {
       if (current) sections.push(current)
@@ -301,7 +314,6 @@ function parseAnalysis(text: string) {
       continue
     }
 
-    // Check for numbered/bullet items
     const bulletMatch = trimmed.match(/^[-•]\s+(.+)$/)
     const content = bulletMatch ? bulletMatch[1] : trimmed.replace(/\*\*/g, '')
     if (current) {
@@ -321,112 +333,134 @@ interface PDFProps {
 
 export function InformeRayoPDFDocument({ data, from, to, analysis }: PDFProps) {
   const kpis = data?.kpis || {}
-  const revenue = Number(kpis.total_revenue ?? kpis.revenue ?? 0)
-  const cheques = Number(kpis.total_cheques ?? kpis.cheques ?? 0)
+  const revenue = Number(kpis.total_ventas || kpis.revenue || kpis.total_revenue || 0)
+  const cheques = Number(kpis.total_cheques || 0)
   const ticketProm = cheques > 0 ? Math.round(revenue / cheques) : 0
-  const personas = Number(kpis.party_size_total ?? kpis.personas ?? 0)
-  const propina = Number(kpis.propina_total ?? kpis.tip_total ?? 0)
+  const personas = Number(kpis.personas || 0)
+  const propina = Number(kpis.propina_total || kpis.tip_total || 0)
   const propPerPerson = personas > 0 ? Math.round(propina / personas) : 0
 
-  const revDelta = Number(kpis.revenue_delta ?? 0)
-  const cheqDelta = Number(kpis.cheques_delta ?? 0)
-  const tickDelta = Number(kpis.ticket_delta ?? 0)
-  const persDelta = Number(kpis.persons_delta ?? 0)
+  const revDelta = Number(kpis.revenue_delta || 0)
+  const cheqDelta = Number(kpis.cheques_delta || 0)
+  const tickDelta = Number(kpis.ticket_delta || 0)
+  const persDelta = Number(kpis.persons_delta || 0)
 
   const topProducts = data?.topProducts?.slice(0, 10) || []
   const payments = data?.payments || []
   const zones = data?.zones || []
   const maxRev = topProducts.length > 0 ? Math.max(...topProducts.map((p: any) => Number(p.total_revenue || p.revenue || 0))) : 1
 
-  const paymentColors = [DORADO, BORGONA, '#8B7B6E', '#3E2723', '#A89070']
   const sections = analysis ? parseAnalysis(analysis) : []
 
   const fromDate = from.replace(/-/g, '/').replace(/^(\d{4})\//, '')
   const toDate = to.replace(/-/g, '/').replace(/^(\d{4})\//, '')
+
+  // Delta color
+  const deltaColor = (d: number) => d >= 0 ? '#16A34A' : '#DC2626'
+
+  const kpiCards = [
+    { label: 'VENTAS', value: fmt(revenue), delta: revDelta, sub: `${fmtN(cheques)} cheques` },
+    { label: 'CHEQUES', value: fmtN(cheques), delta: cheqDelta, sub: `${fmtN(personas)} personas` },
+    { label: 'TICKET PROM.', value: fmt(ticketProm), delta: tickDelta, sub: '' },
+    { label: 'PERSONAS', value: fmtN(personas), delta: persDelta, sub: '' },
+    { label: 'PROPINA', value: fmt(propina), delta: 0, sub: '' },
+    { label: 'PROP/PERSONA', value: fmt(propPerPerson), delta: 0, sub: '' },
+  ]
 
   return (
     <Document>
       {/* ═══ PAGE 1: Cover ═══ */}
       <Page size="A4" style={styles.page}>
         <View style={styles.cover}>
-          <View style={styles.coverAccent} />
-          <Text style={styles.coverTitle}>ATTICK & KELLER</Text>
+          <View style={styles.coverLine} />
+          <Text style={styles.coverTitle}>ATTICK &amp; KELLER</Text>
           <Text style={styles.coverSubtitle}>INFORME RAYO</Text>
-          <View style={{ width: 80, height: 1, backgroundColor: DORADO, marginBottom: 30 }} />
+          <View style={{ width: 80, height: 1, backgroundColor: DORADO_LIGHT, marginBottom: 30 }} />
           <Text style={styles.coverPeriod}>{fromDate} — {toDate}</Text>
-          <Text style={styles.coverDate}>Generado: {new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</Text>
+          <Text style={styles.coverDate}>
+            Generado: {new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}
+          </Text>
+        </View>
+        <View style={styles.coverFooter}>
+          <Text style={styles.coverFooterText}>INFORME EJECUTIVO · DATOS EN TIEMPO REAL</Text>
         </View>
       </Page>
 
-      {/* ═══ PAGE 2: KPIs + Top Products + Payments ═══ */}
+      {/* ═══ PAGE 2: Data ═══ */}
       <Page size="A4" style={styles.page}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>MÉTRICAS CLAVE</Text>
+        <View style={styles.content}>
+          {/* KPIs */}
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIcon}>
+              <Text style={styles.sectionIconText}>$</Text>
+            </View>
+            <Text style={styles.sectionTitle}>METRICAS CLAVE</Text>
+          </View>
           <View style={styles.goldLine} />
 
-          <View style={styles.kpiRow}>
-            {[
-              { label: 'VENTAS', value: fmt(revenue), delta: revDelta, sub: `${fmtN(cheques)} cheques` },
-              { label: 'CHEQUES', value: fmtN(cheques), delta: cheqDelta, sub: `${fmtN(personas)} personas` },
-              { label: 'TICKET PROM.', value: fmt(ticketProm), delta: tickDelta, sub: '' },
-              { label: 'PERSONAS', value: fmtN(personas), delta: persDelta, sub: '' },
-              { label: 'PROPINA', value: fmt(propina), delta: 0, sub: '' },
-              { label: 'PROP/PERSONA', value: fmt(propPerPerson), delta: 0, sub: '' },
-            ].map((kpi, i) => (
+          <View style={styles.kpiGrid}>
+            {kpiCards.map((kpi, i) => (
               <View key={i} style={styles.kpiCard}>
                 <Text style={styles.kpiLabel}>{kpi.label}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
                   <Text style={styles.kpiValue}>{kpi.value}</Text>
-                  {kpi.delta !== 0 && <Text style={styles.kpiDelta}>{fmtPct(kpi.delta)}</Text>}
+                  {kpi.delta !== 0 && (
+                    <Text style={{ ...styles.kpiDelta, color: deltaColor(kpi.delta) }}>
+                      {kpi.delta >= 0 ? '↑' : '↓'}{Math.abs(kpi.delta).toFixed(1)}%
+                    </Text>
+                  )}
                 </View>
                 {kpi.sub ? <Text style={styles.kpiSub}>{kpi.sub}</Text> : null}
               </View>
             ))}
           </View>
-        </View>
 
-        {/* Top Products Bar Chart */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>TOP PRODUCTOS</Text>
+          {/* Top Products */}
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIcon}>
+              <Text style={styles.sectionIconText}>★</Text>
+            </View>
+            <Text style={styles.sectionTitle}>TOP PRODUCTOS</Text>
+          </View>
           <View style={styles.goldLine} />
+
           {topProducts.map((p: any, i: number) => {
             const rev = Number(p.total_revenue || p.revenue || 0)
-            const widthPct = maxRev > 0 ? Math.max(8, (rev / maxRev) * 100) : 8
+            const widthPct = maxRev > 0 ? Math.max(12, (rev / maxRev) * 100) : 12
+            const barColor = i < 3 ? DORADO : i < 6 ? DORADO_LIGHT : '#8B7B6E'
             return (
               <View key={i} style={styles.barRow}>
-                <Text style={styles.barLabel}>{(p.product_name || '').substring(0, 16)}</Text>
+                <Text style={styles.barLabel}>{(p.product_name || '').substring(0, 14)}</Text>
                 <View style={styles.barTrack}>
-                  <View style={[styles.barFill, { width: `${widthPct}%`, backgroundColor: i < 3 ? DORADO : i < 6 ? DORADO_LIGHT : '#8B7B6E' }]}>
+                  <View style={[styles.barFill, { width: `${widthPct}%`, backgroundColor: barColor }]}>
                     <Text style={styles.barValue}>{fmt(rev)}</Text>
                   </View>
                 </View>
               </View>
             )
           })}
-        </View>
 
-        {/* Payments + Zones side by side */}
-        <View style={styles.section}>
-          <View style={styles.twoColRow}>
-            <View style={styles.twoColLeft}>
-              <Text style={styles.sectionTitle}>MÉTODOS DE PAGO</Text>
-              <View style={{ ...styles.goldLine, marginBottom: 8 }} />
-              {payments.map((p: any, i: number) => (
-                <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2, borderBottomWidth: 0.5, borderBottomColor: '#E8DDD0' }}>
-                  <Text style={{ fontSize: 7, color: OSCURO }}>{(p.payment_method || p.method || '').toLowerCase()}</Text>
-                  <Text style={{ fontSize: 7, color: BORGONA, fontFamily: 'Helvetica-Bold' }}>{fmt(p.total || p.amount)} · {p.pct || p.percentage || 0}%</Text>
-                </View>
-              ))}
-            </View>
-            <View style={styles.twoColRight}>
-              <Text style={styles.sectionTitle}>POR ZONA</Text>
-              <View style={{ ...styles.goldLine, marginBottom: 8 }} />
-              {zones.map((z: any, i: number) => (
-                <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2, borderBottomWidth: 0.5, borderBottomColor: '#E8DDD0' }}>
-                  <Text style={{ fontSize: 7, color: OSCURO, fontFamily: 'Helvetica-Bold' }}>{z.zone_name || z.zone || z.derived_zone_name}</Text>
-                  <Text style={{ fontSize: 7, color: OSCURO }}>{fmt(z.total_revenue || z.revenue || z.total_ventas)}</Text>
-                </View>
-              ))}
+          {/* Payments + Zones */}
+          <View style={{ marginTop: 14 }}>
+            <View style={styles.twoColRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sectionLabel}>METODOS DE PAGO</Text>
+                {payments.map((p: any, i: number) => (
+                  <View key={i} style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>{(p.payment_method || p.method || '').charAt(0).toUpperCase() + (p.payment_method || p.method || '').slice(1).toLowerCase()}</Text>
+                    <Text style={styles.detailValue}>{fmt(p.total || p.amount || 0)} · {Math.round(p.pct || p.percentage || 0)}%</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sectionLabel}>POR ZONA</Text>
+                {zones.map((z: any, i: number) => (
+                  <View key={i} style={styles.detailRow}>
+                    <Text style={{ ...styles.detailLabel, fontFamily: 'Helvetica-Bold' }}>{z.zone_name || z.zone || z.derived_zone_name || 'Sin zona'}</Text>
+                    <Text style={styles.detailValue}>{fmt(z.total_revenue || z.revenue || z.total_ventas || 0)}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
           </View>
         </View>
@@ -434,15 +468,20 @@ export function InformeRayoPDFDocument({ data, from, to, analysis }: PDFProps) {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>Informe Rayo · {fromDate} — {toDate}</Text>
-          <Text style={styles.footerBrand}>ATTICK & KELLER</Text>
-          <Text style={styles.footerText}>Pág. 2</Text>
+          <Text style={styles.footerBrand}>ATTICK &amp; KELLER</Text>
+          <Text style={styles.footerText}>Pag. 2</Text>
         </View>
       </Page>
 
-      {/* ═══ PAGE 3: AI Analysis ═══ */}
+      {/* ═══ PAGE 3: Analysis ═══ */}
       <Page size="A4" style={styles.page}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ANÁLISIS INTELIGENTE</Text>
+        <View style={styles.content}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIcon}>
+              <Text style={styles.sectionIconText}>⚡</Text>
+            </View>
+            <Text style={styles.sectionTitle}>ANALISIS INTELIGENTE</Text>
+          </View>
           <View style={styles.goldLine} />
 
           {sections.length > 0 ? sections.map((sec, i) => (
@@ -454,27 +493,25 @@ export function InformeRayoPDFDocument({ data, from, to, analysis }: PDFProps) {
             </View>
           )) : (
             <View style={styles.aiSection}>
-              <Text style={styles.aiText}>Análisis no disponible para este período.</Text>
+              <Text style={styles.aiLine}>Analisis no disponible para este periodo.</Text>
             </View>
           )}
 
           {/* Junta summary */}
-          <View style={{ marginTop: 12, padding: '10 14', borderWidth: 1, borderColor: BORGONA, borderRadius: 6 }}>
-            <Text style={{ fontSize: 10, color: BORGONA, fontFamily: 'Helvetica-Bold', marginBottom: 6 }}>
-              RESUMEN EJECUTIVO PARA JUNTA
+          <View style={styles.juntaBox}>
+            <Text style={styles.juntaTitle}>RESUMEN EJECUTIVO PARA JUNTA</Text>
+            <Text style={styles.juntaLine}>
+              • Ventas: {fmt(revenue)} {revDelta !== 0 ? `(${fmtPct(revDelta)})` : ''}
             </Text>
-            <Text style={{ fontSize: 8, color: OSCURO, lineHeight: 1.6 }}>
-              • Ventas: {fmt(revenue)} ({revDelta !== 0 ? fmtPct(revDelta) : 'sin comparación'})
-            </Text>
-            <Text style={{ fontSize: 8, color: OSCURO, lineHeight: 1.6 }}>
+            <Text style={styles.juntaLine}>
               • Cheques: {fmtN(cheques)} · Personas: {fmtN(personas)} · Ticket Promedio: {fmt(ticketProm)}
             </Text>
-            <Text style={{ fontSize: 8, color: OSCURO, lineHeight: 1.6 }}>
+            <Text style={styles.juntaLine}>
               • Propina Total: {fmt(propina)} · Propina/Persona: {fmt(propPerPerson)}
             </Text>
             {topProducts.length > 0 && (
-              <Text style={{ fontSize: 8, color: OSCURO, lineHeight: 1.6 }}>
-                • Producto líder: {topProducts[0]?.product_name} ({fmt(Number(topProducts[0]?.total_revenue || topProducts[0]?.revenue || 0))})
+              <Text style={styles.juntaLine}>
+                • Producto lider: {topProducts[0]?.product_name} ({fmt(Number(topProducts[0]?.total_revenue || topProducts[0]?.revenue || 0))})
               </Text>
             )}
           </View>
@@ -483,8 +520,8 @@ export function InformeRayoPDFDocument({ data, from, to, analysis }: PDFProps) {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>Informe Rayo · {fromDate} — {toDate}</Text>
-          <Text style={styles.footerBrand}>ATTICK & KELLER</Text>
-          <Text style={styles.footerText}>Pág. 3</Text>
+          <Text style={styles.footerBrand}>ATTICK &amp; KELLER</Text>
+          <Text style={styles.footerText}>Pag. 3</Text>
         </View>
       </Page>
     </Document>

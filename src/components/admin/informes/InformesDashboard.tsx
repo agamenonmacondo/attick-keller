@@ -7,16 +7,15 @@ import {
 } from 'recharts'
 import { Trophy, CreditCard, MapPin } from '@phosphor-icons/react'
 
-// ═══ A&K Brand Colors (fixed, work in both light/dark) ═══
+// ═══ A&K Brand Colors ═══
 const CHART_DORADO = '#C9A94E'
 const CHART_DORADO_LIGHT = '#E8D48B'
 const CHART_BORGONA = '#6B2737'
 const CHART_MADERA = '#3E2723'
 const CHART_NEUTRAL = '#8B7B6E'
-const CHART_LADRILLO = '#A0522D'
 
 const BAR_COLORS = [CHART_DORADO, CHART_DORADO, CHART_DORADO, CHART_DORADO_LIGHT, CHART_DORADO_LIGHT, CHART_DORADO_LIGHT, CHART_NEUTRAL, CHART_NEUTRAL, CHART_NEUTRAL, CHART_NEUTRAL]
-const PIE_COLORS = [CHART_DORADO, CHART_BORGONA, CHART_NEUTRAL, CHART_MADERA, CHART_LADRILLO]
+const PIE_COLORS = [CHART_DORADO, CHART_BORGONA, CHART_NEUTRAL, CHART_MADERA, '#A0522D']
 
 const fmt = (n: number) => {
   if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
@@ -195,7 +194,7 @@ export function InformesDashboard({ data }: InformesDashboardProps) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b" style={{ borderColor: 'var(--border-default)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border-default)' }}>
                   <th className="text-left py-2 font-medium" style={{ color: 'var(--text-secondary)' }}>Zona</th>
                   <th className="text-right py-2 font-medium" style={{ color: 'var(--text-secondary)' }}>Ventas</th>
                   <th className="text-right py-2 font-medium" style={{ color: 'var(--text-secondary)' }}>Cheques</th>
@@ -204,7 +203,7 @@ export function InformesDashboard({ data }: InformesDashboardProps) {
               </thead>
               <tbody>
                 {zones.map((z: any) => (
-                  <tr key={z.name} className="border-b" style={{ borderColor: 'var(--border-light)' }}>
+                  <tr key={z.name} style={{ borderBottom: '1px solid var(--border-light)' }}>
                     <td className="py-2.5 font-medium" style={{ color: 'var(--text-primary)' }}>{z.name}</td>
                     <td className="text-right py-2.5" style={{ color: 'var(--color-ak-dorado)', fontWeight: 500 }}>{fmt(z.ventas)}</td>
                     <td className="text-right py-2.5" style={{ color: 'var(--text-secondary)' }}>{fmtN(z.cheques)}</td>

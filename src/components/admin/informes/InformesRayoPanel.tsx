@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useInformesRayo } from '@/lib/hooks/useInformesRayo'
 import { MetricasClave } from './MetricasClave'
 import { AnalisisIA } from './AnalisisIA'
+import { PDFExportButton } from './PDFExportButton'
 import { Lightning, CaretLeft, CaretRight, Spinner, Warning, Funnel, Sparkle, TrendUp, TrendDown, Lightbulb, ClipboardText, UsersThree, HandCoins } from '@phosphor-icons/react'
 
 type PeriodPreset = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'custom'
@@ -163,7 +164,10 @@ export function InformesRayoPanel() {
         </div>
       </div>
 
-      {/* ── Period Selector ── */}
+      {/* ── PDF Export (shown when data is loaded) ── */}
+      {data && !loading && (
+        <PDFExportButton data={data} from={from} to={to} analysis={null} />
+      )}
       <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4 space-y-4">
         {/* Preset buttons */}
         <div className="flex flex-wrap gap-2">

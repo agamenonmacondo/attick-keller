@@ -39,7 +39,10 @@ LOG_FILE = os.path.join(DIR, "sync_hourly.log")
 def log(msg):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     line = "[%s] %s" % (ts, msg)
-    print(line)
+    try:
+        print(line)
+    except UnicodeEncodeError:
+        print(line.encode("ascii", "replace").decode("ascii"))
     try:
         with open(LOG_FILE, "a", encoding="utf-8") as fh:
             fh.write(line + "\n")
@@ -762,15 +765,25 @@ def sync_costs():
         log("  purchase_items: %d filas | %d OK | %d err" % (len(data), ok, err))
 
     # 11. pos_stock_thresholds (17 rows) — stockinsumos
+    # DEDUPLICAR: SQL Server puede tener filas repetidas con misma clave compuesta,
+    # ON CONFLICT DO UPDATE no permite duplicados en el mismo batch.
     cur.execute("SELECT idinsumo, idalmacen, stockminimo, stockideal, stockmaximo, idempresa FROM stockinsumos")
     rows = cur.fetchall()
-    data = [{"restaurant_id": REST_ID,
-             "pos_ingredient_id": str(r[0]).strip(),
-             "pos_warehouse_id": str(r[1]).strip() if r[1] else None,
-             "min_stock": to_float(r[2]) if r[2] is not None else 0,
-             "ideal_stock": to_float(r[3]) if r[3] is not None else 0,
-             "max_stock": to_float(r[4]) if r[4] is not None else 0,
-             "pos_company_id": str(r[5]).strip() if r[5] else None} for r in rows]
+    seen_st = {}
+    for r in rows:
+        iid = str(r[0]).strip()
+        wid = str(r[1]).strip() if r[1] else ""
+        cid = str(r[5]).strip() if r[5] else ""
+        key = (iid, wid, cid)
+        seen_st[key] = {"restaurant_id": REST_ID,
+                        "pos_ingredient_id": iid,
+                        "pos_warehouse_id": wid if wid else None,
+                        "min_stock": to_float(r[2]) if r[2] is not None else 0,
+                        "ideal_stock": to_float(r[3]) if r[3] is not None else 0,
+                        "max_stock": to_float(r[4]) if r[4] is not None else 0,
+                        "pos_company_id": cid if cid else None}
+    data = list(seen_st.values())
+    log("  stock_thresholds: %d filas SQL -> %d deduplicadas" % (len(rows), len(data)))
     _, ok, err = batch_upsert("pos_stock_thresholds", data, 200, on_conflict="restaurant_id,pos_ingredient_id,pos_warehouse_id,pos_company_id")
     log("  stock_thresholds: %d OK | %d err" % (ok, err))
 
@@ -793,7 +806,7 @@ def sync_costs():
                      "pos_company_id": str(r[3]).strip() if r[3] else None,
                      "pos_ingredient_id": iid}
     data = list(seen.values())
-    log("  recipe_warehouses: %d filas SQL → %d deduplicadas" % (len(rows), len(data)))
+    log("  recipe_warehouses: %d filas SQL -> %d deduplicadas" % (len(rows), len(data)))
     _, ok, err = batch_upsert("pos_recipe_warehouses", data, 200, on_conflict="restaurant_id,pos_product_id,pos_ingredient_id,pos_warehouse_id,pos_area_id")
     log("  recipe_warehouses: %d OK | %d err" % (ok, err))
 

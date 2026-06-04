@@ -2,17 +2,16 @@
 SYNC INCREMENTAL INTELIGENTE
 - Primera corrida: trae TODO desde May 27 + items + pagos + zona
 - Corridas subsecuentes: solo ventas NUEVAS desde la ultima fecha en Supabase
-- KPIs: solo recalcula las ventas sincronizadas (no todas)
+- Costos: siempre se sincronizan (upsert merge-duplicates). Purchases incremental sin --full
 - Costos/catálogos: solo con --full, o primera corrida
 
 Ejecutar:
-    python sync.py          # sync rapido: ventas + items + pagos + KPIs (~2 min)
+    python sync.py          # sync rapido: ventas + items + pagos (~1 min)
     python sync.py --full   # sync completo: agrega catálogos + 12 tablas costos (~5 min)
 """
 import os, sys, time, re, requests, pyodbc
 from datetime import datetime, timedelta
 from decimal import Decimal
-from collections import defaultdict
 
 try: sys.stdout.reconfigure(line_buffering=True)
 except: pass
@@ -175,19 +174,6 @@ def batch_post(table, rows, batch_size=200, return_data=False):
         time.sleep(0.1)
     return inserted, errors
 
-def batch_patch(table, updates, batch_size=100):
-    if not updates: return 0
-    patched = 0
-    for i in range(0, len(updates), batch_size):
-        batch = updates[i:i+batch_size]
-        for uid, data in batch:
-            for attempt in range(2):
-                try:
-                    r = requests.patch(f"{URL}/rest/v1/{table}?id=eq.{uid}", headers=HDR_POST, json=data, timeout=15)
-                    if r.status_code in (200, 204): patched += 1; break
-                except: pass
-    return patched
-
 def batch_delete(table, sale_ids, batch_size=50):
     deleted = 0
     for i in range(0, len(sale_ids), batch_size):
@@ -210,7 +196,7 @@ def main():
     if DO_FULL:
         log("MODO: sync completo (--full)")
     else:
-        log("MODO: sync rápido (ventas+KPIs. Usar --full para catálogos+costos)")
+        log("MODO: sync rapido (ventas+items+pagos+catalogos+costos)")
     log("=" * 60)
     log("SYNC INCREMENTAL - " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     log("=" * 60)
@@ -433,45 +419,6 @@ def main():
     log("Insertando %d pagos (solo ventas nuevas)..." % len(pagos_new))
     ins_p, err_p = batch_post("pos_sale_payments", pagos_new, 200)
     log("  %d OK | %d errors" % (ins_p, err_p))
-
-    # ── RECALCULAR KPIs (solo ventas de este sync) ──
-    all_sale_ids = [folio_to_uuid[f] for f in all_folios if f in folio_to_uuid]
-    log("Recalculando KPIs para %d ventas..." % len(all_sale_ids))
-    sale_id_filter = ",".join('"' + sid + '"' for sid in all_sale_ids)
-
-    # item_count y food_total: solo items de las ventas sincronizadas
-    r = requests.get(
-        f"{URL}/rest/v1/pos_sale_items?select=pos_sale_id,quantity,unit_price&pos_sale_id=in.({sale_id_filter})&limit=100000",
-        headers=HDR_GET, timeout=120)
-    if r.status_code == 200:
-        stats = defaultdict(lambda: {"item_count": 0, "food_total": 0.0})
-        for i in r.json():
-            sid = i["pos_sale_id"]
-            qty = i.get("quantity", 0) or 0
-            stats[sid]["item_count"] += int(qty)
-            stats[sid]["food_total"] += qty * (i.get("unit_price", 0) or 0)
-        updates = [(sid, {"item_count": s["item_count"], "food_total": s["food_total"]})
-                   for sid, s in stats.items() if s["item_count"] > 0]
-        n = batch_patch("pos_sales", updates)
-        log("  item_count: %d ventas" % n)
-
-    # card_paid / cash_paid: solo pagos de las ventas sincronizadas
-    r = requests.get(
-        f"{URL}/rest/v1/pos_sale_payments?select=pos_sale_id,pos_payment_method_id,amount&pos_sale_id=in.({sale_id_filter})&limit=100000",
-        headers=HDR_GET, timeout=120)
-    if r.status_code == 200:
-        card = defaultdict(float)
-        cash = defaultdict(float)
-        for p in r.json():
-            sid = p["pos_sale_id"]
-            amt = p.get("amount", 0) or 0
-            if p.get("pos_payment_method_id") in ("01", "1"): cash[sid] += amt
-            else: card[sid] += amt
-        updates = []
-        for sid in set(card.keys()) | set(cash.keys()):
-            updates.append((sid, {"card_paid": card.get(sid, 0), "cash_paid": cash.get(sid, 0)}))
-        n = batch_patch("pos_sales", updates)
-        log("  card/cash_paid: %d ventas" % n)
 
     # ── CATALOGOS (siempre, son ligeros) ──
     conn2 = getconn()

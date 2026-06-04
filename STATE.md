@@ -45,6 +45,7 @@
 | `/api/admin/sales-averages` | ✅ | Mediana semanal real. Días cerrados excluidos. |
 | `/api/admin/pos-calendar` | ✅ | Cache key corregida. |
 | `/api/admin/informes-rayo` | ✅ | Fase 1: KPIs + períodos + comparaciones. RPCs existentes. |
+| `/api/admin/informes-rayo/analyze` | ✅ | Fase 2: Análisis IA (Groq gpt-oss-120b + fallback reglas). POST con reportData. |
 | `rpc/pos_dashboard_kpis` | ✅ | Filtro `is_paid=true` agregado. |
 | `rpc/pos_dashboard_daily` | ✅ | Sin cambios. |
 | `rpc/pos_dashboard_months` | ✅ | Sin cambios. |
@@ -80,4 +81,4 @@
 | **Tests automatizados** | No existen. |
 | **Monitoreo de costos en tiempo real** | Pendiente. |
 | **App móvil para líderes de zona** | Solo dashboard responsive. |
-| **Informes Rayo — IA + PDF** | Fase 1 completa (KPIs + períodos). Fases 2-4 pendientes: IA (Groq), PDF (@react-pdf/renderer). |
+| **Informes Rayo — IA + PDF** | Fases 1-2 completas (KPIs + períodos + análisis IA Groq). Fases 3-4: Junta/Equipos + PDF. |

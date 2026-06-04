@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
 
 export async function GET(request: NextRequest) {
-  const user = await getAdminUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const admin = await getAdminUser(request)
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = request.nextUrl
   const from = searchParams.get('from')

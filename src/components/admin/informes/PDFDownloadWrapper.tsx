@@ -1,6 +1,8 @@
 'use client'
 
 import { Lightning } from '@phosphor-icons/react'
+import { PDFDownloadLink } from '@react-pdf/renderer'
+import { InformeRayoPDFDocument } from './InformeRayoPDFDocument'
 
 interface PDFDownloadWrapperProps {
   data: any
@@ -9,11 +11,8 @@ interface PDFDownloadWrapperProps {
   analysis: string | null
 }
 
-// All @react-pdf/renderer imports are isolated in this file
-// This file is ONLY loaded via dynamic import() at runtime
-import { PDFDownloadLink } from '@react-pdf/renderer'
-import { InformeRayoPDFDocument } from './InformeRayoPDFDocument'
-
+// This file imports @react-pdf/renderer LAZILY at runtime
+// It should NEVER be imported at the top level — only via dynamic import()
 export function PDFDownloadWrapper({ data, from, to, analysis }: PDFDownloadWrapperProps) {
   return (
     <PDFDownloadLink

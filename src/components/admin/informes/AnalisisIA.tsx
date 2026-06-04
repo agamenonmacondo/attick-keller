@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Lightning, Sparkle, TrendUp, TrendDown, Lightbulb, ClipboardText, Spinner, Warning } from '@phosphor-icons/react'
+import { Lightning, Sparkle, TrendUp, TrendDown, Lightbulb, ClipboardText, Spinner, Warning, Package } from '@phosphor-icons/react'
 
 interface AnalisisIAProps {
   data: any
   from: string
   to: string
+  onAnalysis?: (text: string | null) => void
 }
 
 const SECTION_ICONS: Record<string, React.ReactNode> = {
@@ -15,6 +16,20 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
   '📉': <TrendDown size={16} className="text-red-400" />,
   '💡': <Lightbulb size={16} className="text-amber-400" />,
   '📋': <ClipboardText size={16} className="text-sky-400" />,
+  '⚠️': <Warning size={16} className="text-orange-400" />,
+  '🏆': <Package size={16} className="text-[var(--color-ak-dorado)]" />,
+  '📊': <TrendUp size={16} weight="fill" className="text-blue-400" />,
+}
+
+const SECTION_COLORS: Record<string, string> = {
+  '⚡': 'border-[var(--color-ak-dorado)]/30 bg-[var(--color-ak-dorado)]/5',
+  '📈': 'border-emerald-500/30 bg-emerald-500/5',
+  '📉': 'border-red-500/30 bg-red-500/5',
+  '💡': 'border-amber-500/30 bg-amber-500/5',
+  '📋': 'border-sky-500/30 bg-sky-500/5',
+  '⚠️': 'border-orange-500/30 bg-orange-500/5',
+  '🏆': 'border-[var(--color-ak-dorado)]/30 bg-[var(--color-ak-dorado)]/5',
+  '📊': 'border-blue-500/30 bg-blue-500/5',
 }
 
 function parseAnalysisSections(text: string): { icon: string; title: string; items: string[] }[] {
@@ -53,7 +68,7 @@ function parseAnalysisSections(text: string): { icon: string; title: string; ite
   return sections
 }
 
-export function AnalisisIA({ data, from, to }: AnalisisIAProps) {
+export function AnalisisIA({ data, from, to, onAnalysis }: AnalisisIAProps) {
   const [analysis, setAnalysis] = useState<string | null>(null)
   const [source, setSource] = useState<'ai' | 'rules' | 'error' | null>(null)
   const [loading, setLoading] = useState(false)
@@ -79,6 +94,7 @@ export function AnalisisIA({ data, from, to }: AnalisisIAProps) {
       const result = await res.json()
       setAnalysis(result.analysis)
       setSource(result.source)
+      onAnalysis?.(result.analysis)
     } catch (err: any) {
       setError(err.message || 'Error al obtener análisis')
     } finally {
@@ -92,14 +108,6 @@ export function AnalisisIA({ data, from, to }: AnalisisIAProps) {
   }, [data?.kpis, from, to])
 
   const sections = analysis ? parseAnalysisSections(analysis) : []
-
-  const sectionColors: Record<string, string> = {
-    '⚡': 'border-[var(--color-ak-dorado)]/30 bg-[var(--color-ak-dorado)]/5',
-    '📈': 'border-emerald-500/30 bg-emerald-500/5',
-    '📉': 'border-red-500/30 bg-red-500/5',
-    '💡': 'border-amber-500/30 bg-amber-500/5',
-    '📋': 'border-sky-500/30 bg-sky-500/5',
-  }
 
   return (
     <div className="space-y-3">
@@ -148,7 +156,7 @@ export function AnalisisIA({ data, from, to }: AnalisisIAProps) {
           )}
 
           {sections.map((section, i) => (
-            <div key={i} className={`rounded-lg border p-3 ${sectionColors[section.icon] || 'border-[var(--border-default)] bg-[var(--bg-input)]'}`}>
+            <div key={i} className={`rounded-lg border p-3 ${SECTION_COLORS[section.icon] || 'border-[var(--border-default)] bg-[var(--bg-input)]'}`}>
               <div className="flex items-center gap-2 mb-1.5">
                 {SECTION_ICONS[section.icon] || <Sparkle size={14} className="text-[var(--color-ak-dorado)]" />}
                 <span className="text-xs font-semibold text-[var(--text-primary)]">{section.title}</span>

@@ -126,6 +126,7 @@ export function InformesRayoPanel() {
   const [customTo, setCustomTo] = useState('')
   const [zone, setZone] = useState('all')
   const [fetched, setFetched] = useState(false)
+  const [analysisText, setAnalysisText] = useState<string | null>(null)
 
   const { from, to } = useMemo(() => calculatePeriod(preset, customFrom, customTo), [preset, customFrom, customTo])
   const { compareFrom, compareTo } = useMemo(() => calculateComparison(from, to, compareMode), [from, to, compareMode])
@@ -174,7 +175,7 @@ export function InformesRayoPanel() {
           </div>
         </div>
         {data && !loading && (
-          <PDFExportButton data={data} from={from} to={to} analysis={null} />
+          <PDFExportButton data={data} from={from} to={to} analysis={analysisText} />
         )}
       </div>
 
@@ -403,7 +404,7 @@ export function InformesRayoPanel() {
 
       {/* ── AI Analysis Section ── */}
       {data && !loading && (
-        <AnalisisIA data={data} from={from} to={to} />
+        <AnalisisIA data={data} from={from} to={to} onAnalysis={setAnalysisText} />
       )}
 
       {/* ── Empty state ── */}

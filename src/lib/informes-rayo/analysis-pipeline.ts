@@ -1,35 +1,40 @@
 // ═══ Informes Rayo — Analysis Pipeline ═══
 // Groq Cloud (openai/gpt-oss-120b) con fallback a reglas locales
-// Plan v3.1: análisis narrativo general (tendencia, aciertos, fallas, oportunidades)
+// Plan v3.2: análisis detallado con referencias cruzadas, tendencias y recomendaciones
 
 // ═══ System Prompt ═══
-const SYSTEM_PROMPT = `Eres un analista financiero especializado en restaurantes colombianos. Tu nombre es Rayo IA ⚡.
+const SYSTEM_PROMPT = `Eres Rayo IA ⚡, analista financiero senior especializado en restaurantes colombianos con 15 años de experiencia en consultoría gastronómica.
 
-Analizas datos de A&K (Attic & Keller), un restaurante en Bogotá, Colombia. Moneda: COP (pesos colombianos).
+Analizas datos de A&K (Attic & Keller), un restaurante premium en Bogotá, Colombia. Moneda: COP (pesos colombianos).
 
 ESTRUCTURA TU RESPUESTA EXACTAMENTE ASÍ (no agregues nada fuera de estas secciones):
 
-⚡ **Tendencia General**
-[2-3 líneas ejecutivas con el diagnóstico general del período]
+⚡ **Diagnóstico General**
+[3-4 líneas ejecutivas con el diagnóstico completo: tendencia general, HallazGO principal, y riesgo oportunidad identificado. Sé específico con datos.]
 
-📈 **Aciertos**
-[3-5 bullets de lo que fue bien, con datos y desviaciones positivas. Usa formato: "- Zona X: $Y (↑Z%)"]
+📊 **Análisis de Ventas**
+[Desglose detallado: comparación vs período anterior por cada métrica (ventas, cheques, ticket, personas, propina). Incluir % de cambio y contexto. Explicar POR QUÉ cambió cada métrica si los datos lo sugieren.]
 
-📉 **Fallas**
-[2-4 bullets de lo que necesita atención, con datos y desviaciones negativas. Usa formato: "- Métrica: valor (↓Z%)"]
+🏆 **Productos Estrella**
+[Análisis de los top productos: cuáles impulsan ventas, cuáles tienen ticket alto, cuáles tienen buen volumen. Identificar patrones (ej: "las pizzas representan X% de ventas"). Incluir cálculos de concentración.]
 
-💡 **Oportunidades**
-[3-5 acciones concretas que A&K puede tomar AHORA basadas en los datos]
+💡 **Oportunidades Estratégicas**
+[4-6 acciones concretas y específicas para A&K, PRIORIZADAS por impacto potencial. Cada una con: qué hacer, por qué, y resultado esperado. Basar en los datos — no genéricas.]
 
-📋 **Resumen para Junta**
-[Exactamente 3 bullets para copiar en acta de junta directiva]
+⚠️ **Riesgos y Alertas**
+[2-4 riesgos identificados en los datos: concentración excesiva, dependencia de un producto/zona, tendencias negativas. Con datos que los respalden.]
+
+📋 **Resumen Ejecutivo para Junta**
+[5 bullets concisos para copiar directamente en acta de junta directiva. Incluir: cifra total, cambio %, HallazGO clave, acción #1 recomendada, riesgo #1.]
 
 REGLAS:
-- CANTIDADES en COP: "$1.2M", "$350K", no escribir "$1,200,000"
--PORCENTAJES con 1 decimal: "↑12.3%", "↓8.5%"
+- CANTIDADES en COP: "$1.2M", "$350K", NO escribir "$1,200,000"
+- PORCENTAJES con 1 decimal: "↑12.3%", "↓8.5%"
 - Siempre basar conclusiones en LOS DATOS proporcionados, no inventar
-- Si los datos son insuficientes, decir "Datos insuficientes" en esa sección
+- Si los datos son insuficientes, decirlo explícitamente
 - NO agregar secciones extras, NO poner títulos adicionales
+- Calcular % de concentración, ticket promedio proyectado, y propina como % de ventas
+- Comparar con benchmark de restaurantes en Bogotá cuando sea relevante
 - Respuesta en español colombiano`
 
 function buildAnalysisPrompt(data: {
@@ -39,6 +44,7 @@ function buildAnalysisPrompt(data: {
   staff: any[]
   payments: any[]
   clientSplit: any[]
+  topProducts: any[]
   comparison: { kpis: any } | null
   period: { from: string; to: string; zone: string; compareFrom: string; compareTo: string }
 }): string {
@@ -63,6 +69,7 @@ function buildAnalysisPrompt(data: {
     prompt += `\nComparación: ${data.period.compareFrom} al ${data.period.compareTo}`
   }
 
+  // ── KPIs Principales ──
   prompt += `\n\n═══ KPIs PRINCIPALES ═══`
 
   if (kpi) {
@@ -70,50 +77,93 @@ function buildAnalysisPrompt(data: {
     const cheques = Number(kpi.total_cheques || 0)
     const personas = Number(kpi.personas || 0)
     const propina = Number(kpi.propina_total || kpi.tip_total || 0)
+    const ticket = cheques > 0 ? revenue / cheques : 0
+    const propinaPerCapita = personas > 0 ? propina / personas : 0
+    const propinaPct = revenue > 0 ? (propina / revenue) * 100 : 0
 
     prompt += `\n- Ventas totales: ${fmt(revenue)}`
     prompt += `\n- Cheques: ${cheques.toLocaleString('es-CO')}`
-    prompt += `\n- Ticket promedio: ${fmt(cheques > 0 ? revenue / cheques : 0)}`
+    prompt += `\n- Ticket promedio: ${fmt(ticket)}`
     prompt += `\n- Personas: ${personas.toLocaleString('es-CO')}`
-    prompt += `\n- Propina: ${fmt(propina)}`
-    prompt += `\n- Propina/persona: ${fmt(personas > 0 ? propina / personas : 0)}`
+    prompt += `\n- Propina total: ${fmt(propina)} (${propinaPct.toFixed(1)}% de ventas)`
+    prompt += `\n- Propina/persona: ${fmt(propinaPerCapita)}`
 
     if (compKpi) {
       const compRevenue = Number(compKpi.total_ventas || compKpi.revenue || 0)
       const compCheques = Number(compKpi.total_cheques || 0)
       const compPersonas = Number(compKpi.personas || 0)
       const compPropina = Number(compKpi.propina_total || compKpi.tip_total || 0)
+      const compTicket = compCheques > 0 ? compRevenue / compCheques : 0
 
       prompt += `\n\n═══ COMPARACIÓN (período anterior) ═══`
       prompt += `\n- Ventas anterior: ${fmt(compRevenue)} (${pct(revenue, compRevenue)})`
       prompt += `\n- Cheques anterior: ${compCheques.toLocaleString('es-CO')} (${pct(cheques, compCheques)})`
+      prompt += `\n- Ticket promedio anterior: ${fmt(compTicket)} (${pct(ticket, compTicket)})`
       prompt += `\n- Personas anterior: ${compPersonas.toLocaleString('es-CO')} (${pct(personas, compPersonas)})`
       prompt += `\n- Propina anterior: ${fmt(compPropina)} (${pct(propina, compPropina)})`
     }
   }
 
+  // ── Por Zona ──
   if (data.zones && data.zones.length > 0) {
     prompt += `\n\n═══ POR ZONA ═══`
+    const totalRevenue = data.zones.reduce((s: number, z: any) => s + Number(z.total_ventas || z.revenue || 0), 0)
     for (const z of data.zones) {
       const zName = z.zone || z.derived_zone_name || z.name || 'Sin zona'
       const zRevenue = Number(z.total_ventas || z.revenue || 0)
-      prompt += `\n- ${zName}: ${fmt(zRevenue)}, ${Number(z.total_cheques || z.cheques || 0)} cheques, ${Number(z.personas || 0)} personas`
+      const zCheques = Number(z.total_cheques || z.cheques || 0)
+      const zPersonas = Number(z.personas || 0)
+      const zPct = totalRevenue > 0 ? (zRevenue / totalRevenue * 100).toFixed(1) : '0'
+      prompt += `\n- ${zName}: ${fmt(zRevenue)} (${zPct}% del total), ${zCheques} cheques, ${zPersonas} personas`
     }
   }
 
+  // ── Métodos de Pago ──
   if (data.payments && data.payments.length > 0) {
     prompt += `\n\n═══ MÉTODOS DE PAGO ═══`
     for (const p of data.payments) {
       const method = p.payment_method || p.metodo || p.method || 'Otro'
-      prompt += `\n- ${method}: ${fmt(Number(p.total || p.total_ventas || 0))}, ${Number(p.cheques || p.total_cheques || 0)} cheques`
+      const total = Number(p.total || p.amount || p.total_ventas || 0)
+      const cheques = Number(p.cheques || p.count || p.total_cheques || 0)
+      const pPct = p.pct || 0
+      prompt += `\n- ${method}: ${fmt(total)} (${pPct}%), ${cheques} cheques`
     }
   }
 
-  prompt += `\n\nAnaliza estos datos con la estructura requerida.`
+  // ── Top Productos ──
+  if (data.topProducts && data.topProducts.length > 0) {
+    prompt += `\n\n═══ TOP PRODUCTOS ═══`
+    const totalProductRevenue = data.topProducts.reduce((s: number, p: any) => s + Number(p.revenue || p.total_ventas || 0), 0)
+    for (const p of data.topProducts) {
+      const name = p.product_name || p.name || 'Sin nombre'
+      const category = p.category_name || p.group_name || 'Sin categoría'
+      const qty = Number(p.quantity || 0)
+      const rev = Number(p.revenue || p.total_ventas || 0)
+      const unitPrice = qty > 0 ? rev / qty : 0
+      const concentrationPct = totalProductRevenue > 0 ? (rev / totalProductRevenue * 100).toFixed(1) : '0'
+      prompt += `\n- ${name} (${category}): ${qty} uds, ${fmt(rev)} (${concentrationPct}% del top), precio unitario ${fmt(unitPrice)}`
+    }
+  }
+
+  // ── Staff summary ──
+  if (data.staff && data.staff.length > 0) {
+    prompt += `\n\n═══ STAFF (top 5) ═══`
+    const top5 = data.staff.slice(0, 5)
+    for (const s of top5) {
+      const name = s.staff_name || s.name || 'Sin nombre'
+      const rev = Number(s.total_ventas || s.revenue || 0)
+      const cheques = Number(s.total_cheques || s.cheques || 0)
+      const propina = Number(s.total_propina || s.tip_total || 0)
+      prompt += `\n- ${name}: ${fmt(rev)}, ${cheques} cheques, propina ${fmt(propina)}`
+    }
+  }
+
+  prompt += `\n\nGenera un análisis financiero detallado following la estructura EXACTA del system prompt. Sé específico con datos, calcula concentración, ticket proyectado, y propinas como % de ventas. NO seas genérico.`
+
   return prompt
 }
 
-// ═══ Rule-based fallback (sin IA) ═══
+// ═══ Rule-based fallback (sin IA) — más detallado ═══
 function generateRuleBasedAnalysis(data: {
   kpis: any
   daily: any[]
@@ -121,6 +171,7 @@ function generateRuleBasedAnalysis(data: {
   staff: any[]
   payments: any[]
   clientSplit: any[]
+  topProducts: any[]
   comparison: { kpis: any } | null
   period: { from: string; to: string; zone: string }
 }): string {
@@ -134,6 +185,7 @@ function generateRuleBasedAnalysis(data: {
   const personas = Number(kpi.personas || 0)
   const propina = Number(kpi.propina_total || kpi.tip_total || 0)
   const ticket = cheques > 0 ? revenue / cheques : 0
+  const propinaPct = revenue > 0 ? (propina / revenue) * 100 : 0
 
   const fmt = (n: number) => {
     if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
@@ -141,55 +193,90 @@ function generateRuleBasedAnalysis(data: {
     return `$${Math.round(n).toLocaleString('es-CO')}`
   }
 
-  const pcts: string[] = []
-  let tendencia = 'Los datos del período muestran actividad operativa.'
+  const pct = (cur: number, prev: number) => {
+    if (!prev || prev === 0) return 'N/A'
+    const change = ((cur - prev) / prev) * 100
+    return `${change >= 0 ? '↑' : '↓'}${Math.abs(change).toFixed(1)}%`
+  }
 
+  // ── Diagnosis ──
+  let tendencia = 'Los datos del período muestran actividad operativa.'
+  let revChange = 0
+  if (compKpi) {
+    const compRevenue = Number(compKpi.total_ventas || compKpi.revenue || 0)
+    revChange = compRevenue > 0 ? ((revenue - compRevenue) / compRevenue) * 100 : 0
+    tendencia = revChange >= 0
+      ? `Crecimiento del ${Math.abs(revChange).toFixed(1)}% en ventas vs período anterior.`
+      : `Las ventas cayeron ${Math.abs(revChange).toFixed(1)}% vs período anterior.`
+  }
+
+  // ── Zone info ──
+  const zoneHighlights = (data.zones || []).slice(0, 5).map((z: any) => {
+    const name = z.zone || z.derived_zone_name || z.name || 'Sin zona'
+    const rev = Number(z.total_ventas || z.revenue || 0)
+    const totalRev = (data.zones || []).reduce((s: number, z2: any) => s + Number(z2.total_ventas || z2.revenue || 0), 0)
+    const pctOfTotal = totalRev > 0 ? (rev / totalRev * 100).toFixed(0) : '0'
+    return `${name}: ${fmt(rev)} (${pctOfTotal}%)`
+  })
+
+  // ── Top products info ──
+  const productHighlights = (data.topProducts || []).slice(0, 5).map((p: any) => {
+    const name = p.product_name || p.name || 'Sin nombre'
+    const rev = Number(p.revenue || p.total_ventas || 0)
+    return `${name}: ${fmt(rev)}`
+  })
+
+  let analysis = `⚡ **Diagnóstico General**\n${tendencia}`
+  if (revChange < 0) analysis += ` Caída significativa que requiere análisis de causas.`
+  if (propinaPct < 8) analysis += ` Propina baja (${propinaPct.toFixed(1)}% de ventas).`
+
+  analysis += `\n\n📊 **Análisis de Ventas**`
+  analysis += `\n- Ventas: ${fmt(revenue)}`
+  if (cheques > 0) analysis += `\n- ${cheques} cheques con ticket promedio de ${fmt(ticket)}`
+  if (personas > 0) analysis += `\n- ${personas.toLocaleString('es-CO')} personas atendidas`
+  analysis += `\n- Propina: ${fmt(propina)} (${propinaPct.toFixed(1)}% de ventas)`
   if (compKpi) {
     const compRevenue = Number(compKpi.total_ventas || compKpi.revenue || 0)
     const compCheques = Number(compKpi.total_cheques || 0)
     const compPersonas = Number(compKpi.personas || 0)
-
-    const revPct = compRevenue > 0 ? ((revenue - compRevenue) / compRevenue) * 100 : 0
-    const chkPct = compCheques > 0 ? ((cheques - compCheques) / compCheques) * 100 : 0
-    const perPct = compPersonas > 0 ? ((personas - compPersonas) / compPersonas) * 100 : 0
-
-    if (revPct > 0) pcts.push(`ventas ${revPct >= 0 ? '↑' : '↓'}${Math.abs(revPct).toFixed(1)}%`)
-    if (chkPct > 0) pcts.push(`cheques ${chkPct >= 0 ? '↑' : '↓'}${Math.abs(chkPct).toFixed(1)}%`)
-
-    tendencia = revPct >= 0
-      ? `El período muestra un crecimiento del ${Math.abs(revPct).toFixed(1)}% en ventas vs período anterior.`
-      : `Las ventas cayeron ${Math.abs(revPct).toFixed(1)}% vs período anterior.`
+    analysis += `\n- vs Período anterior: Ventas ${pct(revenue, compRevenue)}, Cheques ${pct(cheques, compCheques)}, Personas ${pct(personas, compPersonas)}`
   }
 
-  // Zone highlights
-  const zoneHighlights = (data.zones || []).slice(0, 3).map((z: any) => {
-    const name = z.zone || z.derived_zone_name || z.name || 'Sin zona'
-    const rev = Number(z.total_ventas || z.revenue || 0)
-    return `${name}: ${fmt(rev)}`
-  })
+  if (zoneHighlights.length > 0) {
+    analysis += `\n\n🏆 **Productos Estrella**`
+    if (productHighlights.length > 0) {
+      analysis += `\nTop productos: ${productHighlights.join(', ')}`
+    } else {
+      analysis += `\nDatos de productos no disponibles para este período.`
+    }
+  }
 
-  let analysis = `⚡ **Tendencia General**\n${tendencia}`
+  analysis += `\n\n💡 **Oportunidades Estratégicas**`
+  if (ticket > 0 && ticket < 200000) analysis += `\n- Subir ticket promedio (${fmt(ticket)}) con estrategias de upselling y maridaje`
+  if (zoneHighlights.length > 1) analysis += `\n- Distribuir carga entre zonas: ${zoneHighlights.join('; ')}`
+  analysis += `\n- Analizar horas pico para optimizar staffing y reducir tiempos de espera`
+  if (propinaPct < 10) analysis += `\n- Propina al ${propinaPct.toFixed(1)}% — considerar sugerencia automática del 15% en cuenta`
+  if (productHighlights.length > 0) analysis += `\n- Promocionar productos estrella (${productHighlights.slice(0, 3).join(', ')}) en redes y menú digital`
 
-  analysis += `\n\n📈 **Aciertos**`
-  if (revenue > 0) analysis += `\n- Ventas del período: ${fmt(revenue)}`
-  if (cheques > 0) analysis += `\n- ${cheques} cheques atendidos`
-  if (personas > 0) analysis += `\n- ${personas.toLocaleString('es-CO')} personas atendidas`
-  if (pcts.length > 0 && pcts.some(p => p.includes('↑'))) analysis += `\n- Crecimiento en ${pcts.filter(p => p.includes('↑')).join(', ')}`
+  analysis += `\n\n⚠️ **Riesgos y Alertas**`
+  if (zoneHighlights.length === 1) analysis += `\n- Alta concentración en una sola zona — cualquier cierre impacta ${fmt(revenue)} en ventas`
+  if (revChange < -20) analysis += `\n- Caída de ${Math.abs(revChange).toFixed(1)}% en ventas — investigar causas (estacionalidad, competencia, calidad)`
+  if (propinaPct < 8) analysis += `\n- Propina debajo del 8% del ticket — puede indicar insatisfacción o falta de sugerencia`
+  if (productHighlights.length > 0) {
+    const topProduct = (data.topProducts || [])[0]
+    if (topProduct) {
+      const topRev = Number(topProduct.revenue || topProduct.total_ventas || 0)
+      const topPct = revenue > 0 ? (topRev / revenue * 100).toFixed(1) : '0'
+      if (Number(topPct) > 15) analysis += `\n- Producto "${topProduct.product_name || topProduct.name}" representa ${topPct}% de ventas — alta dependencia`
+    }
+  }
 
-  analysis += `\n\n📉 **Fallas**`
-  if (ticket > 0 && ticket < 15000) analysis += `\n- Ticket promedio bajo: ${fmt(ticket)}`
-  if (pcts.some(p => p.includes('↓'))) analysis += `\n- Caída en ${pcts.filter(p => p.includes('↓')).join(', ')}`
-
-  analysis += `\n\n💡 **Oportunidades**`
-  if (ticket < 20000) analysis += `\n- Promocionar platos de mayor valor para subir ticket promedio`
-  if (data.zones?.length > 0) analysis += `\n- Analizar rendimiento por zona: ${zoneHighlights.join(', ')}`
-  analysis += `\n- Revisar horas pico para optimar staffing`
-  if (propina < revenue * 0.05) analysis += `\n- Propina baja (${(propina / (revenue || 1) * 100).toFixed(1)}%) — evaluar sugerencia automática`
-
-  analysis += `\n\n📋 **Resumen para Junta**`
-  analysis += `\n- Ventas: ${fmt(revenue)}${pcts.length > 0 ? ` (${pcts[0]})` : ''}`
-  analysis += `\n- Cheques: ${cheques.toLocaleString('es-CO')}, Personas: ${personas.toLocaleString('es-CO')}`
-  analysis += `\n- Ticket promedio: ${fmt(ticket)}`
+  analysis += `\n\n📋 **Resumen Ejecutivo para Junta**`
+  analysis += `\n- Ventas del período: ${fmt(revenue)}${compKpi ? ` (${pct(revenue, Number(compKpi.total_ventas || compKpi.revenue || 0))})` : ''}`
+  analysis += `\n- ${cheques} cheques, ${personas.toLocaleString('es-CO')} personas, ticket ${fmt(ticket)}`
+  analysis += `\n- Propina: ${fmt(propina)} (${propinaPct.toFixed(1)}% de ventas)`
+  analysis += `\n- ${revChange >= 0 ? 'Crecimiento' : 'Caída'} ${Math.abs(revChange).toFixed(1)}% vs período anterior`
+  analysis += `\n- Acción clave: ${revChange < -10 ? 'Investigar causas de caída y definir plan de recuperación' : 'Mantener estrategia y enfocarse en upselling'}`
 
   return analysis
 }
@@ -225,7 +312,7 @@ async function callGroqAI(
           { role: 'user', content: prompt },
         ],
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 3000,
       }),
       signal: options?.signal ?? controller.signal,
     })

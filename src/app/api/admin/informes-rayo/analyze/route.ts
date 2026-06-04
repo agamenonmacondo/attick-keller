@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { getAdminUser } from '@/lib/utils/admin-auth'
 import { runAnalysisPipeline } from '@/lib/informes-rayo/analysis-pipeline'
 
 export async function POST(request: NextRequest) {
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const { reportData } = body
 
     if (!reportData || !reportData.kpis) {
-      return NextResponse.json({ error: 'reportData with kpis is required' }, { status: 400 })
+      return NextResponse.json({ error: 'No report data provided' }, { status: 400 })
     }
 
     const result = await runAnalysisPipeline(reportData)
@@ -24,6 +24,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('[InformesRayo] Analysis error:', error)
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Error analyzing report' }, { status: 500 })
   }
 }

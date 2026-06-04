@@ -6,7 +6,10 @@ import { MetricasClave } from './MetricasClave'
 import { AnalisisIA } from './AnalisisIA'
 import { PDFExportButton } from './PDFExportButton'
 import { InformesDashboard } from './InformesDashboard'
-import { Lightning, CaretLeft, CaretRight, Spinner, Warning, Funnel, Sparkle, TrendUp, TrendDown, Lightbulb, ClipboardText, Package, HandCoins } from '@phosphor-icons/react'
+import {
+  Lightning, CaretLeft, CaretRight, Spinner, Warning,
+  ClipboardText, HandCoins, FileText
+} from '@phosphor-icons/react'
 
 type PeriodPreset = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'custom'
 type CompareMode = 'previousPeriod' | 'none'
@@ -29,7 +32,7 @@ function addDays(d: Date, n: number): Date {
 function startOfWeek(d: Date): Date {
   const r = new Date(d)
   const day = r.getDay()
-  const diff = day === 0 ? 6 : day - 1 // Monday start
+  const diff = day === 0 ? 6 : day - 1
   r.setDate(r.getDate() - diff)
   return r
 }
@@ -109,16 +112,6 @@ const PRESETS: { key: PeriodPreset; label: string }[] = [
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
-function formatCOP(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
-  return `$${n.toLocaleString('es-CO')}`
-}
-
-function formatNum(n: number): string {
-  return n.toLocaleString('es-CO')
-}
-
 export function InformesRayoPanel() {
   const { data, loading, error, fetchReport } = useInformesRayo()
   const [preset, setPreset] = useState<PeriodPreset>('thisWeek')
@@ -141,7 +134,6 @@ export function InformesRayoPanel() {
     fetchReport(from, to, zone, compareFrom, compareTo)
   }
 
-  // Auto-fetch when period changes (after initial fetch)
   useEffect(() => {
     if (fetched) fetchReport(from, to, zone, compareFrom, compareTo)
   }, [preset, customFrom, customTo, compareMode, zone])
@@ -163,16 +155,16 @@ export function InformesRayoPanel() {
   }, [compareFrom, compareTo])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[var(--color-ak-borgona)]/10 flex items-center justify-center">
-            <Lightning size={22} weight="fill" className="text-[var(--color-ak-dorado)]" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-ak-borgona)', boxShadow: '0 2px 8px rgba(93,21,40,0.3)' }}>
+            <Lightning size={22} weight="fill" style={{ color: 'var(--color-ak-dorado)' }} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-[var(--text-primary)]">Informes Rayo</h2>
-            <p className="text-xs text-[var(--text-secondary)]">Reportes rápidos con datos en vivo</p>
+            <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Informes Rayo</h2>
+            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Reportes con datos en vivo</p>
           </div>
         </div>
         {data && !loading && (
@@ -180,79 +172,82 @@ export function InformesRayoPanel() {
         )}
       </div>
 
-      <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4 space-y-4">
-        {/* Preset buttons */}
-        <div className="flex flex-wrap gap-2">
+      {/* ── Period Selector ── */}
+      <div className="rounded-xl border p-4 space-y-3" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
+        {/* Presets */}
+        <div className="flex flex-wrap gap-1.5">
           {PRESETS.map(p => (
             <button
               key={p.key}
               onClick={() => setPreset(p.key)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                preset === p.key
-                  ? 'bg-[var(--color-ak-borgona)] text-white'
-                  : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:bg-[var(--color-ak-borgona)]/10'
-              }`}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all"
+              style={preset === p.key
+                ? { background: 'var(--color-ak-borgona)', color: '#fff' }
+                : { background: 'var(--bg-input)', color: 'var(--text-secondary)' }
+              }
             >
               {p.label}
             </button>
           ))}
         </div>
 
-        {/* Custom date range */}
+        {/* Custom dates */}
         {preset === 'custom' && (
           <div className="flex flex-wrap gap-3 items-center">
             <input
               type="date"
               value={customFrom}
               onChange={e => { setCustomFrom(e.target.value); setPreset('custom') }}
-              className="bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)]"
+              className="rounded-lg px-3 py-1.5 text-sm border"
+              style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
             />
-            <span className="text-[var(--text-secondary)] text-sm">—</span>
+            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>—</span>
             <input
               type="date"
               value={customTo}
               onChange={e => { setCustomTo(e.target.value); setPreset('custom') }}
-              className="bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-primary)]"
+              className="rounded-lg px-3 py-1.5 text-sm border"
+              style={{ background: 'var(--bg-input)', borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
             />
           </div>
         )}
 
-        {/* Compare toggle */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-[var(--text-secondary)]">Comparar:</span>
-          <button
-            onClick={() => setCompareMode(compareMode === 'previousPeriod' ? 'none' : 'previousPeriod')}
-            className={`px-3 py-1 text-xs rounded-lg transition-all ${
-              compareMode === 'previousPeriod'
-                ? 'bg-[var(--color-ak-borgona)] text-white'
-                : 'bg-[var(--bg-input)] text-[var(--text-secondary)]'
-            }`}
-          >
-            {compareMode === 'previousPeriod' ? 'Período anterior ✓' : 'Sin comparación'}
-          </button>
-          {compLabel && (
-            <span className="text-[10px] text-[var(--text-secondary)]">{compLabel}</span>
-          )}
-        </div>
-
-        {/* Period label */}
-        <div className="text-sm font-medium text-[var(--text-primary)]">
-          {periodLabel}
+        {/* Compare toggle + period label */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setCompareMode(compareMode === 'previousPeriod' ? 'none' : 'previousPeriod')}
+              className="px-3 py-1 text-xs font-medium rounded-lg transition-all"
+              style={compareMode === 'previousPeriod'
+                ? { background: 'var(--color-ak-borgona)', color: '#fff' }
+                : { background: 'var(--bg-input)', color: 'var(--text-secondary)' }
+              }
+            >
+              {compareMode === 'previousPeriod' ? 'vs período anterior' : 'sin comparar'}
+            </button>
+            {compLabel && (
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{compLabel}</span>
+            )}
+          </div>
+          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+            {periodLabel}
+          </span>
         </div>
       </div>
 
-      {/* ── Loading/Error States ── */}
+      {/* ── Loading ── */}
       {loading && (
         <div className="flex items-center justify-center py-12">
-          <Spinner size={32} className="animate-spin text-[var(--color-ak-borgona)]" />
-          <span className="ml-3 text-[var(--text-secondary)]">Cargando informe...</span>
+          <Spinner size={32} className="animate-spin" style={{ color: 'var(--color-ak-borgona)' }} />
+          <span className="ml-3 text-sm" style={{ color: 'var(--text-secondary)' }}>Cargando informe...</span>
         </div>
       )}
 
+      {/* ── Error ── */}
       {error && (
-        <div className="bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 rounded-xl p-4 flex items-center gap-3">
-          <Warning size={20} className="text-[var(--color-danger)]" />
-          <span className="text-[var(--color-danger)] text-sm">{error}</span>
+        <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: 'rgba(var(--color-danger), 0.1)', border: '1px solid var(--color-danger)' }}>
+          <Warning size={20} style={{ color: 'var(--color-danger)' }} />
+          <span className="text-sm" style={{ color: 'var(--color-danger)' }}>{error}</span>
         </div>
       )}
 
@@ -261,63 +256,65 @@ export function InformesRayoPanel() {
         <MetricasClave data={data.kpis} comparison={data.comparison as { kpis: any } | null} />
       )}
 
-      {/* ── Dashboard with Charts ── */}
+      {/* ── Dashboard Charts ── */}
       {data && !loading && (
         <InformesDashboard data={data} />
       )}
 
-      {/* ── Section: Junta (Resumen para Acta) ── */}
-      {data && data.kpis && !loading && (
-        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
-            <ClipboardText size={16} className="text-[var(--color-ak-dorado)]" />
-            Resumen para Junta
-          </h3>
-          <div className="space-y-2 text-xs text-[var(--text-secondary)]">
-            {(() => {
-              const kpi = data.kpis
-              const compKpi = data.comparison?.kpis
-              const revenue = Number(kpi?.total_ventas ?? 0)
-              const cheques = Number(kpi?.total_cheques ?? 0)
-              const ticketProm = cheques > 0 ? Math.round(revenue / cheques) : 0
-              const personas = Number(kpi?.personas ?? 0)
-              const propina = Number(kpi?.propina_total ?? 0)
-              const propinaPerCapita = personas > 0 ? Math.round(propina / personas) : 0
+      {/* ── Junta Summary ── */}
+      {data && data.kpis && !loading && (() => {
+        const kpi = data.kpis
+        const compKpi = data.comparison?.kpis
+        const revenue = Number(kpi?.total_ventas ?? 0)
+        const cheques = Number(kpi?.total_cheques ?? 0)
+        const ticketProm = cheques > 0 ? Math.round(revenue / cheques) : 0
+        const personas = Number(kpi?.personas ?? 0)
+        const propina = Number(kpi?.propina_total ?? 0)
+        const propinaPerCapita = personas > 0 ? Math.round(propina / personas) : 0
 
-              const cRevenue = compKpi ? Number(compKpi.total_ventas ?? 0) : 0
-              const cCheques = compKpi ? Number(compKpi.total_cheques ?? 0) : 0
-              const cPersonas = compKpi ? Number(compKpi.personas ?? 0) : 0
+        const cRevenue = compKpi ? Number(compKpi.total_ventas ?? 0) : 0
+        const cCheques = compKpi ? Number(compKpi.total_cheques ?? 0) : 0
+        const cPersonas = compKpi ? Number(compKpi.personas ?? 0) : 0
 
-              const pct = (c: number, p: number) => !p ? '' : ` (${c >= p ? '↑' : '↓'}${Math.abs(((c - p) / p) * 100).toFixed(1)}%)`
+        const fmtC = (n: number) => {
+          if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+          if (Math.abs(n) >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
+          return `$${n.toLocaleString('es-CO')}`
+        }
+        const fmtN = (n: number) => Math.round(n).toLocaleString('es-CO')
+        const pct = (c: number, p: number) => !p ? '' : ` (${c >= p ? '↑' : '↓'}${Math.abs(((c - p) / p) * 100).toFixed(1)}%)`
 
-              return (
-                <ul className="space-y-1.5 pl-3">
-                  <li><span className="text-[var(--text-primary)] font-medium">Ventas:</span> {formatCOP(revenue)}{pct(revenue, cRevenue)}</li>
-                  <li><span className="text-[var(--text-primary)] font-medium">Cheques:</span> {formatNum(cheques)}{pct(cheques, cCheques)}</li>
-                  <li><span className="text-[var(--text-primary)] font-medium">Ticket Promedio:</span> {formatCOP(ticketProm)}</li>
-                  {personas > 0 && <li><span className="text-[var(--text-primary)] font-medium">Personas:</span> {formatNum(personas)}{pct(personas, cPersonas)}</li>}
-                  {propina > 0 && <li><span className="text-[var(--text-primary)] font-medium">Propina:</span> {formatCOP(propina)}</li>}
-                  {propinaPerCapita > 0 && <li><span className="text-[var(--text-primary)] font-medium">Propina/Persona:</span> {formatCOP(propinaPerCapita)}</li>}
-                </ul>
-              )
-            })()}
-            <p className="text-[var(--text-secondary)] italic mt-2">
+        return (
+          <div className="rounded-xl border p-4" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--color-ak-dorado)' }}>
+              <ClipboardText size={16} weight="fill" />
+              Resumen para Junta
+            </h3>
+            <div className="space-y-1.5 pl-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
+              <p><span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Ventas:</span> {fmtC(revenue)}{pct(revenue, cRevenue)}</p>
+              <p><span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Cheques:</span> {fmtN(cheques)}{pct(cheques, cCheques)}</p>
+              <p><span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Ticket Promedio:</span> {fmtC(ticketProm)}</p>
+              {personas > 0 && <p><span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Personas:</span> {fmtN(personas)}{pct(personas, cPersonas)}</p>}
+              {propina > 0 && <p><span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Propina:</span> {fmtC(propina)}</p>}
+              {propinaPerCapita > 0 && <p><span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Propina/Persona:</span> {fmtC(propinaPerCapita)}</p>}
+            </div>
+            <p className="text-xs italic mt-3" style={{ color: 'var(--text-muted)' }}>
               Copia estos datos para el acta de junta directiva.
             </p>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
-      {/* ── AI Analysis Section ── */}
+      {/* ── AI Analysis ── */}
       {data && !loading && (
         <AnalisisIA data={data} from={from} to={to} onAnalysis={setAnalysisText} />
       )}
 
-      {/* ── Empty state ── */}
+      {/* ── Empty State ── */}
       {!data && !loading && !error && fetched && (
         <div className="text-center py-12">
-          <Lightning size={40} className="mx-auto text-[var(--text-secondary)] opacity-30" />
-          <p className="text-[var(--text-secondary)] mt-3">Selecciona un período para ver el informe</p>
+          <Lightning size={40} className="mx-auto opacity-30" style={{ color: 'var(--text-secondary)' }} />
+          <p className="mt-3" style={{ color: 'var(--text-secondary)' }}>Selecciona un período para ver el informe</p>
         </div>
       )}
     </div>

@@ -476,11 +476,8 @@ def main():
     sync_catalogs(cur2)
     conn2.close()
 
-    # ── COSTOS (solo con --full o primera corrida) ──
-    if DO_FULL:
-        sync_costs()
-    else:
-        log("Saltando costos (usar --full para sincronizar)")
+    # ── COSTOS (siempre, con incremental para purchases) ──
+    sync_costs()
 
     log("=" * 60)
     log("OK: %d ventas | %d items | %d pagos" % (ins_s, ins_i, ins_p))

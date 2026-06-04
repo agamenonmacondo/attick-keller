@@ -18,6 +18,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'area y week_str son requeridos' }, { status: 400 })
   }
 
+  const VALID_AREAS = ['cocina', 'barra', 'servicio']
+  if (!VALID_AREAS.includes(area)) {
+    return NextResponse.json({ error: 'Area invalida' }, { status: 400 })
+  }
+
   // Obtener cronograma
   const { data: schedule, error: schedError } = await sb
     .from('shift_schedules')
@@ -171,6 +176,11 @@ export async function POST(request: NextRequest) {
 
   if (!area || !week_str) {
     return NextResponse.json({ error: 'area y week_str son requeridos' }, { status: 400 })
+  }
+
+  const VALID_AREAS = ['cocina', 'barra', 'servicio']
+  if (!VALID_AREAS.includes(area)) {
+    return NextResponse.json({ error: 'Area invalida' }, { status: 400 })
   }
 
   // Verificar permiso de lider_area (solo puede crear en su area)

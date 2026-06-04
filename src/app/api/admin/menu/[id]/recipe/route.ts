@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const admin = await getAdminUser(request);
+  if (!admin) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
+  const supabase = getServiceClient();
   const { id } = await params;
 
   // Get menu item with its pos_product_id

@@ -4,16 +4,13 @@ import { getServiceClient, getAdminUser } from '@/lib/utils/admin-auth'
 // ── Nómina Import API ──────────────────────────────────
 // Accepts imports via X-Import-Token header (for scripts) or admin session cookie
 // Secret token for script access — loaded from env for security
-const IMPORT_TOKEN = process.env.NOMINA_IMPORT_TOKEN || ''
+const IMPORT_TOKEN = process.env.NOMINA_IMPORT_TOKEN
 
 function isAuthorized(request: NextRequest): boolean {
-  // Check import token header (for scripts)
+  if (!IMPORT_TOKEN) return false
   const token = request.headers.get('X-Import-Token')
-  if (token === IMPORT_TOKEN) return true
-  
-  // Could also check admin session cookie for browser access
-  // but for now, token is enough
-  return false
+  if (!token) return false
+  return token === IMPORT_TOKEN
 }
 
 export async function POST(request: NextRequest) {

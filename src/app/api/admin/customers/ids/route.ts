@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { sanitizeLike } from '@/lib/utils/sanitize'
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -21,7 +22,8 @@ export async function GET(request: NextRequest) {
     .eq('restaurant_id', RESTAURANT_ID)
 
   if (q) {
-    customersQuery = customersQuery.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`)
+    const safeQ = sanitizeLike(q)
+    customersQuery = customersQuery.or(`full_name.ilike.%${safeQ}%,phone.ilike.%${safeQ}%,email.ilike.%${safeQ}%`)
   }
 
   if (hasEmail === 'true') {

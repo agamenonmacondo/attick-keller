@@ -11,40 +11,53 @@ interface PDFExportButtonProps {
 }
 
 export function PDFExportButton({ data, from, to, analysis }: PDFExportButtonProps) {
-  const [ready, setReady] = useState(false)
-  const [PDFComponent, setPDFComponent] = useState<React.ComponentType<any> | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handlePrepare = async () => {
+  const handleDownload = async () => {
+    setLoading(true)
+    setError(null)
     try {
-      // Dynamically import the entire PDF module at runtime only
-      const pdfModule = await import('./PDFDownloadWrapper')
-      setPDFComponent(() => pdfModule.PDFDownloadWrapper)
-      setReady(true)
-    } catch (e) {
-      console.error('Failed to load PDF module:', e)
+      // Dynamically import react-pdf and the document component
+      const { pdf } = await import('@react-pdf/renderer')
+      const { InformeRayoPDFDocument } = await import('./InformeRayoPDFDocument')
+
+      // Generate PDF blob
+      const doc = <InformeRayoPDFDocument data={data} from={from} to={to} analysis={analysis} />
+      const blob = await pdf(doc).toBlob()
+
+      // Trigger download
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Informe-Rayo-${from}-${to}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err: any) {
+      console.error('[PDF] Error generating PDF:', err)
+      setError(err.message || 'Error generando PDF')
+    } finally {
+      setLoading(false)
     }
   }
 
-  if (!ready || !PDFComponent) {
-    return (
+  return (
+    <div className="flex items-center gap-2">
       <button
-        onClick={handlePrepare}
+        onClick={handleDownload}
+        disabled={loading}
         className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all
           bg-[var(--color-ak-borgona)] text-white hover:bg-[var(--color-ak-borgona)]/90
-          shadow-sm hover:shadow-md"
+          shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Lightning size={16} weight="fill" />
-        Cargar PDF
+        {loading ? 'Generando PDF...' : 'Descargar PDF'}
       </button>
-    )
-  }
-
-  return (
-    <PDFComponent
-      data={data}
-      from={from}
-      to={to}
-      analysis={analysis}
-    />
+      {error && (
+        <span className="text-xs text-red-400">{error}</span>
+      )}
+    </div>
   )
 }

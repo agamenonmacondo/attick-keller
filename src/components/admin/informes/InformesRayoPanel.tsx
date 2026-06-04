@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useInformesRayo } from '@/lib/hooks/useInformesRayo'
 import { MetricasClave } from './MetricasClave'
-import { Lightning, CaretLeft, CaretRight, Spinner, Warning, Funnel } from '@phosphor-icons/react'
+import { AnalisisIA } from './AnalisisIA'
+import { Lightning, CaretLeft, CaretRight, Spinner, Warning, Funnel, Sparkle, TrendUp, TrendDown, Lightbulb, ClipboardText } from '@phosphor-icons/react'
 
 type PeriodPreset = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'custom'
 type CompareMode = 'previousPeriod' | 'none'
@@ -309,13 +310,9 @@ export function InformesRayoPanel() {
         </div>
       )}
 
-      {/* ── Placeholder for future sections ── */}
+      {/* ── AI Analysis Section ── */}
       {data && !loading && (
-        <div className="text-center py-4">
-          <p className="text-xs text-[var(--text-secondary)]">
-            Análisis IA y PDF vendrán en Fase 2-4 · Datos del {from} al {to}
-          </p>
-        </div>
+        <AnalisisIA data={data} from={from} to={to} />
       )}
 
       {/* ── Empty state ── */}

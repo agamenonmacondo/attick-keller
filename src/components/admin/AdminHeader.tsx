@@ -21,7 +21,7 @@ export function AdminHeader() {
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="font-['Playfair_Display'] text-xl font-bold text-[var(--color-ak-dorado)]">Attick & Keller</h1>
-          <span className="text-[10px] text-[var(--text-primary)] bg-[var(--color-ak-madera)]/60 px-2 py-0.5 rounded font-medium uppercase tracking-wider">Admin</span>
+          <span className="text-[10px] text-[var(--color-ak-dorado)] bg-[var(--color-ak-madera)]/60 px-2 py-0.5 rounded font-medium uppercase tracking-wider">Admin</span>
           <Link
             href="/host"
             className="hidden sm:inline text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"

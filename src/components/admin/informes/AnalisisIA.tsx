@@ -12,24 +12,24 @@ interface AnalisisIAProps {
 
 const SECTION_ICONS: Record<string, React.ReactNode> = {
   '⚡': <Lightning size={16} weight="fill" className="text-[var(--color-ak-dorado)]" />,
-  '📈': <TrendUp size={16} className="text-emerald-400" />,
-  '📉': <TrendDown size={16} className="text-red-400" />,
-  '💡': <Lightbulb size={16} className="text-amber-400" />,
-  '📋': <ClipboardText size={16} className="text-sky-400" />,
-  '⚠️': <Warning size={16} className="text-orange-400" />,
+  '📈': <TrendUp size={16} className="text-[var(--color-success)]" />,
+  '📉': <TrendDown size={16} className="text-[var(--color-danger)]" />,
+  '💡': <Lightbulb size={16} className="text-[var(--color-ak-ambar)]" />,
+  '📋': <ClipboardText size={16} className="text-[var(--color-ak-dorado)]" />,
+  '⚠️': <Warning size={16} className="text-[var(--color-warning)]" />,
   '🏆': <Package size={16} className="text-[var(--color-ak-dorado)]" />,
-  '📊': <TrendUp size={16} weight="fill" className="text-blue-400" />,
+  '📊': <TrendUp size={16} weight="fill" className="text-[var(--color-accent)]" />,
 }
 
 const SECTION_COLORS: Record<string, string> = {
   '⚡': 'border-[var(--color-ak-dorado)]/30 bg-[var(--color-ak-dorado)]/5',
-  '📈': 'border-emerald-500/30 bg-emerald-500/5',
-  '📉': 'border-red-500/30 bg-red-500/5',
-  '💡': 'border-amber-500/30 bg-amber-500/5',
-  '📋': 'border-sky-500/30 bg-sky-500/5',
-  '⚠️': 'border-orange-500/30 bg-orange-500/5',
+  '📈': 'border-[var(--color-success)]/30 bg-[var(--color-success)]/5',
+  '📉': 'border-[var(--color-danger)]/30 bg-[var(--color-danger)]/5',
+  '💡': 'border-[var(--color-ak-ambar)]/30 bg-[var(--color-ak-ambar)]/5',
+  '📋': 'border-[var(--color-ak-dorado)]/30 bg-[var(--color-ak-dorado)]/5',
+  '⚠️': 'border-[var(--color-warning)]/30 bg-[var(--color-warning)]/5',
   '🏆': 'border-[var(--color-ak-dorado)]/30 bg-[var(--color-ak-dorado)]/5',
-  '📊': 'border-blue-500/30 bg-blue-500/5',
+  '📊': 'border-[var(--color-accent)]/30 bg-[var(--color-accent)]/5',
 }
 
 function parseAnalysisSections(text: string): { icon: string; title: string; items: string[] }[] {

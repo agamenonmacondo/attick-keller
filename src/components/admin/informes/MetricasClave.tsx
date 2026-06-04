@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { Wallet, ForkKnife, Receipt, Users, HandCoins, Coins } from '@phosphor-icons/react'
 
 interface KPICardProps {
   label: string
@@ -48,38 +49,38 @@ export function MetricasClave({ data, comparison }: { data: any; comparison: { k
         value: formatCOP(revenue),
         delta: compRevenue > 0 ? pct(revenue, compRevenue) : null,
         subtitle: cheques > 0 ? `${formatNum(cheques)} cheques` : undefined,
-        icon: '💰',
+        icon: <Wallet size={16} className="text-[var(--color-ak-dorado)]" weight="fill" />,
       },
       {
         label: 'Cheques',
         value: formatNum(cheques),
         delta: compCheques > 0 ? pct(cheques, compCheques) : null,
         subtitle: personas > 0 ? `${formatNum(personas)} personas` : undefined,
-        icon: '🍽️',
+        icon: <ForkKnife size={16} className="text-[var(--color-ak-dorado)]" />,
       },
       {
         label: 'Ticket Prom.',
         value: formatCOP(avgTicket),
         delta: compRevenue > 0 && compCheques > 0 ? pct(avgTicket, compRevenue / compCheques) : null,
-        icon: '📊',
+        icon: <Receipt size={16} className="text-[var(--color-ak-dorado)]" />,
       },
       {
         label: 'Personas',
         value: formatNum(personas),
         delta: compPersonas > 0 ? pct(personas, compPersonas) : null,
-        icon: '👥',
+        icon: <Users size={16} className="text-[var(--color-ak-dorado)]" />,
       },
       {
         label: 'Propina',
         value: formatCOP(propina),
         delta: compPropina > 0 ? pct(propina, compPropina) : null,
-        icon: '🎁',
+        icon: <HandCoins size={16} className="text-[var(--color-ak-dorado)]" weight="fill" />,
       },
       {
-        label: 'Propina/Persona',
+        label: 'Prop/Persona',
         value: formatCOP(propinaPerCapita),
         delta: null,
-        icon: '💵',
+        icon: <Coins size={16} className="text-[var(--color-ak-dorado)]" />,
       },
     ]
   }, [data, comparison])
@@ -97,7 +98,7 @@ export function MetricasClave({ data, comparison }: { data: any; comparison: { k
             <span className="text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
               {card.label}
             </span>
-            <span className="text-base">{card.icon}</span>
+            {card.icon}
           </div>
           <div className="text-xl font-bold text-[var(--text-primary)] leading-tight">
             {card.value}
@@ -106,7 +107,7 @@ export function MetricasClave({ data, comparison }: { data: any; comparison: { k
             <div className="text-[10px] text-[var(--text-muted)] mt-0.5">{card.subtitle}</div>
           )}
           {card.delta !== null && card.delta !== undefined && (
-            <div className={`text-xs font-medium mt-1 ${card.delta >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+            <div className={`text-xs font-medium mt-1 ${card.delta >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
               {card.delta >= 0 ? '↑' : '↓'} {Math.abs(card.delta).toFixed(1)}%
             </div>
           )}

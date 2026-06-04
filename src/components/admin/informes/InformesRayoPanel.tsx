@@ -250,9 +250,9 @@ export function InformesRayoPanel() {
       )}
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-3">
-          <Warning size={20} className="text-red-400" />
-          <span className="text-red-400 text-sm">{error}</span>
+        <div className="bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 rounded-xl p-4 flex items-center gap-3">
+          <Warning size={20} className="text-[var(--color-danger)]" />
+          <span className="text-[var(--color-danger)] text-sm">{error}</span>
         </div>
       )}
 

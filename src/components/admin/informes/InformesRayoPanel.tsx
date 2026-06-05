@@ -175,7 +175,7 @@ export function InformesRayoPanel() {
           </div>
         </div>
         {data && !loading && (
-          <PDFExportButton data={data} from={from} to={to} analysis={analysisText} />
+          <PDFExportButton data={data} from={from} to={to} analysis={analysisText} productHourly={productoData || undefined} />
         )}
       </div>
 

@@ -39,6 +39,22 @@ interface ProductoDesgloseTableProps {
   to: string
 }
 
+// Heatmap color: returns rgba string with intensity-based opacity
+function heatmapColor(intensity: number, mode: ValueMode): string {
+  const clamped = Math.min(1, Math.max(0, intensity))
+  if (mode === 'revenue') {
+    // Gold scale: light wash → rich gold
+    const r = 201, g = 169, b = 78
+    const alpha = 0.08 + clamped * 0.65
+    return `rgba(${r},${g},${b},${alpha.toFixed(2)})`
+  } else {
+    // Burgundy scale: light wash → deep burgundy
+    const r = 93, g = 21, b = 40
+    const alpha = 0.06 + clamped * 0.60
+    return `rgba(${r},${g},${b},${alpha.toFixed(2)})`
+  }
+}
+
 export function ProductoDesgloseTable({ data, loading, error, from, to }: ProductoDesgloseTableProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('hour')
   const [valueMode, setValueMode] = useState<ValueMode>('revenue')
@@ -65,8 +81,8 @@ export function ProductoDesgloseTable({ data, loading, error, from, to }: Produc
   }
 
   // Build matrix based on view mode
-  const { products, columns, matrix, colHeaders } = useMemo(() => {
-    if (!data || data.length === 0) return { products: [] as string[], columns: [] as string[], matrix: new Map<string, Map<string | number, { qty: number; revenue: number }>>(), colHeaders: [] as string[] }
+  const { products, columns, matrix, colHeaders, maxValues } = useMemo(() => {
+    if (!data || data.length === 0) return { products: [] as string[], columns: [] as string[], matrix: new Map<string, Map<string | number, { qty: number; revenue: number }>>(), colHeaders: [] as string[], maxValues: new Map<string | number, number>() }
 
     if (viewMode === 'hour') {
       const { products: p, hours, matrix: m } = buildHourlyMatrix(data)
@@ -75,11 +91,26 @@ export function ProductoDesgloseTable({ data, loading, error, from, to }: Produc
         const totalB = getTotal(m.get(b)!)
         return sortOrder === 'desc' ? totalB - totalA : totalA - totalB
       })
+      const strHours = hours.map(String)
+      // Compute max value per column for heatmap scaling
+      const maxVals = new Map<string, number>()
+      for (const h of strHours) {
+        let max = 0
+        for (const prod of sorted) {
+          const cell = m.get(prod)?.get(h)
+          if (cell) {
+            const v = valueMode === 'revenue' ? cell.revenue : cell.qty
+            if (v > max) max = v
+          }
+        }
+        maxVals.set(h, max)
+      }
       return {
         products: sorted,
-        columns: hours.map(String),
+        columns: strHours,
         matrix: m as Map<string, Map<string | number, { qty: number; revenue: number }>>,
         colHeaders: hours.map(formatHourLabel),
+        maxValues: maxVals as Map<string | number, number>,
       }
     } else {
       const { products: p, days, matrix: m } = buildDailyMatrix(data)
@@ -88,14 +119,27 @@ export function ProductoDesgloseTable({ data, loading, error, from, to }: Produc
         const totalB = getTotal(m.get(b)!)
         return sortOrder === 'desc' ? totalB - totalA : totalA - totalB
       })
+      const maxVals = new Map<string, number>()
+      for (const d of days) {
+        let max = 0
+        for (const prod of sorted) {
+          const cell = m.get(prod)?.get(d)
+          if (cell) {
+            const v = valueMode === 'revenue' ? cell.revenue : cell.qty
+            if (v > max) max = v
+          }
+        }
+        maxVals.set(d, max)
+      }
       return {
         products: sorted,
         columns: days,
         matrix: m as Map<string, Map<string | number, { qty: number; revenue: number }>>,
         colHeaders: days.map(formatDayLabel),
+        maxValues: maxVals as Map<string | number, number>,
       }
     }
-  }, [data, viewMode, sortOrder])
+  }, [data, viewMode, sortOrder, valueMode])
 
   // Grand total per column
   const columnTotals = useMemo(() => {
@@ -113,17 +157,14 @@ export function ProductoDesgloseTable({ data, loading, error, from, to }: Produc
 
   // Export CSV
   const handleExportCSV = () => {
-    const valueLabel = valueMode === 'revenue' ? 'Revenue' : 'Cantidad'
     const dimensionLabel = viewMode === 'hour' ? 'Hora' : 'Dia'
 
-    // Header
     let csv = `Producto\\${dimensionLabel}`
     for (const col of columns) {
       csv += `,${col}`
     }
     csv += ',Total\n'
 
-    // Rows
     for (const product of products) {
       csv += `"${product}"`
       let rowTotal = 0
@@ -136,7 +177,6 @@ export function ProductoDesgloseTable({ data, loading, error, from, to }: Produc
       csv += `,${rowTotal}\n`
     }
 
-    // Totals row
     csv += 'TOTAL'
     let grandTotal = 0
     for (const col of columns) {
@@ -281,7 +321,7 @@ export function ProductoDesgloseTable({ data, loading, error, from, to }: Produc
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table with heatmap */}
       <div className="overflow-x-auto" style={{ maxHeight: 600, overflowY: 'auto' }}>
         <table className="w-full text-xs border-collapse">
           <thead className="sticky top-0 z-10" style={{ background: 'var(--bg-card)' }}>
@@ -308,10 +348,9 @@ export function ProductoDesgloseTable({ data, loading, error, from, to }: Produc
               const rowTotal = getTotal(matrix.get(product)!)
               return (
                 <tr key={product}
-                  className="hover:opacity-90 transition-opacity"
+                  className="transition-colors duration-150"
                   style={{
                     borderBottom: '1px solid var(--border-light)',
-                    background: idx % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-input)',
                   }}
                 >
                   <td className="sticky left-0 z-10 py-2 px-3 font-medium"
@@ -323,16 +362,18 @@ export function ProductoDesgloseTable({ data, loading, error, from, to }: Produc
                   </td>
                   {columns.map((col) => {
                     const val = getCellValue(product, col)
-                    const isMax = val > 0 && val === Math.max(...columns.map(c => getCellValue(product, c)))
+                    const colMax = maxValues.get(col) || 1
+                    const intensity = colMax > 0 ? val / colMax : 0
                     const hasValue = val > 0
                     return (
                       <td key={col}
-                        className="text-right py-2 px-2 tabular-nums"
+                        className="text-right py-2 px-2 tabular-nums transition-colors duration-150"
                         style={{
+                          background: hasValue ? heatmapColor(intensity, valueMode) : 'transparent',
                           color: hasValue
-                            ? (valueMode === 'revenue' ? 'var(--color-ak-dorado)' : 'var(--text-primary)')
+                            ? (valueMode === 'revenue' && intensity > 0.5 ? '#fff' : valueMode === 'revenue' ? 'var(--color-ak-dorado)' : 'var(--text-primary)')
                             : 'var(--text-muted)',
-                          fontWeight: isMax ? 700 : 400,
+                          fontWeight: hasValue && intensity > 0.7 ? 700 : 400,
                         }}>
                         {hasValue ? formatCell(val) : '·'}
                       </td>

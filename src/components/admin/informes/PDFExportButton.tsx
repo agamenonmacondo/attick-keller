@@ -8,9 +8,10 @@ interface PDFExportButtonProps {
   from: string
   to: string
   analysis: string | null
+  productHourly?: any[]
 }
 
-export function PDFExportButton({ data, from, to, analysis }: PDFExportButtonProps) {
+export function PDFExportButton({ data, from, to, analysis, productHourly }: PDFExportButtonProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -23,7 +24,7 @@ export function PDFExportButton({ data, from, to, analysis }: PDFExportButtonPro
       const { InformeRayoPDFDocument } = await import('./InformeRayoPDFDocument')
 
       // Generate PDF blob
-      const doc = <InformeRayoPDFDocument data={data} from={from} to={to} analysis={analysis} />
+      const doc = <InformeRayoPDFDocument data={data} from={from} to={to} analysis={analysis} productHourly={productHourly} />
       const blob = await pdf(doc).toBlob()
 
       // Trigger download

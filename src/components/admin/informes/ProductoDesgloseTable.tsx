@@ -43,6 +43,26 @@ export function ProductoDesgloseTable({ data, loading, error, from, to }: Produc
   const [valueMode, setValueMode] = useState<ValueMode>('revenue')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
+  // ── Helpers — MUST be before useMemo (TDZ-safe) ──
+  const getTotal = (rowMap: Map<string | number, { qty: number; revenue: number }> | undefined): number => {
+    if (!rowMap) return 0
+    let sum = 0
+    for (const [, val] of rowMap) {
+      sum += valueMode === 'revenue' ? val.revenue : val.qty
+    }
+    return sum
+  }
+
+  const getCellValue = (product: string, col: string | number): number => {
+    const cell = matrix.get(product)?.get(col)
+    if (!cell) return 0
+    return valueMode === 'revenue' ? cell.revenue : cell.qty
+  }
+
+  const formatCell = (val: number): string => {
+    return valueMode === 'revenue' ? fmt(val) : fmtN(val)
+  }
+
   // Build matrix based on view mode
   const { products, columns, matrix, colHeaders } = useMemo(() => {
     if (!data || data.length === 0) return { products: [] as string[], columns: [] as string[], matrix: new Map<string, Map<string | number, { qty: number; revenue: number }>>(), colHeaders: [] as string[] }
@@ -173,25 +193,6 @@ export function ProductoDesgloseTable({ data, loading, error, from, to }: Produc
         </div>
       </div>
     )
-  }
-
-  const getTotal = (rowMap: Map<string | number, { qty: number; revenue: number }> | undefined): number => {
-    if (!rowMap) return 0
-    let sum = 0
-    for (const [, val] of rowMap) {
-      sum += valueMode === 'revenue' ? val.revenue : val.qty
-    }
-    return sum
-  }
-
-  const getCellValue = (product: string, col: string | number): number => {
-    const cell = matrix.get(product)?.get(col)
-    if (!cell) return 0
-    return valueMode === 'revenue' ? cell.revenue : cell.qty
-  }
-
-  const formatCell = (val: number): string => {
-    return valueMode === 'revenue' ? fmt(val) : fmtN(val)
   }
 
   return (

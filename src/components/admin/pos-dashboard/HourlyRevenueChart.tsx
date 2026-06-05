@@ -1,16 +1,34 @@
 'use client'
 
+import { useMemo } from 'react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import { SectionHeading } from '../shared/SectionHeading'
 import { formatCOPDisplay } from './KPICard'
 
-interface HourlyRevenueChartProps {
-  data: Array<{ hour: string; revenue: number; cheques: number }>
-  onHourDrillDown?: (hour: string) => void
+interface HourlyDataPoint {
+  hour: string              // "0".."23" (string from API)
+  hourNum: number           // 0..23 (numeric for correct ordering)
+  revenue: number
+  cheques: number
+  tipTotal: number
+  cardPaidTotal: number
+  cashPaidTotal: number
 }
 
-function formatHour(h: string): string {
-  const n = parseInt(h, 10)
+interface HourlyRevenueChartProps {
+  data: Array<{
+    hour: string
+    revenue: number
+    cheques: number
+    tipTotal: number
+    cardPaidTotal: number
+    cashPaidTotal: number
+  }>
+  onHourDrillDown?: (hour: string, extra?: { tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }) => void
+}
+
+function formatHour(h: string | number): string {
+  const n = typeof h === 'string' ? parseInt(h, 10) : h
   if (n === 0) return '12a'
   if (n < 12) return `${n}a`
   if (n === 12) return '12p'
@@ -23,14 +41,21 @@ interface TooltipPayload {
   dataKey: string
 }
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: TooltipPayload[]; label?: string }) {
+function CustomTooltip({ active, payload, label, data }: { active?: boolean; payload?: TooltipPayload[]; label?: string | number; data?: HourlyDataPoint[] }) {
   if (!active || !payload) return null
+  const hour = typeof label === 'string' ? parseInt(label, 10) : label
+  const item = data?.find(d => d.hourNum === hour)
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg px-3 py-2 shadow-lg text-xs">
-      <p className="font-medium text-[var(--text-primary)] mb-1">{label ? formatHour(label) : ''}</p>
+      <p className="font-medium text-[var(--text-primary)] mb-1">{item ? formatHour(item.hourNum) : (label ? formatHour(label) : '')}</p>
       {payload.map((p, i) => (
         <p key={i} className="text-[var(--text-secondary)]">
-          {p.dataKey === 'revenue' ? formatCOPDisplay(p.value) : `${p.value} cheques`}
+          {p.dataKey === 'revenue' ? `Ventas: ${formatCOPDisplay(p.value)}`
+          : p.dataKey === 'cheques' ? `${p.value} cheques`
+          : p.dataKey === 'tipTotal' ? `Propina: ${formatCOPDisplay(p.value)}`
+          : p.dataKey === 'cardPaidTotal' ? `Tarjeta: ${formatCOPDisplay(p.value)}`
+          : p.dataKey === 'cashPaidTotal' ? `Efectivo: ${formatCOPDisplay(p.value)}`
+          : ''}
         </p>
       ))}
     </div>
@@ -47,14 +72,20 @@ export function HourlyRevenueChart({ data, onHourDrillDown }: HourlyRevenueChart
     )
   }
 
+  // Transform data: add numeric hour for correct Recharts ordering
+  const chartData = useMemo((): HourlyDataPoint[] => data.map(d => ({
+    ...d,
+    hourNum: parseInt(d.hour, 10),
+  })), [data])
+
   return (
     <div className="min-h-[200px]">
       <SectionHeading>Revenue por Hora</SectionHeading>
       <ResponsiveContainer width="100%" height={280} minHeight={200}>
-        <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" vertical={false} />
           <XAxis
-            dataKey="hour"
+            dataKey="hourNum"
             tickFormatter={formatHour}
             tick={{ fontSize: 10, fill: 'var(--text-secondary)' }}
             axisLine={{ stroke: 'var(--border-default)' }}
@@ -74,8 +105,12 @@ export function HourlyRevenueChart({ data, onHourDrillDown }: HourlyRevenueChart
             radius={[4, 4, 0, 0]}
             style={{ transition: 'all 300ms ease-out', cursor: onHourDrillDown ? 'pointer' : 'default' }}
             onClick={onHourDrillDown ? (_data: unknown, index: number) => {
-              const item = data[index]
-              if (item) onHourDrillDown(item.hour)
+              const item = chartData[index]
+              if (item) onHourDrillDown(item.hour, {
+                tipTotal: item.tipTotal,
+                cardPaidTotal: item.cardPaidTotal,
+                cashPaidTotal: item.cashPaidTotal,
+              })
             } : undefined}
           />
         </BarChart>

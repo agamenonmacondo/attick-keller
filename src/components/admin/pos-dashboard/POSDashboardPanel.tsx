@@ -169,11 +169,13 @@ export function POSDashboardPanel() {
     scrollToDrillDown()
   }, [fetchDrillDown, scrollToDrillDown])
 
-  const handleHourDrillDown = useCallback((hour: string) => {
+  const handleHourDrillDown = useCallback((hour: string, extra?: { tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }) => {
     const hourNum = parseInt(hour, 10)
     const label = `${hourNum === 0 ? '12' : hourNum <= 12 ? hourNum : hourNum - 12}${hourNum < 12 ? 'am' : 'pm'}`
     fetchDrillDown('hour', hour, label)
     scrollToDrillDown()
+    // extra data available: extra?.tipTotal, extra?.cardPaidTotal, extra?.cashPaidTotal
+    // Can be used for enhanced drill-down panel in the future
   }, [fetchDrillDown, scrollToDrillDown])
 
   const handleZoneDrillDown = useCallback((zoneName: string) => {

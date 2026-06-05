@@ -51,11 +51,11 @@ export function useProductoHourly() {
  */
 export function buildHourlyMatrix(data: ProductoHoraItem[]): {
   products: string[]
-  hours: number[]
-  matrix: Map<string, Map<number, { qty: number; revenue: number }>>
+  hours: string[]
+  matrix: Map<string, Map<string, { qty: number; revenue: number }>>
 } {
   const productSet = new Set<string>()
-  const matrix = new Map<string, Map<number, { qty: number; revenue: number }>>()
+  const matrix = new Map<string, Map<string, { qty: number; revenue: number }>>()
 
   for (const row of data) {
     productSet.add(row.product_name)
@@ -63,7 +63,7 @@ export function buildHourlyMatrix(data: ProductoHoraItem[]): {
       matrix.set(row.product_name, new Map())
     }
     const productRow = matrix.get(row.product_name)!
-    const hour = row.hour
+    const hour = String(row.hour)  // String key — MUST match column lookups
     const existing = productRow.get(hour)
     if (existing) {
       existing.qty += Number(row.quantity) || 0
@@ -77,7 +77,7 @@ export function buildHourlyMatrix(data: ProductoHoraItem[]): {
   }
 
   const products = [...productSet].sort()
-  const hours = Array.from({ length: 24 }, (_, i) => i)
+  const hours = Array.from({ length: 24 }, (_, i) => String(i))  // String keys
 
   return { products, hours, matrix }
 }

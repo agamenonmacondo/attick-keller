@@ -23,11 +23,12 @@ function formatDayLabel(dateStr: string): string {
   return `${d} ${MONTHS[m - 1]}`
 }
 
-function formatHourLabel(h: number): string {
-  if (h === 0) return '12a'
-  if (h < 12) return `${h}a`
-  if (h === 12) return '12p'
-  return `${h - 12}p`
+function formatHourLabel(h: string | number): string {
+  const n = typeof h === 'string' ? parseInt(h, 10) : h
+  if (n === 0) return '12a'
+  if (n < 12) return `${n}a`
+  if (n === 12) return '12p'
+  return `${n - 12}p`
 }
 
 interface ProductoDesgloseTableProps {

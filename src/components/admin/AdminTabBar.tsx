@@ -42,7 +42,7 @@ export function AdminTabBar({ active, onChange }: AdminTabBarProps) {
               style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
             >
               {tab.icon}
-              {tab.label}
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </nav>

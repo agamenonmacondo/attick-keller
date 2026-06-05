@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       .range(offset, offset + BATCH - 1)
 
     if (error) {
-      return NextResponse.json({ error: 'Error cargando compras: ' + error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Error cargando compras' }, { status: 500 })
     }
     if (batch && batch.length > 0) {
       allPurchases.push(...batch)

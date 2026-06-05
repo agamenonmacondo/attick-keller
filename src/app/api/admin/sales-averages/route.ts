@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
       .range(offset, offset + PAGE_SIZE - 1);
 
     if (error) {
-      return NextResponse.json({ error: 'Error consultando ventas', detail: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Error consultando ventas' }, { status: 500 });
     }
 
     fetchedOnThisPage = data ? data.length : 0;

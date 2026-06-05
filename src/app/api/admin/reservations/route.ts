@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, created_at, customers(id, email, full_name, phone)')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   // Send confirmation email
   const r = reservation as Record<string, unknown>
@@ -212,7 +212,7 @@ export async function GET(request: NextRequest) {
 
   const { data, count, error } = await query
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   const reservations = (data || []).map(r => {
     const tablesRaw = r.tables as unknown as Array<{ table_zones: Array<{ name: string }> }> | { table_zones: Array<{ name: string }> | { name: string } } | null

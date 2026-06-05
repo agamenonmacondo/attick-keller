@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     .eq('restaurant_id', RESTAURANT_ID)
     .order('sort_order', { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   return NextResponse.json({ zones: data || [] })
 }

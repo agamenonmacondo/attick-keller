@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     .eq('restaurant_id', RESTAURANT_ID)
     .order('sort_order', { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   return NextResponse.json({ zones: data || [] })
 }
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       .select('id, name, description, sort_order')
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
     return NextResponse.json({ zone: data }, { status: 201 })
   } catch {
     return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
@@ -78,7 +78,7 @@ export async function PATCH(request: NextRequest) {
       .select('id, name, description, sort_order')
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
     if (!data) return NextResponse.json({ error: 'Zona no encontrada' }, { status: 404 })
     return NextResponse.json({ zone: data })
   } catch {
@@ -121,7 +121,7 @@ export async function DELETE(request: NextRequest) {
       .eq('id', id)
       .eq('restaurant_id', RESTAURANT_ID)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })

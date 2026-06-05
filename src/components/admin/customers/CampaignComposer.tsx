@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import DOMPurify from 'dompurify'
 import { PaperPlaneTilt, Eye, Tag } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 
@@ -167,7 +168,7 @@ export function CampaignComposer({
             </div>
             <div
               className="p-4 text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto"
-              dangerouslySetInnerHTML={{ __html: replacePlaceholders(body, previewCustomer).replace(/\n/g, '<br/>') }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(replacePlaceholders(body, previewCustomer).replace(/\n/g, '<br/>')) }}
             />
           </motion.div>
         )}

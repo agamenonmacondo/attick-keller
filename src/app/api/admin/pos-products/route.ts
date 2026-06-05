@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   const { data: products, error, count } = await qb;
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 
   const productIds = (products || []).map(p => p.pos_product_id);
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 
   // Create mapping

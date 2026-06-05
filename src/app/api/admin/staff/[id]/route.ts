@@ -31,7 +31,7 @@ export async function PATCH(
     .select('id, auth_user_id, role, is_active')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   if (!data) return NextResponse.json({ error: 'Rol no encontrado' }, { status: 404 })
 
   return NextResponse.json({ staff: data })
@@ -68,7 +68,7 @@ export async function DELETE(
     .eq('id', id)
     .eq('restaurant_id', RESTAURANT_ID)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   return NextResponse.json({ success: true })
 }

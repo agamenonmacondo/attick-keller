@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { data, error } = await sb.from(table).select('*').order('nombre')
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
     return NextResponse.json({ data })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido'

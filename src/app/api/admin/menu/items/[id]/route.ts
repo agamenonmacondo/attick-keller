@@ -34,7 +34,7 @@ export async function PATCH(
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   if (!data) return NextResponse.json({ error: 'Plato no encontrado' }, { status: 404 })
 
   return NextResponse.json({ item: data })
@@ -59,7 +59,7 @@ export async function DELETE(
     .select('id')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   if (!data) return NextResponse.json({ error: 'Plato no encontrado' }, { status: 404 })
 
   return NextResponse.json({ success: true })

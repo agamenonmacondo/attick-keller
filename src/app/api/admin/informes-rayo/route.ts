@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
   ])
 
   if (kpiResult.error) {
-    return NextResponse.json({ error: kpiResult.error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Error fetching KPIs' }, { status: 500 })
   }
 
   // ── Normalize KPI field names ──

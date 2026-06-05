@@ -47,7 +47,7 @@ export async function GET(
     .eq('restaurant_id', RESTAURANT_ID)
     .order('created_at', { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   // Flatten joined data
   const ingredients = (data || []).map((row: Record<string, unknown>) => {
@@ -132,7 +132,7 @@ export async function POST(
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   return NextResponse.json({ ingredient: data }, { status: 201 })
 }
@@ -166,7 +166,7 @@ export async function PATCH(
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   if (!data) return NextResponse.json({ error: 'Ingrediente no encontrado en este plato' }, { status: 404 })
 
   return NextResponse.json({ ingredient: data })
@@ -212,7 +212,7 @@ export async function DELETE(
     .eq('pos_ingredient_id', pos_ingredient_id)
     .eq('restaurant_id', RESTAURANT_ID)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   return NextResponse.json({ success: true })
 }

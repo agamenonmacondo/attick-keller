@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await query
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   // Sort by zone name then sort_order
   const sorted = (data || []).sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
@@ -77,7 +77,7 @@ export async function PATCH(request: NextRequest) {
         .select('*, zone:zone_id(name)')
         .single()
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
       if (data) results.push(data as Record<string, unknown>)
     }
 

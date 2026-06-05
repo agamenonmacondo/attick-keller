@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useInformesRayo } from '@/lib/hooks/useInformesRayo'
+import { useProductoHourly } from '@/lib/hooks/useProductoHourly'
 import { MetricasClave } from './MetricasClave'
 import { AnalisisIA } from './AnalisisIA'
 import { PDFExportButton } from './PDFExportButton'
 import { InformesDashboard } from './InformesDashboard'
+import { ProductoDesgloseTable } from './ProductoDesgloseTable'
 import {
   Lightning, CaretLeft, CaretRight, Spinner, Warning,
   ClipboardText, HandCoins, FileText
@@ -114,6 +116,7 @@ const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', '
 
 export function InformesRayoPanel() {
   const { data, loading, error, fetchReport } = useInformesRayo()
+  const { data: productoData, loading: prodLoading, error: prodError, fetchData: fetchProductos } = useProductoHourly()
   const [preset, setPreset] = useState<PeriodPreset>('thisWeek')
   const [compareMode, setCompareMode] = useState<CompareMode>('previousPeriod')
   const [customFrom, setCustomFrom] = useState('')
@@ -137,6 +140,10 @@ export function InformesRayoPanel() {
   useEffect(() => {
     if (fetched) fetchReport(from, to, zone, compareFrom, compareTo)
   }, [preset, customFrom, customTo, compareMode, zone])
+
+  useEffect(() => {
+    if (fetched) fetchProductos(from, to, zone)
+  }, [from, to, zone, fetched])
 
   const periodLabel = useMemo(() => {
     const f = new Date(from + 'T00:00:00')
@@ -260,6 +267,15 @@ export function InformesRayoPanel() {
       {data && !loading && (
         <InformesDashboard data={data} />
       )}
+
+      {/* ── Producto Desglose: Hora x Dia ── */}
+      <ProductoDesgloseTable
+        data={productoData || []}
+        loading={prodLoading}
+        error={prodError}
+        from={from}
+        to={to}
+      />
 
       {/* ── Junta Summary ── */}
       {data && data.kpis && !loading && (() => {

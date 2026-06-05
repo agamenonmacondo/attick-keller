@@ -19,28 +19,11 @@ export function PDFExportButton({ data, from, to, analysis, productHourly }: PDF
     setLoading(true)
     setError(null)
     try {
-      const body: Record<string, any> = {
-        data,
-        from,
-        to,
-        analysis,
-        productHourly: productHourly || [],
-      }
+      // Lazy-load @react-pdf/renderer to avoid Turbopack issues
+      const { pdf } = await import('@react-pdf/renderer')
+      const { InformeRayoPDF } = await import('@/components/admin/informes/InformeRayoPDF')
 
-      const response = await fetch('/api/admin/informes-rayo/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        const errJson = await response.json().catch(() => ({ error: 'Error generando PDF' }))
-        throw new Error(errJson.error || `Error ${response.status}: Error generando PDF`)
-      }
-
-      // Get the PDF blob and trigger download
-      const blob = await response.blob()
+      const blob = await pdf(InformeRayoPDF({ data, from, to, analysis, productHourly })).toBlob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url

@@ -407,23 +407,28 @@ function escapeHTML(str: string): string {
 }
 
 // ═══ Detect available Chromium executable ═══
-async function findChromiumExecutable(): Promise<string> {
+async function findChromiumExecutable(): Promise<{
+  executablePath: string | null
+  args: string[]
+}> {
   // Try @sparticuz/chromium-min (Vercel-optimized)
+  // default export is a class with static methods: executablePath(), args, headless
   try {
     const sparticuz = await import('@sparticuz/chromium-min')
-    const path = await sparticuz.default.executablePath()
-    if (path) return path
+    const chromiumModule = sparticuz.default
+    // executablePath() is a static async method that returns the path
+    const path = await chromiumModule.executablePath()
+    // args is a static getter returning the recommended Chromium flags
+    const args = chromiumModule.args || []
+    if (path && typeof path === 'string') {
+      return { executablePath: path, args }
+    }
   } catch {
-    // @sparticuz not installed — continue
+    // @sparticuz not available or bin/ not extracted — continue
   }
 
-  // Fallback: use playwright's bundled chromium
-  try {
-    // Let playwright find its own chromium
-    return 'playwright-bundled'
-  } catch {
-    throw new Error('No Chromium executable found. Install @sparticuz/chromium-min or playwright with chromium.')
-  }
+  // Fallback: null = let playwright find its own bundled chromium
+  return { executablePath: null, args: [] }
 }
 
 // ═══ PDF Generation ═══
@@ -440,8 +445,8 @@ export async function generateProductHourlyPDF(data: PDFData): Promise<Buffer> {
   // Build HTML
   const html = buildHTML(matrix, from, to)
 
-  // Launch browser
-  const execPath = await findChromiumExecutable()
+  // Resolve Chromium (Vercel @sparticuz or local playwright bundled)
+  const chromiumInfo = await findChromiumExecutable()
 
   let browser: Browser | null = null
   let page: Page | null = null
@@ -460,12 +465,13 @@ export async function generateProductHourlyPDF(data: PDFData): Promise<Buffer> {
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding',
+        ...chromiumInfo.args,  // merge @sparticuz recommended flags
       ],
     }
 
-    // If not playwright-bundled, provide explicit path
-    if (execPath !== 'playwright-bundled') {
-      launchOptions.executablePath = execPath
+    // If we have an explicit path from @sparticuz, use it
+    if (chromiumInfo.executablePath) {
+      launchOptions.executablePath = chromiumInfo.executablePath
     }
 
     browser = await chromium.launch(launchOptions)

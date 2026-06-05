@@ -2,8 +2,8 @@
 
 ## Current State
 
-**Last Updated:** 2026-05-27
-**Active Feature:** feat-011 — Drill-Down Filter Propagation
+**Last Updated:** 2026-06-05
+**Active Feature:** feat-012 — Producto x Hora/Dia Desglose con CSV
 
 ## Status
 
@@ -12,8 +12,10 @@
 - [x] feat-001: Analytics Insights Dashboard — deployado en produccion
 - [x] feat-005: Data Coverage Audit — auditoria completada
 - [x] feat-002 P1 fixes: Top Products filtra por categoria, zona Desconocido fuera del grafico
-- [x] FIX: `pos_product_id` faltaba en SELECT de `handleProduct` — causaba drill-down vacío para todos los productos
+- [x] FIX: `pos_product_id` faltaba en SELECT de `handleProduct` — causaba drill-down vacío
 - [x] feat-011 SPEC: Documentacion completa del bug de filtros no propagados en drill-downs
+- [x] FIX: HourlyRevenueChart ordenamiento roto (string vs numero) + tooltip enriquecido
+- [x] feat-012: Producto x Hora/Dia Desglose con exportacion CSV (completo, deployado)
 
 ### What's In Progress
 

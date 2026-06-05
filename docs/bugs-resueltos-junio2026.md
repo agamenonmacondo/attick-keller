@@ -179,3 +179,84 @@ https://web-rosy-nine-64.vercel.app/auth/login  # ✅ Login
 https://web-rosy-nine-64.vercel.app/admin       # ✅ Panel admin carga
 # Console: sin errores WebSocket / hydration
 ```
+
+---
+
+## Bug 4: Turno partido duplicado en dropdown — Ashley aparece en "barra" y "servicio"
+
+### Síntoma
+Al crear un turno en tab "Horarios", al ir a tab "Cronograma" el dropdown no muestra el nuevo turno. Además, personal con `secondary_areas` aparece duplicado en múltiples áreas (ej. Ashley con `area='servicio'` + `secondary_areas=['barra']` sale en ambas).
+
+### Causa Raíz
+**Query en `/api/admin/shift-schedules` usaba `.or(area.eq.X,secondary_areas.cs.{X})`** — trae personal cuyo área principal O secundaria coincida. Para cronogramas por área simple, esto duplica al personal que cubre múltiples áreas.
+
+### Fix Aplicado
+**`src/app/api/admin/shift-schedules/route.ts`** (2 ocurrencias) — cambiar `.or()` por `.eq('area', area)`:
+```typescript
+// ANTES
+.or(`area.eq.${area},secondary_areas.cs.{${area}}`)
+
+// DESPUÉS  
+.eq('area', area)
+```
+
+### Commit
+- `787a6e6` — fix(turnos): Ashley solo en barra + auto-sync area selector
+
+---
+
+## Bug 5: Turno creado en "Horarios" no aparece en "Cronograma"
+
+### Síntoma
+Crear un turno en tab "Horarios" (ej. área "cocina"), cambiar a tab "Cronograma" → el dropdown de turnos no incluye el nuevo código.
+
+### Causa Raíz
+El selector de área (arriba a la izquierda) **no se sincronizaba** con el área del turno recién creado. `loadData()` usaba el `area` state actual del selector, que podía diferir del `data.area` del turno guardado.
+
+### Fix Aplicado
+**`src/components/admin/shifts/ShiftSchedulePanel.tsx`** — en `ShiftTypeModal.onSave`, detectar mismatch y sincronizar:
+```typescript
+// Tras save exitoso, antes de loadData()
+if (data.area && data.area !== area) {
+  setArea(data.area as Area);
+}
+loadData();
+```
+
+### Commit
+- `787a6e6` — fix(turnos): Ashley solo en barra + auto-sync area selector
+
+---
+
+## Lecciones / Protocolos Actualizados (ampliado)
+
+### 5. Shift Schedules — Area Filtering
+```typescript
+// Cronograma por área SIEMPRE usa area principal (eq)
+// NO usar .or(area, secondary_areas) — duplica personal
+// secondary_areas solo para lógica de asignación, no para listado
+```
+
+### 6. Modal → Parent State Sync
+```typescript
+// Al crear/editar entidad con área/categoría distinta al contexto actual
+// Sincronizar selector padre ANTES de recargar datos
+if (data.area && data.area !== currentArea) {
+  setCurrentArea(data.area);
+}
+```
+
+---
+
+## Archivos Modificados (Resumen ampliado)
+
+| Archivo | Bugs | Tipo |
+|---------|------|------|
+| `src/app/layout.tsx` | 1 | `force-dynamic` |
+| `package.json` | 1 | webpack build |
+| `tsconfig.json` | 1 | exclude paths |
+| `next.config.ts` | 1, 3 | ignoreBuildErrors + CSP wss |
+| `src/lib/ThemeProvider.tsx` | 2 | always render Provider |
+| `src/app/global-error.tsx` | debug | error visibility |
+| `src/app/api/admin/shift-schedules/route.ts` | 4 | area eq filter |
+| `src/components/admin/shifts/ShiftSchedulePanel.tsx` | 5 | area sync on save |

@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       .select('id, nombre_completo, cargo, area, secondary_areas, salario')
       .eq('sede', 'C75')
       .not('area', 'in', '(apoyo,admin)')
-      .or(`area.eq.${area},secondary_areas.cs.{${area}}`)
+      .eq('area', area)
       .order('nombre_completo')
 
     const { data: shiftTypes } = await sb
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
     .select('id, nombre_completo, cargo, area, secondary_areas, salario')
     .eq('sede', 'C75')
     .not('area', 'in', '(apoyo,admin)')
-    .or(`area.eq.${area},secondary_areas.cs.{${area}}`)
+    .eq('area', area)
     .order('nombre_completo')
 
   const { data: shiftTypes } = await sb

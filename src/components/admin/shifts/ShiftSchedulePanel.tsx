@@ -559,6 +559,10 @@ export default function ShiftSchedulePanel() {
             const err = await res.json();
             throw new Error(err.error || 'Error guardando turno');
           }
+          // Si el turno se creó/editó en un área distinta a la seleccionada, cambiar selector
+          if (data.area && data.area !== area) {
+            setArea(data.area as Area);
+          }
           loadData();
         }}
       />

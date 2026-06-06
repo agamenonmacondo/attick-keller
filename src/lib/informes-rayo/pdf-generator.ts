@@ -1,6 +1,7 @@
 // ═══ A&K Informes Rayo — PDF HTML Generator (9:16 Mobile Slides) ═══
-// Design system: Playfair Display (titles) + DM Sans (body) + Caveat (script)
-// A&K palette: borgona #5D1528, dorado #C9A94E, ladrillo #A0522D
+// Design system: Source Serif 4 (titles) + Inter (body) + Caveat (script)
+// A&K Lightning Theme palette: borgona #5D1528, dorado #C9A94E, ladrillo #A0522D
+// CSS tokens derived from Stitch DESIGN.md — matches A&K brand identity
 // Self-contained HTML designed for html2canvas + jsPDF rendering
 // Each .slide is 450×800px, captured at 3x resolution
 
@@ -843,12 +844,12 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
 <head>
 <meta charset="UTF-8">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600;1,700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Inter:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;600;700&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'DM Sans', sans-serif;
-    background: #0D0D0D;
+    font-family: 'Inter', sans-serif;
+    background: #0D0D0C;
     color: #F0EDE8;
     line-height: 1.4;
     -webkit-font-smoothing: antialiased;
@@ -861,48 +862,49 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     height: 800px;
     overflow: hidden;
     position: relative;
-    background: #0D0D0D;
-    padding: 28px 24px 48px;
+    background: #0D0D0C;
+    padding: 0 24px;
     display: flex;
     flex-direction: column;
   }
 
-  /* ── Slide header ── */
+  /* ── Slide header (Stitch: bg-borgona bar) ── */
   .slide-header {
-    border-bottom: 1px solid #2A2A2A;
-    padding-bottom: 10px;
-    margin-bottom: 14px;
+    background: #5D1528;
+    margin: 0 -24px;
+    padding: 14px 24px;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   .slide-hdr-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Source Serif 4', serif;
     font-size: 16px;
     font-weight: 700;
     color: #C9A94E;
-    letter-spacing: 0.5px;
+    letter-spacing: 2px;
   }
   .slide-subtitle {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    color: #706860;
-    margin-top: -8px;
-    margin-bottom: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #A09890;
+    margin: 8px 0 14px;
     flex-shrink: 0;
+    padding: 0;
   }
 
   /* ── Slide footer ── */
   .slide-footer {
-    position: absolute;
-    bottom: 16px;
-    left: 24px;
-    right: 24px;
+    margin-top: auto;
+    padding: 12px 0 16px;
     display: flex;
     justify-content: center;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 8px;
     color: #706860;
     border-top: 1px solid #2A2A2A;
-    padding-top: 8px;
+    letter-spacing: 1px;
     flex-shrink: 0;
   }
 
@@ -913,7 +915,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   .text-yellow { color: #E8D48B; }
 
   /* ── Semáforo ── */
-  .semaforo { font-size: 10px; margin-right: 3px; }
+  .semaforo { font-size: 12px; margin-right: 4px; }
   .semaforo-green { color: #4ADE80; }
   .semaforo-yellow { color: #E8D48B; }
   .semaforo-red { color: #F87171; }
@@ -926,27 +928,37 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     justify-content: center;
   }
   .empty-msg {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     color: #706860;
     text-align: center;
     padding: 0 32px;
   }
 
-  /* ═══ SLIDE 1 — COVER ═══ */
+  /* ═══ SLIDE 1 — COVER (Stitch Lightning Theme) ═══ */
   .slide-cover {
-    background: linear-gradient(155deg, #0D0D0D 0%, #5D1528 40%, #3E101C 70%, #0D0D0D 100%);
+    background: #5D1528;
     justify-content: center;
     align-items: center;
     text-align: center;
+    position: relative;
   }
+  .slide-cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.04;
+    pointer-events: none;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" stitchTiles="stitch"/></filter><rect width="200" height="200" filter="url(#n)" opacity="1"/></svg>');
+  }
+  .slide-cover > * { position: relative; z-index: 1; }
   .cover-content {
     display: flex;
     flex-direction: column;
     align-items: center;
   }
   .cover-brand {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Source Serif 4', serif;
     font-size: 36px;
     font-weight: 800;
     letter-spacing: 4px;
@@ -962,7 +974,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     margin: -4px 0 2px;
   }
   .cover-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Source Serif 4', serif;
     font-size: 44px;
     font-weight: 900;
     color: #F0EDE8;
@@ -976,14 +988,14 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     margin: 18px 0;
   }
   .cover-period {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     color: #A09890;
     font-weight: 500;
     margin-bottom: 6px;
   }
   .cover-subtitle {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     color: #706860;
     letter-spacing: 2px;
@@ -995,7 +1007,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     font-size: 8px;
     color: rgba(160,152,144,0.5);
     letter-spacing: 2px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     text-transform: uppercase;
   }
 
@@ -1014,7 +1026,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     text-align: center;
   }
   .kpi-vital-label {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
     color: #706860;
     text-transform: uppercase;
@@ -1022,14 +1034,14 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     margin-bottom: 6px;
   }
   .kpi-vital-val {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Source Serif 4', serif;
     font-size: 42px;
     font-weight: 800;
     color: #F0EDE8;
     line-height: 1.1;
   }
   .kpi-vital-sub {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
     color: #A09890;
     margin-top: 4px;
@@ -1049,7 +1061,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     padding: 10px 12px;
   }
   .drena-name {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 15px;
     color: #F0EDE8;
     font-weight: 500;
@@ -1059,7 +1071,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     text-overflow: ellipsis;
   }
   .drena-meta {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
     color: #A09890;
     margin-top: 4px;
@@ -1073,7 +1085,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   .drena-margin { font-weight: 500; }
   .drena-rev { font-weight: 500; color: #A09890; }
   .drena-diag {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     color: #706860;
     margin-top: 5px;
@@ -1094,14 +1106,14 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     padding: 10px 12px;
   }
   .analysis-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Source Serif 4', serif;
     font-size: 14px;
     font-weight: 600;
     color: #C9A94E;
     margin-bottom: 4px;
   }
   .analysis-body {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
     color: #E0D8CC;
     line-height: 1.55;
@@ -1127,7 +1139,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     flex-shrink: 0;
   }
   .charts-bar-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Source Serif 4', serif;
     font-size: 12px;
     font-weight: 600;
     color: #C9A94E;
@@ -1141,7 +1153,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   }
   .chart-bar-label {
     width: 110px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 10px;
     color: #A09890;
     text-align: right;
@@ -1162,7 +1174,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   }
   .chart-bar-val {
     width: 55px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 10px;
     font-weight: 500;
     color: #F0EDE8;
@@ -1189,33 +1201,33 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     margin-bottom: 6px;
   }
   .cat-card-icon {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     font-weight: 700;
     width: 20px;
     text-align: center;
   }
   .cat-card-name {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
     font-weight: 600;
     color: #F0EDE8;
   }
   .cat-card-rev {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Source Serif 4', serif;
     font-size: 24px;
     font-weight: 700;
     color: #F0EDE8;
     margin-bottom: 2px;
   }
   .cat-card-margin {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     color: #A09890;
     margin-bottom: 4px;
   }
   .cat-card-counts {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 10px;
     display: flex;
     align-items: center;
@@ -1231,7 +1243,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     border-bottom: 1px solid #2A2A2A;
     margin-bottom: 4px;
     flex-shrink: 0;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 9px;
     color: #706860;
     text-transform: uppercase;
@@ -1254,7 +1266,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     align-items: center;
     padding: 5px 4px;
     border-bottom: 1px solid #1A1A1A;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 10px;
   }
   .imp-idx {
@@ -1299,7 +1311,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     flex-shrink: 0;
   }
   .imp-footer-note {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     color: #C9A94E;
     text-align: center;
@@ -1332,14 +1344,14 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   }
   .comp-label {
     width: 80px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     color: #A09890;
     flex-shrink: 0;
   }
   .comp-pct {
     width: 36px;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     font-weight: 600;
     color: #F0EDE8;
@@ -1360,13 +1372,13 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     gap: 6px;
   }
   .ev-col-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Source Serif 4', serif;
     font-size: 13px;
     font-weight: 700;
     margin-bottom: 0;
   }
   .ev-col-sub {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 9px;
     color: #706860;
     margin-bottom: 4px;
@@ -1377,7 +1389,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     padding: 8px 10px;
   }
   .ev-name {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
     color: #F0EDE8;
     font-weight: 500;
@@ -1397,7 +1409,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     min-width: 2px;
   }
   .ev-val {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 9px;
     color: #A09890;
   }
@@ -1415,7 +1427,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     gap: 18px;
   }
   .datos-item {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
     color: #E0D8CC;
     line-height: 1.6;
@@ -1452,7 +1464,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     margin-top: 1px;
   }
   .junta-text {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     color: #F0EDE8;
     line-height: 1.5;

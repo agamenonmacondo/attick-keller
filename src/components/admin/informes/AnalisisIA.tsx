@@ -7,6 +7,7 @@ interface AnalisisIAProps {
   data: any
   from: string
   to: string
+  margins?: any
   onAnalysis?: (text: string | null) => void
 }
 
@@ -68,7 +69,7 @@ function parseAnalysisSections(text: string): { icon: string; title: string; ite
   return sections
 }
 
-export function AnalisisIA({ data, from, to, onAnalysis }: AnalisisIAProps) {
+export function AnalisisIA({ data, from, to, margins, onAnalysis }: AnalisisIAProps) {
   const [analysis, setAnalysis] = useState<string | null>(null)
   const [source, setSource] = useState<'ai' | 'rules' | 'error' | null>(null)
   const [loading, setLoading] = useState(false)
@@ -80,10 +81,12 @@ export function AnalisisIA({ data, from, to, onAnalysis }: AnalisisIAProps) {
     setError(null)
 
     try {
+      const payload: any = { ...data, period: { from, to, zone: 'all', compareFrom: data.comparison?.kpis ? from : '', compareTo: data.comparison?.kpis ? to : '' } }
+      if (margins) payload.margins = margins
       const res = await fetch('/api/admin/informes-rayo/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportData: { ...data, period: { from, to, zone: 'all', compareFrom: data.comparison?.kpis ? from : '', compareTo: data.comparison?.kpis ? to : '' } } }),
+        body: JSON.stringify({ reportData: payload }),
       })
 
       if (!res.ok) {

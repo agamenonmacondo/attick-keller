@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useInformesRayo } from '@/lib/hooks/useInformesRayo'
 import { useProductoHourly } from '@/lib/hooks/useProductoHourly'
+import { useProductMargins } from '@/lib/hooks/useProductMargins'
 import { MetricasClave } from './MetricasClave'
 import { RentabilidadPanel } from './RentabilidadPanel'
 import { AnalisisIA } from './AnalisisIA'
@@ -128,6 +129,9 @@ export function InformesRayoPanel() {
 
   const { from, to } = useMemo(() => calculatePeriod(preset, customFrom, customTo), [preset, customFrom, customTo])
   const { compareFrom, compareTo } = useMemo(() => calculateComparison(from, to, compareMode), [from, to, compareMode])
+
+  // Márgenes para alimentar el análisis LLM
+  const { data: marginsData } = useProductMargins(from, to, '')
 
   useEffect(() => {
     fetchReport(from, to, zone, compareFrom, compareTo)
@@ -327,7 +331,7 @@ export function InformesRayoPanel() {
 
       {/* ── AI Analysis ── */}
       {data && !loading && (
-        <AnalisisIA data={data} from={from} to={to} onAnalysis={setAnalysisText} />
+        <AnalisisIA data={data} from={from} to={to} margins={marginsData} onAnalysis={setAnalysisText} />
       )}
 
       {/* ── Empty State ── */}

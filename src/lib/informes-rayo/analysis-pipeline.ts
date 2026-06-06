@@ -5,36 +5,29 @@
 // ═══ System Prompt ═══
 const SYSTEM_PROMPT = `Eres Rayo IA ⚡, analista financiero senior especializado en restaurantes colombianos con 15 años de experiencia en consultoría gastronómica.
 
-Analizas datos de A&K (Attic & Keller), un restaurante premium en Bogotá, Colombia. Moneda: COP (pesos colombianos).
+Analizas datos de A&K (Attick & Keller), un restaurante premium en Bogotá, Colombia. Moneda: COP (pesos colombianos).
 
 ESTRUCTURA TU RESPUESTA EXACTAMENTE ASÍ (no agregues nada fuera de estas secciones):
 
 ⚡ **Diagnóstico General**
-[3-4 líneas ejecutivas con el diagnóstico completo: tendencia general, HallazGO principal, y riesgo oportunidad identificado. Sé específico con datos.]
+[3-4 líneas ejecutivas con el diagnóstico completo: tendencia general, HallazGO principal de RENTABILIDAD, y riesgo u oportunidad identificado. Sé específico con datos de márgenes.]
 
-📊 **Análisis de Ventas**
-[Desglose detallado: comparación vs período anterior por cada métrica (ventas, cheques, ticket, personas, propina). Incluir % de cambio y contexto. Explicar POR QUÉ cambió cada métrica si los datos lo sugieren.]
+📊 **Rentabilidad y Márgenes**
+[Análisis detallado de márgenes: categorías más y menos rentables, productos estrella vs productos que drenan, margen general vs meta del 30%. Explicar POR QUÉ cada categoría tiene ese margen si los datos lo sugieren.]
 
-🏆 **Productos Estrella**
-[Análisis de los top productos: cuáles impulsan ventas, cuáles tienen ticket alto, cuáles tienen buen volumen. Identificar patrones (ej: "las pizzas representan X% de ventas"). Incluir cálculos de concentración.]
-
-💡 **Oportunidades Estratégicas**
-[4-6 acciones concretas y específicas para A&K, PRIORIZADAS por impacto potencial. Cada una con: qué hacer, por qué, y resultado esperado. Basar en los datos — no genéricas.]
+📋 **Oportunidades Estratégicas**
+[4-6 acciones concretas y específicas para A&K, PRIORIZADAS por impacto en margen neto. Cada una: qué hacer, por qué, resultado esperado en pesos.]
 
 ⚠️ **Riesgos y Alertas**
-[2-4 riesgos identificados en los datos: concentración excesiva, dependencia de un producto/zona, tendencias negativas. Con datos que los respalden.]
+[2-4 riesgos: productos con margen negativo, categorías débiles, concentración de margen en pocos productos.]
 
 📋 **Resumen Ejecutivo para Junta**
-[5 bullets concisos para copiar directamente en acta de junta directiva. Incluir: cifra total, cambio %, HallazGO clave, acción #1 recomendada, riesgo #1.]
+[5 bullets concisos para copiar en acta. Incluir: margen general, categoría más rentable, producto estrella, cuántos drenan, acción prioritaria.]
 
 REGLAS:
-- CANTIDADES en COP: "$1.2M", "$350K", NO escribir "$1,200,000"
-- PORCENTAJES con 1 decimal: "↑12.3%", "↓8.5%"
-- Siempre basar conclusiones en LOS DATOS proporcionados, no inventar
-- Si los datos son insuficientes, decirlo explícitamente
-- NO agregar secciones extras, NO poner títulos adicionales
-- Calcular % de concentración, ticket promedio proyectado, y propina como % de ventas
-- Comparar con benchmark de restaurantes en Bogotá cuando sea relevante
+- CANTIDADES en COP: "$1.2M", "$350K"
+- PORCENTAJES con 1 decimal: "72.8%"
+- Basar conclusiones en DATOS proporcionados
 - Respuesta en español colombiano`
 
 function buildAnalysisPrompt(data: {
@@ -142,6 +135,42 @@ function buildAnalysisPrompt(data: {
       const unitPrice = qty > 0 ? rev / qty : 0
       const concentrationPct = totalProductRevenue > 0 ? (rev / totalProductRevenue * 100).toFixed(1) : '0'
       prompt += `\n- ${name} (${category}): ${qty} uds, ${fmt(rev)} (${concentrationPct}% del top), precio unitario ${fmt(unitPrice)}`
+    }
+  }
+
+  // ── Márgenes (rentabilidad real) ──
+  if ((data as any).margins && (data as any).margins.kpis && (data as any).margins.kpis.total_productos > 0) {
+    const mk = (data as any).margins.kpis
+    const cats = (data as any).margins.resumen_ejecutivo?.categorias || []
+    const drenan = (data as any).margins.drenan || []
+    const importan = (data as any).margins.importan || []
+
+    prompt += `\n\n═══ RENTABILIDAD (MÁRGENES REALES) ═══`
+    prompt += `\n- Margen bruto general: ${mk.margin_pct.toFixed(1)}%`
+    prompt += `\n- Ingreso total: ${fmt(mk.total_revenue)}`
+    prompt += `\n- Ganancia neta: ${fmt(mk.margin_bruto)}`
+    prompt += `\n- Productos con margen calculable: ${mk.total_productos}`
+
+    if (cats.length > 0) {
+      prompt += `\n\nPOR CATEGORÍA:`
+      for (const c of cats) {
+        prompt += `\n- ${c.categoria}: ${fmt(c.revenue)} ingreso, ${c.margin_pct}% margen, ${c.importan} importan, ${c.drenan} drenan (${c.count} productos)`
+      }
+    }
+
+    if (importan.length > 0) {
+      prompt += `\n\nTOP 5 POR MARGEN NETO (LOS QUE IMPORTAN):`
+      for (const p of importan.slice(0, 5)) {
+        prompt += `\n- ${p.product_name} (${p.macro_category}): ${fmt(p.margin_bruto)} netos, ${Math.round(p.margin_pct)}% margen, ${fmt(p.revenue)} ingreso`
+      }
+    }
+
+    if (drenan.length > 0) {
+      prompt += `\n\nLOS QUE DRENAN (bottom 5%):`
+      for (const p of drenan.slice(0, 5)) {
+        prompt += `\n- ${p.product_name} (${p.macro_category}): ${fmt(Math.abs(p.margin_bruto))} netos, ${Math.round(p.margin_pct)}% margen (alto pero contribución baja)`
+        if (p.diagnostico) prompt += ` — ${p.diagnostico}`
+      }
     }
   }
 

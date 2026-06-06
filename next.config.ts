@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
-  serverExternalPackages: ['playwright-core', '@sparticuz/chromium-min', '@sparticuz/chromium'],
+  serverExternalPackages: ['playwright-core', '@sparticuz/chromium'],
   turbopack: {
     resolveAlias: {
       'victory-vendor/d3-shape': 'd3-shape',

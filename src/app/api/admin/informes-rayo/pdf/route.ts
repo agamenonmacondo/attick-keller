@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const html = generatePDFHtml({ data, from, to, analysis, productHourly })
 
     // Launch Chromium via @sparticuz/chromium-min
-    const sparticuz = await import('@sparticuz/chromium-min')
+    const sparticuz = await import('@sparticuz/chromium')
     const chromiumModule = sparticuz.default
     const executablePath = await chromiumModule.executablePath()
 

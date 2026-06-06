@@ -512,6 +512,41 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     }
   }
 
+  // ═══ SLIDE 5b — GRÁFICOS (Donut + Barras) ═══
+  if (data.payments && data.payments.length > 0) {
+    const revenue = Number(data.kpis?.total_ventas ?? 0)
+    const donutHtml = buildDonutSvg(data.payments, revenue)
+    const topProds = data.topProducts?.slice(0, 5) || []
+    const maxRev = topProds.length > 0 ? Math.max(...topProds.map((p: ProductData) => Number(p.revenue ?? 0))) : 1
+    
+    const barHtml = topProds.map((p: ProductData, i: number) => {
+      const val = Number(p.revenue ?? 0)
+      const pctW = maxRev > 0 ? (val / maxRev) * 100 : 0
+      const color = i < 2 ? '#C9A94E' : i < 4 ? '#A0522D' : '#5D1528'
+      const name = (p.product_name || '').length > 22 ? p.product_name!.substring(0, 22) + '…' : (p.product_name || '-')
+      return `<div class="chart-bar-row">
+        <span class="chart-bar-label">${name}</span>
+        <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pctW.toFixed(1)}%;background:${color}"></div></div>
+        <span class="chart-bar-val">${fmt(val)}</span>
+      </div>`
+    }).join('')
+
+    slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">GRÁFICOS</span>
+      </div>
+      <div class="slide-subtitle">Distribución de ingresos y métodos de pago</div>
+      <div class="charts-donut-wrap">${donutHtml}</div>
+      <div class="charts-bar-section">
+        <div class="charts-bar-title">Top 5 Productos</div>
+        ${barHtml}
+      </div>
+      <div class="slide-footer">
+        <span>ATTICK & KELLER • INFORME RAYO</span>
+      </div>
+    </div>`)
+  }
+
   // ═══ SLIDE 5 — LO QUE IMPORTA (1-7) ═══
   if (hasMargins && margins!.importan.length > 0) {
     const top7 = margins!.importan.slice(0, 7)
@@ -1070,6 +1105,69 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     font-size: 12px;
     color: #E0D8CC;
     line-height: 1.55;
+  }
+
+  /* ═══ SLIDE GRÁFICOS (Donut + Barras) ═══ */
+  .charts-donut-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0;
+    flex-shrink: 0;
+  }
+  .charts-donut-wrap .donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .charts-donut-wrap .legend-item {
+    font-size: 11px;
+  }
+  .charts-bar-section {
+    padding: 8px 0 0;
+    flex-shrink: 0;
+  }
+  .charts-bar-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #C9A94E;
+    margin-bottom: 8px;
+  }
+  .chart-bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+    gap: 6px;
+  }
+  .chart-bar-label {
+    width: 110px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    color: #A09890;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .chart-bar-track {
+    flex: 1;
+    height: 10px;
+    background: #1A1A1A;
+    overflow: hidden;
+  }
+  .chart-bar-fill {
+    height: 100%;
+    min-width: 2px;
+  }
+  .chart-bar-val {
+    width: 55px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    color: #F0EDE8;
+    text-align: right;
+    flex-shrink: 0;
   }
 
   /* ═══ SLIDE 4 — POR CATEGORÍA ═══ */

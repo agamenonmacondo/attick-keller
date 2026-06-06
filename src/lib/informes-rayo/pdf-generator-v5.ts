@@ -503,5 +503,5 @@ export function generatePDFHtmlV5(input: PDFGeneratorInput): string {
       .replace('class="slide slide-cover"', 'class="slide slide-cover" data-index="' + i + '"')
   }).join('\n')
 
-  return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>' + CSS + '</style></head><body>' + slidesHtml + '</body></html>'
+  return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Caveat:wght@500;600&display=swap"><style>' + CSS + '</style></head><body>' + slidesHtml + '</body></html>'
 }

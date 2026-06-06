@@ -1,7 +1,8 @@
-// ═══ A&K Informes Rayo — PDF HTML Generator (Editorial Premium Theme) ═══
+// ═══ A&K Informes Rayo — PDF HTML Generator (9:16 Mobile Slides) ═══
 // Design system: Playfair Display (titles) + DM Sans (body) + Caveat (script)
 // A&K palette: borgona #5D1528, dorado #C9A94E, ladrillo #A0522D
 // Self-contained HTML designed for html2canvas + jsPDF rendering
+// Each .slide is 450×800px, captured at 3x resolution
 
 // ── Types ──
 interface KpiData {
@@ -56,12 +57,46 @@ interface ReportData {
   comparison?: ComparisonData | null
 }
 
+interface MarginCategory {
+  categoria: string
+  revenue: number
+  margin_pct: number
+  importan: number
+  drenan: number
+  count: number
+}
+
+interface MarginProduct {
+  product_name: string
+  macro_category: string
+  margin_pct: number
+  revenue: number
+  margin_bruto: number
+  quantity_sold?: number
+  diagnostico?: string
+}
+
+interface MarginsData {
+  kpis: {
+    total_revenue: number
+    margin_bruto: number
+    margin_pct: number
+    total_productos: number
+  }
+  resumen_ejecutivo: {
+    categorias: MarginCategory[]
+  }
+  importan: MarginProduct[]
+  drenan: MarginProduct[]
+}
+
 interface PDFGeneratorInput {
   data: ReportData
   from: string
   to: string
   analysis?: string | null
   productHourly?: ProductHourlyItem[]
+  margins?: MarginsData | null
 }
 
 // ── Formatters ──
@@ -100,10 +135,6 @@ function formatShortDate(dateStr: string): string {
   return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`
 }
 
-function hourLabel(h: number): string {
-  return `${h}h`
-}
-
 // ── Product hourly matrix builder ──
 interface ProductRow {
   name: string
@@ -135,9 +166,11 @@ function buildProductHourlyMatrix(items: ProductHourlyItem[]): {
 
   const products = [...prodMap.values()]
     .sort((a, b) => b.totalRevenue - a.totalRevenue)
-    .slice(0, 15)
+    .slice(0, 6)
 
-  const hours = [...hourSet].sort((a, b) => a - b)
+  const allHours = [...hourSet].sort((a, b) => a - b)
+  const peakHours = allHours.filter(h => h >= 12 && h <= 23)
+  const hours = peakHours.length > 0 ? peakHours : allHours.slice(0, 10)
   const grandTotal = products.reduce((s, p) => s + p.totalRevenue, 0)
 
   return { products, hours, grandTotal }
@@ -151,20 +184,36 @@ interface AnalysisSection {
 }
 
 function parseAnalysisSections(analysis: string): AnalysisSection[] {
+  const blocks = analysis.split(/\n\n+/)
   const sections: AnalysisSection[] = []
-  // Split on emoji-prefixed headers: ⚡ 📊 🏆 💡 ⚠️ 📋
-  const parts = analysis.split(/\n(?=[⚡📊🏆💡⚠️📋])/)
-  for (const part of parts) {
-    const trimmed = part.trim()
-    if (!trimmed) continue
-    const nl = trimmed.indexOf('\n')
-    const headerLine = nl > 0 ? trimmed.substring(0, nl).trim() : trimmed
-    const body = nl > 0 ? trimmed.substring(nl + 1).trim() : ''
-    // Extract icon (first char) and title (remove ** markers)
-    const icon = headerLine.charAt(0)
-    const title = headerLine.slice(1).replace(/\*\*/g, '').trim()
-    sections.push({ icon, title, body })
+
+  for (const block of blocks) {
+    const trimmed = block.trim()
+    if (!trimmed || trimmed.length < 10) continue
+
+    const lines = trimmed.split('\n')
+    const firstLine = lines[0].trim()
+    const body = lines.slice(1).join('\n').trim()
+
+    const hasEmoji = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2700}-\u{27BF}\u{26A0}\u{1F4CA}\u{1F3C6}\u{1F4A1}\u{1F4CB}\u{1F50D}\u{1F4C8}\u{1F4C9}]/u.test(firstLine)
+    const hasBold = firstLine.includes('**')
+    const isShort = firstLine.length < 80 && body.length > 0
+
+    if ((hasEmoji || hasBold || isShort) && body) {
+      const icon = hasEmoji ? firstLine.charAt(0) : (hasBold ? '\u{1F4CB}' : '•')
+      const title = firstLine
+        .replace(/^\p{Emoji}+/u, '')
+        .replace(/\*\*/g, '')
+        .replace(/^[:\s-]+/, '')
+        .trim()
+      sections.push({ icon, title, body })
+    } else {
+      const words = trimmed.split(/\s+/)
+      const title = words.slice(0, 8).join(' ') + (words.length > 8 ? '...' : '')
+      sections.push({ icon: '•', title, body: trimmed })
+    }
   }
+
   return sections
 }
 
@@ -187,13 +236,13 @@ function buildCategorySummary(products: ProductData[]): CategorySummary[] {
     .sort((a, b) => b.revenue - a.revenue)
 }
 
-// ── SVG Donut Chart (A&K colors: borgona, dorado, ladrillo) ──
+// ── SVG Donut Chart (A&K colors) ──
 function buildDonutSvg(payments: PaymentData[], total: number): string {
   const colors = ['#C9A94E', '#5D1528', '#A0522D']
   const labels = ['Efectivo', 'Tarjeta', 'Transferencia']
   let cumulative = 0
   let slices = ''
-  const cx = 100, cy = 85, r = 68, inner = 44
+  const cx = 140, cy = 110, r = 90, inner = 58
 
   for (let i = 0; i < labels.length; i++) {
     const val = Number(payments[i]?.total ?? 0)
@@ -230,11 +279,11 @@ function buildDonutSvg(payments: PaymentData[], total: number): string {
   }
 
   return `<div class="donut-wrap">
-    <svg width="200" height="170" viewBox="0 0 200 170">
+    <svg width="320" height="260" viewBox="0 0 320 260">
       ${slices}
       <circle cx="${cx}" cy="${cy}" r="${inner}" fill="#0D0D0D"/>
-      <text x="${cx}" y="${cy - 5}" text-anchor="middle" fill="#F0EDE8" font-family="DM Sans, sans-serif" font-size="24" font-weight="700">${dominantPct}%</text>
-      <text x="${cx}" y="${cy + 12}" text-anchor="middle" fill="#A09890" font-family="DM Sans, sans-serif" font-size="9">método líder</text>
+      <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="#F0EDE8" font-family="DM Sans, sans-serif" font-size="32" font-weight="700">${dominantPct}%</text>
+      <text x="${cx}" y="${cy + 16}" text-anchor="middle" fill="#A09890" font-family="DM Sans, sans-serif" font-size="10">método líder</text>
     </svg>
     <div class="donut-legend">${legendHtml}</div>
   </div>`
@@ -256,97 +305,477 @@ function buildProductHourlyTable(items: ProductHourlyItem[]): { products: Produc
   return buildProductHourlyMatrix(items)
 }
 
+// ── Category helpers ──
+function catLetter(cat: string): string {
+  const u = cat.toUpperCase()
+  if (u.includes('COCTEL')) return 'C'
+  if (u.includes('LICOR')) return 'L'
+  if (u.includes('VINO')) return 'V'
+  if (u.includes('COMID')) return 'M'
+  if (u.includes('BEBID')) return 'B'
+  return cat.charAt(0).toUpperCase()
+}
+
+function catColor(cat: string): string {
+  const u = cat.toUpperCase()
+  if (u.includes('COCTEL')) return '#C9A94E'
+  if (u.includes('LICOR')) return '#E8D48B'
+  if (u.includes('VINO')) return '#A0522D'
+  if (u.includes('COMID')) return '#5D1528'
+  if (u.includes('BEBID')) return '#4ADE80'
+  return '#706860'
+}
+
+function semaforo(pctValue: number, meta: number = 30): string {
+  if (pctValue >= 50) return '<span class="semaforo semaforo-green">◉</span>'
+  if (pctValue >= meta) return '<span class="semaforo semaforo-yellow">◐</span>'
+  return '<span class="semaforo semaforo-red">○</span>'
+}
+
+// ── Empty state slide ──
+function emptySlide(title: string): string {
+  return `<div class="slide">
+    <div class="slide-header">
+      <span class="slide-hdr-title">${title}</span>
+    </div>
+    <div class="empty-state">
+      <div class="empty-msg">Sin datos de rentabilidad para este período</div>
+    </div>
+    <div class="slide-footer">
+      <span>ATTICK & KELLER • INFORME RAYO</span>
+    </div>
+  </div>`
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN GENERATOR
+// ═══════════════════════════════════════════════════════════════
 export function generatePDFHtml(input: PDFGeneratorInput): string {
-  const { data, from, to, analysis, productHourly } = input
-  const { kpis, zones, payments, topProducts, comparison } = data
-
-  const revenue = Number(kpis?.total_ventas ?? 0)
-  const cheques = Number(kpis?.total_cheques ?? 0)
-  const personas = Number(kpis?.personas ?? 0)
-  const propina = Number(kpis?.propina_total ?? 0)
-  const ticketProm = cheques > 0 ? Math.round(revenue / cheques) : 0
-  const propinaPer = personas > 0 ? Math.round(propina / personas) : 0
-  const eff = personas > 0 ? Math.round((cheques / personas) * 100) : 0
-
-  const cKpi = comparison?.kpis
-  const cRevenue = cKpi ? Number(cKpi.total_ventas ?? 0) : 0
-  const cCheques = cKpi ? Number(cKpi.total_cheques ?? 0) : 0
-  const cPersonas = cKpi ? Number(cKpi.personas ?? 0) : 0
-  const cPropina = cKpi ? Number(cKpi.propina_total ?? 0) : 0
-  const cTicketProm = cKpi && cCheques > 0 ? Math.round(cRevenue / cCheques) : 0
-  const cPropinaPer = cKpi && cPersonas > 0 ? Math.round(cPropina / cPersonas) : 0
+  const { data, from, to, margins } = input
 
   const periodLabel = formatDateEs(from) + (from !== to ? ' — ' + formatDateEs(to) : '')
   const todayLabel = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
   const dayName = from ? formatDayName(from) : ''
+  const hasMargins = !!(margins && margins.kpis && margins.kpis.total_productos > 0)
 
-  const maxRev = topProducts.length > 0 ? Math.max(...topProducts.map((p: ProductData) => Number(p.revenue ?? 0))) : 1
+  // ── Build slides ──
+  const slides: string[] = []
 
-  // ── Donut ──
-  let donutHtml = ''
-  if (payments.length > 0) {
-    donutHtml = buildDonutSvg(payments, revenue)
-  }
-
-  // ── Category summary ──
-  const categories = topProducts.length > 0 ? buildCategorySummary(topProducts) : []
-  const maxCatRev = categories.length > 0 ? Math.max(...categories.map(c => c.revenue)) : 1
-
-  // ── Analysis sections ──
-  const analysisSections = analysis ? parseAnalysisSections(analysis) : []
-
-  // ── Product hourly ──
-  let hourlySection = ''
-  if (productHourly && productHourly.length > 0) {
-    const { products, hours, grandTotal } = buildProductHourlyTable(productHourly)
-    const maxHour = products.length > 0 ? Math.max(...hours) : 23
-    const displayProducts = products.slice(0, 12)
-    const maxVal = displayProducts.length > 0 ? Math.max(...displayProducts.map(p => p.totalRevenue)) : 1
-
-    let headerRow = '<th class="hm-prod">Producto</th>'
-    for (let h = 0; h <= maxHour; h++) {
-      if (hours.includes(h)) headerRow += `<th>${h}h</th>`
-    }
-    headerRow += '<th class="hm-total">Total</th>'
-
-    let bodyRows = ''
-    for (const prod of displayProducts) {
-      let row = `<td class="hm-prod">${prod.name}</td>`
-      for (let h = 0; h <= maxHour; h++) {
-        const v = prod.hourly.get(h) ?? 0
-        if (hours.includes(h)) {
-          const intensity = v > 0 ? 0.08 + (v / maxVal) * 0.42 : 0
-          row += `<td style="background:rgba(201,169,78,${intensity.toFixed(2)})">${v > 0 ? fmt(v) : ''}</td>`
-        }
-      }
-      row += `<td class="hm-total">${fmt(prod.totalRevenue)}</td>`
-      bodyRows += `<tr>${row}</tr>`
-    }
-
-    hourlySection = `<div class="page">
-  <div class="page-header">
-    <span class="page-hdr-brand">A&K • PRODUCTO × HORA</span>
-    <span class="page-hdr-period">${periodLabel}</span>
-  </div>
-  <div class="sec">
-    <h2 class="sec-title">Productos × Hora</h2>
-    <p class="sec-desc">Distribución horaria de ingresos por producto (top 12)</p>
-    <div class="hm-wrap">
-      <table class="hm-table">
-        <thead><tr>${headerRow}</tr></thead>
-        <tbody>${bodyRows}</tbody>
-      </table>
+  // ═══ SLIDE 1 — PORTADA ═══
+  slides.push(`<div class="slide slide-cover">
+    <div class="cover-bg"></div>
+    <div class="cover-content">
+      <div class="cover-brand">ATTICK & KELLER</div>
+      <div class="cover-amp">&amp;</div>
+      <div class="cover-title">INFORME RAYO</div>
+      <div class="cover-line"></div>
+      <div class="cover-period">${periodLabel}</div>
+      <div class="cover-subtitle">Reporte Ejecutivo de Rentabilidad</div>
     </div>
-  </div>
-  <div class="page-footer">
-    <span>PÁGINA ${productHourly ? '5' : '4'}</span>
-    <span>ATTICK & KELLER • INFORME RAYO</span>
-  </div>
-</div>`
+    <div class="cover-footer">Confidencial • Generado ${todayLabel}</div>
+  </div>`)
+
+  // ═══ SLIDE 2 — KPIs VITALES ═══
+  if (hasMargins) {
+    const mk = margins!.kpis
+    const marginVsMeta = mk.margin_pct - 30
+    const ventasSemaforo = mk.total_revenue > 0 ? semaforo(60, 50) : semaforo(0) // Always green for positive revenue
+    const margenSemaforo = semaforo(mk.margin_pct, 30)
+
+    slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">MÉTRICAS CLAVE</span>
+      </div>
+      <div class="kpi-vital-wrap">
+        <div class="kpi-vital-card">
+          <div class="kpi-vital-label">VENTAS</div>
+          <div class="kpi-vital-val">${fmt(mk.total_revenue)}</div>
+          <div class="kpi-vital-sub">${ventasSemaforo} vs período</div>
+        </div>
+        <div class="kpi-vital-card">
+          <div class="kpi-vital-label">MARGEN BRUTO</div>
+          <div class="kpi-vital-val">${mk.margin_pct.toFixed(1)}%</div>
+          <div class="kpi-vital-sub">${margenSemaforo} vs meta (30%)</div>
+        </div>
+        <div class="kpi-vital-card">
+          <div class="kpi-vital-label">PRODUCTOS</div>
+          <div class="kpi-vital-val">${mk.total_productos}</div>
+          <div class="kpi-vital-sub">con margen calculable</div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>ATTICK & KELLER • INFORME RAYO</span>
+      </div>
+    </div>`)
+  } else {
+    slides.push(emptySlide('MÉTRICAS CLAVE'))
   }
 
-  const pageNum4 = productHourly ? '4' : '4'
+  // ═══ SLIDE 3 — LO QUE DRENA ═══
+  if (hasMargins && margins!.drenan.length > 0) {
+    const drenaRows = margins!.drenan.slice(0, 5).map(p => {
+      const name = (p.product_name || '').length > 28
+        ? `<span class="drena-name" title="${p.product_name.replace(/"/g, '&quot;')}">${p.product_name.substring(0, 28)}…</span>`
+        : `<span class="drena-name">${p.product_name}</span>`
+      const mbFormatted = p.margin_bruto < 0
+        ? `<span class="text-red">-${fmt(Math.abs(p.margin_bruto))}</span>`
+        : fmt(p.margin_bruto)
+      return `<div class="drena-row">
+        ${name}
+        <div class="drena-meta">
+          <span class="drena-cat">${catLetter(p.macro_category)} ${p.macro_category}</span>
+          <span class="drena-sep">•</span>
+          <span class="drena-margin">${Math.round(p.margin_pct)}%</span>
+          <span class="drena-sep">•</span>
+          <span class="drena-rev">${fmt(p.revenue)}</span>
+          <span class="drena-sep">•</span>
+          <span>Neto: ${mbFormatted}</span>
+        </div>
+        ${p.diagnostico ? `<div class="drena-diag">${p.diagnostico.substring(0, 120)}${p.diagnostico.length > 120 ? '…' : ''}</div>` : ''}
+      </div>`
+    }).join('')
 
+    slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">⚠ LO QUE DRENA</span>
+      </div>
+      <div class="slide-subtitle">Productos en el 5% inferior por ganancia neta</div>
+      <div class="drena-list">
+        ${drenaRows}
+      </div>
+      <div class="slide-footer">
+        <span>ATTICK & KELLER • INFORME RAYO</span>
+      </div>
+    </div>`)
+  } else {
+    slides.push(emptySlide('⚠ LO QUE DRENA'))
+  }
+
+  // ═══ SLIDE 4 — POR CATEGORÍA ═══
+  if (hasMargins && margins!.resumen_ejecutivo.categorias.length > 0) {
+    const catCards = margins!.resumen_ejecutivo.categorias.map(c => {
+      const catSemaforo = semaforo(c.margin_pct, 30)
+      return `<div class="cat-card">
+        <div class="cat-card-top">
+          <span class="cat-card-icon" style="color:${catColor(c.categoria)}">${catLetter(c.categoria)}</span>
+          <span class="cat-card-name">${c.categoria}</span>
+        </div>
+        <div class="cat-card-rev">${fmt(c.revenue)}</div>
+        <div class="cat-card-margin">${c.margin_pct}% ${catSemaforo}</div>
+        <div class="cat-card-counts">
+          <span class="text-gold">\u{1F525} ${c.importan} importan</span>
+          <span class="cat-card-spacer">•</span>
+          <span class="text-red">⚠ ${c.drenan} drenan</span>
+        </div>
+      </div>`
+    }).join('')
+
+    slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">POR CATEGORÍA</span>
+      </div>
+      <div class="cat-cards-wrap">
+        ${catCards}
+      </div>
+      <div class="slide-footer">
+        <span>ATTICK & KELLER • INFORME RAYO</span>
+      </div>
+    </div>`)
+  } else {
+    slides.push(emptySlide('POR CATEGORÍA'))
+  }
+
+  // ═══ SLIDE 5 — LO QUE IMPORTA (1-7) ═══
+  if (hasMargins && margins!.importan.length > 0) {
+    const top7 = margins!.importan.slice(0, 7)
+    const importanRows = top7.map((p, i) => {
+      const name = (p.product_name || '').length > 22
+        ? `<span class="imp-name" title="${p.product_name.replace(/"/g, '&quot;')}">${p.product_name.substring(0, 22)}…</span>`
+        : `<span class="imp-name">${p.product_name}</span>`
+      return `<div class="imp-row">
+        <span class="imp-idx">${i + 1}</span>
+        ${name}
+        <span class="imp-cat">${catLetter(p.macro_category)}</span>
+        <span class="imp-margin">${Math.round(p.margin_pct)}%</span>
+        <span class="imp-rev">${fmt(p.revenue)}</span>
+        <span class="imp-neto">${fmt(p.margin_bruto)}</span>
+      </div>`
+    }).join('')
+
+    slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">\u{1F525} LO QUE IMPORTA</span>
+      </div>
+      <div class="slide-subtitle">Mayor ganancia neta — proteger</div>
+      <div class="imp-table-header">
+        <span class="imp-h-idx"></span>
+        <span class="imp-h-name">Producto</span>
+        <span class="imp-h-cat">Cat</span>
+        <span class="imp-h-margin">Margen</span>
+        <span class="imp-h-rev">Revenue</span>
+        <span class="imp-h-neto">Ganancia neta</span>
+      </div>
+      <div class="imp-list">
+        ${importanRows}
+      </div>
+      <div class="slide-footer">
+        <span>ATTICK & KELLER • INFORME RAYO</span>
+      </div>
+    </div>`)
+  } else {
+    slides.push(emptySlide('\u{1F525} LO QUE IMPORTA'))
+  }
+
+  // ═══ SLIDE 6 — LO QUE IMPORTA (8-15) ═══
+  if (hasMargins && margins!.importan.length > 7) {
+    const rest8 = margins!.importan.slice(7, 15)
+    const totalMarginBruto = margins!.kpis.margin_bruto
+    const top15Bruto = margins!.importan.slice(0, 15).reduce((s, p) => s + Number(p.margin_bruto || 0), 0)
+    const top15Pct = totalMarginBruto > 0 ? Math.round((top15Bruto / totalMarginBruto) * 100) : 0
+
+    const importanRows = rest8.map((p, i) => {
+      const name = (p.product_name || '').length > 22
+        ? `<span class="imp-name" title="${p.product_name.replace(/"/g, '&quot;')}">${p.product_name.substring(0, 22)}…</span>`
+        : `<span class="imp-name">${p.product_name}</span>`
+      return `<div class="imp-row">
+        <span class="imp-idx">${i + 8}</span>
+        ${name}
+        <span class="imp-cat">${catLetter(p.macro_category)}</span>
+        <span class="imp-margin">${Math.round(p.margin_pct)}%</span>
+        <span class="imp-rev">${fmt(p.revenue)}</span>
+        <span class="imp-neto">${fmt(p.margin_bruto)}</span>
+      </div>`
+    }).join('')
+
+    slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">\u{1F525} LO QUE IMPORTA</span>
+      </div>
+      <div class="slide-subtitle">Mayor ganancia neta — proteger (continuación)</div>
+      <div class="imp-table-header">
+        <span class="imp-h-idx"></span>
+        <span class="imp-h-name">Producto</span>
+        <span class="imp-h-cat">Cat</span>
+        <span class="imp-h-margin">Margen</span>
+        <span class="imp-h-rev">Revenue</span>
+        <span class="imp-h-neto">Ganancia neta</span>
+      </div>
+      <div class="imp-list">
+        ${importanRows}
+      </div>
+      <div class="imp-footer-note">
+        Estos 15 productos generan el ${top15Pct}% de la ganancia neta total
+      </div>
+      <div class="slide-footer">
+        <span>ATTICK & KELLER • INFORME RAYO</span>
+      </div>
+    </div>`)
+  } else if (hasMargins) {
+    // Fewer than 8 importan — still show the summary note
+    const totalMarginBruto = margins!.kpis.margin_bruto
+    const topBruto = margins!.importan.reduce((s, p) => s + Number(p.margin_bruto || 0), 0)
+    const topPct = totalMarginBruto > 0 ? Math.round((topBruto / totalMarginBruto) * 100) : 0
+
+    slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">\u{1F525} LO QUE IMPORTA</span>
+      </div>
+      <div class="empty-state">
+        <div class="imp-footer-note" style="padding:24px">
+          Estos ${margins!.importan.length} productos generan el ${topPct}% de la ganancia neta total
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>ATTICK & KELLER • INFORME RAYO</span>
+      </div>
+    </div>`)
+  } else {
+    slides.push(emptySlide('\u{1F525} LO QUE IMPORTA'))
+  }
+
+  // ═══ SLIDE 7 — COMPOSICIÓN DEL MARGEN ═══
+  if (hasMargins && margins!.resumen_ejecutivo.categorias.length > 0) {
+    const cats = margins!.resumen_ejecutivo.categorias
+    const totalMargin = cats.reduce((s, c) => s + (Number(c.revenue || 0) * Number(c.margin_pct || 0) / 100), 0)
+
+    const bars = cats.map(c => {
+      const catMargin = Number(c.revenue || 0) * Number(c.margin_pct || 0) / 100
+      const segPct = totalMargin > 0 ? Math.round((catMargin / totalMargin) * 100) : 0
+      const color = catColor(c.categoria)
+      return `<div class="comp-row">
+        <div class="comp-bar-wrap">
+          <div class="comp-bar-fill" style="width:${Math.max(segPct, 1)}%;background:${color}"></div>
+        </div>
+        <span class="comp-label">${c.categoria}</span>
+        <span class="comp-pct">${segPct}%</span>
+      </div>`
+    }).join('')
+
+    slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">COMPOSICIÓN DEL MARGEN</span>
+      </div>
+      <div class="slide-subtitle">Contribución de cada categoría al margen bruto total</div>
+      <div class="comp-wrap">
+        ${bars}
+      </div>
+      <div class="slide-footer">
+        <span>ATTICK & KELLER • INFORME RAYO</span>
+      </div>
+    </div>`)
+  } else {
+    slides.push(emptySlide('COMPOSICIÓN DEL MARGEN'))
+  }
+
+  // ═══ SLIDE 8 — ESTRELLAS vs LASTRE ═══
+  if (hasMargins) {
+    const estrellas = [...margins!.importan]
+      .sort((a, b) => Number(b.margin_pct || 0) - Number(a.margin_pct || 0))
+      .slice(0, 5)
+    const lastre = [...margins!.drenan]
+      .sort((a, b) => Number(a.margin_pct || 0) - Number(b.margin_pct || 0))
+      .slice(0, 5)
+
+    const estrellasHtml = estrellas.map(p => {
+      const name = (p.product_name || '').length > 18
+        ? p.product_name.substring(0, 18) + '…'
+        : p.product_name
+      const mrgPct = Math.round(Number(p.margin_pct || 0))
+      return `<div class="ev-item">
+        <div class="ev-name" title="${p.product_name.replace(/"/g, '&quot;')}">${name}</div>
+        <div class="ev-bar-track"><div class="ev-bar-fill" style="width:${Math.min(mrgPct, 100)}%;background:${mrgPct >= 50 ? '#4ADE80' : mrgPct >= 30 ? '#E8D48B' : '#F87171'}"></div></div>
+        <div class="ev-val">${fmt(p.margin_bruto)} <span class="ev-pct">${mrgPct}%</span></div>
+      </div>`
+    }).join('')
+
+    const lastreHtml = lastre.map(p => {
+      const name = (p.product_name || '').length > 18
+        ? p.product_name.substring(0, 18) + '…'
+        : p.product_name
+      const mrgPct = Math.round(Number(p.margin_pct || 0))
+      return `<div class="ev-item">
+        <div class="ev-name" title="${p.product_name.replace(/"/g, '&quot;')}">${name}</div>
+        <div class="ev-bar-track"><div class="ev-bar-fill" style="width:${Math.min(Math.abs(mrgPct), 100)}%;background:${mrgPct < 0 ? '#F87171' : mrgPct < 30 ? '#F87171' : '#E8D48B'}"></div></div>
+        <div class="ev-val">${fmt(p.margin_bruto)} <span class="ev-pct">${mrgPct}%</span></div>
+      </div>`
+    }).join('')
+
+    slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">ESTRELLAS vs LASTRE</span>
+      </div>
+      <div class="ev-grid">
+        <div class="ev-col">
+          <div class="ev-col-title text-green">⭐ ESTRELLAS</div>
+          <div class="ev-col-sub">Top 5 por margen bruto</div>
+          ${estrellasHtml}
+        </div>
+        <div class="ev-col">
+          <div class="ev-col-title text-red">⚠ LASTRE</div>
+          <div class="ev-col-sub">Bottom 5 por margen bruto</div>
+          ${lastreHtml}
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>ATTICK & KELLER • INFORME RAYO</span>
+      </div>
+    </div>`)
+  } else {
+    slides.push(emptySlide('ESTRELLAS vs LASTRE'))
+  }
+
+  // ═══ SLIDE 9 — DATOS QUE IMPORTAN ═══
+  if (hasMargins) {
+    const mk = margins!.kpis
+    const cats = margins!.resumen_ejecutivo.categorias
+    const topImportan = margins!.importan.length > 0 ? margins!.importan[0] : null
+    const bestCat = cats.length > 0
+      ? [...cats].sort((a, b) => Number(b.margin_pct || 0) - Number(a.margin_pct || 0))[0]
+      : null
+    const comidaCat = cats.find(c => c.categoria.toUpperCase().includes('COMID'))
+    const vinosCat = cats.find(c => c.categoria.toUpperCase().includes('VINO'))
+    const bebidasCat = cats.find(c => c.categoria.toUpperCase().includes('BEBID'))
+
+    const frases: string[] = []
+
+    if (topImportan) {
+      frases.push(`${topImportan.product_name} genera ${fmt(topImportan.margin_bruto)} netos — el producto más rentable del período`)
+    }
+
+    if (bebidasCat) {
+      frases.push(`BEBIDAS tiene ${bebidasCat.margin_pct}% de margen con solo ${bebidasCat.count} productos`)
+    }
+
+    if (comidaCat) {
+      frases.push(`COMIDA mueve ${fmt(comidaCat.revenue)} pero deja ${comidaCat.margin_pct}% de margen`)
+    }
+
+    if (vinosCat) {
+      frases.push(`VINOS es la categoría más débil: ${vinosCat.margin_pct}% margen, solo ${vinosCat.count} productos`)
+    }
+
+    // Fallback generic insight if we have data but couldn't compute specifics
+    if (frases.length === 0) {
+      frases.push(`Margen general: ${mk.margin_pct.toFixed(1)}% sobre ${fmt(mk.total_revenue)} en ventas`)
+      frases.push(`${mk.total_productos} productos analizados en el período`)
+    }
+
+    const frasesHtml = frases.map(f =>
+      `<div class="datos-item"><span class="datos-bullet">•</span> ${f}</div>`
+    ).join('')
+
+    slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">DATOS QUE IMPORTAN</span>
+      </div>
+      <div class="datos-wrap">
+        ${frasesHtml}
+      </div>
+      <div class="slide-footer">
+        <span>ATTICK & KELLER • INFORME RAYO</span>
+      </div>
+    </div>`)
+  } else {
+    slides.push(emptySlide('DATOS QUE IMPORTAN'))
+  }
+
+  // ═══ SLIDE 10 — PARA LA JUNTA ═══
+  if (hasMargins) {
+    const mk = margins!.kpis
+    const cats = margins!.resumen_ejecutivo.categorias
+    const bebidasCat = cats.find(c => c.categoria.toUpperCase().includes('BEBID'))
+    const drenaCount = margins!.drenan.length
+
+    const bebidasMargin = bebidasCat ? `${bebidasCat.margin_pct}%` : '--'
+    const juntaItems = [
+      { icon: '✅', color: 'text-green', text: `BEBIDAS lidera con ${bebidasMargin} margen → mantener precios y promociones` },
+      { icon: '⚠', color: 'text-yellow', text: `${drenaCount} productos en el 5% inferior por ganancia neta → evaluar menú` },
+      { icon: '\u{1F525}', color: 'text-gold', text: `Margen general ${mk.margin_pct.toFixed(1)}% → saludable, sobre meta del 30%` },
+    ]
+
+    const juntaHtml = juntaItems.map(item =>
+      `<div class="junta-item">
+        <span class="junta-icon ${item.color}">${item.icon}</span>
+        <span class="junta-text">${item.text}</span>
+      </div>`
+    ).join('')
+
+    slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">PARA LA JUNTA</span>
+      </div>
+      <div class="junta-wrap">
+        ${juntaHtml}
+      </div>
+      <div class="slide-footer">
+        <span>Attick & Keller • Informe Rayo • ${todayLabel}</span>
+      </div>
+    </div>`)
+  } else {
+    slides.push(emptySlide('PARA LA JUNTA'))
+  }
+
+  // ── Assemble full HTML ──
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -354,347 +783,532 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600;1,700&display=swap');
 
-  :root {
-    --bg: #0D0D0D;
-    --bg-card: #1A1A1A;
-    --gold: #C9A94E;
-    --gold-light: #E8D48B;
-    --borgona: #5D1528;
-    --ladrillo: #A0522D;
-    --text: #F0EDE8;
-    --text-secondary: #A09890;
-    --text-muted: #706860;
-    --border: #2A2A2A;
-    --border-light: #1F1F1F;
-    --green: #4ADE80;
-    --red: #F87171;
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0D0D0D;
+    color: #F0EDE8;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    width: 450px;
   }
 
-  @page { size: A4 portrait; margin: 0; }
-  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  /* ── Slide container ── */
+  .slide {
+    width: 450px;
+    height: 800px;
+    overflow: hidden;
+    position: relative;
+    background: #0D0D0D;
+    padding: 28px 24px 48px;
+    display: flex;
+    flex-direction: column;
+  }
 
-  .page { width: 210mm; min-height: 297mm; padding: 16mm 15mm 20mm; position: relative; overflow: hidden; page-break-after: always; background: var(--bg); }
-  .page:last-child { page-break-after: auto; }
+  /* ── Slide header ── */
+  .slide-header {
+    border-bottom: 1px solid #2A2A2A;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+  }
+  .slide-hdr-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #C9A94E;
+    letter-spacing: 0.5px;
+  }
+  .slide-subtitle {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #706860;
+    margin-top: -8px;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+  }
 
-  /* ── Page Header ── */
-  .page-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; }
-  .page-hdr-brand { font-family: 'Playfair Display', serif; font-size: 9px; color: var(--gold); letter-spacing: 2.5px; text-transform: uppercase; font-weight: 600; }
-  .page-hdr-period { font-size: 9px; color: var(--text-secondary); font-family: 'DM Sans', sans-serif; }
+  /* ── Slide footer ── */
+  .slide-footer {
+    position: absolute;
+    bottom: 16px;
+    left: 24px;
+    right: 24px;
+    display: flex;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 8px;
+    color: #706860;
+    border-top: 1px solid #2A2A2A;
+    padding-top: 8px;
+    flex-shrink: 0;
+  }
 
-  /* ── Cover ── */
-  .page-cover { background: linear-gradient(155deg, #1A0A10 0%, #5D1528 30%, #3E101C 60%, #0D0D0D 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-  .cover-frame { border: 1px solid rgba(201,169,78,0.25); padding: 52px 44px; position: relative; }
-  .cover-frame::before { content: ''; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 1px solid rgba(201,169,78,0.08); }
-  .cover-brand-top { font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 800; letter-spacing: 8px; color: var(--text); }
-  .cover-amp { font-family: 'Caveat', cursive; font-size: 44px; color: var(--gold); font-weight: 600; margin: 0 2px; line-height: 1; }
-  .cover-sub-brand { font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--gold); letter-spacing: 7px; text-transform: uppercase; font-weight: 500; margin-bottom: 28px; margin-top: 6px; }
-  .cover-line { width: 90px; height: 1px; background: var(--gold); margin: 0 auto 28px; }
-  .cover-title { font-family: 'Playfair Display', serif; font-size: 50px; font-weight: 900; color: var(--text); letter-spacing: 1px; margin-bottom: 4px; }
-  .cover-subtitle { font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--text-muted); letter-spacing: 5px; text-transform: uppercase; margin-bottom: 24px; }
-  .cover-period { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text-secondary); font-weight: 500; }
-  .cover-day { font-family: 'Caveat', cursive; font-size: 18px; color: var(--gold); margin-top: 6px; }
-  .cover-footer { position: absolute; bottom: 18mm; font-size: 8px; color: rgba(160,152,144,0.5); letter-spacing: 2.5px; font-family: 'DM Sans', sans-serif; text-transform: uppercase; }
+  /* ── Colors ── */
+  .text-green { color: #4ADE80; }
+  .text-red { color: #F87171; }
+  .text-gold { color: #C9A94E; }
+  .text-yellow { color: #E8D48B; }
 
-  /* ── Hero KPI ── */
-  .hero { text-align: center; padding: 18px 0 14px; border-bottom: 1px solid var(--gold); margin-bottom: 16px; }
-  .hero-val { font-family: 'Playfair Display', serif; font-size: 44px; font-weight: 800; color: var(--gold-light); letter-spacing: 0; }
-  .hero-lbl { font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--text-muted); letter-spacing: 4px; text-transform: uppercase; margin-top: 2px; font-weight: 500; }
-  .hero-chg { font-size: 11px; margin-top: 4px; font-family: 'DM Sans', sans-serif; font-weight: 500; }
+  /* ── Semáforo ── */
+  .semaforo { font-size: 10px; margin-right: 3px; }
+  .semaforo-green { color: #4ADE80; }
+  .semaforo-yellow { color: #E8D48B; }
+  .semaforo-red { color: #F87171; }
 
-  /* ── KPI Grid 3×2 ── */
-  .kpi-grid { display: flex; flex-wrap: wrap; margin: 0 -5px 10px; }
-  .kpi-card { width: 31.33%; margin: 0 1% 8px; background: var(--bg-card); border: 1px solid var(--border); padding: 12px 10px; }
-  .kpi-lbl { font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; font-weight: 500; }
-  .kpi-val { font-family: 'DM Sans', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
-  .kpi-chg { font-family: 'DM Sans', sans-serif; font-size: 10px; margin-top: 1px; font-weight: 500; }
+  /* ── Empty state ── */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .empty-msg {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: #706860;
+    text-align: center;
+    padding: 0 32px;
+  }
 
-  /* ── Sections ── */
-  .sec { margin-bottom: 14px; }
-  .sec-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; color: var(--gold); letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 8px; }
-  .sec-desc { font-family: 'DM Sans', sans-serif; font-size: 9px; color: var(--text-muted); margin-bottom: 10px; margin-top: -4px; }
+  /* ═══ SLIDE 1 — COVER ═══ */
+  .slide-cover {
+    background: linear-gradient(155deg, #0D0D0D 0%, #5D1528 40%, #3E101C 70%, #0D0D0D 100%);
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .cover-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .cover-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    color: #F0EDE8;
+    line-height: 1.1;
+  }
+  .cover-amp {
+    font-family: 'Caveat', cursive;
+    font-size: 48px;
+    color: #C9A94E;
+    font-weight: 600;
+    line-height: 0.8;
+    margin: -4px 0 2px;
+  }
+  .cover-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 44px;
+    font-weight: 900;
+    color: #F0EDE8;
+    letter-spacing: 1px;
+    line-height: 1.1;
+  }
+  .cover-line {
+    width: 60px;
+    height: 1px;
+    background: #C9A94E;
+    margin: 18px 0;
+  }
+  .cover-period {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: #A09890;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .cover-subtitle {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #706860;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .cover-footer {
+    position: absolute;
+    bottom: 20px;
+    font-size: 8px;
+    color: rgba(160,152,144,0.5);
+    letter-spacing: 2px;
+    font-family: 'DM Sans', sans-serif;
+    text-transform: uppercase;
+  }
 
-  /* ── Donut ── */
-  .donut-wrap { display: flex; align-items: center; gap: 24px; padding: 4px 0; }
-  .donut-legend { display: flex; flex-direction: column; gap: 10px; }
-  .legend-item { display: flex; align-items: center; gap: 8px; font-family: 'DM Sans', sans-serif; font-size: 10px; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-  .legend-label { color: var(--text-secondary); min-width: 80px; }
-  .legend-val { font-weight: 600; color: var(--text); min-width: 60px; text-align: right; }
-  .legend-pct { color: var(--text-muted); font-size: 9px; min-width: 30px; text-align: right; }
+  /* ═══ SLIDE 2 — KPIs VITALES ═══ */
+  .kpi-vital-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+  }
+  .kpi-vital-card {
+    background: #1A1A1A;
+    border: 1px solid #2A2A2A;
+    padding: 18px 20px;
+    text-align: center;
+  }
+  .kpi-vital-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    color: #706860;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .kpi-vital-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 38px;
+    font-weight: 800;
+    color: #F0EDE8;
+    line-height: 1.1;
+  }
+  .kpi-vital-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    color: #A09890;
+    margin-top: 4px;
+  }
 
-  /* ── Bars ── */
-  .bar-row { display: flex; align-items: center; margin-bottom: 5px; }
-  .bar-label { width: 135px; color: var(--text-secondary); font-family: 'DM Sans', sans-serif; font-size: 9px; text-align: right; padding-right: 8px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bar-track { flex: 1; height: 10px; background: var(--border-light); overflow: hidden; }
-  .bar-fill { height: 100%; min-width: 2px; transition: none; }
-  .bar-val { width: 60px; font-family: 'DM Sans', sans-serif; font-size: 9px; font-weight: 500; color: var(--text); padding-left: 8px; text-align: right; flex-shrink: 0; }
-  .bar-pct { width: 32px; font-family: 'DM Sans', sans-serif; font-size: 8px; color: var(--text-muted); text-align: right; flex-shrink: 0; }
+  /* ═══ SLIDE 3 — LO QUE DRENA ═══ */
+  .drena-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+  }
+  .drena-row {
+    background: #1A1A1A;
+    border: 1px solid #2A2A2A;
+    padding: 10px 12px;
+  }
+  .drena-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: #F0EDE8;
+    font-weight: 500;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .drena-meta {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    color: #A09890;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .drena-cat { color: #706860; }
+  .drena-sep { color: #2A2A2A; font-size: 8px; }
+  .drena-margin { font-weight: 500; }
+  .drena-rev { font-weight: 500; color: #A09890; }
+  .drena-diag {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 9px;
+    color: #706860;
+    margin-top: 5px;
+    line-height: 1.4;
+  }
 
-  /* ── Analysis blocks ── */
-  .analysis-grid { display: flex; flex-direction: column; gap: 8px; }
-  .ablock { background: var(--bg-card); border-left: 3px solid var(--gold); padding: 10px 12px; }
-  .ablock-title { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 600; color: var(--gold); margin-bottom: 6px; }
-  .ablock-body { font-family: 'DM Sans', sans-serif; font-size: 12px; color: #E0D8CC; line-height: 1.65; }
+  /* ═══ SLIDE 4 — POR CATEGORÍA ═══ */
+  .cat-cards-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cat-card {
+    background: #1A1A1A;
+    border: 1px solid #2A2A2A;
+    padding: 12px 14px;
+  }
+  .cat-card-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .cat-card-icon {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    width: 20px;
+    text-align: center;
+  }
+  .cat-card-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #F0EDE8;
+  }
+  .cat-card-rev {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #F0EDE8;
+    margin-bottom: 2px;
+  }
+  .cat-card-margin {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #A09890;
+    margin-bottom: 4px;
+  }
+  .cat-card-counts {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .cat-card-spacer { color: #2A2A2A; font-size: 8px; }
 
-  /* ── Board summary table ── */
-  .board-table { width: 100%; border-collapse: collapse; font-family: 'DM Sans', sans-serif; }
-  .board-table th { font-family: 'Playfair Display', serif; font-size: 10px; color: var(--gold); font-weight: 600; text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--gold); letter-spacing: 0.5px; }
-  .board-table th.bt-r { text-align: right; }
-  .board-table td { padding: 6px 10px; border-bottom: 1px solid var(--border-light); font-size: 10px; }
-  .board-table tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
-  .bt-label { color: var(--text-secondary); }
-  .bt-val { font-weight: 600; color: var(--text); text-align: right; }
-  .bt-chg { text-align: right; font-size: 9px; font-weight: 500; }
+  /* ═══ SLIDE 5 & 6 — LO QUE IMPORTA ═══ */
+  .imp-table-header {
+    display: flex;
+    align-items: center;
+    padding: 0 4px 6px;
+    border-bottom: 1px solid #2A2A2A;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 9px;
+    color: #706860;
+    text-transform: uppercase;
+  }
+  .imp-h-idx { width: 20px; flex-shrink: 0; }
+  .imp-h-name { flex: 1; min-width: 0; }
+  .imp-h-cat { width: 28px; text-align: center; flex-shrink: 0; }
+  .imp-h-margin { width: 42px; text-align: right; flex-shrink: 0; }
+  .imp-h-rev { width: 58px; text-align: right; flex-shrink: 0; }
+  .imp-h-neto { width: 64px; text-align: right; flex-shrink: 0; }
+  .imp-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+  }
+  .imp-row {
+    display: flex;
+    align-items: center;
+    padding: 5px 4px;
+    border-bottom: 1px solid #1A1A1A;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+  }
+  .imp-idx {
+    width: 20px;
+    color: #706860;
+    font-size: 9px;
+    flex-shrink: 0;
+  }
+  .imp-name {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #F0EDE8;
+    font-weight: 500;
+  }
+  .imp-cat {
+    width: 28px;
+    text-align: center;
+    color: #706860;
+    font-size: 9px;
+    flex-shrink: 0;
+  }
+  .imp-margin {
+    width: 42px;
+    text-align: right;
+    color: #A09890;
+    flex-shrink: 0;
+  }
+  .imp-rev {
+    width: 58px;
+    text-align: right;
+    color: #A09890;
+    flex-shrink: 0;
+  }
+  .imp-neto {
+    width: 64px;
+    text-align: right;
+    color: #C9A94E;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .imp-footer-note {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #C9A94E;
+    text-align: center;
+    padding-top: 8px;
+    flex-shrink: 0;
+  }
 
-  /* ── Comparison side-by-side ── */
-  .cmp-grid { display: flex; gap: 16px; }
-  .cmp-col { flex: 1; background: var(--bg-card); border: 1px solid var(--border); padding: 12px; }
-  .cmp-col-title { font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 600; color: var(--gold); margin-bottom: 8px; text-align: center; }
-  .cmp-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border-light); font-family: 'DM Sans', sans-serif; font-size: 9px; }
-  .cmp-lbl { color: var(--text-secondary); }
-  .cmp-val { font-weight: 500; color: var(--text); }
+  /* ═══ SLIDE 7 — COMPOSICIÓN DEL MARGEN ═══ */
+  .comp-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+  }
+  .comp-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .comp-bar-wrap {
+    flex: 1;
+    height: 22px;
+    background: #1A1A1A;
+    overflow: hidden;
+  }
+  .comp-bar-fill {
+    height: 100%;
+    min-width: 2px;
+  }
+  .comp-label {
+    width: 80px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #A09890;
+    flex-shrink: 0;
+  }
+  .comp-pct {
+    width: 36px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: #F0EDE8;
+    text-align: right;
+    flex-shrink: 0;
+  }
 
-  /* ── Zone bars ── */
-  .zone-row { display: flex; align-items: center; margin-bottom: 5px; }
-  .zone-name { width: 100px; color: var(--text-secondary); font-family: 'DM Sans', sans-serif; font-size: 9px; font-weight: 500; flex-shrink: 0; }
-  .zone-bar { flex: 1; height: 10px; background: var(--border-light); overflow: hidden; }
-  .zone-fill { height: 100%; background: linear-gradient(90deg, #C9A94E, #E8D48B); }
-  .zone-val { width: 65px; text-align: right; font-family: 'DM Sans', sans-serif; font-size: 9px; font-weight: 500; color: var(--text); flex-shrink: 0; }
-  .zone-pct { width: 32px; text-align: right; font-size: 8px; color: var(--text-muted); flex-shrink: 0; }
+  /* ═══ SLIDE 8 — ESTRELLAS vs LASTRE ═══ */
+  .ev-grid {
+    flex: 1;
+    display: flex;
+    gap: 12px;
+  }
+  .ev-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ev-col-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 0;
+  }
+  .ev-col-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 9px;
+    color: #706860;
+    margin-bottom: 4px;
+  }
+  .ev-item {
+    background: #1A1A1A;
+    border: 1px solid #2A2A2A;
+    padding: 8px 10px;
+  }
+  .ev-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #F0EDE8;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+  .ev-bar-track {
+    height: 6px;
+    background: #0D0D0D;
+    overflow: hidden;
+    margin-bottom: 3px;
+  }
+  .ev-bar-fill {
+    height: 100%;
+    min-width: 2px;
+  }
+  .ev-val {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 9px;
+    color: #A09890;
+  }
+  .ev-pct {
+    font-weight: 600;
+    color: #F0EDE8;
+  }
 
-  /* ── Payment cards ── */
-  .pay-cards { display: flex; gap: 10px; }
-  .pay-card { flex: 1; background: var(--bg-card); border: 1px solid var(--border); padding: 10px; text-align: center; }
-  .pay-icon { font-size: 18px; margin-bottom: 4px; }
-  .pay-val { font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); }
-  .pay-lbl { font-family: 'DM Sans', sans-serif; font-size: 9px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
-  .pay-pct { font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--gold); font-weight: 600; margin-top: 2px; }
+  /* ═══ SLIDE 9 — DATOS QUE IMPORTAN ═══ */
+  .datos-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 18px;
+  }
+  .datos-item {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: #E0D8CC;
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .datos-bullet {
+    color: #C9A94E;
+    font-size: 14px;
+    flex-shrink: 0;
+    line-height: 1.4;
+  }
 
-  /* ── Heatmap table ── */
-  .hm-wrap { overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border); }
-  .hm-table { width: 100%; border-collapse: collapse; font-family: 'DM Sans', sans-serif; font-size: 10px; }
-  .hm-table th, .hm-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--border-light); }
-  .hm-table th { color: var(--text-muted); font-weight: 500; letter-spacing: 0.3px; font-size: 8px; }
-  .hm-table td { color: var(--text-secondary); }
-  .hm-prod { text-align: left; color: var(--text); font-weight: 500; min-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .hm-total { text-align: right; color: var(--gold-light); font-weight: 600; min-width: 60px; }
-
-  /* ── Page footer ── */
-  .page-footer { position: absolute; bottom: 10mm; left: 15mm; right: 15mm; display: flex; justify-content: space-between; font-family: 'DM Sans', sans-serif; font-size: 7px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 5px; }
-
-  /* ── Utilities ── */
-  .text-green { color: var(--green); }
-  .text-red { color: var(--red); }
-  .text-gold { color: var(--gold); }
-  .mt-8 { margin-top: 8px; }
-  .mt-12 { margin-top: 12px; }
+  /* ═══ SLIDE 10 — PARA LA JUNTA ═══ */
+  .junta-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+  }
+  .junta-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #1A1A1A;
+    border: 1px solid #2A2A2A;
+  }
+  .junta-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .junta-text {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: #F0EDE8;
+    line-height: 1.5;
+  }
 </style>
 </head>
 <body>
-
-<!-- ═══ PAGE 1 — COVER ═══ -->
-<div class="page page-cover">
-  <div class="cover-frame">
-    <div class="cover-brand-top">ATTICK <span class="cover-amp">&amp;</span> KELLER</div>
-    <div class="cover-sub-brand">Restaurante &amp; Bar</div>
-    <div class="cover-line"></div>
-    <div class="cover-title">INFORME RAYO</div>
-    <div class="cover-subtitle">Reporte Ejecutivo de Ventas</div>
-    <div class="cover-period">${periodLabel}</div>
-    ${dayName ? `<div class="cover-day">${dayName}</div>` : ''}
-  </div>
-  <div class="cover-footer">Confidencial • Generado ${todayLabel}</div>
-</div>
-
-<!-- ═══ PAGE 2 — KPIs + CHARTS ═══ -->
-<div class="page">
-  <div class="page-header">
-    <span class="page-hdr-brand">Métricas Clave</span>
-    <span class="page-hdr-period">${periodLabel}</span>
-  </div>
-
-  <div class="hero">
-    <div class="hero-val">${fmt(revenue)}</div>
-    <div class="hero-lbl">Ingresos Totales</div>
-    ${cKpi ? `<div class="hero-chg ${revenue >= cRevenue ? 'text-green' : 'text-red'}">${pct(revenue, cRevenue)} vs período anterior</div>` : ''}
-  </div>
-
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-lbl">Transacciones</div>
-      <div class="kpi-val">${fmtN(cheques)}</div>
-      ${cKpi ? `<div class="kpi-chg ${cheques >= cCheques ? 'text-green' : 'text-red'}">${pct(cheques, cCheques)}</div>` : ''}
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-lbl">Ticket Promedio</div>
-      <div class="kpi-val">${fmt(ticketProm)}</div>
-      ${cKpi ? `<div class="kpi-chg ${ticketProm >= cTicketProm ? 'text-green' : 'text-red'}">${pct(ticketProm, cTicketProm)}</div>` : ''}
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-lbl">Eficiencia</div>
-      <div class="kpi-val">${eff}%</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-lbl">Clientes</div>
-      <div class="kpi-val">${fmtN(personas)}</div>
-      ${cKpi ? `<div class="kpi-chg ${personas >= cPersonas ? 'text-green' : 'text-red'}">${pct(personas, cPersonas)}</div>` : ''}
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-lbl">Propinas</div>
-      <div class="kpi-val">${fmt(propina)}</div>
-      ${cKpi ? `<div class="kpi-chg ${propina >= cPropina ? 'text-green' : 'text-red'}">${pct(propina, cPropina)}</div>` : ''}
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-lbl">Propina / Cliente</div>
-      <div class="kpi-val">${fmt(propinaPer)}</div>
-      ${cKpi ? `<div class="kpi-chg ${propinaPer >= cPropinaPer ? 'text-green' : 'text-red'}">${pct(propinaPer, cPropinaPer)}</div>` : ''}
-    </div>
-  </div>
-
-  ${donutHtml ? `
-  <div class="sec">
-    <h2 class="sec-title">Distribución de Ingresos</h2>
-    ${donutHtml}
-  </div>` : ''}
-
-  ${topProducts.length > 0 ? `
-  <div class="sec">
-    <h2 class="sec-title">Top Productos</h2>
-    ${topProducts.slice(0, 10).map((p: ProductData, i: number) => {
-      const val = Number(p.revenue ?? 0)
-      const pctOfTotal = revenue > 0 ? ((val / revenue) * 100).toFixed(1) : '0'
-      const color = i < 3 ? '#C9A94E' : i < 6 ? '#A0522D' : '#5D1528'
-      return progressBar(p.product_name || '-', val, maxRev, color, fmt(val), pctOfTotal + '%')
-    }).join('')}
-  </div>` : ''}
-
-  <div class="page-footer">
-    <span>PÁGINA 2</span>
-    <span>ATTICK & KELLER • INFORME RAYO</span>
-  </div>
-</div>
-
-<!-- ═══ PAGE 3 — ANALYSIS + BOARD SUMMARY ═══ -->
-<div class="page">
-  <div class="page-header">
-    <span class="page-hdr-brand">Análisis &amp; Resumen</span>
-    <span class="page-hdr-period">${periodLabel}</span>
-  </div>
-
-  ${analysisSections.length > 0 ? `
-  <div class="sec">
-    <h2 class="sec-title">Análisis Inteligente</h2>
-    <div class="analysis-grid">
-      ${analysisSections.map((s: AnalysisSection) => `
-      <div class="ablock">
-        <div class="ablock-title">${s.icon} ${s.title}</div>
-        <div class="ablock-body">${s.body.replace(/\n/g, '<br>')}</div>
-      </div>`).join('')}
-    </div>
-  </div>` : (analysis ? `
-  <div class="sec">
-    <h2 class="sec-title">Análisis Inteligente</h2>
-    <div class="ablock">
-      <div class="ablock-body">${analysis.replace(/\n/g, '<br>')}</div>
-    </div>
-  </div>` : '')}
-
-  <div class="sec mt-8">
-    <h2 class="sec-title">Resumen para Junta Directiva</h2>
-    <table class="board-table">
-      <thead><tr><th>Métrica</th><th class="bt-r">Valor</th>${cKpi ? '<th class="bt-r">Variación</th>' : ''}</tr></thead>
-      <tbody>
-        <tr><td class="bt-label">Ventas Totales</td><td class="bt-val">${fmt(revenue)}</td>${cKpi ? `<td class="bt-chg ${revenue >= cRevenue ? 'text-green' : 'text-red'}">${pct(revenue, cRevenue)}</td>` : ''}</tr>
-        <tr><td class="bt-label">Transacciones</td><td class="bt-val">${fmtN(cheques)}</td>${cKpi ? `<td class="bt-chg ${cheques >= cCheques ? 'text-green' : 'text-red'}">${pct(cheques, cCheques)}</td>` : ''}</tr>
-        <tr><td class="bt-label">Ticket Promedio</td><td class="bt-val">${fmt(ticketProm)}</td>${cKpi ? `<td class="bt-chg ${ticketProm >= cTicketProm ? 'text-green' : 'text-red'}">${pct(ticketProm, cTicketProm)}</td>` : ''}</tr>
-        <tr><td class="bt-label">Clientes</td><td class="bt-val">${fmtN(personas)}</td>${cKpi ? `<td class="bt-chg ${personas >= cPersonas ? 'text-green' : 'text-red'}">${pct(personas, cPersonas)}</td>` : ''}</tr>
-        <tr><td class="bt-label">Propinas</td><td class="bt-val">${fmt(propina)}</td>${cKpi ? `<td class="bt-chg ${propina >= cPropina ? 'text-green' : 'text-red'}">${pct(propina, cPropina)}</td>` : ''}</tr>
-        <tr><td class="bt-label">Propina / Cliente</td><td class="bt-val">${fmt(propinaPer)}</td>${cKpi ? `<td class="bt-chg ${propinaPer >= cPropinaPer ? 'text-green' : 'text-red'}">${pct(propinaPer, cPropinaPer)}</td>` : ''}</tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="page-footer">
-    <span>PÁGINA 3</span>
-    <span>ATTICK & KELLER • INFORME RAYO</span>
-  </div>
-</div>
-
-<!-- ═══ PAGE 4 — SALES DETAIL ═══ -->
-<div class="page">
-  <div class="page-header">
-    <span class="page-hdr-brand">Detalle de Ventas</span>
-    <span class="page-hdr-period">${periodLabel}</span>
-  </div>
-
-  ${zones.length > 0 ? `
-  <div class="sec">
-    <h2 class="sec-title">Ventas por Zona</h2>
-    ${zones.map((z: ZoneData) => {
-      const zVal = Number(z.total_ventas ?? 0)
-      const zPct = revenue > 0 ? Math.round((zVal / revenue) * 100) : 0
-      return `<div class="zone-row"><span class="zone-name">${z.zone || '-'}</span><div class="zone-bar"><div class="zone-fill" style="width:${Math.max(zPct, 1)}%"></div></div><span class="zone-val">${fmt(zVal)}</span><span class="zone-pct">${zPct}%</span></div>`
-    }).join('')}
-  </div>` : ''}
-
-  ${categories.length > 0 ? `
-  <div class="sec">
-    <h2 class="sec-title">Top Categorías</h2>
-    ${categories.slice(0, 8).map((c: CategorySummary) => {
-      const color = '#C9A94E'
-      return progressBar(c.category, c.revenue, maxCatRev, color, fmt(c.revenue), c.pct.toFixed(0) + '%')
-    }).join('')}
-  </div>` : ''}
-
-  ${cKpi ? `
-  <div class="sec">
-    <h2 class="sec-title">Comparativa Período Anterior</h2>
-    <div class="cmp-grid">
-      <div class="cmp-col">
-        <div class="cmp-col-title">Período Actual</div>
-        <div class="cmp-row"><span class="cmp-lbl">Ventas</span><span class="cmp-val">${fmt(revenue)}</span></div>
-        <div class="cmp-row"><span class="cmp-lbl">Transacciones</span><span class="cmp-val">${fmtN(cheques)}</span></div>
-        <div class="cmp-row"><span class="cmp-lbl">Ticket Prom</span><span class="cmp-val">${fmt(ticketProm)}</span></div>
-        <div class="cmp-row"><span class="cmp-lbl">Clientes</span><span class="cmp-val">${fmtN(personas)}</span></div>
-        <div class="cmp-row"><span class="cmp-lbl">Propinas</span><span class="cmp-val">${fmt(propina)}</span></div>
-      </div>
-      <div class="cmp-col">
-        <div class="cmp-col-title">Período Anterior</div>
-        <div class="cmp-row"><span class="cmp-lbl">Ventas</span><span class="cmp-val">${fmt(cRevenue)}</span></div>
-        <div class="cmp-row"><span class="cmp-lbl">Transacciones</span><span class="cmp-val">${fmtN(cCheques)}</span></div>
-        <div class="cmp-row"><span class="cmp-lbl">Ticket Prom</span><span class="cmp-val">${fmt(cTicketProm)}</span></div>
-        <div class="cmp-row"><span class="cmp-lbl">Clientes</span><span class="cmp-val">${fmtN(cPersonas)}</span></div>
-        <div class="cmp-row"><span class="cmp-lbl">Propinas</span><span class="cmp-val">${fmt(cPropina)}</span></div>
-      </div>
-    </div>
-  </div>` : ''}
-
-  ${payments.length > 0 ? `
-  <div class="sec">
-    <h2 class="sec-title">Métodos de Pago</h2>
-    <div class="pay-cards">
-      ${payments.map((p: PaymentData) => {
-        const method = p.payment_method || 'Otro'
-        const total = Number(p.total ?? 0)
-        const pctVal = Number(p.pct ?? 0)
-        return `<div class="pay-card">
-          <div class="pay-val">${fmt(total)}</div>
-          <div class="pay-lbl">${method}</div>
-          <div class="pay-pct">${Math.round(pctVal)}%</div>
-        </div>`
-      }).join('')}
-    </div>
-  </div>` : ''}
-
-  <div class="page-footer">
-    <span>PÁGINA ${pageNum4}</span>
-    <span>ATTICK & KELLER • INFORME RAYO</span>
-  </div>
-</div>
-
-${hourlySection}
+${slides.join('\n')}
 </body>
 </html>`
 }

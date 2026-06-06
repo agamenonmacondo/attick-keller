@@ -1,6 +1,7 @@
-// ═══ PDF Renderer v6.1 — html2canvas + jsPDF via iframe ═══
+// ═══ PDF Renderer v6.2 — html2canvas + jsPDF ═══
 // Template: Claude Design (Source Serif 4 + Inter + Caveat)
-// FIX v6.1: Inline font CSS in iframe HTML + font preload + explicit wait
+// FIX v6.2: render from document body (fonts loaded) instead of hidden iframe
+// html2canvas cannot reliably resolve Google Fonts from iframes
 
 // @ts-ignore
 import html2canvas from 'html2canvas'
@@ -16,21 +17,6 @@ const pdfH = (SLIDE_HEIGHT / 96) * 25.4
 
 // ── Google Fonts URL ──
 const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@300;400;500;600;700&family=Caveat:wght@400;500;600&display=swap'
-
-// ── Inline @font-face declarations as fallback ──
-// These ensure fonts are available even if Google Fonts CDN is slow/blocked
-const INLINE_FONT_CSS = `
-/* System fallbacks — always available */
-@font-face { font-family: 'Source Serif 4'; font-weight: 400; font-style: normal; src: local('Source Serif 4'), local('Georgia'); font-display: swap; }
-@font-face { font-family: 'Source Serif 4'; font-weight: 700; font-style: normal; src: local('Source Serif 4'), local('Georgia'); font-display: swap; }
-@font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; src: local('Inter'), local('Arial'); font-display: swap; }
-@font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; src: local('Inter'), local('Arial'); font-display: swap; }
-@font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; src: local('Inter'), local('Arial'); font-display: swap; }
-@font-face { font-family: 'Inter'; font-weight: 700; font-style: normal; src: local('Inter'), local('Arial'); font-display: swap; }
-@font-face { font-family: 'Caveat'; font-weight: 400; font-style: normal; src: local('Caveat'), local('Comic Sans MS'); font-display: swap; }
-@font-face { font-family: 'Caveat'; font-weight: 500; font-style: normal; src: local('Caveat'), local('Comic Sans MS'); font-display: swap; }
-@font-face { font-family: 'Caveat'; font-weight: 600; font-style: normal; src: local('Caveat'), local('Comic Sans MS'); font-display: swap; }
-`
 
 // ── Preload Google Fonts into the main document ──
 let fontsPreloaded = false
@@ -60,16 +46,19 @@ async function ensureFonts(): Promise<void> {
   // 3. Wait for font loading
   await document.fonts.ready
 
-  // 4. Force-load by rendering hidden text
+  // 4. Force-load by rendering hidden text with all weights/variants
   const testDiv = document.createElement('div')
   testDiv.style.position = 'fixed'
   testDiv.style.top = '-9999px'
   testDiv.style.left = '-9999px'
   testDiv.style.visibility = 'hidden'
+  testDiv.style.pointerEvents = 'none'
   testDiv.style.fontSize = '48px'
+  testDiv.style.letterSpacing = '0'
 
   const fontFaces = [
     { family: 'Source Serif 4', weight: '400' },
+    { family: 'Source Serif 4', weight: '600' },
     { family: 'Source Serif 4', weight: '700' },
     { family: 'Inter', weight: '300' },
     { family: 'Inter', weight: '400' },
@@ -83,127 +72,99 @@ async function ensureFonts(): Promise<void> {
 
   fontFaces.forEach(f => {
     const span = document.createElement('span')
-    span.style.fontFamily = `"${f.family}", serif`
+    span.style.fontFamily = `"${f.family}", ${f.family === 'Caveat' ? 'cursive' : f.family === 'Source Serif 4' ? 'serif' : 'sans-serif'}`
     span.style.fontWeight = f.weight
-    span.textContent = 'XxWwMmÁÉÍÓÚÑñ'
+    span.style.display = 'inline-block'
+    span.style.marginRight = '4px'
+    // Use diverse characters including Spanish and numbers to trigger all glyph sets
+    span.textContent = 'XxWwMmÁÉÍÓÚÑñ$%&123'
     testDiv.appendChild(span)
   })
 
   document.body.appendChild(testDiv)
-  await document.fonts.ready
 
-  // 5. Verify fonts loaded
+  // 5. Wait for all fonts to load
+  await document.fonts.ready
+  await new Promise(r => setTimeout(r, 500)) // settle delay
+
+  // 6. Verify
   const allLoaded = fontFaces.every(f =>
     document.fonts.check(`${f.weight} 48px "${f.family}"`)
   )
 
   if (!allLoaded) {
     // Extra wait for slow connections
-    await new Promise(r => setTimeout(r, 2000))
+    await new Promise(r => setTimeout(r, 1500))
     await document.fonts.ready
   }
 
-  document.body.removeChild(testDiv)
+  // Keep testDiv in DOM so fonts stay loaded — do NOT remove
+  // (some browsers garbage-collect unused font faces)
   fontsPreloaded = true
 }
 
 export async function renderHtmlToPDF(html: string): Promise<Blob> {
-  // ── Step 1: Ensure fonts loaded in main document ──
+  // ── Step 1: Ensure fonts are loaded ──
   await ensureFonts()
 
-  // ── Step 2: Inject fonts into the HTML that goes into iframe ──
-  // This is the KEY fix: the iframe HTML must have its own <link> for Google Fonts
-  // plus inline @font-face as fallback, so html2canvas can see the fonts
-  const fontsLink = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="${FONTS_URL}">`
-  
-  let enrichedHtml = html
-  // Insert font preconnect + stylesheet right after <head> or at the start
-  if (enrichedHtml.includes('<head>')) {
-    enrichedHtml = enrichedHtml.replace('<head>', '<head>' + fontsLink)
-  } else if (enrichedHtml.includes('<html')) {
-    enrichedHtml = enrichedHtml.replace(/<html[^>]*>/, '$&' + fontsLink)
-  } else {
-    // Fallback: prepend
-    enrichedHtml = fontsLink + enrichedHtml
-  }
+  // ── Step 2: Parse the HTML and create a container in the document body ──
+  // We render from the main document (not iframe) so html2canvas can access loaded fonts
+  const container = document.createElement('div')
+  container.id = 'pdf-render-container'
+  container.style.position = 'fixed'
+  container.style.top = '-9999px'
+  container.style.left = '-9999px'
+  container.style.width = SLIDE_WIDTH + 'px'
+  container.style.overflow = 'hidden'
+  container.style.zIndex = '-9999'
+  container.style.pointerEvents = 'none'
+  document.body.appendChild(container)
 
-  // Also inject inline @font-face CSS right before </style> or <style>
-  // This ensures fallback fonts are declared even if CDN is slow
-  if (enrichedHtml.includes('</style>')) {
-    // Add inline font-face at the beginning of the first <style> block
-    enrichedHtml = enrichedHtml.replace('<style>', '<style>' + INLINE_FONT_CSS)
-  }
+  // Parse HTML string into DOM nodes
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
 
-  // ── Step 3: Create iframe ──
-  const iframe = document.createElement('iframe')
-  iframe.style.position = 'fixed'
-  iframe.style.top = '-9999px'
-  iframe.style.left = '-9999px'
-  iframe.style.width = (SLIDE_WIDTH + 40) + 'px'
-  iframe.style.height = (SLIDE_HEIGHT + 40) + 'px'
-  iframe.style.border = 'none'
-  iframe.style.zIndex = '-1'
-  iframe.style.visibility = 'hidden'
-  document.body.appendChild(iframe)
+  // Extract <style> content and append to container
+  const styles = doc.querySelectorAll('style')
+  const styleContent = Array.from(styles).map(s => s.textContent || '').join('\n')
 
-  const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
-  if (!iframeDoc) {
-    document.body.removeChild(iframe)
-    throw new Error('Cannot access iframe document')
-  }
-  iframeDoc.open()
-  iframeDoc.write(enrichedHtml)
-  iframeDoc.close()
+  const styleEl = document.createElement('style')
+  styleEl.textContent = styleContent
+  container.appendChild(styleEl)
 
-  // ── Step 4: Wait for fonts inside the iframe ──
-  try {
-    await iframe.contentWindow?.document.fonts.ready
-  } catch { /* fonts.ready may not be available */ }
+  // Extract <link> elements (font stylesheets) and add to container
+  const links = doc.querySelectorAll('link[rel="stylesheet"]')
+  links.forEach(link => {
+    const newLink = document.createElement('link')
+    newLink.rel = 'stylesheet'
+    newLink.href = link.getAttribute('href') || ''
+    container.appendChild(newLink)
+  })
 
-  // Verify fonts loaded in iframe
-  const iframeFonts = [
-    { family: 'Source Serif 4', weight: '700' },
-    { family: 'Source Serif 4', weight: '400' },
-    { family: 'Inter', weight: '400' },
-    { family: 'Inter', weight: '500' },
-    { family: 'Inter', weight: '700' },
-    { family: 'Caveat', weight: '500' },
-    { family: 'Caveat', weight: '600' },
-  ]
-  const iframeLoaded = iframeFonts.every(f =>
-    iframeDoc.fonts?.check(`${f.weight} 48px "${f.family}"`) ?? false
-  )
+  // Extract .slide elements
+  const slides = doc.querySelectorAll('.slide')
 
-  if (!iframeLoaded) {
-    // Wait longer for fonts to load in iframe
-    await new Promise(r => setTimeout(r, 2500))
-    try {
-      await iframe.contentWindow?.document.fonts.ready
-    } catch { /* ignore */ }
-  }
-
-  // Final rendering settle delay
-  await new Promise(r => setTimeout(r, 800))
-
-  const slides = iframeDoc.querySelectorAll('.slide')
-  if (slides.length === 0) {
-    document.body.removeChild(iframe)
-    throw new Error('No slides found in HTML')
-  }
-
-  // ── Step 5: Render each slide to PDF ──
+  // Render each .slide into the container one at a time
+  // This way html2canvas uses the document's already-loaded fonts
   // @ts-ignore
   const pdf = new jsPDF('p', 'mm', [pdfW, pdfH])
 
   for (let i = 0; i < slides.length; i++) {
-    if (i > 0) {
-      // @ts-ignore
-      pdf.addPage()
+    // Clear previous slides from container
+    while (container.children.length > 1) { // keep <style>
+      container.removeChild(container.lastChild!)
     }
 
-    const slide = slides[i] as HTMLElement
+    // Clone the slide into our container
+    const slideEl = slides[i] as HTMLElement
+    const cloned = slideEl.cloneNode(true) as HTMLElement
+    container.appendChild(cloned)
+
+    // Small delay for rendering
+    await new Promise(r => setTimeout(r, 50))
+
     // @ts-ignore
-    const canvas = await html2canvas(slide, {
+    const canvas = await html2canvas(cloned, {
       scale: SCALE,
       useCORS: true,
       allowTaint: true,
@@ -213,10 +174,17 @@ export async function renderHtmlToPDF(html: string): Promise<Blob> {
       height: SLIDE_HEIGHT,
     })
 
+    if (i > 0) {
+      // @ts-ignore
+      pdf.addPage()
+    }
+
     const imgData = canvas.toDataURL('image/jpeg', 0.92)
     pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH)
   }
 
-  document.body.removeChild(iframe)
+  // Cleanup
+  document.body.removeChild(container)
+
   return pdf.output('blob')
 }

@@ -553,129 +553,62 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     </div>`)
   }
 
-  // ═══ SLIDE 5 — LO QUE IMPORTA (1-7) ═══
+  // ═══ SLIDE 5 — LO QUE IMPORTA (TOP 1-7) ═══
   if (hasMargins && margins!.importan.length > 0) {
     const top7 = margins!.importan.slice(0, 7)
-    const importanRows = top7.map((p, i) => {
-      const name = (p.product_name || '').length > 22
-        ? `<span class="imp-name" title="${p.product_name.replace(/"/g, '&quot;')}">${p.product_name.substring(0, 22)}…</span>`
-        : `<span class="imp-name">${p.product_name}</span>`
-      return `<div class="imp-row">
-        <span class="imp-idx">${i + 1}</span>
-        ${name}
-        <span class="imp-cat">${catLetter(p.macro_category)}</span>
-        <span class="imp-margin">${Math.round(p.margin_pct)}%</span>
-        <span class="imp-rev">${fmt(p.revenue)}</span>
-        <span class="imp-neto">${fmt(p.margin_bruto)}</span>
-      </div>`
-    }).join('')
+    const maxMarginPct = Math.max(...top7.map(p => p.margin_pct || 0), 1)
 
-    slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">\u{1F525} LO QUE IMPORTA</span>
-      </div>
-      <div class="slide-subtitle">Mayor ganancia neta — proteger</div>
-      <div class="imp-table-header">
-        <span class="imp-h-idx"></span>
-        <span class="imp-h-name">Producto</span>
-        <span class="imp-h-cat">Cat</span>
-        <span class="imp-h-margin">Margen</span>
-        <span class="imp-h-rev">Revenue</span>
-        <span class="imp-h-neto">Ganancia neta</span>
-      </div>
-      <div class="imp-list">
-        ${importanRows}
-      </div>
-      <div class="slide-footer">
-        <span>ATTICK & KELLER • INFORME RAYO</span>
-      </div>
-    </div>`)
-  } else {
-    slides.push(emptySlide('\u{1F525} LO QUE IMPORTA'))
-  }
-
-  // ═══ SLIDE 6 — LO QUE IMPORTA (8-15) ═══
-  if (hasMargins && margins!.importan.length > 7) {
-    const rest8 = margins!.importan.slice(7, 15)
-    const totalMarginBruto = margins!.kpis.margin_bruto
-    const top15Bruto = margins!.importan.slice(0, 15).reduce((s, p) => s + Number(p.margin_bruto || 0), 0)
-    const top15Pct = totalMarginBruto > 0 ? Math.round((top15Bruto / totalMarginBruto) * 100) : 0
-
-    const importanRows = rest8.map((p, i) => {
-      const name = (p.product_name || '').length > 22
-        ? `<span class="imp-name" title="${p.product_name.replace(/"/g, '&quot;')}">${p.product_name.substring(0, 22)}…</span>`
-        : `<span class="imp-name">${p.product_name}</span>`
-      return `<div class="imp-row">
-        <span class="imp-idx">${i + 8}</span>
-        ${name}
-        <span class="imp-cat">${catLetter(p.macro_category)}</span>
-        <span class="imp-margin">${Math.round(p.margin_pct)}%</span>
-        <span class="imp-rev">${fmt(p.revenue)}</span>
-        <span class="imp-neto">${fmt(p.margin_bruto)}</span>
-      </div>`
-    }).join('')
-
-    slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">\u{1F525} LO QUE IMPORTA</span>
-      </div>
-      <div class="slide-subtitle">Mayor ganancia neta — proteger (continuación)</div>
-      <div class="imp-table-header">
-        <span class="imp-h-idx"></span>
-        <span class="imp-h-name">Producto</span>
-        <span class="imp-h-cat">Cat</span>
-        <span class="imp-h-margin">Margen</span>
-        <span class="imp-h-rev">Revenue</span>
-        <span class="imp-h-neto">Ganancia neta</span>
-      </div>
-      <div class="imp-list">
-        ${importanRows}
-      </div>
-      <div class="imp-footer-note">
-        Estos 15 productos generan el ${top15Pct}% de la ganancia neta total
-      </div>
-      <div class="slide-footer">
-        <span>ATTICK & KELLER • INFORME RAYO</span>
-      </div>
-    </div>`)
-  } else if (hasMargins) {
-    // Fewer than 8 importan — still show the summary note
-    const totalMarginBruto = margins!.kpis.margin_bruto
-    const topBruto = margins!.importan.reduce((s, p) => s + Number(p.margin_bruto || 0), 0)
-    const topPct = totalMarginBruto > 0 ? Math.round((topBruto / totalMarginBruto) * 100) : 0
-
-    slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">\u{1F525} LO QUE IMPORTA</span>
-      </div>
-      <div class="empty-state">
-        <div class="imp-footer-note" style="padding:24px">
-          Estos ${margins!.importan.length} productos generan el ${topPct}% de la ganancia neta total
+    const rows = top7.map((p, i) => {
+      const name = (p.product_name || '').length > 28
+        ? p.product_name.substring(0, 28) + '…'
+        : p.product_name
+      const barPct = maxMarginPct > 0 ? (p.margin_pct / maxMarginPct) * 100 : 0
+      const barColor = p.margin_pct > 50 ? '#C9A94E' : p.margin_pct > 30 ? '#E8D48B' : '#A0522D'
+      return `<div class="importa-row">
+        <div class="importa-num">${i + 1}</div>
+        <div class="importa-body">
+          <div class="importa-name">${name}</div>
+          <div class="importa-bar-track"><div class="importa-bar-fill" style="width:${barPct.toFixed(1)}%;background:${barColor}"></div></div>
         </div>
+        <div class="importa-val">${fmt(p.revenue)}</div>
+        <div class="importa-pct">${Math.round(p.margin_pct)}%</div>
+      </div>`
+    }).join('')
+
+    slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">LO QUE IMPORTA</span>
+      </div>
+      <div class="slide-subtitle">Top 7 por ganancia neta — proteger a toda costa</div>
+      <div class="importa-wrap">
+        ${rows}
       </div>
       <div class="slide-footer">
         <span>ATTICK & KELLER • INFORME RAYO</span>
       </div>
     </div>`)
   } else {
-    slides.push(emptySlide('\u{1F525} LO QUE IMPORTA'))
+    slides.push(emptySlide('LO QUE IMPORTA'))
   }
 
-  // ═══ SLIDE 7 — COMPOSICIÓN DEL MARGEN ═══
+  // ═══ SLIDE 6 — COMPOSICIÓN DEL MARGEN ═══
   if (hasMargins && margins!.resumen_ejecutivo.categorias.length > 0) {
     const cats = margins!.resumen_ejecutivo.categorias
     const totalMargin = cats.reduce((s, c) => s + (Number(c.revenue || 0) * Number(c.margin_pct || 0) / 100), 0)
+    const totalRevenue = cats.reduce((s, c) => s + Number(c.revenue || 0), 0)
+    const maxSegPct = Math.max(...cats.map(c => totalMargin > 0 ? (Number(c.revenue || 0) * Number(c.margin_pct || 0) / 100) / totalMargin * 100 : 0), 1)
 
-    const bars = cats.map(c => {
+    const rows = cats.map(c => {
       const catMargin = Number(c.revenue || 0) * Number(c.margin_pct || 0) / 100
-      const segPct = totalMargin > 0 ? Math.round((catMargin / totalMargin) * 100) : 0
+      const segPct = totalMargin > 0 ? (catMargin / totalMargin) * 100 : 0
       const color = catColor(c.categoria)
-      return `<div class="comp-row">
-        <div class="comp-bar-wrap">
-          <div class="comp-bar-fill" style="width:${Math.max(segPct, 1)}%;background:${color}"></div>
-        </div>
-        <span class="comp-label">${c.categoria}</span>
-        <span class="comp-pct">${segPct}%</span>
+      const barWidth = maxSegPct > 0 ? (segPct / maxSegPct) * 100 : 0
+      return `<div class="compo-row">
+        <div class="compo-label">${c.categoria}</div>
+        <div class="compo-bar-track"><div class="compo-bar-fill" style="width:${barWidth.toFixed(1)}%;background:${color}"></div></div>
+        <div class="compo-pct">${segPct.toFixed(1)}%</div>
+        <div class="compo-rev">${fmt(c.revenue)}</div>
+        <div class="compo-margen">${c.margin_pct}% margen</div>
       </div>`
     }).join('')
 
@@ -683,9 +616,9 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
       <div class="slide-header">
         <span class="slide-hdr-title">COMPOSICIÓN DEL MARGEN</span>
       </div>
-      <div class="slide-subtitle">Contribución de cada categoría al margen bruto total</div>
-      <div class="comp-wrap">
-        ${bars}
+      <div class="slide-subtitle">Contribución por categoría al margen bruto</div>
+      <div class="compo-wrap">
+        ${rows}
       </div>
       <div class="slide-footer">
         <span>ATTICK & KELLER • INFORME RAYO</span>
@@ -695,7 +628,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     slides.push(emptySlide('COMPOSICIÓN DEL MARGEN'))
   }
 
-  // ═══ SLIDE 8 — ESTRELLAS vs LASTRE ═══
+  // ═══ SLIDE 7 — ESTRELLAS vs LASTRE ═══
   if (hasMargins) {
     const estrellas = [...margins!.importan]
       .sort((a, b) => Number(b.margin_pct || 0) - Number(a.margin_pct || 0))
@@ -703,28 +636,27 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     const lastre = [...margins!.drenan]
       .sort((a, b) => Number(a.margin_pct || 0) - Number(b.margin_pct || 0))
       .slice(0, 5)
+    const maxStarPct = Math.max(...estrellas.map(p => p.margin_pct || 0), 1)
+    const maxLastrePct = Math.max(...lastre.map(p => Math.abs(p.margin_pct || 0)), 1)
 
-    const estrellasHtml = estrellas.map(p => {
-      const name = (p.product_name || '').length > 18
-        ? p.product_name.substring(0, 18) + '…'
-        : p.product_name
-      const mrgPct = Math.round(Number(p.margin_pct || 0))
-      return `<div class="ev-item">
-        <div class="ev-name" title="${p.product_name.replace(/"/g, '&quot;')}">${name}</div>
-        <div class="ev-bar-track"><div class="ev-bar-fill" style="width:${Math.min(mrgPct, 100)}%;background:${mrgPct >= 50 ? '#4ADE80' : mrgPct >= 30 ? '#E8D48B' : '#F87171'}"></div></div>
-        <div class="ev-val">${fmt(p.margin_bruto)} <span class="ev-pct">${mrgPct}%</span></div>
+    const estrellasRows = estrellas.map(p => {
+      const name = (p.product_name || '').length > 18 ? p.product_name.substring(0, 18) + '…' : p.product_name
+      const barW = maxStarPct > 0 ? (p.margin_pct / maxStarPct) * 100 : 0
+      return `<div class="star-row">
+        <div class="star-name" title="${p.product_name.replace(/"/g, '&quot;')}">${name}</div>
+        <div class="star-bar-track"><div class="star-bar-fill star-bar-green" style="width:${barW.toFixed(1)}%"></div></div>
+        <div class="star-val">${fmt(p.margin_bruto)} <span class="star-pct">${Math.round(p.margin_pct)}%</span></div>
       </div>`
     }).join('')
 
-    const lastreHtml = lastre.map(p => {
-      const name = (p.product_name || '').length > 18
-        ? p.product_name.substring(0, 18) + '…'
-        : p.product_name
-      const mrgPct = Math.round(Number(p.margin_pct || 0))
-      return `<div class="ev-item">
-        <div class="ev-name" title="${p.product_name.replace(/"/g, '&quot;')}">${name}</div>
-        <div class="ev-bar-track"><div class="ev-bar-fill" style="width:${Math.min(Math.abs(mrgPct), 100)}%;background:${mrgPct < 0 ? '#F87171' : mrgPct < 30 ? '#F87171' : '#E8D48B'}"></div></div>
-        <div class="ev-val">${fmt(p.margin_bruto)} <span class="ev-pct">${mrgPct}%</span></div>
+    const lastreRows = lastre.map(p => {
+      const name = (p.product_name || '').length > 18 ? p.product_name.substring(0, 18) + '…' : p.product_name
+      const barW = maxLastrePct > 0 ? (Math.abs(p.margin_pct) / maxLastrePct) * 100 : 0
+      const colorClass = p.margin_pct < 0 ? 'star-bar-red' : p.margin_pct < 30 ? 'star-bar-yellow' : 'star-bar-green'
+      return `<div class="star-row">
+        <div class="star-name" title="${p.product_name.replace(/"/g, '&quot;')}">${name}</div>
+        <div class="star-bar-track"><div class="star-bar-fill ${colorClass}" style="width:${barW.toFixed(1)}%"></div></div>
+        <div class="star-val">${fmt(p.margin_bruto)} <span class="star-pct">${Math.round(p.margin_pct)}%</span></div>
       </div>`
     }).join('')
 
@@ -732,16 +664,17 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
       <div class="slide-header">
         <span class="slide-hdr-title">ESTRELLAS vs LASTRE</span>
       </div>
-      <div class="ev-grid">
-        <div class="ev-col">
-          <div class="ev-col-title text-green">⭐ ESTRELLAS</div>
-          <div class="ev-col-sub">Top 5 por margen bruto</div>
-          ${estrellasHtml}
+      <div class="slide-subtitle">Top 5 y bottom 5 por margen bruto</div>
+      <div class="star-grid">
+        <div class="star-col">
+          <div class="star-col-title text-green">⭐ ESTRELLAS</div>
+          <div class="star-col-sub">Top 5 por margen bruto</div>
+          ${estrellasRows}
         </div>
-        <div class="ev-col">
-          <div class="ev-col-title text-red">⚠ LASTRE</div>
-          <div class="ev-col-sub">Bottom 5 por margen bruto</div>
-          ${lastreHtml}
+        <div class="star-col">
+          <div class="star-col-title text-red">⚠ LASTRE</div>
+          <div class="star-col-sub">Bottom 5 por margen bruto</div>
+          ${lastreRows}
         </div>
       </div>
       <div class="slide-footer">
@@ -752,7 +685,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     slides.push(emptySlide('ESTRELLAS vs LASTRE'))
   }
 
-  // ═══ SLIDE 9 — DATOS QUE IMPORTAN ═══
+  // ═══ SLIDE 8 — DATOS QUE IMPORTAN ═══
   if (hasMargins) {
     const mk = margins!.kpis
     const cats = margins!.resumen_ejecutivo.categorias
@@ -760,44 +693,44 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     const bestCat = cats.length > 0
       ? [...cats].sort((a, b) => Number(b.margin_pct || 0) - Number(a.margin_pct || 0))[0]
       : null
+    const worstCat = cats.length > 0
+      ? [...cats].sort((a, b) => Number(a.margin_pct || 0) - Number(b.margin_pct || 0))[0]
+      : null
     const comidaCat = cats.find(c => c.categoria.toUpperCase().includes('COMID'))
-    const vinosCat = cats.find(c => c.categoria.toUpperCase().includes('VINO'))
     const bebidasCat = cats.find(c => c.categoria.toUpperCase().includes('BEBID'))
 
-    const frases: string[] = []
+    const bullets: string[] = []
 
     if (topImportan) {
-      frases.push(`${topImportan.product_name} genera ${fmt(topImportan.margin_bruto)} netos — el producto más rentable del período`)
+      bullets.push(`${topImportan.product_name} genera ${fmt(topImportan.margin_bruto)} netos — el producto más rentable del período`)
     }
-
-    if (bebidasCat) {
-      frases.push(`BEBIDAS tiene ${bebidasCat.margin_pct}% de margen con solo ${bebidasCat.count} productos`)
+    if (bestCat) {
+      bullets.push(`${bestCat.categoria} lidera con ${bestCat.margin_pct}% de margen sobre ${fmt(bestCat.revenue)}`)
     }
-
     if (comidaCat) {
-      frases.push(`COMIDA mueve ${fmt(comidaCat.revenue)} pero deja ${comidaCat.margin_pct}% de margen`)
+      bullets.push(`COMIDA mueve ${fmt(comidaCat.revenue)} pero deja ${comidaCat.margin_pct}% de margen`)
+    }
+    if (worstCat && worstCat.categoria !== bestCat?.categoria) {
+      bullets.push(`${worstCat.categoria} muestra solo ${worstCat.margin_pct}% de margen — la categoría más débil`)
+    }
+    if (bebidasCat) {
+      bullets.push(`BEBIDAS tiene ${bebidasCat.margin_pct}% de margen con ${bebidasCat.count} productos`)
+    }
+    if (bullets.length === 0) {
+      bullets.push(`Margen general: ${mk.margin_pct.toFixed(1)}% sobre ${fmt(mk.total_revenue)} en ventas`)
+      bullets.push(`${mk.total_productos} productos analizados en el período`)
     }
 
-    if (vinosCat) {
-      frases.push(`VINOS es la categoría más débil: ${vinosCat.margin_pct}% margen, solo ${vinosCat.count} productos`)
-    }
-
-    // Fallback generic insight if we have data but couldn't compute specifics
-    if (frases.length === 0) {
-      frases.push(`Margen general: ${mk.margin_pct.toFixed(1)}% sobre ${fmt(mk.total_revenue)} en ventas`)
-      frases.push(`${mk.total_productos} productos analizados en el período`)
-    }
-
-    const frasesHtml = frases.map(f =>
-      `<div class="datos-item"><span class="datos-bullet">•</span> ${f}</div>`
+    const bulletsHtml = bullets.map(f =>
+      `<div class="dato-item"><span class="dato-bullet">•</span><span class="dato-text">${f}</span></div>`
     ).join('')
 
     slides.push(`<div class="slide">
       <div class="slide-header">
         <span class="slide-hdr-title">DATOS QUE IMPORTAN</span>
       </div>
-      <div class="datos-wrap">
-        ${frasesHtml}
+      <div class="dato-wrap">
+        ${bulletsHtml}
       </div>
       <div class="slide-footer">
         <span>ATTICK & KELLER • INFORME RAYO</span>
@@ -807,7 +740,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     slides.push(emptySlide('DATOS QUE IMPORTAN'))
   }
 
-  // ═══ SLIDE 10 — PARA LA JUNTA ═══
+  // ═══ SLIDE 9 — PARA LA JUNTA ═══
   if (hasMargins) {
     const mk = margins!.kpis
     const cats = margins!.resumen_ejecutivo.categorias
@@ -815,16 +748,16 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     const drenaCount = margins!.drenan.length
 
     const bebidasMargin = bebidasCat ? `${bebidasCat.margin_pct}%` : '--'
-    const juntaItems = [
-      { icon: '✅', color: 'text-green', text: `BEBIDAS lidera con ${bebidasMargin} margen → mantener precios y promociones` },
-      { icon: '⚠', color: 'text-yellow', text: `${drenaCount} productos en el 5% inferior por ganancia neta → evaluar menú` },
-      { icon: '\u{1F525}', color: 'text-gold', text: `Margen general ${mk.margin_pct.toFixed(1)}% → saludable, sobre meta del 30%` },
+    const tarjetas = [
+      { icon: '✅', border: '#4ADE80', text: `BEBIDAS lidera con ${bebidasMargin} margen → mantener precios y promociones` },
+      { icon: '⚠', border: '#E8D48B', text: `${drenaCount} productos en el 5% inferior por ganancia neta → evaluar menú` },
+      { icon: '◉', border: '#C9A94E', text: `Margen general ${mk.margin_pct.toFixed(1)}% → saludable, sobre meta del 30%` },
     ]
 
-    const juntaHtml = juntaItems.map(item =>
-      `<div class="junta-item">
-        <span class="junta-icon ${item.color}">${item.icon}</span>
-        <span class="junta-text">${item.text}</span>
+    const tarjetasHtml = tarjetas.map(t =>
+      `<div class="junta-card" style="border-left:3px solid ${t.border}">
+        <span class="junta-icon">${t.icon}</span>
+        <span class="junta-text">${t.text}</span>
       </div>`
     ).join('')
 
@@ -832,8 +765,9 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
       <div class="slide-header">
         <span class="slide-hdr-title">PARA LA JUNTA</span>
       </div>
+      <div class="slide-subtitle">3 recomendaciones accionables</div>
       <div class="junta-wrap">
-        ${juntaHtml}
+        ${tarjetasHtml}
       </div>
       <div class="slide-footer">
         <span>Attick & Keller • Informe Rayo • ${todayLabel}</span>
@@ -842,6 +776,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   } else {
     slides.push(emptySlide('PARA LA JUNTA'))
   }
+
 
   // ── Assemble full HTML ──
   return `<!DOCTYPE html>
@@ -1270,228 +1205,242 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   }
   .cat-card-spacer { color: #2A2A2A; font-size: 8px; }
 
-  /* ═══ SLIDE 5 & 6 — LO QUE IMPORTA ═══ */
-  .imp-table-header {
-    display: flex;
-    align-items: center;
-    padding: 0 4px 6px;
-    border-bottom: 1px solid #2A2A2A;
-    margin-bottom: 4px;
-    flex-shrink: 0;
-    font-family: 'Inter', sans-serif;
-    font-size: 9px;
-    color: #706860;
-    text-transform: uppercase;
-  }
-  .imp-h-idx { width: 20px; flex-shrink: 0; }
-  .imp-h-name { flex: 1; min-width: 0; }
-  .imp-h-cat { width: 28px; text-align: center; flex-shrink: 0; }
-  .imp-h-margin { width: 42px; text-align: right; flex-shrink: 0; }
-  .imp-h-rev { width: 58px; text-align: right; flex-shrink: 0; }
-  .imp-h-neto { width: 64px; text-align: right; flex-shrink: 0; }
-  .imp-list {
+  /* ═══ SLIDE 5 — LO QUE IMPORTA (barras) ═══ */
+  .importa-wrap {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    overflow: hidden;
-  }
-  .imp-row {
-    display: flex;
-    align-items: center;
-    padding: 5px 4px;
-    border-bottom: 1px solid #1A1A1A;
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-  }
-  .imp-idx {
-    width: 20px;
-    color: #706860;
-    font-size: 9px;
-    flex-shrink: 0;
-  }
-  .imp-name {
-    flex: 1;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: #F0EDE8;
-    font-weight: 500;
-  }
-  .imp-cat {
-    width: 28px;
-    text-align: center;
-    color: #706860;
-    font-size: 9px;
-    flex-shrink: 0;
-  }
-  .imp-margin {
-    width: 42px;
-    text-align: right;
-    color: #A09890;
-    flex-shrink: 0;
-  }
-  .imp-rev {
-    width: 58px;
-    text-align: right;
-    color: #A09890;
-    flex-shrink: 0;
-  }
-  .imp-neto {
-    width: 64px;
-    text-align: right;
-    color: #C9A94E;
-    font-weight: 600;
-    flex-shrink: 0;
-  }
-  .imp-footer-note {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    color: #C9A94E;
-    text-align: center;
-    padding-top: 8px;
-    flex-shrink: 0;
-  }
-
-  /* ═══ SLIDE 7 — COMPOSICIÓN DEL MARGEN ═══ */
-  .comp-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+    gap: 10px;
     justify-content: center;
-    gap: 14px;
   }
-  .comp-row {
+  .importa-row {
     display: flex;
     align-items: center;
     gap: 10px;
+    padding: 6px 0;
   }
-  .comp-bar-wrap {
+  .importa-num {
+    font-family: 'Source Serif 4', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #C9A94E;
+    width: 24px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .importa-body {
     flex: 1;
-    height: 22px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .importa-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: #F0EDE8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .importa-bar-track {
+    height: 8px;
     background: #1A1A1A;
     overflow: hidden;
+    border-radius: 0;
   }
-  .comp-bar-fill {
+  .importa-bar-fill {
+    height: 100%;
+    min-width: 2px;
+    transition: none;
+  }
+  .importa-val {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: #A09890;
+    text-align: right;
+    width: 52px;
+    flex-shrink: 0;
+  }
+  .importa-pct {
+    font-family: 'Source Serif 4', serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #C9A94E;
+    text-align: right;
+    width: 34px;
+    flex-shrink: 0;
+  }
+
+  /* ═══ SLIDE 6 — COMPOSICIÓN DEL MARGEN ═══ */
+  .compo-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: center;
+  }
+  .compo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+  }
+  .compo-label {
+    width: 72px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: #F0EDE8;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .compo-bar-track {
+    flex: 1;
+    height: 16px;
+    background: #1A1A1A;
+    overflow: hidden;
+    border-radius: 0;
+  }
+  .compo-bar-fill {
     height: 100%;
     min-width: 2px;
   }
-  .comp-label {
-    width: 80px;
-    font-family: 'Inter', sans-serif;
+  .compo-pct {
+    width: 42px;
+    font-family: 'Source Serif 4', serif;
     font-size: 11px;
-    color: #A09890;
-    flex-shrink: 0;
-  }
-  .comp-pct {
-    width: 36px;
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     color: #F0EDE8;
     text-align: right;
     flex-shrink: 0;
   }
+  .compo-rev {
+    width: 54px;
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: #A09890;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .compo-margen {
+    width: 54px;
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: #706860;
+    text-align: right;
+    flex-shrink: 0;
+  }
 
-  /* ═══ SLIDE 8 — ESTRELLAS vs LASTRE ═══ */
-  .ev-grid {
+  /* ═══ SLIDE 7 — ESTRELLAS vs LASTRE ═══ */
+  .star-grid {
     flex: 1;
     display: flex;
-    gap: 12px;
+    gap: 14px;
   }
-  .ev-col {
+  .star-col {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
-  .ev-col-title {
+  .star-col-title {
     font-family: 'Source Serif 4', serif;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
-    margin-bottom: 0;
   }
-  .ev-col-sub {
+  .star-col-sub {
     font-family: 'Inter', sans-serif;
     font-size: 9px;
     color: #706860;
     margin-bottom: 4px;
   }
-  .ev-item {
+  .star-row {
+    padding: 8px 10px;
     background: #1A1A1A;
     border: 1px solid #2A2A2A;
-    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
-  .ev-name {
+  .star-name {
     font-family: 'Inter', sans-serif;
-    font-size: 11px;
+    font-size: 10px;
     color: #F0EDE8;
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 4px;
   }
-  .ev-bar-track {
-    height: 6px;
+  .star-bar-track {
+    height: 5px;
     background: #0D0D0D;
     overflow: hidden;
-    margin-bottom: 3px;
   }
-  .ev-bar-fill {
+  .star-bar-fill {
     height: 100%;
     min-width: 2px;
   }
-  .ev-val {
+  .star-bar-green { background: #4ADE80; }
+  .star-bar-yellow { background: #E8D48B; }
+  .star-bar-red { background: #F87171; }
+  .star-val {
     font-family: 'Inter', sans-serif;
     font-size: 9px;
     color: #A09890;
+    display: flex;
+    justify-content: space-between;
   }
-  .ev-pct {
+  .star-pct {
     font-weight: 600;
     color: #F0EDE8;
   }
 
-  /* ═══ SLIDE 9 — DATOS QUE IMPORTAN ═══ */
-  .datos-wrap {
+  /* ═══ SLIDE 8 — DATOS QUE IMPORTAN ═══ */
+  .dato-wrap {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 18px;
   }
-  .datos-item {
+  .dato-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.55;
+  }
+  .dato-bullet {
+    font-family: 'Source Serif 4', serif;
+    font-size: 14px;
+    color: #C9A94E;
+    flex-shrink: 0;
+    line-height: 1.35;
+    margin-top: 1px;
+  }
+  .dato-text {
     font-family: 'Inter', sans-serif;
     font-size: 12px;
     color: #E0D8CC;
-    line-height: 1.6;
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  .datos-bullet {
-    color: #C9A94E;
-    font-size: 14px;
-    flex-shrink: 0;
-    line-height: 1.4;
   }
 
-  /* ═══ SLIDE 10 — PARA LA JUNTA ═══ */
+  /* ═══ SLIDE 9 — PARA LA JUNTA ═══ */
   .junta-wrap {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 20px;
+    gap: 14px;
   }
-  .junta-item {
+  .junta-card {
     display: flex;
     align-items: flex-start;
     gap: 12px;
     padding: 14px 16px;
     background: #1A1A1A;
-    border: 1px solid #2A2A2A;
   }
   .junta-icon {
     font-size: 20px;
@@ -1504,6 +1453,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     color: #F0EDE8;
     line-height: 1.5;
   }
+
 </style>
 </head>
 <body>

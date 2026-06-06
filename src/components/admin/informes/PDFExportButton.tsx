@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Lightning } from '@phosphor-icons/react'
 
 interface PDFExportButtonProps {
@@ -15,38 +15,64 @@ export function PDFExportButton({ data, from, to, analysis, productHourly }: PDF
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleDownload = async () => {
+  const handleDownload = useCallback(async () => {
     setLoading(true)
     setError(null)
-    try {
-      const res = await fetch('/api/admin/informes-rayo/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data, from, to, analysis, productHourly }),
-        credentials: 'include',
-      })
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Error generando PDF' }))
-        throw new Error(err.error || 'Error generando PDF')
+    let container: HTMLDivElement | null = null
+    try {
+      const [html2canvasModule, jsPDFModule, pdfGenModule] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+        import('@/lib/informes-rayo/pdf-generator'),
+      ])
+      const html2canvas = html2canvasModule.default
+      const { jsPDF } = jsPDFModule
+      const { generatePDFHtml } = pdfGenModule
+
+      const html = generatePDFHtml({ data: data as any, from, to, analysis, productHourly })
+
+      // Render HTML in hidden container
+      container = document.createElement('div')
+      container.id = '__pdf_temp__'
+      container.style.cssText =
+        'position:fixed;left:0;top:0;width:794px;z-index:99999;visibility:visible;background:#0A0A0A;'
+      container.innerHTML = html
+      document.body.appendChild(container)
+
+      // Wait for fonts to load
+      await new Promise(r => setTimeout(r, 2000))
+      try { await document.fonts.ready } catch (_) {}
+
+      // Capture each .page
+      const pages = container.querySelectorAll('.page')
+      if (pages.length === 0) throw new Error('No se encontraron páginas en la plantilla')
+
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pw = pdf.internal.pageSize.getWidth()
+      const ph = pdf.internal.pageSize.getHeight()
+
+      for (let i = 0; i < pages.length; i++) {
+        const pageEl = pages[i] as HTMLElement
+        const canvas = await html2canvas(pageEl, {
+          scale: 3,
+          useCORS: true,
+          backgroundColor: '#0A0A0A',
+          logging: false,
+        })
+        if (i > 0) pdf.addPage()
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pw, ph)
       }
 
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `Informe-Rayo-${from}-${to}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      pdf.save(`Informe-Rayo-${from}-${to}.pdf`)
     } catch (err: any) {
       console.error('[PDF] Error:', err)
       setError(err.message || 'Error generando PDF')
     } finally {
+      if (container) document.body.removeChild(container)
       setLoading(false)
     }
-  }
+  }, [data, from, to, analysis, productHourly])
 
   return (
     <div className="flex items-center gap-2">
@@ -60,9 +86,7 @@ export function PDFExportButton({ data, from, to, analysis, productHourly }: PDF
         <Lightning size={16} weight="fill" />
         {loading ? 'Generando PDF...' : 'Descargar PDF'}
       </button>
-      {error && (
-        <span className="text-xs text-red-400">{error}</span>
-      )}
+      {error && <span className="text-xs text-red-400">{error}</span>}
     </div>
   )
 }

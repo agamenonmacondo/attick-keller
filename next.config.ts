@@ -2,10 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
-  serverExternalPackages: ['playwright-core', '@sparticuz/chromium'],
-  outputFileTracingIncludes: {
-    '/api/admin/informes-rayo/pdf': ['./node_modules/@sparticuz/chromium/bin/*'],
-  },
   turbopack: {
     resolveAlias: {
       'victory-vendor/d3-shape': 'd3-shape',

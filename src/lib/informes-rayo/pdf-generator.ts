@@ -352,430 +352,214 @@ function emptySlide(title: string): string {
 // MAIN GENERATOR
 // ═══════════════════════════════════════════════════════════════
 export function generatePDFHtml(input: PDFGeneratorInput): string {
-  const { data, from, to, margins } = input
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN GENERATOR — Light Editorial Theme (A&K Rústico Moderno)
+// ═══════════════════════════════════════════════════════════════
+export function generatePDFHtml(input: PDFGeneratorInput): string {
+  const { data, from, to, margins, analysis } = input
 
   const periodLabel = formatDateEs(from) + (from !== to ? ' — ' + formatDateEs(to) : '')
   const todayLabel = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
-  const dayName = from ? formatDayName(from) : ''
   const hasMargins = !!(margins && margins.kpis && margins.kpis.total_productos > 0)
 
-  // ── Build slides ──
   const slides: string[] = []
 
-  // ═══ SLIDE 1 — PORTADA (Stitch Lightning Theme) ═══
+  // ═══ SLIDE 1 — PORTADA ═══
   slides.push(`<div class="slide slide-cover">
-    <div class="cover-top">
-      <span class="cover-top-label">ATTICK & KELLER</span>
-      <span class="cover-top-series">Executive Report Series</span>
+    <div class="cover-top"><div class="cover-logo">Attick &amp; Keller</div><div class="cover-date">${todayLabel}</div></div>
+    <div class="cover-main">
+      <div class="cover-script">Informe de rentabilidad</div>
+      <div class="cover-title">Informe<br>Rayo</div>
+      <div class="cover-sub">Análisis operativo de márgenes, productos y decisiones para la junta directiva.</div>
     </div>
-    <div class="cover-center">
-      <div class="cover-bolt">⚡</div>
-      <div class="cover-title">INFORME<br>RAYO</div>
-      <div class="cover-line"></div>
-      <div class="cover-period">${periodLabel}</div>
-    </div>
-    <div class="cover-bottom">
-      <div class="cover-bottom-line"></div>
-      <div class="cover-confidencial">Confidencial</div>
-    </div>
-    <div class="cover-flourish">⚡</div>
+    <div class="cover-footer"><div class="cover-period">${periodLabel}</div><div class="cover-page">01 / 10</div></div>
+    <div class="watermark">A&amp;K · Confidencial</div>
   </div>`)
 
   // ═══ SLIDE 2 — KPIs VITALES ═══
   if (hasMargins) {
     const mk = margins!.kpis
-    const marginVsMeta = mk.margin_pct - 30
-    const ventasSemaforo = mk.total_revenue > 0 ? semaforo(60, 50) : semaforo(0) // Always green for positive revenue
-    const margenSemaforo = semaforo(mk.margin_pct, 30)
-
     slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">MÉTRICAS CLAVE</span>
+      <div class="slide-header"><div class="slide-label">Resumen ejecutivo</div><div class="slide-title">Métricas clave<br>del período</div></div>
+      <div class="metrics-grid">
+        <div class="metric-card"><div class="metric-value">${fmt(mk.total_revenue)}</div><div class="metric-delta">${mk.total_revenue > 0 ? '↑ vs período anterior' : '—'}</div><div class="metric-name">Ventas totales</div></div>
+        <div class="metric-card"><div class="metric-value">${mk.margin_pct.toFixed(1)}%</div><div class="metric-delta">${mk.margin_pct >= 30 ? '↑ Sobre meta (30%)' : '↓ Bajo meta'}</div><div class="metric-name">Margen general</div></div>
+        <div class="metric-card"><div class="metric-value">${fmtN(mk.total_productos)}</div><div class="metric-delta">con margen calculable</div><div class="metric-name">Productos</div></div>
+        <div class="metric-card"><div class="metric-value">${fmt(mk.margin_bruto)}</div><div class="metric-delta">ganancia neta total</div><div class="metric-name">Margen bruto</div></div>
       </div>
-      <div class="kpi-vital-wrap">
-        <div class="kpi-vital-card">
-          <div class="kpi-vital-label">VENTAS</div>
-          <div class="kpi-vital-val">${fmt(mk.total_revenue)}</div>
-          <div class="kpi-vital-sub">${ventasSemaforo} vs período</div>
-        </div>
-        <div class="kpi-vital-card">
-          <div class="kpi-vital-label">MARGEN BRUTO</div>
-          <div class="kpi-vital-val">${mk.margin_pct.toFixed(1)}%</div>
-          <div class="kpi-vital-sub">${margenSemaforo} vs meta (30%)</div>
-        </div>
-        <div class="kpi-vital-card">
-          <div class="kpi-vital-label">PRODUCTOS</div>
-          <div class="kpi-vital-val">${mk.total_productos}</div>
-          <div class="kpi-vital-sub">con margen calculable</div>
-        </div>
-      </div>
-      <div class="slide-footer">
-        <span>ATTICK & KELLER • INFORME RAYO</span>
-      </div>
+      <div class="watermark">A&amp;K · Confidencial</div>
     </div>`)
-  } else {
-    slides.push(emptySlide('MÉTRICAS CLAVE'))
-  }
+  } else { slides.push(emptySlide('MÉTRICAS CLAVE')) }
 
   // ═══ SLIDE 3 — LO QUE DRENA ═══
   if (hasMargins && margins!.drenan.length > 0) {
-    const drenaRows = margins!.drenan.slice(0, 5).map(p => {
-      const name = (p.product_name || '').length > 28
-        ? `<span class="drena-name" title="${p.product_name.replace(/"/g, '&quot;')}">${p.product_name.substring(0, 28)}…</span>`
-        : `<span class="drena-name">${p.product_name}</span>`
-      const mbFormatted = p.margin_bruto < 0
-        ? `<span class="text-red">-${fmt(Math.abs(p.margin_bruto))}</span>`
-        : fmt(p.margin_bruto)
-      return `<div class="drena-row">
-        ${name}
-        <div class="drena-meta">
-          <span class="drena-cat">${catLetter(p.macro_category)} ${p.macro_category}</span>
-          <span class="drena-sep">•</span>
-          <span class="drena-margin">${Math.round(p.margin_pct)}%</span>
-          <span class="drena-sep">•</span>
-          <span class="drena-rev">${fmt(p.revenue)}</span>
-          <span class="drena-sep">•</span>
-          <span>Neto: ${mbFormatted}</span>
-        </div>
-        ${p.diagnostico ? `<div class="drena-diag">${p.diagnostico.substring(0, 120)}${p.diagnostico.length > 120 ? '…' : ''}</div>` : ''}
+    const drenaRows = margins!.drenan.slice(0, 4).map(p => {
+      const name = (p.product_name || '').length > 28 ? p.product_name.substring(0, 28) + '…' : p.product_name
+      const barColor = p.margin_pct < 30 ? '#A0522D' : '#D4922A'
+      return `<div class="drena-item ${p.margin_pct < 30 ? '' : 'warning'}">
+        <div class="drena-header"><span class="drena-name">${name}</span><div class="drena-metric">${fmt(p.revenue)} · ${p.macro_category}</div></div>
+        <div class="drena-bar-row"><div class="drena-bar"><div class="drena-bar-fill" style="width:${Math.max(p.margin_pct, 5)}%;background:${barColor}"></div></div><div class="drena-pct">${Math.round(p.margin_pct)}%</div></div>
       </div>`
     }).join('')
-
+    const insight = margins!.drenan[0]?.diagnostico ? margins!.drenan[0].diagnostico.substring(0, 140) + (margins!.drenan[0].diagnostico.length > 140 ? '…' : '') : 'Productos en el 5% inferior por ganancia neta requieren atención inmediata.'
     slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">⚠ LO QUE DRENA</span>
-      </div>
-      <div class="slide-subtitle">Productos en el 5% inferior por ganancia neta</div>
-      <div class="drena-list">
-        ${drenaRows}
-      </div>
-      <div class="slide-footer">
-        <span>ATTICK & KELLER • INFORME RAYO</span>
-      </div>
+      <div class="slide-header"><div class="slide-label">Diagnóstico operativo</div><div class="slide-title">Lo que drena<br>el negocio</div></div>
+      <div class="drena-list">${drenaRows}</div>
+      <div class="drena-insight"><div class="drena-insight-text"><strong>⚠ MARGEN BAJO PRESIÓN</strong> — ${insight}</div></div>
+      <div class="watermark">A&amp;K · Confidencial</div>
     </div>`)
-  } else {
-    slides.push(emptySlide('⚠ LO QUE DRENA'))
-  }
+  } else { slides.push(emptySlide('LO QUE DRENA')) }
 
-  // ═══ SLIDE 4 — POR CATEGORÍA ═══
-  if (hasMargins && margins!.resumen_ejecutivo.categorias.length > 0) {
-    const catCards = margins!.resumen_ejecutivo.categorias.map(c => {
-      const catSemaforo = semaforo(c.margin_pct, 30)
-      return `<div class="cat-card">
-        <div class="cat-card-top">
-          <span class="cat-card-icon" style="color:${catColor(c.categoria)}">${catLetter(c.categoria)}</span>
-          <span class="cat-card-name">${c.categoria}</span>
-        </div>
-        <div class="cat-card-rev">${fmt(c.revenue)}</div>
-        <div class="cat-card-margin">${c.margin_pct}% ${catSemaforo}</div>
-        <div class="cat-card-counts">
-          <span class="text-gold">\u{1F525} ${c.importan} importan</span>
-          <span class="cat-card-spacer">•</span>
-          <span class="text-red">⚠ ${c.drenan} drenan</span>
-        </div>
-      </div>`
-    }).join('')
-
-    slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">POR CATEGORÍA</span>
-      </div>
-      <div class="cat-cards-wrap">
-        ${catCards}
-      </div>
-      <div class="slide-footer">
-        <span>ATTICK & KELLER • INFORME RAYO</span>
-      </div>
-    </div>`)
-  } else {
-    slides.push(emptySlide('POR CATEGORÍA'))
-  }
-
-  // ═══ SLIDE 5 — ANÁLISIS IA ═══
-  if (input.analysis && input.analysis.length > 10) {
-    const sections = parseAnalysisSections(input.analysis)
-    if (sections.length > 0) {
-      const analysisBlocks = sections.slice(0, 5).map(s => {
-        const body = s.body.replace(/\n/g, '<br>')
-        return `<div class="analysis-block">
-          <div class="analysis-title">${s.icon} ${s.title}</div>
-          <div class="analysis-body">${body}</div>
-        </div>`
-      }).join('')
-
-      slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">ANÁLISIS INTELIGENTE</span>
-      </div>
-      <div class="slide-subtitle">Diagnóstico automatizado del período</div>
-      <div class="analysis-wrap">
-        ${analysisBlocks}
-      </div>
-      <div class="slide-footer">
-        <span>ATTICK & KELLER • INFORME RAYO</span>
-      </div>
-    </div>`)
-    }
-  }
-
-  // ═══ SLIDE 5b — GRÁFICOS (Donut + Barras) ═══
-  if (data.payments && data.payments.length > 0) {
-    const revenue = Number(data.kpis?.total_ventas ?? 0)
-    const donutHtml = buildDonutSvg(data.payments, revenue)
-    const topProds = data.topProducts?.slice(0, 5) || []
-    const maxRev = topProds.length > 0 ? Math.max(...topProds.map((p: ProductData) => Number(p.revenue ?? 0))) : 1
-    
-    const barHtml = topProds.map((p: ProductData, i: number) => {
-      const val = Number(p.revenue ?? 0)
-      const pctW = maxRev > 0 ? (val / maxRev) * 100 : 0
-      const color = i < 2 ? '#C9A94E' : i < 4 ? '#A0522D' : '#5D1528'
-      const name = (p.product_name || '').length > 22 ? p.product_name!.substring(0, 22) + '…' : (p.product_name || '-')
-      return `<div class="chart-bar-row">
-        <span class="chart-bar-label">${name}</span>
-        <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pctW.toFixed(1)}%;background:${color}"></div></div>
-        <span class="chart-bar-val">${fmt(val)}</span>
-      </div>`
-    }).join('')
-
-    slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">GRÁFICOS</span>
-      </div>
-      <div class="slide-subtitle">Distribución de ingresos y métodos de pago</div>
-      <div class="charts-donut-wrap">${donutHtml}</div>
-      <div class="charts-bar-section">
-        <div class="charts-bar-title">Top 5 Productos</div>
-        ${barHtml}
-      </div>
-      <div class="slide-footer">
-        <span>ATTICK & KELLER • INFORME RAYO</span>
-      </div>
-    </div>`)
-  }
-
-  // ═══ SLIDE 5 — LO QUE IMPORTA (TOP 1-7) ═══
+  // ═══ SLIDE 4 — LO QUE IMPORTA (TOP 1-7) ═══
   if (hasMargins && margins!.importan.length > 0) {
     const top7 = margins!.importan.slice(0, 7)
     const maxMarginPct = Math.max(...top7.map(p => p.margin_pct || 0), 1)
-
     const rows = top7.map((p, i) => {
-      const name = (p.product_name || '').length > 28
-        ? p.product_name.substring(0, 28) + '…'
-        : p.product_name
+      const name = (p.product_name || '').length > 28 ? p.product_name.substring(0, 28) + '…' : p.product_name
       const barPct = maxMarginPct > 0 ? (p.margin_pct / maxMarginPct) * 100 : 0
-      const barColor = p.margin_pct > 50 ? '#C9A94E' : p.margin_pct > 30 ? '#E8D48B' : '#A0522D'
+      const barColor = p.margin_pct > 50 ? '#C9A94E' : p.margin_pct > 30 ? '#D4B76A' : '#A0522D'
       return `<div class="importa-row">
-        <div class="importa-num">${i + 1}</div>
-        <div class="importa-body">
-          <div class="importa-name">${name}</div>
-          <div class="importa-bar-track"><div class="importa-bar-fill" style="width:${barPct.toFixed(1)}%;background:${barColor}"></div></div>
-        </div>
-        <div class="importa-val">${fmt(p.revenue)}</div>
-        <div class="importa-pct">${Math.round(p.margin_pct)}%</div>
+        <div class="importa-rank">${i + 1}</div>
+        <div class="importa-info"><div class="importa-name">${name}</div><div class="importa-bar-wrap"><div class="importa-bar"><div class="importa-bar-fill" style="width:${barPct.toFixed(1)}%;background:${barColor}"></div></div></div></div>
+        <div class="importa-right"><div class="importa-rev">${fmt(p.revenue)}</div><div class="importa-pct">${Math.round(p.margin_pct)}% margen</div></div>
       </div>`
     }).join('')
-
     slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">LO QUE IMPORTA</span>
-      </div>
-      <div class="slide-subtitle">Top 7 por ganancia neta — proteger a toda costa</div>
-      <div class="importa-wrap">
-        ${rows}
-      </div>
-      <div class="slide-footer">
-        <span>ATTICK & KELLER • INFORME RAYO</span>
-      </div>
+      <div class="slide-header"><div class="slide-label">Top performers</div><div class="slide-title">Lo que importa<br>Top 1 — 7</div></div>
+      <div class="importa-list">${rows}</div>
+      <div class="watermark">A&amp;K · Confidencial</div>
     </div>`)
-  } else {
-    slides.push(emptySlide('LO QUE IMPORTA'))
-  }
+  } else { slides.push(emptySlide('LO QUE IMPORTA')) }
 
-  // ═══ SLIDE 6 — COMPOSICIÓN DEL MARGEN ═══
+  // ═══ SLIDE 5 — COMPOSICIÓN DEL MARGEN ═══
   if (hasMargins && margins!.resumen_ejecutivo.categorias.length > 0) {
     const cats = margins!.resumen_ejecutivo.categorias
-    const totalMargin = cats.reduce((s, c) => s + (Number(c.revenue || 0) * Number(c.margin_pct || 0) / 100), 0)
-    const totalRevenue = cats.reduce((s, c) => s + Number(c.revenue || 0), 0)
-    const maxSegPct = Math.max(...cats.map(c => totalMargin > 0 ? (Number(c.revenue || 0) * Number(c.margin_pct || 0) / 100) / totalMargin * 100 : 0), 1)
-
+    const maxRev = Math.max(...cats.map(c => Number(c.revenue || 0)), 1)
+    const catColors = { 'BEBIDAS': '#5C7A4D', 'COCTELES': '#6B2737', 'LICORES': '#C9A94E', 'COMIDA': '#A0522D', 'VINOS': '#D4922A' }
     const rows = cats.map(c => {
-      const catMargin = Number(c.revenue || 0) * Number(c.margin_pct || 0) / 100
-      const segPct = totalMargin > 0 ? (catMargin / totalMargin) * 100 : 0
-      const color = catColor(c.categoria)
-      const barWidth = maxSegPct > 0 ? (segPct / maxSegPct) * 100 : 0
-      return `<div class="compo-row">
-        <div class="compo-label">${c.categoria}</div>
-        <div class="compo-bar-track"><div class="compo-bar-fill" style="width:${barWidth.toFixed(1)}%;background:${color}"></div></div>
-        <div class="compo-pct">${segPct.toFixed(1)}%</div>
-        <div class="compo-rev">${fmt(c.revenue)}</div>
-        <div class="compo-margen">${c.margin_pct}% margen</div>
+      const color = catColors[c.categoria.toUpperCase()] || '#6B2737'
+      const barW = maxRev > 0 ? (Number(c.revenue || 0) / maxRev) * 100 : 0
+      return `<div class="comp-row">
+        <div class="comp-label" style="color:${color}">${c.categoria}</div>
+        <div class="comp-bar-area">
+          <div class="comp-bar"><div class="comp-bar-fill" style="width:${barW.toFixed(1)}%;background:${color}"><span class="comp-pct">${c.margin_pct}%</span></div></div>
+          <div class="comp-meta"><div class="comp-meta-item">Rev: <span class="comp-meta-val">${fmt(c.revenue)}</span></div><div class="comp-meta-item">SKU: <span class="comp-meta-val">${fmtN(c.count)}</span></div></div>
+        </div>
       </div>`
     }).join('')
-
     slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">COMPOSICIÓN DEL MARGEN</span>
-      </div>
-      <div class="slide-subtitle">Contribución por categoría al margen bruto</div>
-      <div class="compo-wrap">
-        ${rows}
-      </div>
-      <div class="slide-footer">
-        <span>ATTICK & KELLER • INFORME RAYO</span>
-      </div>
+      <div class="slide-header"><div class="slide-label">Estructura de rentabilidad</div><div class="slide-title">Composición<br>del margen</div></div>
+      <div class="comp-list">${rows}</div>
+      <div class="watermark">A&amp;K · Confidencial</div>
     </div>`)
-  } else {
-    slides.push(emptySlide('COMPOSICIÓN DEL MARGEN'))
-  }
+  } else { slides.push(emptySlide('COMPOSICIÓN DEL MARGEN')) }
 
-  // ═══ SLIDE 7 — ESTRELLAS vs LASTRE ═══
+  // ═══ SLIDE 6 — ESTRELLAS vs LASTRE ═══
   if (hasMargins) {
-    const estrellas = [...margins!.importan]
-      .sort((a, b) => Number(b.margin_pct || 0) - Number(a.margin_pct || 0))
-      .slice(0, 5)
-    const lastre = [...margins!.drenan]
-      .sort((a, b) => Number(a.margin_pct || 0) - Number(b.margin_pct || 0))
-      .slice(0, 5)
-    const maxStarPct = Math.max(...estrellas.map(p => p.margin_pct || 0), 1)
-    const maxLastrePct = Math.max(...lastre.map(p => Math.abs(p.margin_pct || 0)), 1)
-
-    const estrellasRows = estrellas.map(p => {
-      const name = (p.product_name || '').length > 18 ? p.product_name.substring(0, 18) + '…' : p.product_name
-      const barW = maxStarPct > 0 ? (p.margin_pct / maxStarPct) * 100 : 0
-      return `<div class="star-row">
-        <div class="star-name" title="${p.product_name.replace(/"/g, '&quot;')}">${name}</div>
-        <div class="star-bar-track"><div class="star-bar-fill star-bar-green" style="width:${barW.toFixed(1)}%"></div></div>
-        <div class="star-val">${fmt(p.margin_bruto)} <span class="star-pct">${Math.round(p.margin_pct)}%</span></div>
-      </div>`
+    const estrellas = [...margins!.importan].sort((a,b)=>Number(b.margin_pct||0)-Number(a.margin_pct||0)).slice(0,5)
+    const lastre = [...margins!.drenan].sort((a,b)=>Number(a.margin_pct||0)-Number(b.margin_pct||0)).slice(0,5)
+    const maxStarPct = Math.max(...estrellas.map(p=>p.margin_pct||0),1)
+    const maxLastrePct = Math.max(...lastre.map(p=>Math.abs(p.margin_pct||0)),1)
+    const estrellasRows = estrellas.map(p=>{
+      const name = (p.product_name||'').length>18?p.product_name.substring(0,18)+'…':p.product_name
+      const barW = maxStarPct>0?(p.margin_pct/maxStarPct)*100:0
+      return `<div class="vs-item"><div class="vs-name">${name}</div><div class="vs-bar-row"><div class="vs-bar"><div class="vs-bar-fill" style="width:${barW.toFixed(1)}%;background:#5C7A4D"></div></div><div class="vs-val">${fmt(p.margin_bruto)} · ${Math.round(p.margin_pct)}%</div></div></div>`
     }).join('')
-
-    const lastreRows = lastre.map(p => {
-      const name = (p.product_name || '').length > 18 ? p.product_name.substring(0, 18) + '…' : p.product_name
-      const barW = maxLastrePct > 0 ? (Math.abs(p.margin_pct) / maxLastrePct) * 100 : 0
-      const colorClass = p.margin_pct < 0 ? 'star-bar-red' : p.margin_pct < 30 ? 'star-bar-yellow' : 'star-bar-green'
-      return `<div class="star-row">
-        <div class="star-name" title="${p.product_name.replace(/"/g, '&quot;')}">${name}</div>
-        <div class="star-bar-track"><div class="star-bar-fill ${colorClass}" style="width:${barW.toFixed(1)}%"></div></div>
-        <div class="star-val">${fmt(p.margin_bruto)} <span class="star-pct">${Math.round(p.margin_pct)}%</span></div>
-      </div>`
+    const lastreRows = lastre.map(p=>{
+      const name = (p.product_name||'').length>18?p.product_name.substring(0,18)+'…':p.product_name
+      const barW = maxLastrePct>0?(Math.abs(p.margin_pct)/maxLastrePct)*100:0
+      const color = p.margin_pct<0?'#A0522D':p.margin_pct<30?'#D4922A':'#5C7A4D'
+      return `<div class="vs-item"><div class="vs-name">${name}</div><div class="vs-bar-row"><div class="vs-bar"><div class="vs-bar-fill" style="width:${barW.toFixed(1)}%;background:${color}"></div></div><div class="vs-val">${fmt(p.margin_bruto)} · ${Math.round(p.margin_pct)}%</div></div></div>`
     }).join('')
-
     slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">ESTRELLAS vs LASTRE</span>
-      </div>
-      <div class="slide-subtitle">Top 5 y bottom 5 por margen bruto</div>
-      <div class="star-grid">
-        <div class="star-col">
-          <div class="star-col-title text-green">⭐ ESTRELLAS</div>
-          <div class="star-col-sub">Top 5 por margen bruto</div>
-          ${estrellasRows}
-        </div>
-        <div class="star-col">
-          <div class="star-col-title text-red">⚠ LASTRE</div>
-          <div class="star-col-sub">Bottom 5 por margen bruto</div>
-          ${lastreRows}
-        </div>
-      </div>
-      <div class="slide-footer">
-        <span>ATTICK & KELLER • INFORME RAYO</span>
-      </div>
+      <div class="slide-header"><div class="slide-label">Dualidad operativa</div><div class="slide-title">Estrellas vs<br>Lastre</div></div>
+      <div class="vs-container"><div class="vs-col"><div class="vs-header stars">⭐ ESTRELLAS — Top 5 margen</div>${estrellasRows}</div><div class="vs-col"><div class="vs-header lastre">⚠ LASTRE — Bottom 5</div>${lastreRows}</div></div>
+      <div class="watermark">A&amp;K · Confidencial</div>
     </div>`)
-  } else {
-    slides.push(emptySlide('ESTRELLAS vs LASTRE'))
-  }
+  } else { slides.push(emptySlide('ESTRELLAS vs LASTRE')) }
 
-  // ═══ SLIDE 8 — DATOS QUE IMPORTAN ═══
+  // ═══ SLIDE 7 — DATOS QUE IMPORTAN ═══
   if (hasMargins) {
     const mk = margins!.kpis
     const cats = margins!.resumen_ejecutivo.categorias
-    const topImportan = margins!.importan.length > 0 ? margins!.importan[0] : null
-    const bestCat = cats.length > 0
-      ? [...cats].sort((a, b) => Number(b.margin_pct || 0) - Number(a.margin_pct || 0))[0]
-      : null
-    const worstCat = cats.length > 0
-      ? [...cats].sort((a, b) => Number(a.margin_pct || 0) - Number(b.margin_pct || 0))[0]
-      : null
-    const comidaCat = cats.find(c => c.categoria.toUpperCase().includes('COMID'))
-    const bebidasCat = cats.find(c => c.categoria.toUpperCase().includes('BEBID'))
-
-    const bullets: string[] = []
-
-    if (topImportan) {
-      bullets.push(`${topImportan.product_name} genera ${fmt(topImportan.margin_bruto)} netos — el producto más rentable del período`)
-    }
-    if (bestCat) {
-      bullets.push(`${bestCat.categoria} lidera con ${bestCat.margin_pct}% de margen sobre ${fmt(bestCat.revenue)}`)
-    }
-    if (comidaCat) {
-      bullets.push(`COMIDA mueve ${fmt(comidaCat.revenue)} pero deja ${comidaCat.margin_pct}% de margen`)
-    }
-    if (worstCat && worstCat.categoria !== bestCat?.categoria) {
-      bullets.push(`${worstCat.categoria} muestra solo ${worstCat.margin_pct}% de margen — la categoría más débil`)
-    }
-    if (bebidasCat) {
-      bullets.push(`BEBIDAS tiene ${bebidasCat.margin_pct}% de margen con ${bebidasCat.count} productos`)
-    }
-    if (bullets.length === 0) {
-      bullets.push(`Margen general: ${mk.margin_pct.toFixed(1)}% sobre ${fmt(mk.total_revenue)} en ventas`)
-      bullets.push(`${mk.total_productos} productos analizados en el período`)
-    }
-
-    const bulletsHtml = bullets.map(f =>
-      `<div class="dato-item"><span class="dato-bullet">•</span><span class="dato-text">${f}</span></div>`
-    ).join('')
-
+    const topImportan = margins!.importan.length>0?margins!.importan[0]:null
+    const bestCat = cats.length>0?[...cats].sort((a,b)=>Number(b.margin_pct||0)-Number(a.margin_pct||0))[0]:null
+    const worstCat = cats.length>0?[...cats].sort((a,b)=>Number(a.margin_pct||0)-Number(b.margin_pct||0))[0]:null
+    const comidaCat = cats.find(c=>c.categoria.toUpperCase().includes('COMID'))
+    const bebidasCat = cats.find(c=>c.categoria.toUpperCase().includes('BEBID'))
+    const bullets = []
+    if (topImportan) bullets.push(`<strong class="insight-highlight">${topImportan.product_name}</strong> genera ${fmt(topImportan.margin_bruto)} netos — el producto más rentable del período`)
+    if (bebidasCat) bullets.push(`<strong class="insight-highlight">BEBIDAS</strong> tiene ${bebidasCat.margin_pct}% de margen con solo ${fmtN(bebidasCat.count)} productos — la categoría más eficiente`)
+    if (comidaCat) bullets.push(`<strong class="insight-highlight">COMIDA</strong> mueve ${fmt(comidaCat.revenue)} pero deja ${comidaCat.margin_pct}% de margen — volumen compensa, eficiencia 10 puntos bajo meta`)
+    if (worstCat && worstCat.categoria !== bestCat?.categoria) bullets.push(`<strong class="insight-highlight">${worstCat.categoria}</strong> muestra solo ${worstCat.margin_pct}% de margen — la categoría más débil`)
+    bullets.push(`El <strong class="insight-highlight">${mk.margin_pct.toFixed(1)}% de margen general</strong> supera la meta del 30% por ${(mk.margin_pct - 30).toFixed(0)} puntos`)
+    const bulletsHtml = bullets.map(b=>`<div class="insight-item"><div class="insight-bullet">•</div><div class="insight-text">${b}</div></div>`).join('')
     slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">DATOS QUE IMPORTAN</span>
-      </div>
-      <div class="dato-wrap">
-        ${bulletsHtml}
-      </div>
-      <div class="slide-footer">
-        <span>ATTICK & KELLER • INFORME RAYO</span>
-      </div>
+      <div class="slide-header"><div class="slide-label">Inteligencia operativa</div><div class="slide-title">Datos que<br>importan</div></div>
+      <div class="insights-list">${bulletsHtml}</div>
+      <div class="watermark">A&amp;K · Confidencial</div>
     </div>`)
-  } else {
-    slides.push(emptySlide('DATOS QUE IMPORTAN'))
-  }
+  } else { slides.push(emptySlide('DATOS QUE IMPORTAN')) }
 
-  // ═══ SLIDE 9 — PARA LA JUNTA ═══
+  // ═══ SLIDE 8 — PARA LA JUNTA ═══
   if (hasMargins) {
     const mk = margins!.kpis
     const cats = margins!.resumen_ejecutivo.categorias
-    const bebidasCat = cats.find(c => c.categoria.toUpperCase().includes('BEBID'))
+    const bebidasCat = cats.find(c=>c.categoria.toUpperCase().includes('BEBID'))
     const drenaCount = margins!.drenan.length
-
     const bebidasMargin = bebidasCat ? `${bebidasCat.margin_pct}%` : '--'
     const tarjetas = [
-      { icon: '✅', border: '#4ADE80', text: `BEBIDAS lidera con ${bebidasMargin} margen → mantener precios y promociones` },
-      { icon: '⚠', border: '#E8D48B', text: `${drenaCount} productos en el 5% inferior por ganancia neta → evaluar menú` },
-      { icon: '◉', border: '#C9A94E', text: `Margen general ${mk.margin_pct.toFixed(1)}% → saludable, sobre meta del 30%` },
+      { icon:'✅', cls:'green', text:`<strong style="color:#5C7A4D">BEBIDAS lidera con ${bebidasMargin} margen</strong> — mantener precios actuales y duplicar promociones en horas pico (jueves-sábado 8pm-12am).`, action:'Acción inmediata · Bajo riesgo' },
+      { icon:'⚠', cls:'yellow', text:`<strong style="color:#D4922A">${drenaCount} productos en el 5% inferior</strong> por ganancia neta — evaluar menú.`, action:'Evaluar en 14 días · Riesgo moderado' },
+      { icon:'◉', cls:'borgona', text:`<strong style="color:#6B2737">Margen general ${mk.margin_pct.toFixed(1)}%</strong> — saludable, sobre meta del 30%. Revisar presupuesto Q3.`, action:'Planificar Q3 · Oportunidad' },
     ]
-
-    const tarjetasHtml = tarjetas.map(t =>
-      `<div class="junta-card" style="border-left:3px solid ${t.border}">
-        <span class="junta-icon">${t.icon}</span>
-        <span class="junta-text">${t.text}</span>
-      </div>`
-    ).join('')
-
+    const tarjetasHtml = tarjetas.map(t=>`<div class="junta-card ${t.cls}"><div class="junta-icon">${t.icon}</div><div class="junta-body"><div class="junta-text">${t.text}</div><div class="junta-action">${t.action}</div></div></div>`).join('')
     slides.push(`<div class="slide">
-      <div class="slide-header">
-        <span class="slide-hdr-title">PARA LA JUNTA</span>
-      </div>
-      <div class="slide-subtitle">3 recomendaciones accionables</div>
-      <div class="junta-wrap">
-        ${tarjetasHtml}
-      </div>
-      <div class="slide-footer">
-        <span>Attick & Keller • Informe Rayo • ${todayLabel}</span>
-      </div>
+      <div class="slide-header"><div class="slide-label">Recomendaciones</div><div class="slide-title">Para la<br>junta</div></div>
+      <div class="junta-list">${tarjetasHtml}</div>
+      <div style="margin-top:auto;text-align:center;padding-top:20px;border-top:1px solid rgba(62,39,35,0.1)"><div style="font-size:9px;color:#5C4037;letter-spacing:0.1em;text-transform:uppercase;font-family:'DM Sans',sans-serif">Informe generado · Attick &amp; Keller · ${todayLabel}</div></div>
+      <div class="watermark">A&amp;K · Confidencial</div>
     </div>`)
-  } else {
-    slides.push(emptySlide('PARA LA JUNTA'))
+  } else { slides.push(emptySlide('PARA LA JUNTA')) }
+
+  // ═══ SLIDE 9 — ANÁLISIS IA ═══
+  if (analysis && analysis.length > 10) {
+    const sections = parseAnalysisSections(analysis)
+    if (sections.length > 0) {
+      const analysisBlocks = sections.slice(0, 5).map(s => {
+        const body = s.body.replace(/\n/g, '<br>')
+        return `<div class="analysis-block"><div class="analysis-title">${s.icon} ${s.title}</div><div class="analysis-body">${body}</div></div>`
+      }).join('')
+      slides.push(`<div class="slide">
+        <div class="slide-header"><div class="slide-label">Análisis inteligente</div><div class="slide-title">Análisis<br>Rayo IA</div></div>
+        <div class="analysis-wrap">${analysisBlocks}</div>
+        <div class="watermark">A&amp;K · Confidencial</div>
+      </div>`)
+    }
   }
+
+  // ═══ SLIDE 10 — RENTABILIDAD RESUMEN ═══
+  if (hasMargins) {
+    const mk = margins!.kpis
+    const cats = margins!.resumen_ejecutivo.categorias
+    const catColors = { 'BEBIDAS':'#5C7A4D', 'COCTELES':'#6B2737', 'LICORES':'#C9A94E', 'COMIDA':'#A0522D', 'VINOS':'#D4922A' }
+    const catBars = cats.map(c=>{
+      const color = catColors[c.categoria.toUpperCase()] || '#6B2737'
+      return `<div class="comp-row"><div class="comp-label" style="color:${color}">${c.categoria}</div><div class="comp-bar-area"><div class="comp-bar"><div class="comp-bar-fill" style="width:${c.margin_pct}%;background:${color}"><span class="comp-pct">${c.margin_pct}%</span></div></div><div class="comp-meta"><div class="comp-meta-item">Rev: <span class="comp-meta-val">${fmt(c.revenue)}</span></div><div class="comp-meta-item">SKU: <span class="comp-meta-val">${fmtN(c.count)}</span></div></div></div></div>`
+    }).join('')
+    slides.push(`<div class="slide">
+      <div class="slide-header"><div class="slide-label">Rentabilidad operativa</div><div class="slide-title">Márgenes<br>por categoría</div></div>
+      <div style="display:flex;gap:10px;margin-bottom:18px">
+        <div style="flex:1;background:#FFFFFF;border-radius:10px;padding:14px;border:1px solid rgba(62,39,35,0.08)"><div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#5C4037;margin-bottom:6px">Margen General</div><div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#6B2737;line-height:1">${mk.margin_pct.toFixed(1)}%</div><div style="font-size:10px;color:#5C7A4D;font-weight:600;margin-top:4px">+${(mk.margin_pct - 30).toFixed(0)}pp sobre meta</div></div>
+        <div style="flex:1;background:#FFFFFF;border-radius:10px;padding:14px;border:1px solid rgba(62,39,35,0.08)"><div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#5C4037;margin-bottom:6px">Productos con Receta</div><div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#6B2737;line-height:1">${fmtN(mk.total_productos)}</div><div style="font-size:10px;color:#5C4037;font-weight:500;margin-top:4px">${fmtN(margins!.importan.length + margins!.drenan.length)} con margen real</div></div>
+      </div>
+      <div class="comp-list">${catBars}</div>
+      <div style="margin-top:auto;padding-top:14px;border-top:1px solid rgba(62,39,35,0.1)"><div style="font-size:11px;line-height:1.5;color:#5C4037"><strong style="color:#6B2737">5 macrocategorías operacionales.</strong> ${fmtN(max(0, margins!.importan.length + margins!.drenan.length - mk.total_productos))} productos con receta sin ventas = ruido (excluidos).</div></div>
+      <div class="watermark">A&amp;K · Confidencial</div>
+    </div>`)
+  } else { slides.push(emptySlide('RENTABILIDAD RESUMEN')) }
+
 
 
   // ── Assemble full HTML ──
@@ -784,676 +568,162 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
 <head>
 <meta charset="UTF-8">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Inter:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Caveat:wght@400;500;600;700&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'Inter', sans-serif;
-    background: #0D0D0C;
-    color: #F0EDE8;
+    font-family: 'DM Sans', sans-serif;
+    background: #F5EDE0;
+    color: #3E2723;
     line-height: 1.4;
     -webkit-font-smoothing: antialiased;
     width: 450px;
   }
 
-  /* ── Slide container ── */
   .slide {
-    width: 450px;
-    height: 800px;
-    overflow: hidden;
-    position: relative;
-    background: #0D0D0C;
-    padding: 0 24px;
-    display: flex;
-    flex-direction: column;
+    width: 450px; height: 800px; overflow: hidden;
+    position: relative; background: #F5EDE0;
+    padding: 0 32px; display: flex; flex-direction: column;
   }
-
-  /* ── Slide header (Stitch: bg-borgona bar) ── */
   .slide-header {
-    background: #5D1528;
-    margin: 0 -24px;
-    padding: 14px 24px;
+    margin: 0 -32px; padding: 20px 32px 16px;
     flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
   }
-  .slide-hdr-title {
-    font-family: 'Source Serif 4', serif;
-    font-size: 16px;
-    font-weight: 700;
-    color: #C9A94E;
-    letter-spacing: 2px;
+  .slide-label {
+    font-family: 'DM Sans', sans-serif; font-size: 10px;
+    font-weight: 700; letter-spacing: 0.2em;
+    text-transform: uppercase; color: #A0522D;
+    margin-bottom: 6px;
+  }
+  .slide-title {
+    font-family: 'Playfair Display', serif; font-size: 28px;
+    font-weight: 700; color: #3E2723; line-height: 1.15;
+    letter-spacing: -0.01em;
   }
   .slide-subtitle {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    color: #A09890;
-    margin: 8px 0 14px;
-    flex-shrink: 0;
-    padding: 0;
+    font-family: 'DM Sans', sans-serif; font-size: 11px;
+    color: #5C4037; margin-top: 6px; margin-bottom: 14px;
   }
-
-  /* ── Slide footer ── */
   .slide-footer {
-    margin-top: auto;
-    padding: 12px 0 16px;
-    display: flex;
-    justify-content: center;
-    font-family: 'Inter', sans-serif;
-    font-size: 8px;
-    color: #706860;
-    border-top: 1px solid #2A2A2A;
-    letter-spacing: 1px;
-    flex-shrink: 0;
+    margin-top: auto; padding: 14px 0 16px;
+    display: flex; justify-content: center;
+    font-family: 'DM Sans', sans-serif; font-size: 8px;
+    color: #5C4037; border-top: 1px solid rgba(62,39,35,0.1);
+    letter-spacing: 1px; flex-shrink: 0;
   }
-
-  /* ── Colors ── */
-  .text-green { color: #4ADE80; }
-  .text-red { color: #F87171; }
-  .text-gold { color: #C9A94E; }
-  .text-yellow { color: #E8D48B; }
-
-  /* ── Semáforo ── */
-  .semaforo { font-size: 12px; margin-right: 4px; }
-  .semaforo-green { color: #4ADE80; }
-  .semaforo-yellow { color: #E8D48B; }
-  .semaforo-red { color: #F87171; }
-
-  /* ── Empty state ── */
-  .empty-state {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .empty-msg {
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    color: #706860;
-    text-align: center;
-    padding: 0 32px;
-  }
-
-  /* ═══ SLIDE 1 — COVER (Stitch Lightning Theme) ═══ */
-  .slide-cover {
-    background: #5D1528;
-    justify-content: space-between;
-    align-items: center;
-    text-align: center;
-    position: relative;
-    padding: 48px 24px 40px;
-  }
-  .slide-cover::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: 0.04;
+  .watermark {
+    position: absolute; bottom: 14px; right: 22px;
+    font-family: 'DM Sans', sans-serif; font-size: 9px;
+    color: rgba(62,39,35,0.08); font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
     pointer-events: none;
-    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" stitchTiles="stitch"/></filter><rect width="200" height="200" filter="url(#n)" opacity="1"/></svg>');
   }
-  .slide-cover > * { position: relative; z-index: 1; }
+  .empty-state { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .empty-msg { font-family: 'DM Sans', sans-serif; font-size: 14px; color: #5C4037; text-align: center; padding: 0 32px; }
 
-  .cover-top {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
+  /* ═══ COVER ═══ */
+  .slide-cover {
+    background: #6B2737; justify-content: space-between;
+    padding: 44px 36px 36px; color: #F5EDE0;
   }
-  .cover-top-label {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 4px;
-    color: #C9A94E;
-    opacity: 0.8;
-    text-transform: uppercase;
-  }
-  .cover-top-series {
-    font-family: 'Inter', sans-serif;
-    font-size: 9px;
-    color: #C9A94E;
-    opacity: 0.5;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-  }
+  .cover-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .cover-logo { font-family: 'Playfair Display', serif; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #C9A94E; }
+  .cover-date { font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(245,237,224,0.55); font-weight: 400; }
+  .cover-main { margin-top: auto; margin-bottom: auto; }
+  .cover-script { font-family: 'Caveat', cursive; font-size: 32px; color: #D4B76A; margin-bottom: 10px; line-height: 1.15; font-weight: 500; }
+  .cover-title { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 900; color: #F5EDE0; line-height: 1.05; margin-bottom: 18px; letter-spacing: -0.02em; }
+  .cover-sub { font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(245,237,224,0.65); line-height: 1.55; max-width: 300px; font-weight: 400; }
+  .cover-footer { border-top: 1px solid rgba(201,169,78,0.3); padding-top: 18px; display: flex; justify-content: space-between; align-items: center; }
+  .cover-period { font-family: 'DM Sans', sans-serif; font-size: 11px; color: #D4B76A; font-weight: 500; }
+  .cover-page { font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(245,237,224,0.35); }
 
-  .cover-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-  .cover-bolt {
-    font-size: 32px;
-    opacity: 0.4;
-    color: #C9A94E;
-    margin-bottom: 8px;
-  }
-  .cover-title {
-    font-family: 'Source Serif 4', serif;
-    font-size: 36px;
-    font-weight: 700;
-    color: #C9A94E;
-    line-height: 1.15;
-    letter-spacing: -0.5px;
-  }
-  .cover-line {
-    width: 40px;
-    height: 1px;
-    background: #C9A94E;
-    margin: 4px 0;
-  }
-  .cover-period {
-    font-family: 'Inter', sans-serif;
-    font-size: 16px;
-    color: #F0EDE8;
-    font-weight: 400;
-    opacity: 0.9;
-  }
+  /* ═══ METRICS ═══ */
+  .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px; }
+  .metric-card { background: #FFFFFF; border-radius: 10px; padding: 18px 14px; border: 1px solid rgba(62,39,35,0.08); box-shadow: 0 2px 8px rgba(62,39,35,0.04); }
+  .metric-value { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: #6B2737; line-height: 1; }
+  .metric-delta { font-size: 10px; color: #5C7A4D; font-weight: 600; margin-top: 5px; font-family: 'DM Sans', sans-serif; }
+  .metric-delta.negative { color: #A0522D; }
+  .metric-name { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #5C4037; margin-top: 10px; font-family: 'DM Sans', sans-serif; }
 
-  .cover-bottom {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-  }
-  .cover-bottom-line {
-    width: 32px;
-    height: 1px;
-    background: #C9A94E;
-    opacity: 0.2;
-  }
-  .cover-confidencial {
-    font-family: 'Caveat', cursive;
-    font-size: 22px;
-    color: #C9A94E;
-    opacity: 0.6;
-    transform: rotate(-2deg);
-  }
-  .cover-flourish {
-    position: absolute;
-    top: 0;
-    right: 0;
-    font-size: 120px;
-    color: #C9A94E;
-    opacity: 0.1;
-    transform: translate(40px, -40px);
-  }
+  /* ═══ DRENA ═══ */
+  .drena-list { margin-top: 8px; }
+  .drena-item { background: #FFFFFF; border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; border: 1px solid rgba(62,39,35,0.06); border-left: 4px solid #A0522D; box-shadow: 0 2px 6px rgba(62,39,35,0.03); }
+  .drena-item.warning { border-left-color: #D4922A; }
+  .drena-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .drena-name { font-size: 13px; font-weight: 600; color: #3E2723; font-family: 'DM Sans', sans-serif; }
+  .drena-metric { font-size: 10px; color: #5C4037; font-weight: 500; font-family: 'DM Sans', sans-serif; }
+  .drena-bar-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .drena-bar { flex: 1; height: 5px; background: #E8DCC8; border-radius: 3px; overflow: hidden; }
+  .drena-bar-fill { height: 100%; border-radius: 3px; }
+  .drena-pct { font-size: 10px; font-weight: 700; color: #5C4037; min-width: 32px; text-align: right; font-family: 'DM Sans', sans-serif; }
+  .drena-insight { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(62,39,35,0.1); }
+  .drena-insight-text { font-size: 11px; line-height: 1.5; color: #5C4037; font-family: 'DM Sans', sans-serif; }
+  .drena-insight-text strong { color: #A0522D; font-weight: 600; }
 
-  /* ═══ SLIDE 2 — KPIs VITALES ═══ */
-  .kpi-vital-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 16px;
-  }
-  .kpi-vital-card {
-    background: #1A1A1A;
-    border: 1px solid #2A2A2A;
-    padding: 18px 20px;
-    text-align: center;
-  }
-  .kpi-vital-label {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    color: #706860;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 6px;
-  }
-  .kpi-vital-val {
-    font-family: 'Source Serif 4', serif;
-    font-size: 42px;
-    font-weight: 800;
-    color: #F0EDE8;
-    line-height: 1.1;
-  }
-  .kpi-vital-sub {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    color: #A09890;
-    margin-top: 4px;
-  }
+  /* ═══ IMPORTA ═══ */
+  .importa-list { margin-top: 6px; }
+  .importa-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(62,39,35,0.08); }
+  .importa-rank { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #C9A94E; width: 28px; text-align: center; flex-shrink: 0; }
+  .importa-info { flex: 1; min-width: 0; }
+  .importa-name { font-size: 12px; font-weight: 600; color: #3E2723; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'DM Sans', sans-serif; }
+  .importa-bar-wrap { margin-top: 5px; }
+  .importa-bar { height: 5px; background: #E8DCC8; border-radius: 3px; overflow: hidden; }
+  .importa-bar-fill { height: 100%; border-radius: 3px; }
+  .importa-right { text-align: right; flex-shrink: 0; }
+  .importa-rev { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; color: #6B2737; }
+  .importa-pct { font-size: 10px; color: #5C4037; font-weight: 500; margin-top: 2px; font-family: 'DM Sans', sans-serif; }
 
-  /* ═══ SLIDE 3 — LO QUE DRENA ═══ */
-  .drena-list {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    overflow: hidden;
-  }
-  .drena-row {
-    background: #1A1A1A;
-    border: 1px solid #2A2A2A;
-    padding: 10px 12px;
-  }
-  .drena-name {
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    color: #F0EDE8;
-    font-weight: 500;
-    display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .drena-meta {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    color: #A09890;
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-  .drena-cat { color: #706860; }
-  .drena-sep { color: #2A2A2A; font-size: 10px; }
-  .drena-margin { font-weight: 500; }
-  .drena-rev { font-weight: 500; color: #A09890; }
-  .drena-diag {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    color: #706860;
-    margin-top: 5px;
-    line-height: 1.4;
-  }
+  /* ═══ COMPOSICIÓN ═══ */
+  .comp-list { margin-top: 10px; }
+  .comp-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .comp-label { width: 72px; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-align: right; flex-shrink: 0; font-family: 'DM Sans', sans-serif; }
+  .comp-bar-area { flex: 1; }
+  .comp-bar { height: 20px; background: #E8DCC8; border-radius: 5px; overflow: hidden; position: relative; }
+  .comp-bar-fill { height: 100%; border-radius: 5px; display: flex; align-items: center; padding-right: 8px; justify-content: flex-end; }
+  .comp-pct { font-size: 10px; font-weight: 700; color: #FFFFFF; text-shadow: 0 1px 2px rgba(0,0,0,0.2); font-family: 'DM Sans', sans-serif; }
+  .comp-meta { display: flex; gap: 12px; margin-top: 3px; padding-left: 2px; }
+  .comp-meta-item { font-size: 9px; color: #5C4037; font-family: 'DM Sans', sans-serif; }
+  .comp-meta-val { color: #3E2723; font-weight: 600; }
 
-  /* ═══ SLIDE 5 — ANÁLISIS IA ═══ */
-  .analysis-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    overflow-y: auto;
-  }
-  .analysis-block {
-    background: #1A1A1A;
-    border-left: 3px solid #C9A94E;
-    padding: 10px 12px;
-  }
-  .analysis-title {
-    font-family: 'Source Serif 4', serif;
-    font-size: 14px;
-    font-weight: 600;
-    color: #C9A94E;
-    margin-bottom: 4px;
-  }
-  .analysis-body {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    color: #E0D8CC;
-    line-height: 1.55;
-  }
+  /* ═══ ESTRELLAS vs LASTRE ═══ */
+  .vs-container { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; flex: 1; }
+  .vs-col { display: flex; flex-direction: column; }
+  .vs-header { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid rgba(62,39,35,0.1); font-family: 'DM Sans', sans-serif; }
+  .vs-header.stars { color: #5C7A4D; }
+  .vs-header.lastre { color: #A0522D; }
+  .vs-item { background: #FFFFFF; border-radius: 8px; padding: 10px; margin-bottom: 6px; border: 1px solid rgba(62,39,35,0.06); box-shadow: 0 1px 4px rgba(62,39,35,0.03); }
+  .vs-name { font-size: 10px; font-weight: 600; color: #3E2723; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; font-family: 'DM Sans', sans-serif; }
+  .vs-bar-row { display: flex; align-items: center; gap: 6px; }
+  .vs-bar { flex: 1; height: 4px; background: #E8DCC8; border-radius: 2px; overflow: hidden; }
+  .vs-bar-fill { height: 100%; border-radius: 2px; }
+  .vs-val { font-size: 9px; font-weight: 700; color: #5C4037; white-space: nowrap; font-family: 'DM Sans', sans-serif; }
 
-  /* ═══ SLIDE GRÁFICOS (Donut + Barras) ═══ */
-  .charts-donut-wrap {
-    display: flex;
-    justify-content: center;
-    padding: 8px 0;
-    flex-shrink: 0;
-  }
-  .charts-donut-wrap .donut-wrap {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .charts-donut-wrap .legend-item {
-    font-size: 11px;
-  }
-  .charts-bar-section {
-    padding: 8px 0 0;
-    flex-shrink: 0;
-  }
-  .charts-bar-title {
-    font-family: 'Source Serif 4', serif;
-    font-size: 12px;
-    font-weight: 600;
-    color: #C9A94E;
-    margin-bottom: 8px;
-  }
-  .chart-bar-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 6px;
-    gap: 6px;
-  }
-  .chart-bar-label {
-    width: 110px;
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    color: #A09890;
-    text-align: right;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .chart-bar-track {
-    flex: 1;
-    height: 10px;
-    background: #1A1A1A;
-    overflow: hidden;
-  }
-  .chart-bar-fill {
-    height: 100%;
-    min-width: 2px;
-  }
-  .chart-bar-val {
-    width: 55px;
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 500;
-    color: #F0EDE8;
-    text-align: right;
-    flex-shrink: 0;
-  }
+  /* ═══ DATOS QUE IMPORTAN ═══ */
+  .insights-list { margin-top: 14px; }
+  .insight-item { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 20px; }
+  .insight-bullet { color: #C9A94E; font-size: 14px; line-height: 1; flex-shrink: 0; margin-top: 2px; font-family: 'Playfair Display', serif; }
+  .insight-text { font-size: 13px; line-height: 1.6; color: #3E2723; font-family: 'DM Sans', sans-serif; }
+  .insight-highlight { color: #6B2737; font-weight: 700; }
 
-  /* ═══ SLIDE 4 — POR CATEGORÍA ═══ */
-  .cat-cards-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .cat-card {
-    background: #1A1A1A;
-    border: 1px solid #2A2A2A;
-    padding: 12px 14px;
-  }
-  .cat-card-top {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
-  .cat-card-icon {
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    width: 20px;
-    text-align: center;
-  }
-  .cat-card-name {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    color: #F0EDE8;
-  }
-  .cat-card-rev {
-    font-family: 'Source Serif 4', serif;
-    font-size: 24px;
-    font-weight: 700;
-    color: #F0EDE8;
-    margin-bottom: 2px;
-  }
-  .cat-card-margin {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    color: #A09890;
-    margin-bottom: 4px;
-  }
-  .cat-card-counts {
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .cat-card-spacer { color: #2A2A2A; font-size: 8px; }
+  /* ═══ PARA LA JUNTA ═══ */
+  .junta-list { margin-top: 12px; display: flex; flex-direction: column; gap: 14px; }
+  .junta-card { background: #FFFFFF; border-radius: 10px; padding: 16px; border-left: 4px solid; display: flex; gap: 12px; align-items: flex-start; box-shadow: 0 2px 8px rgba(62,39,35,0.04); }
+  .junta-card.green { border-left-color: #5C7A4D; }
+  .junta-card.yellow { border-left-color: #D4922A; }
+  .junta-card.borgona { border-left-color: #6B2737; }
+  .junta-icon { font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 1px; }
+  .junta-card.green .junta-icon { color: #5C7A4D; }
+  .junta-card.yellow .junta-icon { color: #D4922A; }
+  .junta-card.borgona .junta-icon { color: #6B2737; }
+  .junta-body { flex: 1; }
+  .junta-text { font-size: 13px; line-height: 1.5; color: #3E2723; font-family: 'DM Sans', sans-serif; }
+  .junta-action { font-size: 10px; color: #5C4037; margin-top: 6px; font-weight: 600; font-family: 'DM Sans', sans-serif; }
 
-  /* ═══ SLIDE 5 — LO QUE IMPORTA (barras) ═══ */
-  .importa-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    justify-content: center;
-  }
-  .importa-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 0;
-  }
-  .importa-num {
-    font-family: 'Source Serif 4', serif;
-    font-size: 18px;
-    font-weight: 700;
-    color: #C9A94E;
-    width: 24px;
-    flex-shrink: 0;
-    text-align: center;
-  }
-  .importa-body {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .importa-name {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    font-weight: 500;
-    color: #F0EDE8;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .importa-bar-track {
-    height: 8px;
-    background: #1A1A1A;
-    overflow: hidden;
-    border-radius: 0;
-  }
-  .importa-bar-fill {
-    height: 100%;
-    min-width: 2px;
-    transition: none;
-  }
-  .importa-val {
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 600;
-    color: #A09890;
-    text-align: right;
-    width: 52px;
-    flex-shrink: 0;
-  }
-  .importa-pct {
-    font-family: 'Source Serif 4', serif;
-    font-size: 11px;
-    font-weight: 700;
-    color: #C9A94E;
-    text-align: right;
-    width: 34px;
-    flex-shrink: 0;
-  }
-
-  /* ═══ SLIDE 6 — COMPOSICIÓN DEL MARGEN ═══ */
-  .compo-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    justify-content: center;
-  }
-  .compo-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 0;
-  }
-  .compo-label {
-    width: 72px;
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 600;
-    color: #F0EDE8;
-    flex-shrink: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .compo-bar-track {
-    flex: 1;
-    height: 16px;
-    background: #1A1A1A;
-    overflow: hidden;
-    border-radius: 0;
-  }
-  .compo-bar-fill {
-    height: 100%;
-    min-width: 2px;
-  }
-  .compo-pct {
-    width: 42px;
-    font-family: 'Source Serif 4', serif;
-    font-size: 11px;
-    font-weight: 700;
-    color: #F0EDE8;
-    text-align: right;
-    flex-shrink: 0;
-  }
-  .compo-rev {
-    width: 54px;
-    font-family: 'Inter', sans-serif;
-    font-size: 9px;
-    color: #A09890;
-    text-align: right;
-    flex-shrink: 0;
-  }
-  .compo-margen {
-    width: 54px;
-    font-family: 'Inter', sans-serif;
-    font-size: 9px;
-    color: #706860;
-    text-align: right;
-    flex-shrink: 0;
-  }
-
-  /* ═══ SLIDE 7 — ESTRELLAS vs LASTRE ═══ */
-  .star-grid {
-    flex: 1;
-    display: flex;
-    gap: 14px;
-  }
-  .star-col {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .star-col-title {
-    font-family: 'Source Serif 4', serif;
-    font-size: 12px;
-    font-weight: 700;
-  }
-  .star-col-sub {
-    font-family: 'Inter', sans-serif;
-    font-size: 9px;
-    color: #706860;
-    margin-bottom: 4px;
-  }
-  .star-row {
-    padding: 8px 10px;
-    background: #1A1A1A;
-    border: 1px solid #2A2A2A;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .star-name {
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    color: #F0EDE8;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .star-bar-track {
-    height: 5px;
-    background: #0D0D0D;
-    overflow: hidden;
-  }
-  .star-bar-fill {
-    height: 100%;
-    min-width: 2px;
-  }
-  .star-bar-green { background: #4ADE80; }
-  .star-bar-yellow { background: #E8D48B; }
-  .star-bar-red { background: #F87171; }
-  .star-val {
-    font-family: 'Inter', sans-serif;
-    font-size: 9px;
-    color: #A09890;
-    display: flex;
-    justify-content: space-between;
-  }
-  .star-pct {
-    font-weight: 600;
-    color: #F0EDE8;
-  }
-
-  /* ═══ SLIDE 8 — DATOS QUE IMPORTAN ═══ */
-  .dato-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 18px;
-  }
-  .dato-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    line-height: 1.55;
-  }
-  .dato-bullet {
-    font-family: 'Source Serif 4', serif;
-    font-size: 14px;
-    color: #C9A94E;
-    flex-shrink: 0;
-    line-height: 1.35;
-    margin-top: 1px;
-  }
-  .dato-text {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    color: #E0D8CC;
-  }
-
-  /* ═══ SLIDE 9 — PARA LA JUNTA ═══ */
-  .junta-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 14px;
-  }
-  .junta-card {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 14px 16px;
-    background: #1A1A1A;
-  }
-  .junta-icon {
-    font-size: 20px;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-  .junta-text {
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    color: #F0EDE8;
-    line-height: 1.5;
-  }
-
+  /* ═══ ANÁLISIS IA ═══ */
+  .analysis-wrap { flex: 1; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+  .analysis-block { background: #FFFFFF; border-radius: 10px; padding: 14px 16px; border: 1px solid rgba(62,39,35,0.06); }
+  .analysis-title { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 700; color: #6B2737; margin-bottom: 6px; }
+  .analysis-body { font-family: 'DM Sans', sans-serif; font-size: 11px; line-height: 1.6; color: #3E2723; }
 </style>
 </head>
 <body>

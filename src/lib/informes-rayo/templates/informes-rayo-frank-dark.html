@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Informes Rayo — A&amp;K Editorial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cal: #F5EDE0;
+      --cal-warm: #E8DCC8;
+      --madera: #3E2723;
+      --madera-light: #5C4037;
+      --madera-muted: #8B7B6E;
+      --borgona: #6B2737;
+      --borgona-light: #C44D63;
+      --borgona-bg: rgba(107,39,55,0.06);
+      --dorado: #C9A94E;
+      --dorado-light: #D4B86A;
+      --dorado-dim: #A08A40;
+      --oliva: #5C7A4D;
+      --oliva-light: #7A9E6A;
+      --blanco: #FFFFFF;
+      --verde: #4ADE80;
+      --verde-dim: #2D8A50;
+      --amarillo: #FACC15;
+      --amarillo-dim: #B8960B;
+      --rojo: #EF4444;
+      --rojo-dim: #9B2C2C;
+      --ladrillo: #A0522D;
+      --border: rgba(62,39,35,0.08);
+      --border-hover: rgba(62,39,35,0.12);
+      --shadow: rgba(62,39,35,0.06);
+      --shadow-strong: rgba(62,39,35,0.10);
+      --font-serif: "Playfair Display", Georgia, serif;
+      --font-sans: "DM Sans", system-ui, sans-serif;
+      --font-script: "Caveat", cursive;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #E5DDD5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: var(--font-sans);
+      color: var(--madera);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .deck-wrapper {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      padding: 24px;
+      position: relative;
+    }
+
+    .deck-container {
+      width: 450px;
+      height: 800px;
+      background: var(--cal);
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+      box-shadow:
+        0 0 0 1px var(--border),
+        0 20px 60px var(--shadow),
+        0 0 100px rgba(201,169,78,0.04);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 36px 28px 32px;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .slide.active { display: flex; opacity: 1; }
+
+    /* ── UTILS ── */
+    .flex-grow { flex: 1; }
+    .mt-auto { margin-top: auto; }
+    
+    .watermark {
+      position: absolute;
+      bottom: 14px;
+      right: 22px;
+      font-size: 9px;
+      color: rgba(62,39,35,0.07);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .slide-counter {
+      position: absolute;
+      top: 36px;
+      right: 28px;
+      font-size: 10px;
+      color: var(--madera-muted);
+      letter-spacing: 1px;
+      font-weight: 500;
+    }
+
+    /* ── HEADER ── */
+    .header-block { margin-bottom: 16px; flex-shrink: 0; }
+    .header-label {
+      font-size: 9px;
+      color: var(--dorado-dim);
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .header-title {
+      font-family: var(--font-serif);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--madera);
+      line-height: 1.15;
+      letter-spacing: -0.3px;
+    }
+    .header-sub {
+      font-size: 11px;
+      color: var(--madera-muted);
+      margin-top: 5px;
+      font-weight: 400;
+      line-height: 1.4;
+    }
+
+    /* ── NAV ── */
+    .nav-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+      align-items: center;
+    }
+    .slide-dots { display: flex; gap: 6px; justify-content: center; }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #D0C8BC;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .dot:hover { background: var(--madera-muted); }
+    .dot.active { background: var(--dorado); box-shadow: 0 0 6px rgba(201,169,78,0.25); }
+    .nav-controls { display: flex; gap: 8px; }
+    .nav-btn {
+      background: var(--blanco);
+      border: 1px solid var(--border);
+      color: var(--madera-muted);
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .nav-btn:hover { border-color: var(--dorado-dim); color: var(--dorado); }
+    .pdf-btn {
+      background: var(--borgona);
+      color: var(--cal);
+      border: none;
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.8px;
+      transition: background 0.2s ease;
+      margin-top: 4px;
+    }
+    .pdf-btn:hover { background: var(--borgona-light); }
+
+    /* ═══ SLIDE 1: PORTADA ═══ */
+    .slide-cover {
+      background: linear-gradient(165deg, var(--borgona) 0%, #4A1A2A 50%, #2A1018 100%);
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .cover-script {
+      font-family: var(--font-script);
+      font-size: 30px;
+      color: var(--dorado);
+      margin-bottom: 8px;
+      opacity: 0.9;
+    }
+    .cover-title {
+      font-family: var(--font-serif);
+      font-size: 44px;
+      font-weight: 700;
+      color: var(--cal);
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+    }
+    .cover-line {
+      width: 50px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--dorado), transparent);
+      margin: 22px auto;
+    }
+    .cover-sub { font-size: 13px; color: var(--cal-warm); max-width: 260px; line-height: 1.5; }
+    .cover-badge {
+      position: absolute;
+      bottom: 55px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(201,169,78,0.10);
+      border: 1px solid rgba(201,169,78,0.25);
+      padding: 8px 20px;
+      border-radius: 24px;
+      font-size: 11px;
+      color: var(--dorado);
+      letter-spacing: 1.5px;
+      font-weight: 600;
+    }
+
+    /* ═══ SLIDE 2: MÉTRICAS CLAVE + SPARKLINE ═══ */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 2px;
+    }
+    .kpi-card {
+      background: var(--blanco);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    .kpi-label {
+      font-size: 8px;
+      color: var(--madera-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+    }
+    .kpi-value {
+      font-family: var(--font-serif);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--dorado);
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+    .kpi-delta {
+      font-size: 10px;
+      color: var(--verde-dim);
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+    .kpi-delta.neg { color: var(--rojo-dim); }
+
+    /* Mini sparkline debajo de KPIs */
+    .mini-sparkline {
+      margin-top: 14px;
+      padding: 14px;
+      background: var(--blanco);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    .mini-spark-title {
+      font-size: 8px;
+      color: var(--madera-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    /* ═══ SLIDE 3: LO QUE DRENA (EXPANDIDO) ═══ */
+    .drena-list { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
+    .drena-card {
+      background: var(--blanco);
+      border-left: 3px solid var(--rojo);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+    .drena-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; color: var(--rojo); }
+    .drena-text { font-size: 12px; color: var(--madera-light); line-height: 1.55; }
+    .drena-text strong { color: var(--madera); font-weight: 600; }
+    
+    .drena-analysis {
+      margin-top: 12px;
+      padding: 14px 16px;
+      background: var(--blanco);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+    .drena-analysis-title {
+      font-size: 8px;
+      color: var(--madera-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .drena-analysis-text {
+      font-size: 11px;
+      color: var(--madera-light);
+      line-height: 1.55;
+    }
+    .drena-analysis-text strong { color: var(--madera); }
+
+    .drena-summary {
+      margin-top: 12px;
+      padding: 14px 16px;
+      background: var(--blanco);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+    .drena-summary-title {
+      font-size: 8px;
+      color: var(--madera-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .drena-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .drena-row:last-child { border-bottom: none; }
+    .drena-row-name {
+      font-size: 11px;
+      color: var(--madera-light);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .drena-row-val { font-size: 11px; color: var(--madera); font-weight: 600; }
+    .dot-semaforo { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .dot-semaforo.red { background: var(--rojo); }
+    .dot-semaforo.yellow { background: var(--amarillo); }
+    .dot-semaforo.green { background: var(--verde-dim); }
+
+    /* ═══ SLIDE 4: EVOLUCIÓN TEMPORAL (EXPANDIDO) ═══ */
+    .evo-chart-wrap {
+      margin-top: 6px;
+      padding: 14px;
+      background: var(--blanco);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    .evo-chart-title {
+      font-size: 8px;
+      color: var(--madera-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    
+    .evo-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .evo-stat-card {
+      background: var(--blanco);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 12px;
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+    .evo-stat-label {
+      font-size: 8px;
+      color: var(--madera-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+    }
+    .evo-stat-value {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 700;
+      margin-top: 4px;
+      line-height: 1;
+    }
+    .evo-stat-sub {
+      font-size: 9px;
+      color: var(--madera-muted);
+      margin-top: 4px;
+    }
+    
+    .evo-weekly {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--blanco);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+    .evo-weekly-title {
+      font-size: 8px;
+      color: var(--madera-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .evo-weekly-grid {
+      display: flex;
+      gap: 6px;
+    }
+    .evo-week {
+      flex: 1;
+      text-align: center;
+      padding: 8px 4px;
+      border-radius: 6px;
+      background: var(--cal);
+    }
+    .evo-week-label { font-size: 8px; color: var(--madera-muted); }
+    .evo-week-value {
+      font-family: var(--font-serif);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--madera);
+      margin-top: 2px;
+    }
+    .evo-week-delta { font-size: 8px; margin-top: 2px; }
+    .evo-week-delta.up { color: var(--verde-dim); }
+    .evo-week-delta.down { color: var(--rojo-dim); }
+
+    /* ═══ SLIDE 5: ZONAS (EXPANDIDO) ═══ */
+    .zonas-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; flex: 1; justify-content: center; }
+    .zona-row { display: flex; align-items: center; gap: 10px; }
+    .zona-label {
+      font-size: 11px;
+      color: var(--madera-light);
+      width: 65px;
+      flex-shrink: 0;
+      font-weight: 500;
+    }
+    .zona-track {
+      flex: 1;
+      height: 36px;
+      background: var(--cal-warm);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .zona-fill {
+      height: 100%;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      padding-right: 12px;
+      justify-content: flex-end;
+      min-width: 80px;
+    }
+    .zona-pct {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--madera);
+      white-space: nowrap;
+    }
+    .zona-analysis {
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: var(--blanco);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+
+    /* ═══ SLIDE 6: PAGOS (EXPANDIDO) ═══ */
+    .pagos-layout {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      gap: 30px;
+      flex: 1;
+    }
+    .donut-wrap { position: relative; width: 160px; height: 160px; }
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .donut-center-label { font-size: 10px; color: var(--madera-muted); letter-spacing: 0.5px; }
+    .donut-center-val {
+      font-family: var(--font-serif);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--dorado);
+      margin-top: 2px;
+    }
+    .leyenda-list { display: flex; flex-direction: column; gap: 14px; }
+    .leyenda-item { display: flex; align-items: center; gap: 12px; }
+    .leyenda-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .leyenda-name { font-size: 12px; color: var(--madera-light); }
+    .leyenda-pct {
+      font-size: 13px;
+      color: var(--madera);
+      font-weight: 700;
+      margin-left: auto;
+      min-width: 35px;
+      text-align: right;
+    }
+    .pagos-analysis {
+      margin-top: 14px;
+      padding: 14px 16px;
+      background: var(--blanco);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+
+    /* ═══ SLIDE 7: LO QUE IMPORTA (EXPANDIDO) ═══ */
+    .importan-list { margin-top: 2px; display: flex; flex-direction: column; flex: 1; justify-content: center; }
+    .importan-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .importan-row:last-child { border-bottom: none; }
+    .importan-rank {
+      font-family: var(--font-serif);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--dorado);
+      width: 28px;
+      text-align: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .importan-name {
+      font-size: 12px;
+      color: var(--madera-light);
+      width: 100px;
+      flex-shrink: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+    .importan-track {
+      flex: 1;
+      height: 10px;
+      background: var(--cal-warm);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .importan-fill {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .importan-val {
+      font-size: 11px;
+      color: var(--madera-muted);
+      width: 90px;
+      text-align: right;
+      flex-shrink: 0;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+    .importan-analysis {
+      margin-top: 12px;
+      padding: 14px 16px;
+      background: var(--blanco);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+
+    /* ═══ SLIDE 8: COMPOSICIÓN MARGEN (EXPANDIDO) ═══ */
+    .comp-list { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; flex: 1; justify-content: center; }
+    .comp-row { display: flex; align-items: center; gap: 12px; }
+    .comp-label {
+      font-size: 11px;
+      color: var(--madera-light);
+      width: 70px;
+      flex-shrink: 0;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+    .comp-track {
+      flex: 1;
+      height: 32px;
+      background: var(--cal-warm);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .comp-fill {
+      height: 100%;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      padding-left: 12px;
+      transition: width 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .comp-pct {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--madera);
+      letter-spacing: 0.2px;
+    }
+    .comp-analysis {
+      margin-top: 14px;
+      padding: 14px 16px;
+      background: var(--blanco);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+
+    /* ═══ SLIDE 9: ESTRELLAS VS LASTRE (EXPANDIDO) ═══ */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 2px; flex: 1; }
+    .col-header {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 10px;
+      font-weight: 600;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .col-header.star { color: var(--dorado); }
+    .col-header.risk { color: var(--rojo-dim); }
+    .mini-card {
+      background: var(--blanco);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 4px var(--shadow);
+    }
+    .mini-name {
+      font-size: 11px;
+      color: var(--madera-light);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .mini-track {
+      height: 6px;
+      background: var(--cal-warm);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .mini-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+    .mini-value { font-size: 10px; color: var(--madera-muted); font-weight: 500; letter-spacing: 0.2px; }
+    .estrellas-analysis {
+      margin-top: 12px;
+      padding: 14px 16px;
+      background: var(--blanco);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+
+    /* ═══ SLIDE 10: INSIGHTS LLM ═══ */
+    .insight-list { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; flex: 1; justify-content: center; }
+    .insight-item { display: flex; gap: 12px; align-items: flex-start; }
+    .insight-bullet {
+      color: var(--dorado);
+      font-size: 20px;
+      line-height: 1;
+      flex-shrink: 0;
+      margin-top: -3px;
+      font-family: var(--font-serif);
+    }
+    .insight-text {
+      font-size: 13px;
+      color: var(--madera-light);
+      line-height: 1.6;
+      font-weight: 400;
+    }
+    .insight-text strong { color: var(--madera); font-weight: 600; }
+    .insight-source {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: var(--borgona-bg);
+      border-radius: 8px;
+      border: 1px solid rgba(107,39,55,0.12);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .insight-source-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--verde-dim); }
+    .insight-source-text { font-size: 9px; color: var(--borgona); font-weight: 500; letter-spacing: 0.3px; }
+
+    /* ═══ SLIDE 11: PARA LA JUNTA (EXPANDIDO) ═══ */
+    .junta-list { display: flex; flex-direction: column; gap: 12px; margin-top: 2px; flex: 1; justify-content: center; }
+    .junta-card {
+      background: var(--blanco);
+      border-radius: 12px;
+      padding: 18px 16px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px var(--shadow);
+      transition: all 0.2s ease;
+    }
+    .junta-card:hover { border-color: var(--border-hover); box-shadow: 0 4px 12px var(--shadow-strong); }
+    .junta-card.green { border-left: 4px solid var(--verde-dim); }
+    .junta-card.yellow { border-left: 4px solid var(--amarillo); }
+    .junta-card.gold { border-left: 4px solid var(--dorado); }
+    .junta-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+    .junta-icon.green { color: var(--verde-dim); }
+    .junta-icon.yellow { color: var(--amarillo-dim); }
+    .junta-icon.gold { color: var(--dorado); }
+    .junta-text { font-size: 13px; color: var(--madera-light); line-height: 1.6; }
+    .junta-text strong { color: var(--madera); font-weight: 600; }
+    .junta-footer {
+      margin-top: 12px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .junta-footer-title {
+      font-size: 9px;
+      color: var(--madera-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .junta-footer-text { font-size: 10px; color: var(--madera-muted); line-height: 1.5; }
+
+    /* ═══ PRINT ═══ */
+    @media print {
+      body { background: #fff; padding: 0; }
+      .nav-bar { display: none !important; }
+      .deck-container {
+        box-shadow: none;
+        border-radius: 0;
+        page-break-after: always;
+        width: 450px;
+        height: 800px;
+      }
+      .slide { opacity: 1 !important; display: flex !important; }
+      .slide-counter { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="deck-wrapper">
+  <div class="deck-container" id="deck">
+
+    <!-- ═══ SLIDE 1: PORTADA ═══ -->
+    <div class="slide slide-cover active" data-index="0">
+      <div class="slide-counter">01 / 11</div>
+      <div class="cover-script">Attick & Keller</div>
+      <div class="cover-title">Informe<br>Rayo</div>
+      <div class="cover-line"></div>
+      <div class="cover-sub">Junio 2026 · Rentabilidad operativa</div>
+      <div class="cover-badge">MARGEN 72.8%</div>
+      <div class="watermark">A&amp;K · Confidencial</div>
+    </div>
+
+    <!-- ═══ SLIDE 2: MÉTRICAS CLAVE + SPARKLINE ═══ -->
+    <div class="slide" data-index="1">
+      <div class="slide-counter">02 / 11</div>
+      <div class="header-block">
+        <div class="header-label">Panel Ejecutivo</div>
+        <div class="header-title">Métricas Clave</div>
+        <div class="header-sub">Jun 1 — Jun 30, 2026 vs. período anterior</div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Ventas</div>
+          <div class="kpi-value">$791.2M</div>
+          <div class="kpi-delta">▲ +12.3% vs mes anterior</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Cheques</div>
+          <div class="kpi-value">1,247</div>
+          <div class="kpi-delta">▲ +5.1% vs mes anterior</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Ticket Prom.</div>
+          <div class="kpi-value">$634.4K</div>
+          <div class="kpi-delta neg">▼ -2.1% vs mes anterior</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Margen General</div>
+          <div class="kpi-value">72.8%</div>
+          <div class="kpi-delta">▲ +4.2pp vs meta 30%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Personas</div>
+          <div class="kpi-value">3,842</div>
+          <div class="kpi-delta">▲ +8.7% vs mes anterior</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Productos Activos</div>
+          <div class="kpi-value">161</div>
+          <div class="kpi-delta">con receta y ventas</div>
+        </div>
+      </div>
+      
+      <!-- Mini sparkline de ventas -->
+      <div class="mini-sparkline">
+        <div class="mini-spark-title">Tendencia de Ventas · 30 días</div>
+        <svg viewBox="0 0 394 60" style="width:100%; height:60px; overflow:visible;">
+          <defs>
+            <linearGradient id="miniGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#C9A94E" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#C9A94E" stop-opacity="0.02"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="394" height="60" fill="#FAF6F0" rx="4"/>
+          <path d="M0,60 L0,50 L13,45 L26,35 L39,40 L52,30 L65,25 L78,28 L91,20 L104,22 L117,18 L130,15 L143,12 L156,14 L169,10 L182,8 L195,12 L208,6 L221,9 L234,5 L247,7 L260,4 L273,6 L286,3 L299,5 L312,2 L325,4 L338,1 L351,3 L364,2 L377,1 L390,2 L394,3 L394,60 Z" fill="url(#miniGrad)"/>
+          <path d="M0,50 L13,45 L26,35 L39,40 L52,30 L65,25 L78,28 L91,20 L104,22 L117,18 L130,15 L143,12 L156,14 L169,10 L182,8 L195,12 L208,6 L221,9 L234,5 L247,7 L260,4 L273,6 L286,3 L299,5 L312,2 L325,4 L338,1 L351,3 L364,2 L377,1 L390,2 L394,3" fill="none" stroke="#C9A94E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div style="display:flex; justify-content:space-between; margin-top:6px;">
+          <span style="font-size:9px; color:var(--madera-muted);">Jun 1 · $18.5M</span>
+          <span style="font-size:9px; color:var(--verde-dim); font-weight:600;">▲ Tendencia alcista +40%</span>
+          <span style="font-size:9px; color:var(--madera-muted);">Jun 30 · $41.0M</span>
+        </div>
+      </div>
+      
+      <div class="watermark">A&amp;K · Confidencial</div>
+    </div>
+
+    <!-- ═══ SLIDE 3: LO QUE DRENA (EXPANDIDO) ═══ -->
+    <div class="slide" data-index="2">
+      <div class="slide-counter">03 / 11</div>
+      <div class="header-block">
+        <div class="header-label">Diagnóstico</div>
+        <div class="header-title">Lo Que Drena</div>
+        <div class="header-sub">8 productos en el 5% inferior por ganancia neta</div>
+      </div>
+      <div class="drena-list">
+        <div class="drena-card">
+          <div class="drena-icon">⚠</div>
+          <div class="drena-text">
+            <strong>MARGEN BAJO PRESIÓN</strong> — Vinos muestra solo 51% de margen con 12 productos. La categoría más débil del menú. Si se compara con la meta del 30%, está bien, pero vs otras categorías pierde 24-30 puntos.
+          </div>
+        </div>
+        <div class="drena-card">
+          <div class="drena-icon">⚠</div>
+          <div class="drena-text">
+            <strong>COMIDA SIN PESO</strong> — 63% de margen pero $156M en revenue. Alta rotación, bajo impacto neto. Cada peso invertido en COMIDA genera menos retorno que BEBIDAS o COCTELES.
+          </div>
+        </div>
+        <div class="drena-card">
+          <div class="drena-icon">⚠</div>
+          <div class="drena-text">
+            <strong>LICORES DILUIDOS</strong> — 75% margen en papel, pero 196 productos diluyen el portafolio. El esfuerzo operativo de mantener 196 SKUs no se traduce en proporcionalidad de ganancia.
+          </div>
+        </div>
+      </div>
+      
+      <div class="drena-analysis">
+        <div class="drena-analysis-title">Análisis por Impacto</div>
+        <div class="drena-analysis-text">
+          <strong>VINOS</strong> representa la mayor oportunidad de mejora: +10pp en margen = +$15.6M netos. <strong>COMIDA</strong> necesita revisión de porciones o precios. <strong>LICORES</strong> requiere poda de portafolio: de 196 a ~120 SKUs enfocados.
+        </div>
+      </div>
+      
+      <div class="drena-summary">
+        <div class="drena-summary-title">Resumen por Categoría</div>
+        <div class="drena-row">
+          <span class="drena-row-name"><span class="dot-semaforo red"></span> VINOS</span>
+          <span class="drena-row-val">51% · 12 prod · $89M revenue</span>
+        </div>
+        <div class="drena-row">
+          <span class="drena-row-name"><span class="dot-semaforo yellow"></span> COMIDA</span>
+          <span class="drena-row-val">63% · 28 prod · $156M revenue</span>
+        </div>
+        <div class="drena-row">
+          <span class="drena-row-name"><span class="dot-semaforo green"></span> LICORES</span>
+          <span class="drena-row-val">75% · 196 prod · $234M revenue</span>
+        </div>
+        <div class="drena-row">
+          <span class="drena-row-name"><span class="dot-semaforo green"></span> COCTELES</span>
+          <span class="drena-row-val">75% · 54 prod · $198M revenue</span>
+        </div>
+      </div>
+      <div class="watermark">A&amp;K · Confidencial</div>
+    </div>
+
+    <!-- ═══ SLIDE 4: EVOLUCIÓN TEMPORAL (EXPANDIDO) ═══ -->
+    <div class="slide" data-index="3">
+      <div class="slide-counter">04 / 11</div>
+      <div class="header-block">
+        <div class="header-label">Tendencia</div>
+        <div class="header-title">Evolución de Ventas</div>
+        <div class="header-sub">Jun 1 — Jun 30, 2026 · $791.2M total · 30 días</div>
+      </div>
+      
+      <div class="evo-chart-wrap">
+        <div class="evo-chart-title">Ventas Diarias · $M COP</div>
+        <svg viewBox="0 0 394 160" style="width:100%; height:160px; overflow:visible;">
+          <defs>
+            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#C9A94E" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#C9A94E" stop-opacity="0.02"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="394" height="160" fill="#FAF6F0" rx="8"/>
+          <path d="M0,160 L0,95 L13,85 L26,75 L39,80 L52,70 L65,65 L78,68 L91,60 L104,62 L117,58 L130,55 L143,52 L156,54 L169,50 L182,48 L195,52 L208,46 L221,49 L234,45 L247,47 L260,44 L273,46 L286,43 L299,45 L312,42 L325,44 L338,41 L351,43 L364,42 L377,41 L390,42 L394,43 L394,160 Z" fill="url(#areaGrad)"/>
+          <path d="M0,95 L13,85 L26,75 L39,80 L52,70 L65,65 L78,68 L91,60 L104,62 L117,58 L130,55 L143,52 L156,54 L169,50 L182,48 L195,52 L208,46 L221,49 L234,45 L247,47 L260,44 L273,46 L286,43 L299,45 L312,42 L325,44 L338,41 L351,43 L364,42 L377,41 L390,42 L394,43" fill="none" stroke="#C9A94E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          
+          <circle cx="286" cy="43" r="5" fill="#4ADE80" stroke="#fff" stroke-width="2"/>
+          <text x="286" y="30" text-anchor="middle" font-size="10" font-family="DM Sans" fill="#3E2723" font-weight="600">$54.7M</text>
+          
+          <circle cx="0" cy="95" r="5" fill="#EF4444" stroke="#fff" stroke-width="2"/>
+          <text x="0" y="115" text-anchor="middle" font-size="10" font-family="DM Sans" fill="#3E2723" font-weight="600">$19.4M</text>
+          
+          <line x1="0" y1="52" x2="394" y2="52" stroke="#A08A40" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+          <text x="389" y="44" text-anchor="end" font-size="9" font-family="DM Sans" fill="#A08A40">Prom: $30.6M</text>
+        </svg>
+      </div>
+      
+      <div class="evo-stats">
+        <div class="evo-stat-card">
+          <div class="evo-stat-label">Mejor Día</div>
+          <div class="evo-stat-value" style="color:var(--verde-dim);">$54.7M</div>
+          <div class="evo-stat-sub">Jun 27 · ▲ 79% sobre promedio</div>
+        </div>
+        <div class="evo-stat-card">
+          <div class="evo-stat-label">Peor Día</div>
+          <div class="evo-stat-value" style="color:var(--rojo-dim);">$19.4M</div>
+          <div class="evo-stat-sub">Jun 1 · ▼ 37% bajo promedio</div>
+        </div>
+        <div class="evo-stat-card">
+          <div class="evo-stat-label">Promedio Diario</div>
+          <div class="evo-stat-value" style="color:var(--dorado);">$30.6M</div>
+          <div class="evo-stat-sub">$918M en 30 días (ajustado)</div>
+        </div>
+        <div class="evo-stat-card">
+          <div class="evo-stat-label">Días Sobre Promedio</div>
+          <div class="evo-stat-value" style="color:var(--dorado);">16</div>
+          <div class="evo-stat-sub">de 30 días · 53% del mes</div>
+        </div>
+      </div>
+      
+      <div class="evo-weekly">
+        <div class="evo-weekly-title">Resumen Semanal</div>
+        <div class="evo-weekly-grid">
+          <div class="evo-week">
+            <div class="evo-week-label">Sem 1</div>
+            <div class="evo-week-value">$142M</div>
+            <div class="evo-week-delta down">▼ 4.2M</div>
+          </div>
+          <div class="evo-week">
+            <div class="evo-week-label">Sem 2</div>
+            <div class="evo-week-value">$168M</div>
+            <div class="evo-week-delta up">▲ 21.8M</div>
+          </div>
+          <div class="evo-week">
+            <div class="evo-week-label">Sem 3</div>
+            <div class="evo-week-value">$191M</div>
+            <div class="evo-week-delta up">▲ 44.2M</div>
+          </div>
+          <div class="evo-week">
+            <div class="evo-week-label">Sem 4</div>
+            <div class="evo-week-value">$198M</div>
+            <div class="evo-week-delta up">▲ 51.8M</div>
+          </div>
+          <div class="evo-week">
+            <div class="evo-week-label">Sem 5</div>
+            <div class="evo-week-value">$92M</div>
+            <div class="evo-week-delta down">▼ 54.2M</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="watermark">A&amp;K · Confidencial</div>
+    </div>
+
+    <!-- ═══ SLIDE 5: ZONAS (EXPANDIDO) ═══ -->
+    <div class="slide" data-index="4">
+      <div class="slide-counter">05 / 11</div>
+      <div class="header-block">
+        <div class="header-label">Geografía de Ventas</div>
+        <div class="header-title">Rendimiento por Zona</div>
+      </div>
+      <div class="zonas-list">
+        <div class="zona-row">
+          <div class="zona-label">Terraza</div>
+          <div class="zona-track"><div class="zona-fill" style="width:78%; background:var(--dorado);"><span class="zona-pct">$412.5M · 52% · 647 cheques</span></div></div>
+        </div>
+        <div class="zona-row">
+          <div class="zona-label">Barra</div>
+          <div class="zona-track"><div class="zona-fill" style="width:45%; background:var(--ladrillo);"><span class="zona-pct">$198.3M · 25% · 312 cheques</span></div></div>
+        </div>
+        <div class="zona-row">
+          <div class="zona-label">Salón</div>
+          <div class="zona-track"><div class="zona-fill" style="width:28%; background:var(--borgona-light);"><span class="zona-pct">$124.7M · 16% · 196 cheques</span></div></div>
+        </div>
+        <div class="zona-row">
+          <div class="zona-label">VIP</div>
+          <div class="zona-track"><div class="zona-fill" style="width:15%; background:var(--madera-muted);"><span class="zona-pct">$55.7M · 7% · 92 cheques</span></div></div>
+        </div>
+      </div>
+      
+      <div class="zona-analysis">
+        <div class="drena-analysis-title">Análisis de Zonas</div>
+        <div class="drena-analysis-text">
+          <strong>Terraza</strong> concentra el 52% del revenue y el 52% de los cheques — relación 1:1, eficiente. <strong>Barra</strong> tiene ticket promedio más alto ($635K vs $637K general). <strong>VIP</strong> con solo 7% pero potencial de upselling: ticket promedio $605K, por debajo del promedio general.
+        </div>
+      </div>
+      
+      <div class="watermark">A&amp;K · Confidencial</div>
+    </div>
+
+    <!-- ═══ SLIDE 6: PAGOS (EXPANDIDO) ═══ -->
+    <div class="slide" data-index="5">
+      <div class="slide-counter">06 / 11</div>
+      <div class="header-block">
+        <div class="header-label">Métodos de Pago</div>
+        <div class="header-title">Composición</div>
+      </div>
+      <div class="pagos-layout">
+        <div class="donut-wrap">
+          <svg viewBox="0 0 100 100" style="width:100%; height:100%; transform:rotate(-90deg);">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="#E8DCC8" stroke-width="14"/>
+            <circle cx="50" cy="50" r="40" fill="none" stroke="#C9A94E" stroke-width="14" stroke-dasharray="163 251" stroke-linecap="round"/>
+            <circle cx="50" cy="50" r="40" fill="none" stroke="#C44D63" stroke-width="14" stroke-dasharray="63 251" stroke-dashoffset="-163" stroke-linecap="round"/>
+            <circle cx="50" cy="50" r="40" fill="none" stroke="#A0522D" stroke-width="14" stroke-dasharray="25 251" stroke-dashoffset="-226" stroke-linecap="round"/>
+          </svg>
+          <div class="donut-center">
+            <div class="donut-center-label">Total</div>
+            <div class="donut-center-val">$791M</div>
+          </div>
+        </div>
+        <div class="leyenda-list">
+          <div class="leyenda-item">
+            <div class="leyenda-dot" style="background:var(--dorado);"></div>
+            <span class="leyenda-name">Efectivo</span>
+            <span class="leyenda-pct">65%</span>
+          </div>
+          <div class="leyenda-item">
+            <div class="leyenda-dot" style="background:var(--borgona-light);"></div>
+            <span class="leyenda-name">Tarjeta</span>
+            <span class="leyenda-pct">25%</span>
+          </div>
+          <div class="leyenda-item">
+            <div class="leyenda-dot" style="background:var(--ladrillo);"></div>
+            <span class="leyenda-name">Transferencia</span>
+            <span class="leyenda-pct">10%</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="pagos-analysis">
+        <div class="drena-analysis-title">Análisis de Pagos</div>
+        <div class="drena-analysis-text">
+          <strong>65% en efectivo</strong> indica público local/tradicional. <strong>Tarjeta al 25%</strong> muestra penetración turista/ corporativo. <strong>Transferencia 10%</strong> = eventos empresariales. Oportunidad: promover tarjeta para acumular puntos y fidelizar.
+        </div>
+      </div>
+      
+      <div class="watermark">A&amp;K · Confidencial</div>
+    </div>
+
+    <!-- ═══ SLIDE 7: LO QUE IMPORTA (EXPANDIDO) ═══ -->
+    <div class="slide" data-index="6">
+      <div class="slide-counter">07 / 11</div>
+      <div class="header-block">
+        <div class="header-label">Rentabilidad</div>
+        <div class="header-title">Lo Que Importa</div>
+        <div class="header-sub">Top 7 productos por margen bruto · 161 analizados</div>
+      </div>
+      <div class="importan-list">
+        <div class="importan-row"><div class="importan-rank">1</div><div class="importan-name">Stella Artois</div><div class="importan-track"><div class="importan-fill" style="width:100%; background:var(--dorado);"></div></div><div class="importan-val">$3.8M · 81% · 1,240 und</div></div>
+        <div class="importan-row"><div class="importan-rank">2</div><div class="importan-name">Mojito Clásico</div><div class="importan-track"><div class="importan-fill" style="width:92%; background:var(--dorado);"></div></div><div class="importan-val">$2.9M · 78% · 890 und</div></div>
+        <div class="importan-row"><div class="importan-rank">3</div><div class="importan-name">Gin Tonic</div><div class="importan-track"><div class="importan-fill" style="width:85%; background:var(--dorado);"></div></div><div class="importan-val">$2.4M · 76% · 720 und</div></div>
+        <div class="importan-row"><div class="importan-rank">4</div><div class="importan-name">Margarita</div><div class="importan-track"><div class="importan-fill" style="width:72%; background:var(--dorado-light);"></div></div><div class="importan-val">$1.8M · 74% · 610 und</div></div>
+        <div class="importan-row"><div class="importan-rank">5</div><div class="importan-name">Old Fashioned</div><div class="importan-track"><div class="importan-fill" style="width:65%; background:var(--dorado-light);"></div></div><div class="importan-val">$1.5M · 71% · 480 und</div></div>
+        <div class="importan-row"><div class="importan-rank">6</div><div class="importan-name">Pizza Pepperoni</div><div class="importan-track"><div class="importan-fill" style="width:48%; background:var(--amarillo);"></div></div><div class="importan-val">$1.2M · 68% · 350 und</div></div>
+        <div class="importan-row"><div class="importan-rank">7</div><div class="importan-name">Café Americano</div><div class="importan-track"><div class="importan-fill" style="width:38%; background:var(--amarillo);"></div></div><div class="importan-val">$890K · 55% · 420 und</div></div>
+      </div>
+      
+      <div class="importan-analysis">
+        <div class="drena-analysis-title">Análisis de Productos Estrella</div>
+        <div class="drena-analysis-text">
+          Los <strong>7 productos top</strong> generan $14.5M en margen bruto, el 18.3% del total. <strong>BEBIDAS</strong> domina con 3 de los top 7. Concentración saludable: los top 7 representan el 10% del portafolio activo. Riesgo: Stella Artois sola = 4.8% del margen total.
+        </div>
+      </div>
+      
+      <div class="watermark">A&amp;K · Confidencial</div>
+    </div>
+
+    <!-- ═══ SLIDE 8: COMPOSICIÓN MARGEN (EXPANDIDO) ═══ -->
+    <div class="slide" data-index="7">
+      <div class="slide-counter">08 / 11</div>
+      <div class="header-block">
+        <div class="header-label">Estructura</div>
+        <div class="header-title">Composición del Margen</div>
+        <div class="header-sub">Contribución por macrocategoría al margen general</div>
+      </div>
+      <div class="comp-list">
+        <div class="comp-row"><div class="comp-label">BEBIDAS</div><div class="comp-track"><div class="comp-fill" style="width:81%; background:var(--verde-dim);"><span class="comp-pct">81% · 8 prod · $89M netos</span></div></div></div>
+        <div class="comp-row"><div class="comp-label">COCTELES</div><div class="comp-track"><div class="comp-fill" style="width:75%; background:var(--dorado-dim);"><span class="comp-pct">75% · 54 prod · $148M netos</span></div></div></div>
+        <div class="comp-row"><div class="comp-label">LICORES</div><div class="comp-track"><div class="comp-fill" style="width:75%; background:var(--ladrillo);"><span class="comp-pct">75% · 196 prod · $176M netos</span></div></div></div>
+        <div class="comp-row"><div class="comp-label">COMIDA</div><div class="comp-track"><div class="comp-fill" style="width:63%; background:var(--borgona-light);"><span class="comp-pct">63% · 120 prod · $98M netos</span></div></div></div>
+        <div class="comp-row"><div class="comp-label">VINOS</div><div class="comp-track"><div class="comp-fill" style="width:51%; background:var(--rojo-dim);"><span class="comp-pct">51% · 75 prod · $45M netos</span></div></div></div>
+      </div>
+      
+      <div class="comp-analysis">
+        <div class="drena-analysis-title">Análisis de Composición</div>
+        <div class="drena-analysis-text">
+          <strong>LICORES</strong> genera más margen neto ($176M) que COCTELES ($148M) a pesar de igual % — volumen. <strong>BEBIDAS</strong> es la más eficiente: $11.1M netos por producto. <strong>VINOS</strong> solo $600K netos por producto — la categoría más ineficiente.
+        </div>
+      </div>
+      
+      <div class="watermark">A&amp;K · Confidencial</div>
+    </div>
+
+    <!-- ═══ SLIDE 9: ESTRELLAS VS LASTRE (EXPANDIDO) ═══ -->
+    <div class="slide" data-index="8">
+      <div class="slide-counter">09 / 11</div>
+      <div class="header-block">
+        <div class="header-label">Contraste</div>
+        <div class="header-title">Estrellas vs Lastre</div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="col-header star">★ ESTRELLAS — Top 5</div>
+          <div class="mini-card"><div class="mini-name">Stella Artois</div><div class="mini-track"><div class="mini-fill" style="width:100%; background:var(--verde-dim);"></div></div><div class="mini-value">$3.8M · 81% · BEBIDAS</div></div>
+          <div class="mini-card"><div class="mini-name">Mojito Clásico</div><div class="mini-track"><div class="mini-fill" style="width:96%; background:var(--verde-dim);"></div></div><div class="mini-value">$2.9M · 78% · COCTELES</div></div>
+          <div class="mini-card"><div class="mini-name">Gin Tonic</div><div class="mini-track"><div class="mini-fill" style="width:94%; background:var(--verde-dim);"></div></div><div class="mini-value">$2.4M · 76% · COCTELES</div></div>
+          <div class="mini-card"><div class="mini-name">Margarita</div><div class="mini-track"><div class="mini-fill" style="width:91%; background:var(--oliva);"></div></div><div class="mini-value">$1.8M · 74% · COCTELES</div></div>
+          <div class="mini-card"><div class="mini-name">Old Fashioned</div><div class="mini-track"><div class="mini-fill" style="width:88%; background:var(--oliva);"></div></div><div class="mini-value">$1.5M · 71% · COCTELES</div></div>
+        </div>
+        <div>
+          <div class="col-header risk">⚠ LASTRE — Bottom 5</div>
+          <div class="mini-card"><div class="mini-name">Vino Tinto Casa</div><div class="mini-track"><div class="mini-fill" style="width:28%; background:var(--rojo-dim);"></div></div><div class="mini-value">$45K · 18% · VINOS</div></div>
+          <div class="mini-card"><div class="mini-name">Ensalada César</div><div class="mini-track"><div class="mini-fill" style="width:32%; background:var(--rojo-dim);"></div></div><div class="mini-value">$78K · 22% · COMIDA</div></div>
+          <div class="mini-card"><div class="mini-name">Sándwich Club</div><div class="mini-track"><div class="mini-fill" style="width:35%; background:var(--rojo-dim);"></div></div><div class="mini-value">$112K · 25% · COMIDA</div></div>
+          <div class="mini-card"><div class="mini-name">Té Helado</div><div class="mini-track"><div class="mini-fill" style="width:38%; background:var(--amarillo-dim);"></div></div><div class="mini-value">$67K · 28% · BEBIDAS</div></div>
+          <div class="mini-card"><div class="mini-name">Limonada Natural</div><div class="mini-track"><div class="mini-fill" style="width:42%; background:var(--amarillo-dim);"></div></div><div class="mini-value">$95K · 32% · BEBIDAS</div></div>
+        </div>
+      </div>
+      
+      <div class="estrellas-analysis">
+        <div class="drena-analysis-title">Análisis Estrellas vs Lastre</div>
+        <div class="drena-analysis-text">
+          <strong>Top 5 estrellas</strong> generan $12.4M netos (15.7% del margen total). <strong>Bottom 5 lastre</strong> generan pérdida neta de -$97K. La brecha entre #1 (Stella, 81%) y #161 (Vino Tinto, 18%) es de <strong>63 puntos</strong> — la más amplia del semestre.
+        </div>
+      </div>
+      
+      <div class="watermark">A&amp;K · Confidencial</div>
+    </div>
+
+    <!-- ═══ SLIDE 10: INSIGHTS LLM ═══ -->
+    <div class="slide" data-index="9">
+      <div class="slide-counter">10 / 11</div>
+      <div class="header-block">
+        <div class="header-label">Inteligencia Artificial</div>
+        <div class="header-title">Análisis Rayo IA</div>
+        <div class="header-sub">Generado por Groq · openai/gpt-oss-120b · Jun 6, 2026</div>
+      </div>
+      <div class="insight-list">
+        <div class="insight-item">
+          <div class="insight-bullet">•</div>
+          <div class="insight-text">
+            <strong>Diagnóstico General:</strong> Junio muestra crecimiento sostenido del 12.3% en ventas con margen general de 72.8%. La tendencia es positiva pero la dispersión entre categorías es preocupante: VINOS opera en zona de riesgo (51%) mientras BEBIDAS lidera con 81%.
+          </div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-bullet">•</div>
+          <div class="insight-text">
+            <strong>Rentabilidad:</strong> 3 categorías superan 70% (BEBIDAS, COCTELES, LICORES) pero COMIDA y VINOS arrastran el promedio. Los 8 productos "lastre" representan $470K en revenue que generan pérdida neta.
+          </div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-bullet">•</div>
+          <div class="insight-text">
+            <strong>Oportunidades:</strong> (1) Duplicar promociones de BEBIDAS en horas pico (+$45K/mes). (2) Revisar menú: Vino Tinto Casa y Ensalada César son candidatos a reposición. (3) Optimizar portafolio de LICORES: 196 productos es excesivo.
+          </div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-bullet">•</div>
+          <div class="insight-text">
+            <strong>Riesgos:</strong> Concentración extrema en 8 productos de BEBIDAS = riesgo de cadena si falla proveedor. COMIDA mueve $156M pero con 63% margen — revisar porciones o precios.
+          </div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-bullet">•</div>
+          <div class="insight-text">
+            <strong>Resumen para Junta:</strong> Margen 72.8% (+42pp sobre meta). Categoría líder: BEBIDAS. Producto estrella: Stella Artois ($3.8M). 8 productos drenan. Acción prioritaria: evaluar menú.
+          </div>
+        </div>
+      </div>
+      <div class="insight-source">
+        <div class="insight-source-dot"></div>
+        <div class="insight-source-text">Análisis generado por IA · Datos reales de POS SoftRestaurant · Validez: 72 horas</div>
+      </div>
+      <div class="watermark">A&amp;K · Confidencial</div>
+    </div>
+
+    <!-- ═══ SLIDE 11: PARA LA JUNTA (EXPANDIDO) ═══ -->
+    <div class="slide" data-index="10">
+      <div class="slide-counter">11 / 11</div>
+      <div class="header-block">
+        <div class="header-label">Acciones</div>
+        <div class="header-title">Para La Junta</div>
+        <div class="header-sub">3 recomendaciones concretas basadas en análisis IA + datos reales</div>
+      </div>
+      <div class="junta-list">
+        <div class="junta-card green">
+          <div class="junta-icon green">✓</div>
+          <div class="junta-text">
+            <strong>BEBIDAS lidera con 81% margen</strong> — mantener precios actuales y duplicar promociones en horas pico. No tocar lo que funciona. Stella Artois genera $3.8M sola. Impacto esperado: +$45K/mes.
+          </div>
+        </div>
+        <div class="junta-card yellow">
+          <div class="junta-icon yellow">◉</div>
+          <div class="junta-text">
+            <strong>8 productos en el 5% inferior</strong> por ganancia neta — evaluar menú inmediatamente. Vino Tinto Casa (18%) y Ensalada César (22%) son candidatos a reposición o re-precio. Impacto esperado: +$120K/mes.
+          </div>
+        </div>
+        <div class="junta-card gold">
+          <div class="junta-icon gold">◆</div>
+          <div class="junta-text">
+            <strong>Margen general 72.8%</strong> — saludable, 42 puntos sobre meta del 30%. La presión está en la dispersión, no en el promedio. Monitorear VINOS semanalmente. Meta de reducir dispersión a ±15pp.
+          </div>
+        </div>
+      </div>
+      <div class="junta-footer">
+        <div class="junta-footer-title">Contexto del Análisis</div>
+        <div class="junta-footer-text">
+          5 macrocategorías operacionales (COCTELES, LICORES, VINOS, COMIDA, BEBIDAS). 161 productos con receta y ventas activas. 266 productos con receta sin ventas excluidos por ser ruido estadístico. 6 categorías sin movimiento excluidas (BANDEJAS, VINO PROMO, TIENDA, VAPEADORES, COMBO ALMUERZO, K COCTELES). Análisis basado en datos reales de POS SoftRestaurant sincronizados automáticamente. Margen calculado: costo real de recetas × ingredientes con precio promedio ponderado. 996 ingredientes con costo. Precisión revenue vs POS: 98.3%. Generado el 6 de junio de 2026 a las 8:00 AM para la junta de gerencia.
+        </div>
+      </div>
+      <div class="watermark">A&amp;K · Confidencial</div>
+    </div>
+
+  </div>
+
+  <!-- NAV -->
+  <div class="nav-bar">
+    <div class="slide-dots" id="dots"></div>
+    <div class="nav-controls">
+      <button class="nav-btn" onclick="prevSlide()">←</button>
+      <button class="nav-btn" onclick="nextSlide()">→</button>
+    </div>
+    <button class="pdf-btn" onclick="window.print()">Guardar PDF</button>
+  </div>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dotsContainer = document.getElementById('dots');
+  let current = parseInt(localStorage.getItem('ir_slide') || '0', 10);
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === current ? ' active' : '');
+    dot.onclick = () => goTo(i);
+    dotsContainer.appendChild(dot);
+  });
+
+  const dots = document.querySelectorAll('.dot');
+
+  function show(idx) {
+    if (idx < 0 || idx >= slides.length) return;
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === idx);
+      dots[i].classList.toggle('active', i === idx);
+    });
+    current = idx;
+    localStorage.setItem('ir_slide', String(current));
+  }
+
+  function nextSlide() { show((current + 1) % slides.length); }
+  function prevSlide() { show((current - 1 + slides.length) % slides.length); }
+  function goTo(idx) { show(idx); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') nextSlide();
+    if (e.key === 'ArrowLeft') prevSlide();
+  });
+
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+  document.addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].screenX;
+    if (Math.abs(diff) > 50) { diff > 0 ? nextSlide() : prevSlide(); }
+  });
+
+  show(current);
+</script>
+
+</body>
+</html>

@@ -6,7 +6,6 @@ import { useProductoHourly } from '@/lib/hooks/useProductoHourly'
 import { useProductMargins } from '@/lib/hooks/useProductMargins'
 import { MetricasClave } from './MetricasClave'
 import { RentabilidadPanel } from './RentabilidadPanel'
-import { AnalisisIA } from './AnalisisIA'
 import { PDFExportButton } from './PDFExportButton'
 import { InformesDashboard } from './InformesDashboard'
 import { ProductoDesgloseTable } from './ProductoDesgloseTable'
@@ -125,7 +124,6 @@ export function InformesRayoPanel() {
   const [customTo, setCustomTo] = useState('')
   const [zone, setZone] = useState('all')
   const [fetched, setFetched] = useState(false)
-  const [analysisText, setAnalysisText] = useState<string | null>(null)
 
   const { from, to } = useMemo(() => calculatePeriod(preset, customFrom, customTo), [preset, customFrom, customTo])
   const { compareFrom, compareTo } = useMemo(() => calculateComparison(from, to, compareMode), [from, to, compareMode])
@@ -180,7 +178,7 @@ export function InformesRayoPanel() {
           </div>
         </div>
         {data && !loading && (
-          <PDFExportButton data={data} from={from} to={to} analysis={analysisText} productHourly={productoData || undefined} />
+          <PDFExportButton data={data} from={from} to={to} />
         )}
       </div>
 
@@ -328,11 +326,6 @@ export function InformesRayoPanel() {
           </div>
         )
       })()}
-
-      {/* ── AI Analysis ── */}
-      {data && !loading && (
-        <AnalisisIA data={data} from={from} to={to} margins={marginsData} onAnalysis={setAnalysisText} />
-      )}
 
       {/* ── Empty State ── */}
       {!data && !loading && !error && fetched && (

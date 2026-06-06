@@ -296,34 +296,57 @@ export function RentabilidadPanel({ from, to }: Props) {
           </h3>
         </div>
         <div className="space-y-2 text-sm text-[var(--text-secondary)]">
-          {categorias.slice(0, 1).map((cat, i) => {
-            const semaforo = getSemaforo(cat.margin_pct)
+          {(() => {
+            // Usar los datos reales de drenan para generar el resumen
+            const drenanConMargen = drenan.filter((p: any) => Number(p.margin_pct || 0) < 20)
+            const drenanNegativos = drenan.filter((p: any) => Number(p.margin_bruto || 0) < 0)
+            const catDrenan = drenan.length > 0 ? drenan[0].macro_category : 'Comida'
+            const catLabel = MACRO_LABELS[catDrenan]?.label || catDrenan
+
+            // Top categoria por margen
+            const mejorCat = categorias.length > 0
+              ? categorias.reduce((a: any, b: any) => (a.margin_pct > b.margin_pct ? a : b))
+              : null
+
             return (
-              <div key={`top-${i}`} className="flex gap-2">
-                <span className="text-[var(--color-success)] font-bold">1.</span>
-                <span>
-                  <strong className="text-[var(--text-primary)]">{MACRO_LABELS[cat.categoria]?.label}</strong> tiene {cat.importan} productos estrella con margen promedio de {cat.margin_pct}% {semaforo}
-                  {' '}— mantener estrategia de precios y promociones actuales.
-                </span>
-              </div>
+              <>
+                {mejorCat && (
+                  <div className="flex gap-2">
+                    <span className="text-[var(--color-success)] font-bold">1.</span>
+                    <span>
+                      <strong className="text-[var(--text-primary)]">{MACRO_LABELS[mejorCat.categoria]?.label || mejorCat.categoria}</strong> lidera con {mejorCat.margin_pct}% de margen y {mejorCat.importan} productos estrella {getSemaforo(mejorCat.margin_pct)}
+                      {' '}— mantener estrategia de precios y promociones actuales.
+                    </span>
+                  </div>
+                )}
+                {drenanConMargen.length > 0 && (
+                  <div className="flex gap-2">
+                    <span className="text-[var(--color-warning)] font-bold">2.</span>
+                    <span>
+                      <strong className="text-[var(--text-primary)]">ATENCIÓN:</strong> {drenanConMargen.length} productos con margen bajo (<20%) en <strong className="text-[var(--text-primary)]">{catLabel}</strong>
+                      {' '}— revisar recetas y precios con cocina y barra. {drenanConMargen.slice(0, 2).map((p: any) => p.product_name).join(', ')}.
+                    </span>
+                  </div>
+                )}
+                {drenanNegativos.length > 0 && (
+                  <div className="flex gap-2">
+                    <span className="text-[var(--color-danger)] font-bold">{drenanConMargen.length > 0 ? '3.' : '2.'}</span>
+                    <span>
+                      <strong className="text-[var(--text-primary)]">URGENTE:</strong> {drenanNegativos.length} productos con margen bruto negativo en {catLabel}
+                      {' '}— están costando más producir que lo que generan. Evaluar eliminación inmediata.
+                    </span>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <span className="text-[var(--color-ak-dorado)] font-bold">{drenanConMargen.length > 0 || drenanNegativos.length > 0 ? '4.' : '1.'}</span>
+                  <span>
+                    <strong className="text-[var(--text-primary)]">Margen general del negocio:</strong> {kpis?.margin_pct || '?'}% sobre {formatPesos(kpis?.total_revenue || 0)} en ventas
+                    {' '}— {kpis && kpis.margin_pct >= metaMargen ? 'saludable, sobre la meta del ' + metaMargen + '%.' : (metaMargen - (kpis?.margin_pct || 0)) + ' puntos bajo la meta del ' + metaMargen + '%.'}
+                  </span>
+                </div>
+              </>
             )
-          })}
-          {drenan.length > 0 && (
-            <div className="flex gap-2">
-              <span className="text-[var(--color-warning)] font-bold">2.</span>
-              <span>
-                <strong className="text-[var(--text-primary)]">ATENCIÓN:</strong> {drenan.length} productos con margen bajo o nulo en <strong className="text-[var(--text-primary)]">{MACRO_LABELS[drenan[0]?.macro_category]?.label || 'el menú'}</strong>
-                {' '}— revisar recetas y precios con cocina y barra esta semana.
-              </span>
-            </div>
-          )}
-          <div className="flex gap-2">
-            <span className="text-[var(--color-ak-dorado)] font-bold">3.</span>
-            <span>
-              <strong className="text-[var(--text-primary)]">Margen general del negocio:</strong> {kpis?.margin_pct || '?'}% sobre {formatPesos(kpis?.total_revenue || 0)} en ventas
-              {' '}— {kpis && kpis.margin_pct >= metaMargen ? 'saludable, sobre la meta del ' + metaMargen + '%.' : (metaMargen - (kpis?.margin_pct || 0)) + ' puntos bajo la meta del ' + metaMargen + '%.'}
-            </span>
-          </div>
+          })()}
         </div>
       </div>
     </div>

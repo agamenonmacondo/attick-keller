@@ -25,28 +25,23 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error
 
-    // Si hay filtro de categoría, filtrar client-side (la RPC ya está optimizada)
     let filtered = data || []
     if (category && category !== 'Todas') {
       filtered = filtered.filter((p: any) => p.macro_category === category)
     }
 
-    // Calcular resumen por macrocategoría
-    const categorySummary: Record<string, { revenue: number; margin_pct: number; count: number; importan: number; drenan: number }> = {}
-
+    // ── RESUMEN POR CATEGORÍA ──
+    const catSummary: Record<string, { revenue: number; margin_pct: number; count: number; importan: number; drenan: number }> = {}
     for (const p of filtered) {
       const cat = p.macro_category
-      if (!categorySummary[cat]) {
-        categorySummary[cat] = { revenue: 0, margin_pct: 0, count: 0, importan: 0, drenan: 0 }
+      if (!catSummary[cat]) {
+        catSummary[cat] = { revenue: 0, margin_pct: 0, count: 0, importan: 0, drenan: 0 }
       }
-      categorySummary[cat].revenue += Number(p.revenue || 0)
-      categorySummary[cat].count++
-      
-      // Clasificar: importa (margen > 25% y revenue > mediana) o drena (margen < 15% o revenue < mediana)
-      // La mediana se calcula sobre revenue
+      catSummary[cat].revenue += Number(p.revenue || 0)
+      catSummary[cat].count++
     }
 
-    // Calcular medianas para clasificación
+    // ── CLASIFICACIÓN (auditoría jun-2026, márgenes reales verificados) ──
     const revenues = filtered.map((p: any) => Number(p.revenue || 0)).sort((a: number, b: number) => a - b)
     const medianRevenue = revenues.length > 0 ? revenues[Math.floor(revenues.length / 2)] : 0
 
@@ -55,30 +50,44 @@ export async function GET(request: NextRequest) {
       const mrg = Number(p.margin_pct || 0)
       const cat = p.macro_category
 
-      if (mrg >= 25 && rev >= medianRevenue) {
-        categorySummary[cat].importan++
-      } else if (mrg < 15 || rev < medianRevenue * 0.1) {
-        categorySummary[cat].drenan++
+      // Adiciones/micro-productos con margen >50%: NO son lastre, son complementos
+      const isAdicion = rev < medianRevenue * 0.15 && mrg > 50
+
+      if (mrg >= 25 && rev >= medianRevenue * 0.3) {
+        catSummary[cat].importan++
+      } else if (!isAdicion && (mrg < 20 || Number(p.margin_bruto || 0) < 0)) {
+        catSummary[cat].drenan++
       }
     }
 
-    // Calcular margen promedio por categoría
-    for (const cat of Object.keys(categorySummary)) {
-      const catProducts = filtered.filter((p: any) => p.macro_category === cat)
-      const totalMargin = catProducts.reduce((s: number, p: any) => s + Number(p.margin_pct || 0), 0)
-      categorySummary[cat].margin_pct = catProducts.length > 0 ? Math.round(totalMargin / catProducts.length) : 0
+    // ── MARGEN PONDERADO POR REVENUE ──
+    for (const cat of Object.keys(catSummary)) {
+      const prods = filtered.filter((p: any) => p.macro_category === cat)
+      const totalRev = prods.reduce((s: number, p: any) => s + Number(p.revenue || 0), 0)
+      const totalMrg = prods.reduce((s: number, p: any) => s + Number(p.margin_bruto || 0), 0)
+      catSummary[cat].margin_pct = totalRev > 0 ? Math.round((totalMrg / totalRev) * 100) : 0
     }
 
-    // Calcular KPIs globales
+    // ── KPIs GLOBALES ──
     const totalRevenue = filtered.reduce((s: number, p: any) => s + Number(p.revenue || 0), 0)
     const totalCost = filtered.reduce((s: number, p: any) => s + Number(p.cost_total || 0), 0)
     const totalMarginPct = totalRevenue > 0 ? Math.round(((totalRevenue - totalCost) / totalRevenue) * 1000) / 10 : 0
     const totalMarginBruto = totalRevenue - totalCost
 
-    // Top 15 (importan) y bottom 10 (drenan) por margen bruto
+    // ── LO QUE IMPORTA (top 15 por margen bruto en pesos) ──
     const sorted = [...filtered].sort((a: any, b: any) => Number(b.margin_bruto || 0) - Number(a.margin_bruto || 0))
     const importan = sorted.slice(0, 15)
-    const drenan = sorted.slice(-10).reverse()
+
+    // ── LO QUE DRENA (margen <20% o margen bruto negativo, excluyendo adiciones) ──
+    const drenanCandidates = filtered
+      .filter((p: any) => {
+        const rev = Number(p.revenue || 0)
+        const mrg = Number(p.margin_pct || 0)
+        if (rev < medianRevenue * 0.15 && mrg > 50) return false
+        return mrg < 20 || Number(p.margin_bruto || 0) < 0
+      })
+      .sort((a: any, b: any) => Number(a.margin_pct || 0) - Number(b.margin_pct || 0))
+    const drenan = drenanCandidates.slice(0, 10)
 
     return NextResponse.json({
       kpis: {
@@ -88,7 +97,7 @@ export async function GET(request: NextRequest) {
         total_productos: filtered.length
       },
       resumen_ejecutivo: {
-        categorias: Object.entries(categorySummary).map(([cat, info]) => ({
+        categorias: Object.entries(catSummary).map(([cat, info]) => ({
           categoria: cat,
           revenue: info.revenue,
           margin_pct: info.margin_pct,

@@ -485,6 +485,33 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     slides.push(emptySlide('POR CATEGORÍA'))
   }
 
+  // ═══ SLIDE 5 — ANÁLISIS IA ═══
+  if (input.analysis && input.analysis.length > 10) {
+    const sections = parseAnalysisSections(input.analysis)
+    if (sections.length > 0) {
+      const analysisBlocks = sections.slice(0, 5).map(s => {
+        const body = s.body.replace(/\n/g, '<br>')
+        return `<div class="analysis-block">
+          <div class="analysis-title">${s.icon} ${s.title}</div>
+          <div class="analysis-body">${body}</div>
+        </div>`
+      }).join('')
+
+      slides.push(`<div class="slide">
+      <div class="slide-header">
+        <span class="slide-hdr-title">ANÁLISIS INTELIGENTE</span>
+      </div>
+      <div class="slide-subtitle">Diagnóstico automatizado del período</div>
+      <div class="analysis-wrap">
+        ${analysisBlocks}
+      </div>
+      <div class="slide-footer">
+        <span>ATTICK & KELLER • INFORME RAYO</span>
+      </div>
+    </div>`)
+    }
+  }
+
   // ═══ SLIDE 5 — LO QUE IMPORTA (1-7) ═══
   if (hasMargins && margins!.importan.length > 0) {
     const top7 = margins!.importan.slice(0, 7)
@@ -821,7 +848,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   }
   .slide-subtitle {
     font-family: 'DM Sans', sans-serif;
-    font-size: 11px;
+    font-size: 13px;
     color: #706860;
     margin-top: -8px;
     margin-bottom: 14px;
@@ -953,7 +980,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   }
   .kpi-vital-label {
     font-family: 'DM Sans', sans-serif;
-    font-size: 10px;
+    font-size: 12px;
     color: #706860;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -961,14 +988,14 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   }
   .kpi-vital-val {
     font-family: 'Playfair Display', serif;
-    font-size: 38px;
+    font-size: 42px;
     font-weight: 800;
     color: #F0EDE8;
     line-height: 1.1;
   }
   .kpi-vital-sub {
     font-family: 'DM Sans', sans-serif;
-    font-size: 10px;
+    font-size: 12px;
     color: #A09890;
     margin-top: 4px;
   }
@@ -988,7 +1015,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   }
   .drena-name {
     font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
+    font-size: 15px;
     color: #F0EDE8;
     font-weight: 500;
     display: block;
@@ -998,7 +1025,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   }
   .drena-meta {
     font-family: 'DM Sans', sans-serif;
-    font-size: 10px;
+    font-size: 12px;
     color: #A09890;
     margin-top: 4px;
     display: flex;
@@ -1007,15 +1034,42 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     flex-wrap: wrap;
   }
   .drena-cat { color: #706860; }
-  .drena-sep { color: #2A2A2A; font-size: 8px; }
+  .drena-sep { color: #2A2A2A; font-size: 10px; }
   .drena-margin { font-weight: 500; }
   .drena-rev { font-weight: 500; color: #A09890; }
   .drena-diag {
     font-family: 'DM Sans', sans-serif;
-    font-size: 9px;
+    font-size: 11px;
     color: #706860;
     margin-top: 5px;
     line-height: 1.4;
+  }
+
+  /* ═══ SLIDE 5 — ANÁLISIS IA ═══ */
+  .analysis-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+  }
+  .analysis-block {
+    background: #1A1A1A;
+    border-left: 3px solid #C9A94E;
+    padding: 10px 12px;
+  }
+  .analysis-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #C9A94E;
+    margin-bottom: 4px;
+  }
+  .analysis-body {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: #E0D8CC;
+    line-height: 1.55;
   }
 
   /* ═══ SLIDE 4 — POR CATEGORÍA ═══ */

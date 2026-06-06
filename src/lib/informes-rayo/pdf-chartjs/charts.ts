@@ -105,6 +105,8 @@ export function drawDonut(
   });
 
   // Centro blanco (para efecto donut)
+  const cx = x;
+  const cy = y;
   doc.setFillColor('#FFFFFF');
   doc.ellipse(cx, cy, innerR, innerR, 'F');
 

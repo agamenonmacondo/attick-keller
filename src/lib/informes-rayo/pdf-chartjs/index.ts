@@ -16,8 +16,7 @@ import { renderEstrellasLastre } from './slides/08-estrellas-lastre';
 import { renderInsights } from './slides/09-insights';
 import { renderJunta } from './slides/10-junta';
 
-export type { AllData, KPIData, ZoneData, PaymentData, MarginKPIs, CategorySummary, ProductMargin, LLMAnalysis } from './types';
-export type { DailyData as DailyPoint } from './types';
+export type { AllData, KPIData, ZoneData, PaymentData, MarginKPIs, CategorySummary, ProductMargin, LLMAnalysis, DailyData } from './types';
 
 export async function generatePDF(data: AllData): Promise<Blob> {
   const doc = new jsPDF('p', 'mm', 'a4');

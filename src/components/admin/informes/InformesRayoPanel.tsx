@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useInformesRayo } from '@/lib/hooks/useInformesRayo'
 import { useProductoHourly } from '@/lib/hooks/useProductoHourly'
 import { MetricasClave } from './MetricasClave'
+import { RentabilidadPanel } from './RentabilidadPanel'
 import { AnalisisIA } from './AnalisisIA'
 import { PDFExportButton } from './PDFExportButton'
 import { InformesDashboard } from './InformesDashboard'
@@ -262,6 +263,9 @@ export function InformesRayoPanel() {
       {data && !loading && (
         <MetricasClave data={data.kpis} comparison={data.comparison as { kpis: any } | null} />
       )}
+
+      {/* ── RENTABILIDAD ── */}
+      <RentabilidadPanel from={from} to={to} />
 
       {/* ── Dashboard Charts ── */}
       {data && !loading && (

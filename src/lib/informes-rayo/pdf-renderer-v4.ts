@@ -1,5 +1,6 @@
-// ═══ PDF Renderer v4 — html2canvas + jsPDF ═══
-// Toma HTML generado por pdf-generator-v4.ts y lo convierte en PDF descargable
+// ═══ PDF Renderer v5 — html2canvas + jsPDF via iframe ═══
+// Toma HTML generado por pdf-generator-v5.ts y lo convierte en PDF descargable
+// FIX: usa iframe para que el navegador procese <head>/<style> y cargue Google Fonts
 
 // @ts-ignore
 import html2canvas from 'html2canvas'
@@ -14,22 +15,39 @@ const pdfW = (SLIDE_WIDTH / 96) * 25.4
 const pdfH = (SLIDE_HEIGHT / 96) * 25.4
 
 export async function renderHtmlToPDF(html: string): Promise<Blob> {
-  const container = document.createElement('div')
-  container.style.position = 'fixed'
-  container.style.top = '-9999px'
-  container.style.left = '-9999px'
-  container.style.width = SLIDE_WIDTH + 'px'
-  container.style.zIndex = '-1'
-  container.style.visibility = 'hidden'
-  container.innerHTML = html
-  document.body.appendChild(container)
+  // ── Create an iframe so the browser processes <head>/<style>/<link> properly ──
+  const iframe = document.createElement('iframe')
+  iframe.style.position = 'fixed'
+  iframe.style.top = '-9999px'
+  iframe.style.left = '-9999px'
+  iframe.style.width = SLIDE_WIDTH + 'px'
+  iframe.style.height = SLIDE_HEIGHT + 'px'
+  iframe.style.border = 'none'
+  iframe.style.zIndex = '-1'
+  iframe.style.visibility = 'hidden'
+  document.body.appendChild(iframe)
 
-  await document.fonts.ready
-  await new Promise(r => setTimeout(r, 600))
+  // Write the full HTML document into the iframe
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+  if (!iframeDoc) {
+    document.body.removeChild(iframe)
+    throw new Error('Cannot access iframe document')
+  }
+  iframeDoc.open()
+  iframeDoc.write(html)
+  iframeDoc.close()
 
-  const slides = container.querySelectorAll('.slide')
+  // Wait for fonts to load inside the iframe
+  try {
+    await iframe.contentWindow?.document.fonts.ready
+  } catch {
+    //_fonts.ready may not be available in some contexts
+  }
+  await new Promise(r => setTimeout(r, 1200))
+
+  const slides = iframeDoc.querySelectorAll('.slide')
   if (slides.length === 0) {
-    document.body.removeChild(container)
+    document.body.removeChild(iframe)
     throw new Error('No slides found in HTML')
   }
 
@@ -59,6 +77,6 @@ export async function renderHtmlToPDF(html: string): Promise<Blob> {
     pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH)
   }
 
-  document.body.removeChild(container)
+  document.body.removeChild(iframe)
   return pdf.output('blob')
 }

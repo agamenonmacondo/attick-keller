@@ -266,6 +266,14 @@ body{font-family:"Inter",system-ui,sans-serif;background:#0D0D0C;color:#F0EDE8;l
 .junta-action{font-size:10px;color:var(--text-muted);margin-top:6px;font-weight:500;font-family:var(--font-sans)}
 .junta-metric{font-family:var(--font-serif);font-size:16px;font-weight:700;color:var(--gold);margin-top:4px;line-height:1}
 
+/* ── Mensaje al equipo ── */
+.mensaje-equipo{margin-top:14px;background:linear-gradient(135deg,rgba(92,21,40,0.35),rgba(13,13,12,0.6));border-radius:10px;padding:16px 14px;border:1px solid rgba(201,169,78,0.2)}
+.mensaje-equipo-header{font-family:var(--font-script);font-size:18px;color:var(--gold);margin-bottom:8px;line-height:1.2}
+.mensaje-equipo-body{font-size:11.5px;line-height:1.65;color:#E0D8CC;font-family:var(--font-sans)}
+.mensaje-equipo-body p{margin:0 0 8px 0}
+.mensaje-equipo-body p:last-child{margin-bottom:0}
+.mensaje-equipo-body strong{color:var(--gold);font-weight:600}
+
 /* ── Analysis block (slide 9) ── */
 .analysis-block{background:var(--surface);border-radius:8px;padding:12px 14px;margin-bottom:10px}
 .analysis-block-header{font-size:10px;font-weight:700;color:#F0EDE8;margin-bottom:6px;display:flex;align-items:center;gap:6px;font-family:var(--font-sans)}
@@ -488,7 +496,7 @@ export function generatePDFHtmlV6(input: PDFGeneratorInput): string {
     )
   } else { slides.push(emptySlide('DATOS QUE IMPORTAN')) }
 
-  // ═══ SLIDE 8 — PARA LA JUNTA (junta-card green/yellow/gold) ═══
+  // ═══ SLIDE 8 — PARA LA JUNTA + MENSAJE AL EQUIPO ═══
   if (hasMargins) {
     const cards = a?.slide_8_cards && a.slide_8_cards.length > 0 ? a.slide_8_cards : []
     const mk = margins!.kpis
@@ -512,11 +520,25 @@ export function generatePDFHtmlV6(input: PDFGeneratorInput): string {
       return '<div class="junta-card ' + borderClass + '"><div class="junta-icon">' + c.emoji + '</div><div class="junta-body"><div class="junta-text">' + titleHtml + c.action + '</div>' + metricHtml + '</div></div>'
     }).join('')
 
+    // ── Mensaje al equipo ──
+    const mensaje = a?.slide_junta_mensaje || ''
+    let mensajeHtml = ''
+    if (mensaje) {
+      // Split by double newlines into paragraphs
+      const paragraphs = mensaje.split(/\n\n+/).filter(p => p.trim())
+      const bodyContent = paragraphs.map(p => '<p>' + p.replace(/\n/g, '<br>') + '</p>').join('')
+      mensajeHtml = '<div class="mensaje-equipo">' +
+        '<div class="mensaje-equipo-header">Mensaje al equipo</div>' +
+        '<div class="mensaje-equipo-body">' + bodyContent + '</div>' +
+        '</div>'
+    }
+
     slides.push(
       '<div class="slide">' +
       '<div class="slide-label">Recomendaciones</div>' +
       '<div class="slide-title">Para la<br>junta</div>' +
       '<div class="junta-list">' + cardsHtml + '</div>' +
+      mensajeHtml +
       '<div class="slide-footer"><div class="slide-footer-text">Informe generado · Attick &amp; Keller · ' + todayLabel + '</div></div>' +
       '<div class="watermark">A&amp;K · Confidencial</div>' +
       '</div>'

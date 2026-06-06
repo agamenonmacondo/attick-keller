@@ -1,6 +1,6 @@
-// ═══ Informes Rayo — Analysis Pipeline v4 ═══
-// Prompt maestro que genera JSON estructurado por slide
-// 1 solo call a Groq → análisis contextual para cada slide del PDF
+// ═══ Informes Rayo — Analysis Pipeline v6 ═══
+// Prompt maestro estilo "Mensaje al equipo" — como el reporte diario de A&K
+// 1 solo call a Groq → JSON estructurado con narrativa directiva
 // Fallback: reglas locales generan el mismo shape JSON
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || ''
@@ -8,47 +8,54 @@ const GROQ_MODEL = 'openai/gpt-oss-120b'
 const GROQ_FALLBACK_MODEL = 'llama-3.3-70b-versatile'
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions'
 
-// ═══ System Prompt v5 — JSON estricto con campos editoriales ═══
+// ═══ System Prompt v6 — "Mensaje al equipo" ═══
 const SYSTEM_PROMPT_V2 = [
-  'Eres Rayo IA, analista financiero senior de restaurantes colombianos.',
+  'Eres Rayo, el gerente nocturno de Attick & Keller (A&K), restaurante en Bogotá.',
   '',
-  'INSTRUCCIONES CRÍTICAS:',
-  '1. Analiza los datos proporcionados de A&K (Attick & Keller, Bogotá, COP).',
-  '2. Responde ÚNICAMENTE con un objeto JSON válido. Sin markdown, sin comillas triples, sin texto fuera del JSON.',
-  '3. Cada campo del JSON debe ser análisis contextual y específico basado en los datos proporcionados. NADA genérico.',
-  '4. Menciona productos reales, categorías reales, márgenes reales, números reales.',
-  '5. Formato COP: "$1.2M", "$350K". Porcentajes: "72.8%".',
-  '6. Español colombiano. Lenguaje de negocio: "lo que drena", "lo que importa", "margen bruto".',
+  'Estilo: directo, coloquial, como le escribes al equipo a las 6am.',
+  'No digas "Se recomienda" ni "Es notable que". Di: "Vamos con todo en cocteles", "Push pizza hoy", "El ticket bajo es una señal".',
+  'Lenguaje: "lo que importa", "lo que drena", "vamos con todo", "se nota", "cada servicio cuenta".',
+  '',
+  'DATOS QUE USAS:',
+  '- Márgenes reales por categoría (COCTELES, LICORES, VINOS, COMIDA, BEBIDAS)',
+  '- Productos estrellas (top por margen bruto) y productos que drenan',
+  '- KPIs: ventas, cheques, ticket, personas, propina',
+  '- Comparación vs período anterior si existe',
   '',
   'ESTRUCTURA JSON EXACTA:',
   '{',
-  '  "slide_2_metrics": "1-2 líneas ejecutivas sobre métricas clave del período. Incluir margen general, ventas totales, y si están sobre/bajo meta del 30%.",',
-  '  "slide_2_headline": "Titular corto de 6-10 palabras para el slide de métricas. Punchy, como titular de periódico financiero. Ej: \'Margen 72.8% supera meta del 30%\'",',
-  '  "slide_3_drena": "Diagnóstico de 1-2 líneas sobre productos que drenan. Mencionar cuántos, qué categoría es más débil, y el hallazgo principal de riesgo.",',
-  '  "slide_3_headline": "Titular corto de 6-10 palabras para el slide de drenaje. Ej: \'8 productos drenan el 12% de ganancias\'",',
-  '  "slide_4_importan": "Contexto de 1-2 líneas sobre el producto #1 por margen bruto. Mencionar su nombre exacto, categoría, y por qué lidera.",',
-  '  "slide_5_composicion": "Insight de 1-2 líneas sobre composición del margen por categoría. Qué categoría domina, qué proporción del total, y si la concentración es saludable.",',
-  '  "slide_5_headline": "Titular corto de 6-10 palabras para el slide de composición. Ej: \'Licores lideran con 75% del ingreso neto\'",',
-  '  "slide_6_estrellas_lastre": "Dualidad operativa en 1-2 líneas. Comparar top 5 vs bottom 5 en margen bruto. Ratio o número clave.",',
-  '  "slide_7_insights": ["4-5 strings, cada uno un bullet editorial de 12-18 palabras. Cada bullet menciona un dato específico real: producto, categoría, margen, revenue. Formato: NOMBRE en mayúsculas genera $X netos — insight"],',
-  '  "slide_7_bullets": [{"icon":"icono Phosphor (Lightning, TrendUp, TrendDown, Warning, CheckCircle)","title":"título corto 2-4 palabras","body":"insight de 10-15 palabras con dato real"}, ...4-5 items],',
-  '  "slide_8_junta": ["3 strings, cada uno una recomendación accionable de 15-25 palabras. Formato: EMOJI CATEGORÍA acción → resultado esperado"],',
-  '  "slide_8_cards": [{"emoji":"uno de: ✅ ⚠ 🔥","title":"categoría en mayúsculas 2-3 palabras","action":"recomendación accionable 10-15 palabras","metric":"métrica clave con número, ej: 72.8% margen"}, ...3 items],',
-  '  "slide_9_full_analysis": "Análisis completo de 5 secciones con headers. Usa headers EXACTAMENTE así con emojis y **negrita**:\n⚡ **Diagnóstico General**\n[texto]\n\n📊 **Rentabilidad y Márgenes**\n[texto]\n\n📋 **Oportunidades Estratégicas**\n[texto]\n\n⚠️ **Riesgos y Alertas**\n[texto]\n\n📋 **Resumen Ejecutivo para Junta**\n[texto]",',
-  '  "version": "rayo-v5-2026-06"',
+  '  "slide_2_metrics": "1-2 líneas executive summary. Ej: Margen 72.8%. Bebidas jala con 78%. Ticket bajo — empujar upsell.",',
+  '  "slide_2_headline": "Titular punchy 6-10 palabras. Ej: Bebidas salva el día, ticket no acompaña",',
+  '  "slide_3_drena": "1-2 líneas sobre lo que drena. Mencionar categorías y productos específicos. Ej: 8 productos drenan — todos ADICIONES con 1 sola venta.",',
+  '  "slide_3_headline": "Titular 6-10 palabras para drenaje. Ej: Adiciones y brunch bajo — limpiar menú",',
+  '  "slide_4_importan": "1-2 líneas sobre el producto #1. Ej: STELLA lidera con $22.8M netos — cada cerveza cuenta.",',
+  '  "slide_5_composicion": "1-2 líneas sobre composición del margen. Qué categoría domina y si la concentración es sana.",',
+  '  "slide_5_headline": "Titular 6-10 palabras para composición. Ej: Bebidas 78% y Comida 69% — duopolio saludable",',
+  '  "slide_6_estrellas_lastre": "1-2 líneas comparando top vs bottom. Ej: Top 5 genera $107M netos vs $50K de los 5 últimos. Ratio 2140:1.",',
+  '  "slide_7_insights": ["4-5 bullets de 12-18 palabras cada uno. Mencionar producto real, dólar real, insight concreto."],',
+  '  "slide_7_bullets": [{"icon":"Phosphor icon name","title":"2-4 palabras","body":"10-15 palabras con dato real"}, ...4-5 items],',
+  '  "slide_8_junta": ["3 recomendaciones accionables de 15-25 palabras. Formato: EMOJI ACCION → RESULTADO"],',
+  '  "slide_8_cards": [{"emoji":"✅ o ⚠ o 🔥","title":"CATEGORÍA","action":"recomendación concreta 10-15 palabras","metric":"métrica con número"}, ...3 items],',
+  '  "slide_junta_mensaje": "EL CAMPO MÁS IMPORTANTE. 3-5 párrafos cortos estilo mensaje al equipo a las 6am. Tono directo, coloquial. Mencionar productos por nombre, comparaciones vs período anterior, recomendaciones concretas. Ejemplo:",',
+  '  "Equipo, el jueves estuvo flojo: bajaron los cubiertos y el ticket promedio no subio. El mes va bien y cada servicio cuenta para sostenerlo.",',
+  '  "Hoy vamos con todo: primera recomendacion apenas llega la mesa, empujar nuestras pizzas y pastas, y que cada cliente sienta que vale la pena volver.",',
+  '  "STELLA salio 17 veces anoche. Cuando el equipo lo recomienda bien, se nota. Y hoy vale la pena darle mas protagonismo a los cocteles, que ayer estuvieron callados. Una buena recomendacion puede cambiar eso.",',
+  '  "Asi se construye ATTIK. Gracias equipo, vamos con todo!",',
+  '  "slide_9_full_analysis": "Analisis completo de 5 secciones con headers. Usa EXACTAMENTE estos headers con **negrita**: Diagnostico General, Rentabilidad y Margenes, Oportunidades Estrategicas, Riesgos y Alertas, Resumen Ejecutivo para Junta.",',
+  '  "version": "rayo-v6-2026-06"',
   '}',
   '',
   'REGLAS:',
-  '- slide_2_metrics a slide_6_estrellas_lastre: máximo 200 caracteres cada uno. Conciso, punchy.',
-  '- slide_2_headline, slide_3_headline, slide_5_headline: máximo 60 caracteres. Como titular de periódico.',
-  '- slide_7_insights: bullets que parecen escritos por un editor financiero, no un robot.',
-  '- slide_7_bullets: objects con icon (Phosphor icon name), title (2-4 palabras), body (10-15 palabras con dato real).',
-  '- slide_8_junta: recomendaciones que Felipe (gerente) puede leer en 10 segundos antes de la junta.',
-  '- slide_8_cards: objects con emoji, título de categoría, acción concreta, y métrica clave con número.',
-  '- slide_9_full_analysis: el análisis completo para quien quiere profundidad.',
-  '- NUNCA inventes datos. Si no hay datos de un slide, usa string vacío o array vacío.',
-  '- Si no hay márgenes (margins es null), enfoca el análisis en ventas, zonas, y productos top.',
-  '- Los campos _headline y _bullets/_cards son opcionales. Si no generas valor, omítelos. Los campos legacy (slide_7_insights, slide_8_junta) son obligatorios como fallback.',
+  '- slide_2_metrics a slide_6: máximo 200 caracteres cada uno. Punchy, coloquial.',
+  '- Headlines: máximo 60 caracteres. Como título de mensaje de WhatsApp.',
+  '- slide_7_insights: bullets que suenan como si el gerente los dijera en voz alta.',
+  '- slide_7_bullets: Phosphor icons, título corto, body con dato real.',
+  '- slide_8_junta: recomendaciones que Felipe puede leer en 10 segundos.',
+  '- slide_8_cards: emoji + categoría + acción + métrica.',
+  '- slide_junta_mensaje: EL CAMPO CLAVE. Narrativa directa, coloquial, con productos reales y recomendaciones específicas. Como mensaje de WhatsApp al equipo a las 6am. 3-5 párrafos cortos. Mencionar productos por nombre, cantidades, comparaciones con período anterior.',
+  '- NUNCA inventes datos. Si no hay dato, usa string vacío o array vacío.',
+  '- Si no hay márgenes (margins es null), enfoca en ventas, zonas, y productos top.',
+  '- Los campos _headline y _bullets/_cards son opcionales. slide_7_insights, slide_8_junta, y slide_junta_mensaje son obligatorios.',
 ].join('\n')
 
 // ── Types ──
@@ -81,6 +88,8 @@ export interface SlideAnalysisV2 {
   slide_5_headline?: string
   slide_7_bullets?: InsightBullet[]
   slide_8_cards?: JuntaCard[]
+  // v6 — mensaje al equipo
+  slide_junta_mensaje?: string
   version: string
 }
 
@@ -221,7 +230,9 @@ function buildAnalysisPromptV2(data: {
   }
 
   prompt += '\n\n═══════════════════════════════════════'
-  prompt += '\nGENERA EL JSON EXACTO según el system prompt. Responde ÚNICAMENTE JSON válido. Sin texto adicional.'
+  prompt += '\nIMPORTANTE: El campo slide_junta_mensaje es el más importante. Es un mensaje directo al equipo como el de este ejemplo:'
+  prompt += '\n"Equipo, el jueves estuvo flojo: bajaron los cubiertos y el ticket promedio no subió. El mes va bien y cada servicio cuenta para sostenerlo.\nHoy vamos con todo: primera recomendación apenas llega la mesa, empujar nuestras pizzas y pastas, y que cada cliente sienta que vale la pena volver.\nSTELLA salió 17 veces anoche. Cuando el equipo lo recomienda bien, se nota. Y hoy vale la pena darle más protagonismo a los cocteles, que ayer estuvieron callados. Una buena recomendación puede cambiar eso.\nAsí se construye ATTIK. Gracias equipo, vamos con todo!"'
+  prompt += '\n\nGenera el JSON EXACTO según el system prompt. Responde ÚNICAMENTE JSON válido. Sin texto adicional.'
 
   return prompt
 }
@@ -287,87 +298,161 @@ function parseAnalysisJSON(raw: string): SlideAnalysisV2 | null {
     const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
     if (match) {
       const parsed = JSON.parse(match[1].trim())
-      if (parsed && 'slide_2_metrics' in parsed) return parsed as SlideAnalysisV2
+      if (parsed && typeof parsed === 'object' && 'slide_2_metrics' in parsed) {
+        return parsed as SlideAnalysisV2
+      }
     }
   } catch {}
 
   try {
-    const match = raw.match(/\{[\s\S]*\}/)
-    if (match) {
-      const parsed = JSON.parse(match[0])
-      if (parsed && 'slide_2_metrics' in parsed) return parsed as SlideAnalysisV2
+    const firstBrace = raw.indexOf('{')
+    const lastBrace = raw.lastIndexOf('}')
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      const jsonObject = raw.substring(firstBrace, lastBrace + 1)
+      const parsed = JSON.parse(jsonObject)
+      if (parsed && typeof parsed === 'object' && 'slide_2_metrics' in parsed) {
+        return parsed as SlideAnalysisV2
+      }
     }
   } catch {}
 
   return null
 }
 
-// ═══ Fallback: reglas locales generan mismo shape JSON ═══
+// ═══ Rule-based fallback v6 ═══
 function generateRuleBasedAnalysisV2(data: {
   kpis: any
+  daily: any[]
   zones: any[]
+  staff: any[]
   payments: any[]
+  clientSplit: any[]
   topProducts: any[]
   comparison: { kpis: any } | null
+  period: { from: string; to: string; zone: string; compareFrom: string; compareTo: string }
   margins?: any
 }): SlideAnalysisV2 {
   const kpi = Array.isArray(data.kpis) ? data.kpis[0] : data.kpis
-  const revenue = kpi ? Number(kpi.total_ventas ?? kpi.revenue ?? 0) : 0
-  const cheques = kpi ? Number(kpi.total_cheques ?? 0) : 0
+  const revenue = Number(kpi?.total_ventas ?? kpi?.revenue ?? 0)
+  const cheques = Number(kpi?.total_cheques ?? 0)
+  const personas = Number(kpi?.personas ?? 0)
+  const propina = Number(kpi?.propina_total ?? kpi?.tip_total ?? 0)
+  const ticket = cheques > 0 ? revenue / cheques : 0
 
+  // Margins
   const mk = data.margins?.kpis
   const cats = data.margins?.resumen_ejecutivo?.categorias || []
   const importan = data.margins?.importan || []
   const drenan = data.margins?.drenan || []
+  const hasMargins = mk && mk.total_productos > 0
 
-  const bestCat = cats.length > 0
-    ? [...cats].sort((a: any, b: any) => Number(b.margin_pct || 0) - Number(a.margin_pct || 0))[0]
-    : null
-  const worstCat = cats.length > 0
-    ? [...cats].sort((a: any, b: any) => Number(a.margin_pct || 0) - Number(b.margin_pct || 0))[0]
-    : null
+  const bestCat = cats.length > 0 ? cats.reduce((best: any, c: any) => c.margin_pct > best.margin_pct ? c : best, cats[0]) : null
+  const worstCat = cats.length > 0 ? cats.reduce((worst: any, c: any) => c.margin_pct < worst.margin_pct ? c : worst, cats[0]) : null
   const topProduct = importan.length > 0 ? importan[0] : null
 
-  const s2 = mk
-    ? 'Margen general ' + mk.margin_pct.toFixed(1) + '% — ' + (mk.margin_pct >= 30 ? 'sobre' : 'bajo') + ' la meta del 30%. Ventas ' + fmt(mk.total_revenue) + ' con ' + fmtN(mk.total_productos) + ' productos analizados.'
-    : 'Ventas ' + fmt(revenue) + ' en ' + fmtN(cheques) + ' cheques. Sin datos de rentabilidad para este período.'
+  // Comparación
+  const compKpi = data.comparison?.kpis ? (Array.isArray(data.comparison.kpis) ? data.comparison.kpis[0] : data.comparison.kpis) : null
+  const compRevenue = Number(compKpi?.total_ventas ?? compKpi?.revenue ?? 0)
+  const compCheques = Number(compKpi?.total_cheques ?? 0)
+  const compTicket = compCheques > 0 ? compRevenue / compCheques : 0
 
-  const s3 = drenan.length > 0 && worstCat
-    ? '⚠ ' + fmtN(drenan.length) + ' productos en el 5% inferior por ganancia neta. ' + worstCat.categoria + ' con ' + worstCat.margin_pct + '% margen — la categoría más débil del menú.'
-    : 'Sin productos identificados como lastre en este período.'
-
+  // ── Slides ──
+  const s2 = 'Ventas ' + fmt(revenue) + '. ' + (hasMargins ? 'Margen ' + mk.margin_pct.toFixed(1) + '%.' : 'Sin datos de margen.') + ' ' + (cheques > 0 ? fmtN(cheques) + ' cheques, ticket ' + fmt(ticket) + '.' : '')
+  const s3 = drenan.length > 0
+    ? fmtN(drenan.length) + ' productos drenan — ' + (worstCat ? worstCat.categoria + ' es la más débil con ' + worstCat.margin_pct + '% margen.' : 'todos con ventas mínimas.')
+    : 'Sin productos en riesgo de drenaje este período.'
   const s4 = topProduct
-    ? topProduct.product_name + ' lidera con ' + fmt(topProduct.margin_bruto) + ' netos y ' + Math.round(topProduct.margin_pct) + '% de margen en ' + topProduct.macro_category + '.'
-    : 'Sin datos de productos top por margen.'
-
+    ? topProduct.product_name + ' lidera con ' + fmt(topProduct.margin_bruto) + ' netos y ' + Math.round(topProduct.margin_pct) + '% margen.'
+    : 'Sin datos de producto estrella.'
   const s5 = bestCat
-    ? bestCat.categoria + ' representa la mayor contribución con ' + bestCat.margin_pct + '% margen y ' + fmt(bestCat.revenue) + ' en ingresos.'
-    : 'Sin datos de composición por categoría.'
+    ? bestCat.categoria + ' lidera con ' + bestCat.margin_pct + '% margen. ' + (worstCat && worstCat.categoria !== bestCat.categoria ? worstCat.categoria + ' es la más débil con ' + worstCat.margin_pct + '%.' : 'Concentración saludable.')
+    : 'Sin datos de composición.'
+  const s6 = importan.length > 0 && drenan.length > 0
+    ? 'Top 5 genera ' + fmt(importan.slice(0, 5).reduce((s: number, p: any) => s + Number(p.margin_bruto || 0), 0)) + ' netos vs ' + fmt(drenan.slice(0, 5).reduce((s: number, p: any) => s + Math.abs(Number(p.margin_bruto || 0)), 0)) + ' de los 5 últimos.'
+    : 'Sin datos para comparar estrellas vs lastres.'
 
-  const totalStarMargin = importan.slice(0, 5).reduce((s: number, p: any) => s + Number(p.margin_bruto || 0), 0)
-  const totalLastreMargin = drenan.slice(0, 5).reduce((s: number, p: any) => s + Number(p.margin_bruto || 0), 0)
-  const s6 = totalStarMargin > 0
-    ? 'Top 5 estrellas generan ' + fmt(totalStarMargin) + ' vs ' + fmt(Math.abs(totalLastreMargin)) + ' de los 5 lastres. Ratio ' + (totalStarMargin / Math.max(Math.abs(totalLastreMargin), 1)).toFixed(1) + ':1.'
-    : 'Sin datos suficientes para comparar estrellas vs lastres.'
+  // ── Headlines ──
+  const s2_headline = mk
+    ? 'Margen ' + mk.margin_pct.toFixed(1) + '% ' + (mk.margin_pct >= 30 ? 'supera' : 'bajo') + ' meta del 30%'
+    : 'Ventas ' + fmt(revenue) + ' sin datos de rentabilidad'
+  const s3_headline = drenan.length > 0
+    ? fmtN(drenan.length) + ' productos drenan ganancias'
+    : 'Sin productos en riesgo de drenaje'
+  const s5_headline = bestCat
+    ? bestCat.categoria + ' lidera con ' + bestCat.margin_pct + '% de margen'
+    : 'Composición de margen por categoría'
 
   const insights: string[] = []
-  if (topProduct) insights.push(topProduct.product_name + ' genera ' + fmt(topProduct.margin_bruto) + ' netos — el producto más rentable del período')
-  if (bestCat) insights.push(bestCat.categoria + ' tiene ' + bestCat.margin_pct + '% de margen con solo ' + fmtN(bestCat.count) + ' productos')
-  if (worstCat && worstCat.categoria !== bestCat?.categoria) insights.push(worstCat.categoria + ' muestra solo ' + worstCat.margin_pct + '% de margen — la categoría más débil')
-  if (mk) insights.push('El ' + mk.margin_pct.toFixed(1) + '% de margen general supera la meta del 30% por ' + (mk.margin_pct - 30).toFixed(0) + ' puntos')
-  if (revenue > 0) insights.push('Ventas totales ' + fmt(revenue) + ' en ' + fmtN(cheques) + ' cheques — ticket promedio ' + fmt(revenue / Math.max(cheques, 1)))
+  if (topProduct) insights.push(topProduct.product_name.toUpperCase() + ' genera ' + fmt(topProduct.margin_bruto) + ' netos — el producto más rentable')
+  if (bestCat) insights.push(bestCat.categoria + ' tiene ' + bestCat.margin_pct + '% margen con ' + fmtN(bestCat.count) + ' productos')
+  if (worstCat && worstCat.categoria !== bestCat?.categoria) insights.push(worstCat.categoria + ' muestra solo ' + worstCat.margin_pct + '% margen — la categoría más débil')
+  if (mk) insights.push('Margen general ' + mk.margin_pct.toFixed(1) + '% — ' + (mk.margin_pct >= 30 ? 'sobre meta del 30%' : 'bajo meta del 30%'))
+  if (revenue > 0) insights.push('Ventas período: ' + fmt(revenue) + ' en ' + fmtN(cheques) + ' cheques')
 
-  const junta: string[] = []
-  if (bestCat) junta.push('✅ ' + bestCat.categoria + ' lidera con ' + bestCat.margin_pct + '% margen → mantener precios y promociones')
-  if (drenan.length > 0) junta.push('⚠ ' + fmtN(drenan.length) + ' productos en el 5% inferior por ganancia neta → evaluar menú')
-  if (mk) junta.push('🔥 Margen general ' + mk.margin_pct.toFixed(1) + '% → saludable, sobre meta del 30%')
+  const bullets: InsightBullet[] = []
+  if (topProduct) bullets.push({ icon: 'Lightning', title: 'Producto estrella', body: topProduct.product_name + ' genera ' + fmt(topProduct.margin_bruto) + ' netos' })
+  if (bestCat) bullets.push({ icon: 'TrendUp', title: bestCat.categoria, body: bestCat.margin_pct + '% margen con ' + fmtN(bestCat.count) + ' productos' })
+  if (worstCat && worstCat.categoria !== bestCat?.categoria) bullets.push({ icon: 'Warning', title: worstCat.categoria, body: 'Solo ' + worstCat.margin_pct + '% margen — categoría más débil' })
+  if (mk) bullets.push({ icon: 'CheckCircle', title: 'Meta cumplida', body: (mk.margin_pct - 30).toFixed(0) + ' puntos sobre el 30% objetivo' })
+  if (revenue > 0) bullets.push({ icon: 'TrendUp', title: 'Ventas período', body: fmt(revenue) + ' en ' + fmtN(cheques) + ' cheques' })
+
+  const cards: JuntaCard[] = []
+  if (bestCat) cards.push({ emoji: '✅', title: bestCat.categoria.toUpperCase(), action: 'Mantener precios y duplicar promociones en horas pico', metric: bestCat.margin_pct + '% margen' })
+  if (drenan.length > 0) cards.push({ emoji: '⚠', title: fmtN(drenan.length) + ' EN RIESGO', action: 'Evaluar menú y ajustar precios de productos del 5% inferior', metric: 'Bottom 5%' })
+  if (mk) cards.push({ emoji: '🔥', title: 'MARGEN SALUDABLE', action: 'Margen general sobre meta — mantener estrategia actual', metric: mk.margin_pct.toFixed(1) + '% margen' })
+
+  // ── MENSAJE AL EQUIPO (v6) ──
+  // Generar narrativa estilo reporte diario de A&K
+  const fecha = data.period.from + ' al ' + data.period.to
+  const top3 = importan.slice(0, 3).map((p: any) => p.product_name)
+  const catLider = bestCat ? bestCat.categoria : 'BEBIDAS'
+  const margenPct = hasMargins ? mk.margin_pct.toFixed(1) : 'N/A'
+
+  let mensaje = ''
+
+  // Párrafo 1: diagnóstico general + comparación
+  if (compRevenue > 0 && revenue > 0) {
+    const changePct = ((revenue - compRevenue) / compRevenue * 100).toFixed(1)
+    const direction = Number(changePct) >= 0 ? 'arriba' : 'abajo'
+    mensaje += 'Equipo, el período va ' + direction + ': ventas ' + fmt(revenue) + ', ' + (Number(changePct) >= 0 ? '↑' : '↓') + Math.abs(Number(changePct)) + '% vs período anterior.'
+    if (cheques > 0 && compCheques > 0) {
+      const ticketChange = compTicket > 0 ? ((ticket - compTicket) / compTicket * 100).toFixed(1) : '0'
+      mensaje += ' ' + (Number(ticketChange) >= 0 ? 'Ticket subió' : 'Ticket bajó') + ' ' + Math.abs(Number(ticketChange)) + '%.'
+    }
+  } else {
+    mensaje += 'Ventas del período: ' + fmt(revenue) + ' en ' + fmtN(cheques) + ' cheques.'
+  }
+  if (hasMargins) {
+    mensaje += ' Margen ' + margenPct + '% — ' + (Number(margenPct) >= 30 ? 'sobre meta. Cada peso cuenta.' : 'bajo meta del 30%. Hay que empujar margen.')
+  }
+  mensaje += '\n\n'
+
+  // Párrafo 2: recomendaciones específicas por producto
+  if (top3.length > 0) {
+    mensaje += top3[0] + ' lidera con ' + (topProduct ? fmt(topProduct.margin_bruto) : 'buen margen') + ' netos.'
+    if (top3.length > 1) {
+      mensaje += ' ' + top3[1] + ' y ' + top3[2] + ' también son estrellas.'
+    }
+    mensaje += ' Primera recomendación apenas llega la mesa: empujar ' + top3.slice(0, 2).join(' y ') + '.'
+  }
+  if (worstCat) {
+    mensaje += ' Y ojo con ' + worstCat.categoria.toLowerCase() + ' — ' + worstCat.margin_pct + '% margen, la más débil.'
+  }
+  mensaje += '\n\n'
+
+  // Párrafo 3: llamado a la acción
+  mensaje += (catLider === 'BEBIDAS' ? 'Los cocteles' : catLider) + ' jala. '
+  if (drenan.length > 0) {
+    mensaje += fmtN(drenan.length) + ' productos del menú tienen ventas mínimas — evaluar si valen la pena en la carta.'
+  }
+  mensaje += ' Cada servicio cuenta para sostener el mes. Vamos con todo.'
 
   const fullParts = [
     '⚡ **Diagnóstico General**',
     s2,
     '',
     '📊 **Rentabilidad y Márgenes**',
-    'Margen general ' + (mk ? mk.margin_pct.toFixed(1) : 'N/A') + '%. ' + (bestCat ? bestCat.categoria + ' lidera con ' + bestCat.margin_pct + '%' : 'Sin datos de categorías') + '. ' + (worstCat ? worstCat.categoria + ' es la más débil con ' + worstCat.margin_pct + '%' : ''),
+    'Margen general ' + (mk ? mk.margin_pct.toFixed(1) + '%' : 'N/A') + '. ' + (bestCat ? bestCat.categoria + ' lidera con ' + bestCat.margin_pct + '%' : 'Sin datos de categorías') + '. ' + (worstCat ? worstCat.categoria + ' es la más débil con ' + worstCat.margin_pct + '%' : ''),
     '',
     '📋 **Oportunidades Estratégicas**',
     '1. Duplicar promociones en ' + (bestCat ? bestCat.categoria : 'la categoría líder') + ' durante horas pico.',
@@ -386,31 +471,6 @@ function generateRuleBasedAnalysisV2(data: {
   ]
   const full = fullParts.join('\n')
 
-  // ── v5 editorial fields ──
-  const s2_headline = mk
-    ? 'Margen ' + mk.margin_pct.toFixed(1) + '% ' + (mk.margin_pct >= 30 ? 'supera' : 'bajo') + ' meta del 30%'
-    : 'Ventas ' + fmt(revenue) + ' sin datos de rentabilidad'
-
-  const s3_headline = drenan.length > 0
-    ? fmtN(drenan.length) + ' productos drenan ganancias'
-    : 'Sin productos en riesgo de drenaje'
-
-  const s5_headline = bestCat
-    ? bestCat.categoria + ' lidera con ' + bestCat.margin_pct + '% de margen'
-    : 'Composición de margen por categoría'
-
-  const bullets: InsightBullet[] = []
-  if (topProduct) bullets.push({ icon: 'Lightning', title: 'Producto estrella', body: topProduct.product_name + ' genera ' + fmt(topProduct.margin_bruto) + ' netos' })
-  if (bestCat) bullets.push({ icon: 'TrendUp', title: bestCat.categoria, body: bestCat.margin_pct + '% margen con ' + fmtN(bestCat.count) + ' productos' })
-  if (worstCat && worstCat.categoria !== bestCat?.categoria) bullets.push({ icon: 'Warning', title: worstCat.categoria, body: 'Solo ' + worstCat.margin_pct + '% margen — categoría más débil' })
-  if (mk) bullets.push({ icon: 'CheckCircle', title: 'Meta cumplida', body: (mk.margin_pct - 30).toFixed(0) + ' puntos sobre el 30% objetivo' })
-  if (revenue > 0) bullets.push({ icon: 'TrendUp', title: 'Ventas período', body: fmt(revenue) + ' en ' + fmtN(cheques) + ' cheques' })
-
-  const cards: JuntaCard[] = []
-  if (bestCat) cards.push({ emoji: '✅', title: bestCat.categoria.toUpperCase(), action: 'Mantener precios y duplicar promociones en horas pico', metric: bestCat.margin_pct + '% margen' })
-  if (drenan.length > 0) cards.push({ emoji: '⚠', title: fmtN(drenan.length) + ' EN RIESGO', action: 'Evaluar menú y ajustar precios de productos del 5% inferior', metric: 'Bottom 5%' })
-  if (mk) cards.push({ emoji: '🔥', title: 'MARGEN SALUDABLE', action: 'Margen general sobre meta — mantener estrategia actual', metric: mk.margin_pct.toFixed(1) + '% margen' })
-
   return {
     slide_2_metrics: s2,
     slide_2_headline: s2_headline,
@@ -422,10 +482,15 @@ function generateRuleBasedAnalysisV2(data: {
     slide_6_estrellas_lastre: s6,
     slide_7_insights: insights.slice(0, 5),
     slide_7_bullets: bullets.slice(0, 5),
-    slide_8_junta: junta.slice(0, 3),
+    slide_8_junta: [
+      '✅ ' + (bestCat ? bestCat.categoria.toUpperCase() : 'CATEGORÍA LÍDER') + ' — mantener precios y duplicar promociones en horas pico → margen arriba',
+      '⚠ ' + fmtN(drenan.length) + ' productos en el 5% inferior por ganancia neta → evaluar menú y ajustar precios',
+      '🔥 Margen general ' + margenPct + '% — ' + (Number(margenPct) >= 30 ? 'saludable, sobre meta' : 'bajo meta, empujar ventas de alto margen'),
+    ],
     slide_8_cards: cards.slice(0, 3),
+    slide_junta_mensaje: mensaje,
     slide_9_full_analysis: full,
-    version: 'rayo-v5-2026-06',
+    version: 'rayo-v6-2026-06',
   }
 }
 

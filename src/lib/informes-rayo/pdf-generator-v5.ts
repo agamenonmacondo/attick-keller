@@ -186,8 +186,16 @@ function parseAnalysisSections(text: string): { icon: string; title: string; bod
 const CSS = `
 @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Caveat:wght@500;600&display=swap");
 
+/* ── Font fallback definitions (for offline/slow) ── */
+@font-face{font-family:"Playfair Display Fallback";src:local("Georgia");font-weight:400;font-display:swap}
+@font-face{font-family:"Playfair Display Fallback";src:local("Georgia Bold");font-weight:700;font-display:swap}
+@font-face{font-family:"Playfair Display Fallback";src:local("Georgia Bold");font-weight:900;font-display:swap}
+@font-face{font-family:"DM Sans Fallback";src:local("Arial");font-weight:400;font-display:swap}
+@font-face{font-family:"DM Sans Fallback";src:local("Arial Bold");font-weight:700;font-display:swap}
+@font-face{font-family:"Caveat Fallback";src:local("Comic Sans MS");font-weight:500;font-display:swap}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"DM Sans",sans-serif;background:#0D0D0C;color:#F0EDE8;line-height:1.4;-webkit-font-smoothing:antialiased;width:450px}
+body{font-family:"DM Sans","DM Sans Fallback",Arial,Helvetica,sans-serif;background:#0D0D0C;color:#F0EDE8;line-height:1.4;-webkit-font-smoothing:antialiased;width:450px}
 
 /* ── Slide base ── */
 .slide{width:450px;height:800px;overflow:hidden;position:relative;background:#0D0D0C;padding:0 32px;display:flex;flex-direction:column}
@@ -195,61 +203,61 @@ body{font-family:"DM Sans",sans-serif;background:#0D0D0C;color:#F0EDE8;line-heig
 
 /* ── Header ── */
 .slide-header{margin:0 -32px;padding:20px 32px 14px;flex-shrink:0}
-.slide-label{font-family:"DM Sans",sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#A09890;margin-bottom:4px}
-.slide-title{font-family:"Playfair Display",serif;font-size:26px;font-weight:700;color:#F0EDE8;line-height:1.15;letter-spacing:-0.01em}
+.slide-label{font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#A09890;margin-bottom:4px}
+.slide-title{font-family:'Playfair Display','Playfair Display Fallback',Georgia,serif;font-size:26px;font-weight:700;color:#F0EDE8;line-height:1.15;letter-spacing:-0.01em}
 
 /* ── Editorial headline (v5: LLM as backbone) ── */
-.slide-headline{font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;color:#C9A94E;line-height:1.4;margin:6px 0 16px;padding:10px 14px;background:rgba(201,169,78,0.06);border-radius:8px;border-left:3px solid #C9A94E}
+.slide-headline{font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif;font-size:13px;font-weight:500;color:#C9A94E;line-height:1.4;margin:6px 0 16px;padding:10px 14px;background:rgba(201,169,78,0.06);border-radius:8px;border-left:3px solid #C9A94E}
 
 /* ── Watermark ── */
-.watermark{position:absolute;bottom:14px;right:22px;font-family:"DM Sans",sans-serif;font-size:9px;color:rgba(240,237,232,0.06);font-weight:700;letter-spacing:0.15em;text-transform:uppercase;pointer-events:none}
+.watermark{position:absolute;bottom:14px;right:22px;font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif;font-size:9px;color:rgba(240,237,232,0.06);font-weight:700;letter-spacing:0.15em;text-transform:uppercase;pointer-events:none}
 
 /* ── Empty state ── */
 .empty-state{flex:1;display:flex;align-items:center;justify-content:center}
-.empty-msg{font-family:"DM Sans",sans-serif;font-size:14px;color:#A09890;text-align:center;padding:0 32px}
+.empty-msg{font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif;font-size:14px;color:#A09890;text-align:center;padding:0 32px}
 
 /* ── Metrics grid (slide 2) ── */
 .metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
 .metric-card{background:#141414;border-radius:10px;padding:16px 12px;border:1px solid rgba(201,169,78,0.08)}
-.metric-value{font-family:"Playfair Display",serif;font-size:24px;font-weight:700;color:#C9A94E;line-height:1}
-.metric-delta{font-size:9px;color:#4ADE80;font-weight:600;margin-top:4px;font-family:"DM Sans",sans-serif}
-.metric-name{font-size:9px;color:#A09890;margin-top:4px;font-family:"DM Sans",sans-serif}
+.metric-value{font-family:'Playfair Display','Playfair Display Fallback',Georgia,serif;font-size:24px;font-weight:700;color:#C9A94E;line-height:1}
+.metric-delta{font-size:9px;color:#4ADE80;font-weight:600;margin-top:4px;font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif}
+.metric-name{font-size:9px;color:#A09890;margin-top:4px;font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif}
 
 /* ── Insight card (v5: slide 7) ── */
 .insight-card{display:flex;gap:12px;padding:12px;margin-bottom:10px;background:#141414;border-radius:8px;border:1px solid rgba(201,169,78,0.06);align-items:flex-start}
 .insight-icon{flex-shrink:0;margin-top:2px}
 .insight-body{flex:1;min-width:0}
-.insight-title{font-size:11px;font-weight:700;color:#C9A94E;font-family:"DM Sans",sans-serif;margin-bottom:2px}
-.insight-text{font-size:10px;line-height:1.45;color:#E0D8CC;font-family:"DM Sans",sans-serif}
+.insight-title{font-size:11px;font-weight:700;color:#C9A94E;font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif;margin-bottom:2px}
+.insight-text{font-size:10px;line-height:1.45;color:#E0D8CC;font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif}
 
 /* ── Junta card (v5: slide 8) ── */
 .junta-card{background:#141414;border-radius:10px;padding:16px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start}
 .junta-emoji{font-size:26px;flex-shrink:0;line-height:1}
 .junta-content{flex:1;min-width:0}
-.junta-title{font-size:12px;font-weight:700;color:#F0EDE8;font-family:"DM Sans",sans-serif;letter-spacing:0.05em;margin-bottom:4px}
-.junta-action{font-size:11px;line-height:1.45;color:#E0D8CC;font-family:"DM Sans",sans-serif}
-.junta-metric{font-family:"Playfair Display",serif;font-size:18px;font-weight:700;color:#C9A94E;margin-top:6px;line-height:1}
+.junta-title{font-size:12px;font-weight:700;color:#F0EDE8;font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif;letter-spacing:0.05em;margin-bottom:4px}
+.junta-action{font-size:11px;line-height:1.45;color:#E0D8CC;font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif}
+.junta-metric{font-family:'Playfair Display','Playfair Display Fallback',Georgia,serif;font-size:18px;font-weight:700;color:#C9A94E;margin-top:6px;line-height:1}
 
 /* ── Cover ── */
 .cover-top{display:flex;justify-content:space-between;align-items:flex-start}
-.cover-logo{font-family:"Playfair Display",serif;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#C9A94E}
-.cover-date{font-family:"DM Sans",sans-serif;font-size:11px;color:rgba(240,237,232,0.35);font-weight:400}
+.cover-logo{font-family:'Playfair Display','Playfair Display Fallback',Georgia,serif;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#C9A94E}
+.cover-date{font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif;font-size:11px;color:rgba(240,237,232,0.35);font-weight:400}
 .cover-main{margin-top:auto;margin-bottom:auto}
-.cover-script{font-family:"Caveat",cursive;font-size:32px;color:#C9A94E;margin-bottom:10px;line-height:1.15;font-weight:500}
-.cover-title{font-family:"Playfair Display",serif;font-size:42px;font-weight:900;color:#F0EDE8;line-height:1.05;margin-bottom:18px;letter-spacing:-0.02em}
-.cover-sub{font-family:"DM Sans",sans-serif;font-size:13px;color:rgba(240,237,232,0.55);line-height:1.55;max-width:300px;font-weight:400}
+.cover-script{font-family:"Caveat","Caveat Fallback","Comic Sans MS",cursive;font-size:32px;color:#C9A94E;margin-bottom:10px;line-height:1.15;font-weight:500}
+.cover-title{font-family:'Playfair Display','Playfair Display Fallback',Georgia,serif;font-size:42px;font-weight:900;color:#F0EDE8;line-height:1.05;margin-bottom:18px;letter-spacing:-0.02em}
+.cover-sub{font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif;font-size:13px;color:rgba(240,237,232,0.55);line-height:1.55;max-width:300px;font-weight:400}
 .cover-footer{border-top:1px solid rgba(201,169,78,0.2);padding-top:18px;display:flex;justify-content:space-between;align-items:center}
-.cover-period{font-family:"DM Sans",sans-serif;font-size:11px;color:#C9A94E;font-weight:500}
-.cover-page{font-family:"DM Sans",sans-serif;font-size:11px;color:rgba(240,237,232,0.25)}
+.cover-period{font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif;font-size:11px;color:#C9A94E;font-weight:500}
+.cover-page{font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif;font-size:11px;color:rgba(240,237,232,0.25)}
 
 /* ── Analysis block (v5: slide 9) ── */
 .analysis-block{background:#141414;border-radius:8px;padding:12px 14px;margin-bottom:10px}
 .analysis-block-header{font-size:10px;font-weight:700;color:#F0EDE8;margin-bottom:6px;display:flex;align-items:center;gap:6px}
-.analysis-block-body{font-size:10px;line-height:1.5;color:#E0D8CC;font-family:"DM Sans",sans-serif}
+.analysis-block-body{font-size:10px;line-height:1.5;color:#E0D8CC;font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif}
 
 /* ── Footer ── */
 .slide-footer{margin-top:auto;padding-top:12px;border-top:1px solid rgba(201,169,78,0.1);text-align:center}
-.slide-footer-text{font-size:9px;color:#A09890;letter-spacing:0.1em;text-transform:uppercase;font-family:"DM Sans",sans-serif}
+.slide-footer-text{font-size:9px;color:#A09890;letter-spacing:0.1em;text-transform:uppercase;font-family:'DM Sans','DM Sans Fallback',Arial,sans-serif}
 `
 
 // ═══════════════════════════════════════════════════════════════
@@ -285,7 +293,7 @@ export function generatePDFHtmlV5(input: PDFGeneratorInput): string {
       '<div class="metric-card"><div class="metric-value">' + fmtN(mk.total_productos) + '</div><div class="metric-delta">con margen calculable</div><div class="metric-name">Productos</div></div>' +
       '<div class="metric-card"><div class="metric-value">' + fmt(mk.margin_bruto) + '</div><div class="metric-delta">ganancia neta total</div><div class="metric-name">Margen bruto</div></div>' +
       '</div>' +
-      (analysisText && analysisText !== headline2 ? '<div style="margin-top:12px;font-size:10px;line-height:1.45;color:#E0D8CC;font-family:DM Sans,sans-serif;padding:8px 12px;background:rgba(201,169,78,0.06);border-radius:6px;border-left:3px solid #C9A94E">' + analysisText + '</div>' : '') +
+      (analysisText && analysisText !== headline2 ? '<div class="slide-headline" style="border-left-color:#C9A94E;color:#C9A94E;background:rgba(201,169,78,0.06)">' + analysisText + '</div>' : '') +
       '<div class="watermark">A&K · Confidencial</div></div>')
   } else { slides.push(emptySlide('MÉTRICAS CLAVE')) }
 
@@ -300,7 +308,7 @@ export function generatePDFHtmlV5(input: PDFGeneratorInput): string {
     slides.push('<div class="slide"><div class="slide-header"><div class="slide-label">Diagnóstico operativo</div><div class="slide-title">Lo que drena<br>el negocio</div></div>' +
       '<div class="slide-headline" style="background:rgba(160,82,45,0.08);border-left-color:#A0522D;color:#D4922A">' + headline3 + '</div>' +
       '<div style="margin-top:4px">' + drenaRows + '</div>' +
-      (analysisText && analysisText !== headline3 ? '<div style="margin-top:10px;font-size:10px;line-height:1.45;color:#E0D8CC;font-family:DM Sans,sans-serif;padding:8px 12px;background:rgba(160,82,45,0.08);border-radius:6px;border-left:3px solid #A0522D">' + analysisText + '</div>' : '') +
+      (analysisText && analysisText !== headline3 ? '<div class="slide-headline" style="background:rgba(160,82,45,0.08);border-left-color:#A0522D;color:#D4922A">' + analysisText + '</div>' : '') +
       '<div class="watermark">A&K · Confidencial</div></div>')
   } else { slides.push(emptySlide('LO QUE DRENA')) }
 
@@ -335,7 +343,7 @@ export function generatePDFHtmlV5(input: PDFGeneratorInput): string {
     slides.push('<div class="slide"><div class="slide-header"><div class="slide-label">Estructura de rentabilidad</div><div class="slide-title">Composición<br>del margen</div></div>' +
       '<div class="slide-headline" style="background:rgba(92,122,77,0.08);border-left-color:#5C7A4D;color:#8AAE6B">' + headline5 + '</div>' +
       '<div style="margin-top:4px">' + rows + '</div>' +
-      (analysisText && analysisText !== headline5 ? '<div style="margin-top:10px;font-size:10px;line-height:1.45;color:#E0D8CC;font-family:DM Sans,sans-serif;padding:8px 12px;background:rgba(92,122,77,0.06);border-radius:6px;border-left:3px solid #5C7A4D">' + analysisText + '</div>' : '') +
+      (analysisText && analysisText !== headline5 ? '<div class="slide-headline" style="background:rgba(92,122,77,0.06);border-left-color:#5C7A4D;color:#8AAE6B">' + analysisText + '</div>' : '') +
       '<div class="watermark">A&K · Confidencial</div></div>')
   } else { slides.push(emptySlide('COMPOSICIÓN DEL MARGEN')) }
 
@@ -467,7 +475,7 @@ export function generatePDFHtmlV5(input: PDFGeneratorInput): string {
       const color = catColors[c.categoria.toUpperCase()] || '#6B2737'
       return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:10px;font-weight:600;color:' + color + ';min-width:70px">' + c.categoria + '</span><div style="flex:1;height:16px;background:#1A1A1A;border-radius:3px;overflow:hidden;margin:0 8px"><div style="width:' + c.margin_pct + '%;height:100%;background:' + color + ';border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:5px"><span style="font-size:8px;color:#0D0D0C;font-weight:700">' + c.margin_pct + '%</span></div></div></div></div>'
     }).join('')
-    slides.push('<div class="slide"><div class="slide-header"><div class="slide-label">Rentabilidad operativa</div><div class="slide-title">Márgenes<br>por categoría</div></div><div style="display:flex;gap:10px;margin-bottom:12px"><div style="flex:1;background:#141414;border-radius:8px;padding:12px;border:1px solid rgba(201,169,78,0.1)"><div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A09890;margin-bottom:4px">Margen General</div><div style="font-family:Playfair Display,serif;font-size:28px;font-weight:700;color:#C9A94E;line-height:1">' + mk.margin_pct.toFixed(1) + '%</div><div style="font-size:9px;color:#4ADE80;font-weight:600;margin-top:4px">+' + (mk.margin_pct - 30).toFixed(0) + 'pp sobre meta</div></div><div style="flex:1;background:#141414;border-radius:8px;padding:12px;border:1px solid rgba(201,169,78,0.1)"><div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A09890;margin-bottom:4px">Productos con Receta</div><div style="font-family:Playfair Display,serif;font-size:28px;font-weight:700;color:#C9A94E;line-height:1">' + fmtN(mk.total_productos) + '</div><div style="font-size:9px;color:#A09890;font-weight:500;margin-top:4px">' + fmtN(margins!.importan.length + margins!.drenan.length) + ' con margen real</div></div></div><div style="margin-top:4px">' + catBars + '</div><div style="margin-top:auto;padding-top:10px;border-top:1px solid rgba(201,169,78,0.1)"><div style="font-size:10px;line-height:1.5;color:#A09890"><strong style="color:#F0EDE8">5 macrocategorías operacionales.</strong> ' + fmtN(Math.max(0, margins!.importan.length + margins!.drenan.length - mk.total_productos)) + ' productos con receta sin ventas = ruido (excluidos).</div></div><div class="watermark">A&K · Confidencial</div></div>')
+    slides.push('<div class="slide"><div class="slide-header"><div class="slide-label">Rentabilidad operativa</div><div class="slide-title">Márgenes<br>por categoría</div></div><div style="display:flex;gap:10px;margin-bottom:12px"><div style="flex:1;background:#141414;border-radius:8px;padding:12px;border:1px solid rgba(201,169,78,0.1)"><div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A09890;margin-bottom:4px">Margen General</div><div class="metric-value">' + mk.margin_pct.toFixed(1) + '%</div><div style="font-size:9px;color:#4ADE80;font-weight:600;margin-top:4px">+' + (mk.margin_pct - 30).toFixed(0) + 'pp sobre meta</div></div><div style="flex:1;background:#141414;border-radius:8px;padding:12px;border:1px solid rgba(201,169,78,0.1)"><div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A09890;margin-bottom:4px">Productos con Receta</div><div class="metric-value">' + fmtN(mk.total_productos) + '</div><div style="font-size:9px;color:#A09890;font-weight:500;margin-top:4px">' + fmtN(margins!.importan.length + margins!.drenan.length) + ' con margen real</div></div></div><div style="margin-top:4px">' + catBars + '</div><div style="margin-top:auto;padding-top:10px;border-top:1px solid rgba(201,169,78,0.1)"><div style="font-size:10px;line-height:1.5;color:#A09890"><strong style="color:#F0EDE8">5 macrocategorías operacionales.</strong> ' + fmtN(Math.max(0, margins!.importan.length + margins!.drenan.length - mk.total_productos)) + ' productos con receta sin ventas = ruido (excluidos).</div></div><div class="watermark">A&K · Confidencial</div></div>')
   } else { slides.push(emptySlide('RENTABILIDAD RESUMEN')) }
 
   // ═══ SLIDE 11 — ZONAS + PAGOS ═══

@@ -8,7 +8,7 @@ const GROQ_MODEL = 'openai/gpt-oss-120b'
 const GROQ_FALLBACK_MODEL = 'llama-3.3-70b-versatile'
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions'
 
-// ═══ System Prompt v4 — JSON estricto por slide ═══
+// ═══ System Prompt v5 — JSON estricto con campos editoriales ═══
 const SYSTEM_PROMPT_V2 = [
   'Eres Rayo IA, analista financiero senior de restaurantes colombianos.',
   '',
@@ -23,27 +23,50 @@ const SYSTEM_PROMPT_V2 = [
   'ESTRUCTURA JSON EXACTA:',
   '{',
   '  "slide_2_metrics": "1-2 líneas ejecutivas sobre métricas clave del período. Incluir margen general, ventas totales, y si están sobre/bajo meta del 30%.",',
+  '  "slide_2_headline": "Titular corto de 6-10 palabras para el slide de métricas. Punchy, como titular de periódico financiero. Ej: \'Margen 72.8% supera meta del 30%\'",',
   '  "slide_3_drena": "Diagnóstico de 1-2 líneas sobre productos que drenan. Mencionar cuántos, qué categoría es más débil, y el hallazgo principal de riesgo.",',
+  '  "slide_3_headline": "Titular corto de 6-10 palabras para el slide de drenaje. Ej: \'8 productos drenan el 12% de ganancias\'",',
   '  "slide_4_importan": "Contexto de 1-2 líneas sobre el producto #1 por margen bruto. Mencionar su nombre exacto, categoría, y por qué lidera.",',
   '  "slide_5_composicion": "Insight de 1-2 líneas sobre composición del margen por categoría. Qué categoría domina, qué proporción del total, y si la concentración es saludable.",',
+  '  "slide_5_headline": "Titular corto de 6-10 palabras para el slide de composición. Ej: \'Licores lideran con 75% del ingreso neto\'",',
   '  "slide_6_estrellas_lastre": "Dualidad operativa en 1-2 líneas. Comparar top 5 vs bottom 5 en margen bruto. Ratio o número clave.",',
   '  "slide_7_insights": ["4-5 strings, cada uno un bullet editorial de 12-18 palabras. Cada bullet menciona un dato específico real: producto, categoría, margen, revenue. Formato: NOMBRE en mayúsculas genera $X netos — insight"],',
+  '  "slide_7_bullets": [{"icon":"icono Phosphor (Lightning, TrendUp, TrendDown, Warning, CheckCircle)","title":"título corto 2-4 palabras","body":"insight de 10-15 palabras con dato real"}, ...4-5 items],',
   '  "slide_8_junta": ["3 strings, cada uno una recomendación accionable de 15-25 palabras. Formato: EMOJI CATEGORÍA acción → resultado esperado"],',
+  '  "slide_8_cards": [{"emoji":"uno de: ✅ ⚠ 🔥","title":"categoría en mayúsculas 2-3 palabras","action":"recomendación accionable 10-15 palabras","metric":"métrica clave con número, ej: 72.8% margen"}, ...3 items],',
   '  "slide_9_full_analysis": "Análisis completo de 5 secciones con headers. Usa headers EXACTAMENTE así con emojis y **negrita**:\n⚡ **Diagnóstico General**\n[texto]\n\n📊 **Rentabilidad y Márgenes**\n[texto]\n\n📋 **Oportunidades Estratégicas**\n[texto]\n\n⚠️ **Riesgos y Alertas**\n[texto]\n\n📋 **Resumen Ejecutivo para Junta**\n[texto]",',
-  '  "version": "rayo-v4-2026-06"',
+  '  "version": "rayo-v5-2026-06"',
   '}',
   '',
   'REGLAS:',
   '- slide_2_metrics a slide_6_estrellas_lastre: máximo 200 caracteres cada uno. Conciso, punchy.',
+  '- slide_2_headline, slide_3_headline, slide_5_headline: máximo 60 caracteres. Como titular de periódico.',
   '- slide_7_insights: bullets que parecen escritos por un editor financiero, no un robot.',
+  '- slide_7_bullets: objects con icon (Phosphor icon name), title (2-4 palabras), body (10-15 palabras con dato real).',
   '- slide_8_junta: recomendaciones que Felipe (gerente) puede leer en 10 segundos antes de la junta.',
+  '- slide_8_cards: objects con emoji, título de categoría, acción concreta, y métrica clave con número.',
   '- slide_9_full_analysis: el análisis completo para quien quiere profundidad.',
   '- NUNCA inventes datos. Si no hay datos de un slide, usa string vacío o array vacío.',
   '- Si no hay márgenes (margins es null), enfoca el análisis en ventas, zonas, y productos top.',
+  '- Los campos _headline y _bullets/_cards son opcionales. Si no generas valor, omítelos. Los campos legacy (slide_7_insights, slide_8_junta) son obligatorios como fallback.',
 ].join('\n')
 
 // ── Types ──
+export interface InsightBullet {
+  icon: string
+  title: string
+  body: string
+}
+
+export interface JuntaCard {
+  emoji: string
+  title: string
+  action: string
+  metric: string
+}
+
 export interface SlideAnalysisV2 {
+  // v4 legacy fields (kept for backwards compat)
   slide_2_metrics: string
   slide_3_drena: string
   slide_4_importan: string
@@ -52,6 +75,12 @@ export interface SlideAnalysisV2 {
   slide_7_insights: string[]
   slide_8_junta: string[]
   slide_9_full_analysis: string
+  // v5 editorial fields
+  slide_2_headline?: string
+  slide_3_headline?: string
+  slide_5_headline?: string
+  slide_7_bullets?: InsightBullet[]
+  slide_8_cards?: JuntaCard[]
   version: string
 }
 
@@ -102,10 +131,10 @@ function buildAnalysisPromptV2(data: {
 
   // ── KPIs ──
   if (kpi) {
-    const revenue = Number(kpi.total_ventas || kpi.revenue || 0)
-    const cheques = Number(kpi.total_cheques || 0)
-    const personas = Number(kpi.personas || 0)
-    const propina = Number(kpi.propina_total || kpi.tip_total || 0)
+    const revenue = Number(kpi.total_ventas ?? kpi.revenue ?? 0)
+    const cheques = Number(kpi.total_cheques ?? 0)
+    const personas = Number(kpi.personas ?? 0)
+    const propina = Number(kpi.propina_total ?? kpi.tip_total ?? 0)
     const ticket = cheques > 0 ? revenue / cheques : 0
     const propinaPct = revenue > 0 ? (propina / revenue * 100).toFixed(1) : '0'
 
@@ -117,17 +146,17 @@ function buildAnalysisPromptV2(data: {
     prompt += '\n- Propina: ' + fmt(propina) + ' (' + propinaPct + '%)'
 
     if (compKpi) {
-      const cRev = Number(compKpi.total_ventas || compKpi.revenue || 0)
+      const cRev = Number(compKpi.total_ventas ?? compKpi.revenue ?? 0)
       prompt += '\n- Ventas anterior: ' + fmt(cRev) + ' (' + pctx(revenue, cRev) + ')'
     }
   }
 
   // ── Zonas ──
   if (data.zones && data.zones.length > 0) {
-    const totalRev = data.zones.reduce((s: number, z: any) => s + Number(z.total_ventas || z.revenue || 0), 0)
+    const totalRev = data.zones.reduce((s: number, z: any) => s + Number(z.total_ventas ?? z.revenue ?? 0), 0)
     prompt += '\n\n═══ ZONAS ═══'
     for (const z of data.zones.slice(0, 5)) {
-      const zRev = Number(z.total_ventas || z.revenue || 0)
+      const zRev = Number(z.total_ventas ?? z.revenue ?? 0)
       const zPct = totalRev > 0 ? (zRev / totalRev * 100).toFixed(1) : '0'
       prompt += '\n- ' + (z.zone || z.derived_zone_name || 'Sin zona') + ': ' + fmt(zRev) + ' (' + zPct + '%)'
     }
@@ -138,7 +167,7 @@ function buildAnalysisPromptV2(data: {
     prompt += '\n\n═══ PAGOS ═══'
     for (const p of data.payments.slice(0, 4)) {
       const method = p.payment_method || p.metodo || p.method || 'Otro'
-      const total = Number(p.total || p.amount || 0)
+      const total = Number(p.total ?? p.amount ?? 0)
       const pPct = p.pct || 0
       prompt += '\n- ' + method + ': ' + fmt(total) + ' (' + pPct + '%)'
     }
@@ -146,11 +175,11 @@ function buildAnalysisPromptV2(data: {
 
   // ── Top Productos ──
   if (data.topProducts && data.topProducts.length > 0) {
-    const totalProdRev = data.topProducts.reduce((s: number, p: any) => s + Number(p.revenue || 0), 0)
+    const totalProdRev = data.topProducts.reduce((s: number, p: any) => s + Number(p.revenue ?? 0), 0)
     prompt += '\n\n═══ TOP PRODUCTOS ═══'
     for (const p of data.topProducts.slice(0, 7)) {
-      const rev = Number(p.revenue || 0)
-      const qty = Number(p.quantity || 0)
+      const rev = Number(p.revenue ?? 0)
+      const qty = Number(p.quantity ?? 0)
       const conc = totalProdRev > 0 ? (rev / totalProdRev * 100).toFixed(1) : '0'
       prompt += '\n- ' + (p.product_name || p.name || 'N/A') + ' (' + (p.category_name || 'N/A') + '): ' + fmt(rev) + ' (' + conc + '%), ' + fmtN(qty) + ' uds'
     }
@@ -283,8 +312,8 @@ function generateRuleBasedAnalysisV2(data: {
   margins?: any
 }): SlideAnalysisV2 {
   const kpi = Array.isArray(data.kpis) ? data.kpis[0] : data.kpis
-  const revenue = kpi ? Number(kpi.total_ventas || kpi.revenue || 0) : 0
-  const cheques = kpi ? Number(kpi.total_cheques || 0) : 0
+  const revenue = kpi ? Number(kpi.total_ventas ?? kpi.revenue ?? 0) : 0
+  const cheques = kpi ? Number(kpi.total_cheques ?? 0) : 0
 
   const mk = data.margins?.kpis
   const cats = data.margins?.resumen_ejecutivo?.categorias || []
@@ -357,16 +386,46 @@ function generateRuleBasedAnalysisV2(data: {
   ]
   const full = fullParts.join('\n')
 
+  // ── v5 editorial fields ──
+  const s2_headline = mk
+    ? 'Margen ' + mk.margin_pct.toFixed(1) + '% ' + (mk.margin_pct >= 30 ? 'supera' : 'bajo') + ' meta del 30%'
+    : 'Ventas ' + fmt(revenue) + ' sin datos de rentabilidad'
+
+  const s3_headline = drenan.length > 0
+    ? fmtN(drenan.length) + ' productos drenan ganancias'
+    : 'Sin productos en riesgo de drenaje'
+
+  const s5_headline = bestCat
+    ? bestCat.categoria + ' lidera con ' + bestCat.margin_pct + '% de margen'
+    : 'Composición de margen por categoría'
+
+  const bullets: InsightBullet[] = []
+  if (topProduct) bullets.push({ icon: 'Lightning', title: 'Producto estrella', body: topProduct.product_name + ' genera ' + fmt(topProduct.margin_bruto) + ' netos' })
+  if (bestCat) bullets.push({ icon: 'TrendUp', title: bestCat.categoria, body: bestCat.margin_pct + '% margen con ' + fmtN(bestCat.count) + ' productos' })
+  if (worstCat && worstCat.categoria !== bestCat?.categoria) bullets.push({ icon: 'Warning', title: worstCat.categoria, body: 'Solo ' + worstCat.margin_pct + '% margen — categoría más débil' })
+  if (mk) bullets.push({ icon: 'CheckCircle', title: 'Meta cumplida', body: (mk.margin_pct - 30).toFixed(0) + ' puntos sobre el 30% objetivo' })
+  if (revenue > 0) bullets.push({ icon: 'TrendUp', title: 'Ventas período', body: fmt(revenue) + ' en ' + fmtN(cheques) + ' cheques' })
+
+  const cards: JuntaCard[] = []
+  if (bestCat) cards.push({ emoji: '✅', title: bestCat.categoria.toUpperCase(), action: 'Mantener precios y duplicar promociones en horas pico', metric: bestCat.margin_pct + '% margen' })
+  if (drenan.length > 0) cards.push({ emoji: '⚠', title: fmtN(drenan.length) + ' EN RIESGO', action: 'Evaluar menú y ajustar precios de productos del 5% inferior', metric: 'Bottom 5%' })
+  if (mk) cards.push({ emoji: '🔥', title: 'MARGEN SALUDABLE', action: 'Margen general sobre meta — mantener estrategia actual', metric: mk.margin_pct.toFixed(1) + '% margen' })
+
   return {
     slide_2_metrics: s2,
+    slide_2_headline: s2_headline,
     slide_3_drena: s3,
+    slide_3_headline: s3_headline,
     slide_4_importan: s4,
     slide_5_composicion: s5,
+    slide_5_headline: s5_headline,
     slide_6_estrellas_lastre: s6,
     slide_7_insights: insights.slice(0, 5),
+    slide_7_bullets: bullets.slice(0, 5),
     slide_8_junta: junta.slice(0, 3),
+    slide_8_cards: cards.slice(0, 3),
     slide_9_full_analysis: full,
-    version: 'rayo-v4-2026-06',
+    version: 'rayo-v5-2026-06',
   }
 }
 

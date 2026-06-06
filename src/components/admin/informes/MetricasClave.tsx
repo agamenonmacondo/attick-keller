@@ -29,7 +29,7 @@ export function MetricasClave({ data, comparison }: { data: any; comparison: { k
     const kpi = Array.isArray(data) ? data[0] : data
     const compKpi = comparison?.kpis ? (Array.isArray(comparison.kpis) ? comparison.kpis[0] : comparison.kpis) : null
 
-    const revenue = Number(kpi?.total_ventas || kpi?.revenue || kpi?.total_revenue || 0)
+    const revenue = Number(kpi?.total_ventas ?? kpi?.revenue ?? kpi?.total_revenue ?? 0)
     const cheques = Number(kpi?.total_cheques ?? 0)
     const avgTicket = cheques > 0 ? revenue / cheques : 0
     const personas = Number(kpi?.personas ?? 0)

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { Lightning } from '@phosphor-icons/react'
-import { generatePDFHtmlV4 } from '@/lib/informes-rayo/pdf-generator-v4'
+import { generatePDFHtmlV5 } from '@/lib/informes-rayo/pdf-generator-v5'
 import { renderHtmlToPDF } from '@/lib/informes-rayo/pdf-renderer-v4'
 import type { SlideAnalysisV2 } from '@/lib/informes-rayo/analysis-pipeline-v2'
 
@@ -47,11 +47,11 @@ export function PDFExportButton({ data, from, to }: PDFExportButtonProps) {
           }
         }
       } catch (analyzeErr) {
-        console.log('[PDFv4] Analyze-v2 failed, continuing without analysis:', analyzeErr)
+        console.log('[PDFv5] Analyze-v2 failed, continuing without analysis:', analyzeErr)
       }
 
-      // 3. Generate HTML with v4 template + analysis injection
-      const html = generatePDFHtmlV4({
+      // 3. Generate HTML with v5 template — analysis as editorial backbone
+      const html = generatePDFHtmlV5({
         data,
         from,
         to,
@@ -72,7 +72,7 @@ export function PDFExportButton({ data, from, to }: PDFExportButtonProps) {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
     } catch (err: any) {
-      console.error('[PDFv4] Error:', err)
+      console.error('[PDFv5] Error:', err)
       setError(err.message || 'Error generando PDF')
     } finally {
       setLoading(false)

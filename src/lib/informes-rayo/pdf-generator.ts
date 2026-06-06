@@ -550,7 +550,7 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
         <div style="flex:1;background:#FFFFFF;border-radius:10px;padding:14px;border:1px solid rgba(62,39,35,0.08)"><div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#5C4037;margin-bottom:6px">Productos con Receta</div><div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#6B2737;line-height:1">${fmtN(mk.total_productos)}</div><div style="font-size:10px;color:#5C4037;font-weight:500;margin-top:4px">${fmtN(margins!.importan.length + margins!.drenan.length)} con margen real</div></div>
       </div>
       <div class="comp-list">${catBars}</div>
-      <div style="margin-top:auto;padding-top:14px;border-top:1px solid rgba(62,39,35,0.1)"><div style="font-size:11px;line-height:1.5;color:#5C4037"><strong style="color:#6B2737">5 macrocategorías operacionales.</strong> ${fmtN(max(0, margins!.importan.length + margins!.drenan.length - mk.total_productos))} productos con receta sin ventas = ruido (excluidos).</div></div>
+      <div style="margin-top:auto;padding-top:14px;border-top:1px solid rgba(62,39,35,0.1)"><div style="font-size:11px;line-height:1.5;color:#5C4037"><strong style="color:#6B2737">5 macrocategorías operacionales.</strong> ${fmtN(Math.max(0, margins!.importan.length + margins!.drenan.length - mk.total_productos))} productos con receta sin ventas = ruido (excluidos).</div></div>
       <div class="watermark">A&amp;K · Confidencial</div>
     </div>`)
   } else { slides.push(emptySlide('RENTABILIDAD RESUMEN')) }

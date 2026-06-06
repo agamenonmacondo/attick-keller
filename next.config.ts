@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
-  serverExternalPackages: ['@react-pdf/renderer'],
+  serverExternalPackages: ['playwright-core', '@sparticuz/chromium-min', '@sparticuz/chromium'],
   turbopack: {
     resolveAlias: {
       'victory-vendor/d3-shape': 'd3-shape',

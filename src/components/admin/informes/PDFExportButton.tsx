@@ -59,19 +59,19 @@ export function PDFExportButton({ data, from, to, analysis, productHourly }: PDF
       const slides = container.querySelectorAll('.slide')
       if (slides.length === 0) throw new Error('No se encontraron slides en la plantilla')
 
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pw = pdf.internal.pageSize.getWidth()
-      const ph = pdf.internal.pageSize.getHeight()
+      const pdf = new jsPDF('p', 'mm', [119, 212]) // 450×800px at 96dpi — matches slide aspect ratio
+      const pw = pdf.internal.pageSize.getWidth()   // 119mm
+      const ph = pdf.internal.pageSize.getHeight()   // 212mm
 
       for (let i = 0; i < slides.length; i++) {
         const slideEl = slides[i] as HTMLElement
         const canvas = await html2canvas(slideEl, {
           scale: 3,
           useCORS: true,
-          backgroundColor: '#0D0D0D',
+          backgroundColor: '#0D0D0C',
           logging: false,
         })
-        if (i > 0) pdf.addPage()
+        if (i > 0) pdf.addPage([119, 212])
         pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pw, ph, undefined, 'FAST')
       }
 

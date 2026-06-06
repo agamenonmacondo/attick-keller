@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from 'react'
 import { Lightning } from '@phosphor-icons/react'
-import { generatePDFHtmlV5 } from '@/lib/informes-rayo/pdf-generator-v5'
-import { renderHtmlToPDF } from '@/lib/informes-rayo/pdf-renderer-v4'
+import { generatePDFHtmlV6 } from '@/lib/informes-rayo/pdf-generator-v6'
+import { renderHtmlToPDF } from '@/lib/informes-rayo/pdf-renderer-v6'
 import type { SlideAnalysisV2 } from '@/lib/informes-rayo/analysis-pipeline-v2'
 
 interface PDFExportButtonProps {
@@ -50,8 +50,8 @@ export function PDFExportButton({ data, from, to }: PDFExportButtonProps) {
         console.log('[PDFv5] Analyze-v2 failed, continuing without analysis:', analyzeErr)
       }
 
-      // 3. Generate HTML with v5 template — analysis as editorial backbone
-      const html = generatePDFHtmlV5({
+      // 3. Generate HTML with v6 template (Claude Design + Analysis LLM)
+      const html = generatePDFHtmlV6({
         data,
         from,
         to,

@@ -362,18 +362,23 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   // ── Build slides ──
   const slides: string[] = []
 
-  // ═══ SLIDE 1 — PORTADA ═══
+  // ═══ SLIDE 1 — PORTADA (Stitch Lightning Theme) ═══
   slides.push(`<div class="slide slide-cover">
-    <div class="cover-bg"></div>
-    <div class="cover-content">
-      <div class="cover-brand">ATTICK & KELLER</div>
-      <div class="cover-amp">&amp;</div>
-      <div class="cover-title">INFORME RAYO</div>
+    <div class="cover-top">
+      <span class="cover-top-label">ATTICK & KELLER</span>
+      <span class="cover-top-series">Executive Report Series</span>
+    </div>
+    <div class="cover-center">
+      <div class="cover-bolt">⚡</div>
+      <div class="cover-title">INFORME<br>RAYO</div>
       <div class="cover-line"></div>
       <div class="cover-period">${periodLabel}</div>
-      <div class="cover-subtitle">Reporte Ejecutivo de Rentabilidad</div>
     </div>
-    <div class="cover-footer">Confidencial • Generado ${todayLabel}</div>
+    <div class="cover-bottom">
+      <div class="cover-bottom-line"></div>
+      <div class="cover-confidencial">Confidencial</div>
+    </div>
+    <div class="cover-flourish">⚡</div>
   </div>`)
 
   // ═══ SLIDE 2 — KPIs VITALES ═══
@@ -938,10 +943,11 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
   /* ═══ SLIDE 1 — COVER (Stitch Lightning Theme) ═══ */
   .slide-cover {
     background: #5D1528;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     text-align: center;
     position: relative;
+    padding: 48px 24px 40px;
   }
   .slide-cover::before {
     content: '';
@@ -952,63 +958,92 @@ export function generatePDFHtml(input: PDFGeneratorInput): string {
     background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" stitchTiles="stitch"/></filter><rect width="200" height="200" filter="url(#n)" opacity="1"/></svg>');
   }
   .slide-cover > * { position: relative; z-index: 1; }
-  .cover-content {
+
+  .cover-top {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 2px;
   }
-  .cover-brand {
-    font-family: 'Source Serif 4', serif;
-    font-size: 36px;
-    font-weight: 800;
+  .cover-top-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
     letter-spacing: 4px;
-    color: #F0EDE8;
-    line-height: 1.1;
-  }
-  .cover-amp {
-    font-family: 'Caveat', cursive;
-    font-size: 48px;
     color: #C9A94E;
-    font-weight: 600;
-    line-height: 0.8;
-    margin: -4px 0 2px;
+    opacity: 0.8;
+    text-transform: uppercase;
+  }
+  .cover-top-series {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: #C9A94E;
+    opacity: 0.5;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .cover-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .cover-bolt {
+    font-size: 32px;
+    opacity: 0.4;
+    color: #C9A94E;
+    margin-bottom: 8px;
   }
   .cover-title {
     font-family: 'Source Serif 4', serif;
-    font-size: 44px;
-    font-weight: 900;
-    color: #F0EDE8;
-    letter-spacing: 1px;
-    line-height: 1.1;
+    font-size: 36px;
+    font-weight: 700;
+    color: #C9A94E;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
   }
   .cover-line {
-    width: 60px;
+    width: 40px;
     height: 1px;
     background: #C9A94E;
-    margin: 18px 0;
+    margin: 4px 0;
   }
   .cover-period {
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    color: #A09890;
-    font-weight: 500;
-    margin-bottom: 6px;
+    font-size: 16px;
+    color: #F0EDE8;
+    font-weight: 400;
+    opacity: 0.9;
   }
-  .cover-subtitle {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
-    color: #706860;
-    letter-spacing: 2px;
-    text-transform: uppercase;
+
+  .cover-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
   }
-  .cover-footer {
+  .cover-bottom-line {
+    width: 32px;
+    height: 1px;
+    background: #C9A94E;
+    opacity: 0.2;
+  }
+  .cover-confidencial {
+    font-family: 'Caveat', cursive;
+    font-size: 22px;
+    color: #C9A94E;
+    opacity: 0.6;
+    transform: rotate(-2deg);
+  }
+  .cover-flourish {
     position: absolute;
-    bottom: 20px;
-    font-size: 8px;
-    color: rgba(160,152,144,0.5);
-    letter-spacing: 2px;
-    font-family: 'Inter', sans-serif;
-    text-transform: uppercase;
+    top: 0;
+    right: 0;
+    font-size: 120px;
+    color: #C9A94E;
+    opacity: 0.1;
+    transform: translate(40px, -40px);
   }
 
   /* ═══ SLIDE 2 — KPIs VITALES ═══ */

@@ -47,7 +47,7 @@ export function PDFExportButton({ data, from, to, analysis, productHourly }: PDF
       container = document.createElement('div')
       container.id = '__pdf_temp__'
       container.style.cssText =
-        'position:fixed;left:0;top:0;width:450px;z-index:99999;visibility:visible;background:#000;'
+        'position:fixed;left:0;top:0;width:450px;z-index:99999;visibility:visible;background:#F5EDE0;'
       container.innerHTML = html
       document.body.appendChild(container)
 
@@ -68,7 +68,7 @@ export function PDFExportButton({ data, from, to, analysis, productHourly }: PDF
         const canvas = await html2canvas(slideEl, {
           scale: 3,
           useCORS: true,
-          backgroundColor: '#0D0D0C',
+          backgroundColor: '#F5EDE0',
           logging: false,
         })
         if (i > 0) pdf.addPage([119, 212])

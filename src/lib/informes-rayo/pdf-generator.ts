@@ -349,11 +349,6 @@ function emptySlide(title: string): string {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MAIN GENERATOR
-// ═══════════════════════════════════════════════════════════════
-export function generatePDFHtml(input: PDFGeneratorInput): string {
-
-// ═══════════════════════════════════════════════════════════════
 // MAIN GENERATOR — Light Editorial Theme (A&K Rústico Moderno)
 // ═══════════════════════════════════════════════════════════════
 export function generatePDFHtml(input: PDFGeneratorInput): string {

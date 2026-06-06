@@ -149,16 +149,8 @@ function emptySlide(title: string): string {
 // CSS — Claude Design (Source Serif 4 + Inter + Caveat)
 // ═══════════════════════════════════════════════════════════════
 const CSS = `
-@import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@300;400;500;600;700&family=Caveat:wght@400;500;600&display=swap");
-
-@font-face{font-family:"Source Serif 4 Fallback";src:local("Georgia");font-weight:400;font-display:swap}
-@font-face{font-family:"Source Serif 4 Fallback";src:local("Georgia Bold");font-weight:700;font-display:swap}
-@font-face{font-family:"Inter Fallback";src:local("Arial");font-weight:400;font-display:swap}
-@font-face{font-family:"Inter Fallback";src:local("Arial Bold");font-weight:700;font-display:swap}
-@font-face{font-family:"Caveat Fallback";src:local("Comic Sans MS");font-weight:500;font-display:swap}
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Inter","Inter Fallback",system-ui,sans-serif;background:#0D0D0C;color:#F0EDE8;line-height:1.4;-webkit-font-smoothing:antialiased;width:450px}
+body{font-family:"Inter",system-ui,sans-serif;background:#0D0D0C;color:#F0EDE8;line-height:1.4;-webkit-font-smoothing:antialiased;width:450px}
 
 :root{
   --bg:#0D0D0C;--surface:#141414;--surface-2:#1A1A1A;
@@ -167,9 +159,9 @@ body{font-family:"Inter","Inter Fallback",system-ui,sans-serif;background:#0D0D0
   --borgona:#5D1528;--borgona-light:#7A1E35;--ladrillo:#A0522D;
   --verde:#4ADE80;--verde-muted:#2D6A3F;--amarillo:#FACC15;--rojo:#EF4444;
   --track:#1A1A1A;--border:#262626;
-  --font-serif:"Source Serif 4","Source Serif 4 Fallback",Georgia,serif;
-  --font-sans:"Inter","Inter Fallback",system-ui,sans-serif;
-  --font-script:"Caveat","Caveat Fallback","Comic Sans MS",cursive;
+  --font-serif:"Source Serif 4",Georgia,serif;
+  --font-sans:"Inter",Arial,system-ui,sans-serif;
+  --font-script:"Caveat","Comic Sans MS",cursive;
 }
 
 .slide{width:450px;height:800px;overflow:hidden;position:relative;background:var(--bg);padding:32px 28px;display:flex;flex-direction:column}

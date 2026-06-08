@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Caveat&family=Inter:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0D0D0C;
+    color: #F0EDE8;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .slide {
+    width: 450px;
+    height: 800px;
+    overflow: hidden;
+    position: relative;
+    background: #0D0D0C;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .slide-header {
+    background: #5D1528;
+    margin: 0 -24px;
+    padding: 14px 24px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .slide-hdr-title {
+    font-family: 'Source Serif 4', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #C9A94E;
+    letter-spacing: 2px;
+  }
+  .slide-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #A09890;
+    margin: 8px 0 14px;
+    flex-shrink: 0;
+    padding: 0;
+  }
+  .slide-footer {
+    margin-top: auto;
+    padding: 12px 0 16px;
+    display: flex;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 8px;
+    color: #706860;
+    border-top: 1px solid #2A2A2A;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .text-green { color: #4ADE80; }
+  .text-red { color: #F87171; }
+  .text-gold { color: #C9A94E; }
+  .text-yellow { color: #E8D48B; }
+
+  /* SLIDE 5 — LO QUE IMPORTA (barras) */
+  .importa-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+  }
+  .importa-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+  }
+  .importa-num {
+    font-family: 'Source Serif 4', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #C9A94E;
+    width: 24px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .importa-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .importa-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: #F0EDE8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .importa-bar-track {
+    height: 8px;
+    background: #1A1A1A;
+    overflow: hidden;
+  }
+  .importa-bar-fill {
+    height: 100%;
+    min-width: 2px;
+  }
+  .importa-val {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: #A09890;
+    text-align: right;
+    width: 52px;
+    flex-shrink: 0;
+  }
+  .importa-pct {
+    font-family: 'Source Serif 4', serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #C9A94E;
+    text-align: right;
+    width: 34px;
+    flex-shrink: 0;
+  }
+
+  /* SLIDE 6 — COMPOSICIÓN DEL MARGEN */
+  .compo-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: center;
+  }
+  .compo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+  }
+  .compo-label {
+    width: 72px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: #F0EDE8;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .compo-bar-track {
+    flex: 1;
+    height: 16px;
+    background: #1A1A1A;
+    overflow: hidden;
+  }
+  .compo-bar-fill {
+    height: 100%;
+    min-width: 2px;
+  }
+  .compo-pct {
+    width: 42px;
+    font-family: 'Source Serif 4', serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #F0EDE8;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .compo-rev {
+    width: 54px;
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: #A09890;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .compo-margen {
+    width: 54px;
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: #706860;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* SLIDE 7 — ESTRELLAS vs LASTRE */
+  .star-grid {
+    flex: 1;
+    display: flex;
+    gap: 14px;
+  }
+  .star-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .star-col-title {
+    font-family: 'Source Serif 4', serif;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .star-col-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: #706860;
+    margin-bottom: 4px;
+  }
+  .star-row {
+    padding: 8px 10px;
+    background: #1A1A1A;
+    border: 1px solid #2A2A2A;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .star-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: #F0EDE8;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .star-bar-track {
+    height: 5px;
+    background: #0D0D0D;
+    overflow: hidden;
+  }
+  .star-bar-fill {
+    height: 100%;
+    min-width: 2px;
+  }
+  .star-bar-green { background: #4ADE80; }
+  .star-bar-yellow { background: #E8D48B; }
+  .star-bar-red { background: #F87171; }
+  .star-val {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: #A09890;
+    display: flex;
+    justify-content: space-between;
+  }
+  .star-pct {
+    font-weight: 600;
+    color: #F0EDE8;
+  }
+
+  /* SLIDE 8 — DATOS QUE IMPORTAN */
+  .dato-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 18px;
+  }
+  .dato-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.55;
+  }
+  .dato-bullet {
+    font-family: 'Source Serif 4', serif;
+    font-size: 14px;
+    color: #C9A94E;
+    flex-shrink: 0;
+    line-height: 1.35;
+    margin-top: 1px;
+  }
+  .dato-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #E0D8CC;
+  }
+
+  /* SLIDE 9 — PARA LA JUNTA */
+  .junta-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+  }
+  .junta-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #1A1A1A;
+  }
+  .junta-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .junta-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: #F0EDE8;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 5: LO QUE IMPORTA -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="slide-hdr-title">LO QUE IMPORTA</span>
+  </div>
+  <div class="slide-subtitle">Top 7 por ganancia neta — proteger a toda costa</div>
+  <div class="importa-wrap">
+    <div class="importa-row">
+      <div class="importa-num">1</div>
+      <div class="importa-body">
+        <div class="importa-name">Stella Artois</div>
+        <div class="importa-bar-track"><div class="importa-bar-fill" style="width:95%;background:#C9A94E"></div></div>
+      </div>
+      <div class="importa-val">$3.8M</div>
+      <div class="importa-pct">81%</div>
+    </div>
+    <div class="importa-row">
+      <div class="importa-num">2</div>
+      <div class="importa-body">
+        <div class="importa-name">Gin Tonic</div>
+        <div class="importa-bar-track"><div class="importa-bar-fill" style="width:88%;background:#C9A94E"></div></div>
+      </div>
+      <div class="importa-val">$2.1M</div>
+      <div class="importa-pct">75%</div>
+    </div>
+    <div class="importa-row">
+      <div class="importa-num">3</div>
+      <div class="importa-body">
+        <div class="importa-name">Margarita</div>
+        <div class="importa-bar-track"><div class="importa-bar-fill" style="width:72%;background:#E8D48B"></div></div>
+      </div>
+      <div class="importa-val">$1.5M</div>
+      <div class="importa-pct">62%</div>
+    </div>
+    <div class="importa-row">
+      <div class="importa-num">4</div>
+      <div class="importa-body">
+        <div class="importa-name">Old Fashioned</div>
+        <div class="importa-bar-track"><div class="importa-bar-fill" style="width:60%;background:#E8D48B"></div></div>
+      </div>
+      <div class="importa-val">$1.2M</div>
+      <div class="importa-pct">51%</div>
+    </div>
+    <div class="importa-row">
+      <div class="importa-num">5</div>
+      <div class="importa-body">
+        <div class="importa-name">Mojito</div>
+        <div class="importa-bar-track"><div class="importa-bar-fill" style="width:55%;background:#A0522D"></div></div>
+      </div>
+      <div class="importa-val">$980K</div>
+      <div class="importa-pct">47%</div>
+    </div>
+    <div class="importa-row">
+      <div class="importa-num">6</div>
+      <div class="importa-body">
+        <div class="importa-name">Sangría</div>
+        <div class="importa-bar-track"><div class="importa-bar-fill" style="width:48%;background:#A0522D"></div></div>
+      </div>
+      <div class="importa-val">$750K</div>
+      <div class="importa-pct">41%</div>
+    </div>
+    <div class="importa-row">
+      <div class="importa-num">7</div>
+      <div class="importa-body">
+        <div class="importa-name">Espresso Martini</div>
+        <div class="importa-bar-track"><div class="importa-bar-fill" style="width:42%;background:#A0522D"></div></div>
+      </div>
+      <div class="importa-val">$620K</div>
+      <div class="importa-pct">36%</div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>ATTICK & KELLER • INFORME RAYO</span></div>
+</div>
+
+<!-- SLIDE 6: COMPOSICIÓN DEL MARGEN -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="slide-hdr-title">COMPOSICIÓN DEL MARGEN</span>
+  </div>
+  <div class="slide-subtitle">Contribución por categoría al margen bruto</div>
+  <div class="compo-wrap">
+    <div class="compo-row">
+      <div class="compo-label">BEBIDAS</div>
+      <div class="compo-bar-track"><div class="compo-bar-fill" style="width:100%;background:#4ADE80"></div></div>
+      <div class="compo-pct">35.2%</div>
+      <div class="compo-rev">$210M</div>
+      <div class="compo-margen">81% margen</div>
+    </div>
+    <div class="compo-row">
+      <div class="compo-label">COCTELES</div>
+      <div class="compo-bar-track"><div class="compo-bar-fill" style="width:78%;background:#C9A94E"></div></div>
+      <div class="compo-pct">27.4%</div>
+      <div class="compo-rev">$185M</div>
+      <div class="compo-margen">75% margen</div>
+    </div>
+    <div class="compo-row">
+      <div class="compo-label">LICORES</div>
+      <div class="compo-bar-track"><div class="compo-bar-fill" style="width:62%;background:#E8D48B"></div></div>
+      <div class="compo-pct">21.8%</div>
+      <div class="compo-rev">$142M</div>
+      <div class="compo-margen">75% margen</div>
+    </div>
+    <div class="compo-row">
+      <div class="compo-label">COMIDA</div>
+      <div class="compo-bar-track"><div class="compo-bar-fill" style="width:38%;background:#5D1528"></div></div>
+      <div class="compo-pct">13.4%</div>
+      <div class="compo-rev">$156M</div>
+      <div class="compo-margen">63% margen</div>
+    </div>
+    <div class="compo-row">
+      <div class="compo-label">VINOS</div>
+      <div class="compo-bar-track"><div class="compo-bar-fill" style="width:18%;background:#A0522D"></div></div>
+      <div class="compo-pct">2.2%</div>
+      <div class="compo-rev">$98M</div>
+      <div class="compo-margen">51% margen</div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>ATTICK & KELLER • INFORME RAYO</span></div>
+</div>
+
+<!-- SLIDE 7: ESTRELLAS vs LASTRE -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="slide-hdr-title">ESTRELLAS vs LASTRE</span>
+  </div>
+  <div class="slide-subtitle">Top 5 y bottom 5 por margen bruto</div>
+  <div class="star-grid">
+    <div class="star-col">
+      <div class="star-col-title text-green">⭐ ESTRELLAS</div>
+      <div class="star-col-sub">Top 5 por margen bruto</div>
+      <div class="star-row">
+        <div class="star-name">Stella Artois</div>
+        <div class="star-bar-track"><div class="star-bar-fill star-bar-green" style="width:100%"></div></div>
+        <div class="star-val">$3.8M <span class="star-pct">81%</span></div>
+      </div>
+      <div class="star-row">
+        <div class="star-name">Gin Tonic</div>
+        <div class="star-bar-track"><div class="star-bar-fill star-bar-green" style="width:93%"></div></div>
+        <div class="star-val">$2.1M <span class="star-pct">75%</span></div>
+      </div>
+      <div class="star-row">
+        <div class="star-name">Margarita</div>
+        <div class="star-bar-track"><div class="star-bar-fill star-bar-green" style="width:77%"></div></div>
+        <div class="star-val">$1.5M <span class="star-pct">62%</span></div>
+      </div>
+      <div class="star-row">
+        <div class="star-name">Old Fashioned</div>
+        <div class="star-bar-track"><div class="star-bar-fill star-bar-green" style="width:63%"></div></div>
+        <div class="star-val">$1.2M <span class="star-pct">51%</span></div>
+      </div>
+      <div class="star-row">
+        <div class="star-name">Mojito</div>
+        <div class="star-bar-track"><div class="star-bar-fill star-bar-green" style="width:58%"></div></div>
+        <div class="star-val">$980K <span class="star-pct">47%</span></div>
+      </div>
+    </div>
+    <div class="star-col">
+      <div class="star-col-title text-red">⚠ LASTRE</div>
+      <div class="star-col-sub">Bottom 5 por margen bruto</div>
+      <div class="star-row">
+        <div class="star-name">Nachos con queso</div>
+        <div class="star-bar-track"><div class="star-bar-fill star-bar-yellow" style="width:30%"></div></div>
+        <div class="star-val">$45K <span class="star-pct">18%</span></div>
+      </div>
+      <div class="star-row">
+        <div class="star-name">Tostones</div>
+        <div class="star-bar-track"><div class="star-bar-fill star-bar-yellow" style="width:22%"></div></div>
+        <div class="star-val">$32K <span class="star-pct">14%</span></div>
+      </div>
+      <div class="star-row">
+        <div class="star-name">Vino tinto house</div>
+        <div class="star-bar-track"><div class="star-bar-fill star-bar-red" style="width:15%"></div></div>
+        <div class="star-val">$18K <span class="star-pct">8%</span></div>
+      </div>
+      <div class="star-row">
+        <div class="star-name">Café americano</div>
+        <div class="star-bar-track"><div class="star-bar-fill star-bar-red" style="width:8%"></div></div>
+        <div class="star-val">$8K <span class="star-pct">4%</span></div>
+      </div>
+      <div class="star-row">
+        <div class="star-name">Papas fritas</div>
+        <div class="star-bar-track"><div class="star-bar-fill star-bar-red" style="width:5%"></div></div>
+        <div class="star-val">-$2K <span class="star-pct">-1%</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>ATTICK & KELLER • INFORME RAYO</span></div>
+</div>
+
+<!-- SLIDE 8: DATOS QUE IMPORTAN -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="slide-hdr-title">DATOS QUE IMPORTAN</span>
+  </div>
+  <div class="dato-wrap">
+    <div class="dato-item"><span class="dato-bullet">•</span><span class="dato-text">Stella Artois genera $3.8M netos — el producto más rentable del período</span></div>
+    <div class="dato-item"><span class="dato-bullet">•</span><span class="dato-text">BEBIDAS lidera con 81% de margen sobre $210M en ventas</span></div>
+    <div class="dato-item"><span class="dato-bullet">•</span><span class="dato-text">COMIDA mueve $156M pero deja 63% de margen</span></div>
+    <div class="dato-item"><span class="dato-bullet">•</span><span class="dato-text">VINOS muestra solo 51% de margen — la categoría más débil del menú</span></div>
+    <div class="dato-item"><span class="dato-bullet">•</span><span class="dato-text">BEBIDAS tiene 81% de margen con 8 productos</span></div>
+  </div>
+  <div class="slide-footer"><span>ATTICK & KELLER • INFORME RAYO</span></div>
+</div>
+
+<!-- SLIDE 9: PARA LA JUNTA -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="slide-hdr-title">PARA LA JUNTA</span>
+  </div>
+  <div class="slide-subtitle">3 recomendaciones accionables</div>
+  <div class="junta-wrap">
+    <div class="junta-card" style="border-left:3px solid #4ADE80">
+      <span class="junta-icon">✅</span>
+      <span class="junta-text">BEBIDAS lidera con 81% margen → mantener precios y promociones</span>
+    </div>
+    <div class="junta-card" style="border-left:3px solid #E8D48B">
+      <span class="junta-icon">⚠</span>
+      <span class="junta-text">8 productos en el 5% inferior por ganancia neta → evaluar menú</span>
+    </div>
+    <div class="junta-card" style="border-left:3px solid #C9A94E">
+      <span class="junta-icon">◉</span>
+      <span class="junta-text">Margen general 72.8% → saludable, sobre meta del 30%</span>
+    </div>
+  </div>
+  <div class="slide-footer"><span>Attick & Keller • Informe Rayo • 6 de junio de 2026</span></div>
+</div>
+
+</body>
+</html>

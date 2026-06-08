@@ -14,7 +14,6 @@ import { TopProductsTable } from './TopProductsTable'
 import { CategoryBreakdown } from './CategoryBreakdown'
 import { StaffPerformanceTable } from './StaffPerformanceTable'
 import { PaymentMethodsChart } from './PaymentMethodsChart'
-import { ClientSplitCard } from './ClientSplitCard'
 import { TopProductByCategoryChart } from './TopProductByCategoryChart'
 import { DayPerformanceCard } from './DayPerformanceCard'
 import { DrillDownPanel } from './DrillDownPanel'
@@ -449,12 +448,6 @@ export function POSDashboardPanel() {
             </AnimatedCard>
             <AnimatedCard delay={0.54} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
               <PaymentMethodsChart data={data.paymentMethods} />
-            </AnimatedCard>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-            <AnimatedCard delay={0.60} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <ClientSplitCard data={data.clientSplit} />
             </AnimatedCard>
           </div>
         </>

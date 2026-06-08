@@ -14,16 +14,12 @@ import { TopProductsTable } from './TopProductsTable'
 import { CategoryBreakdown } from './CategoryBreakdown'
 import { StaffPerformanceTable } from './StaffPerformanceTable'
 import { PaymentMethodsChart } from './PaymentMethodsChart'
-import { ClientTiersCard } from './ClientTiersCard'
 import { ClientSplitCard } from './ClientSplitCard'
 import { TopProductByCategoryChart } from './TopProductByCategoryChart'
 import { DayPerformanceCard } from './DayPerformanceCard'
-import { DataUploadSection } from './DataUploadSection'
 import { DrillDownPanel } from './DrillDownPanel'
 import { CategoryCompanionsCard } from './CategoryCompanionsCard'
-import { ShiftReconciliation } from './ShiftReconciliation'
 import { CategoryPerformersCard } from './CategoryPerformersCard'
-import { ConsolidadoPanel } from '../operacion/ConsolidadoPanel'
 import { POSCostsTabContent } from './POSCostsTabContent'
 import { POSCatalogTabContent } from './POSCatalogTabContent'
 
@@ -456,33 +452,11 @@ export function POSDashboardPanel() {
             </AnimatedCard>
           </div>
 
-          {/* Shift Reconciliation — new */}
-          <AnimatedCard delay={0.56} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-            <ShiftReconciliation data={data.shifts || []} />
-          </AnimatedCard>
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
             <AnimatedCard delay={0.60} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <ClientTiersCard data={data.clientTiers} />
-            </AnimatedCard>
-            <AnimatedCard delay={0.66} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
               <ClientSplitCard data={data.clientSplit} />
             </AnimatedCard>
           </div>
-
-          {/* Upload */}
-          <AnimatedCard delay={0.72} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-            <DataUploadSection onUploadComplete={refetch} />
-          </AnimatedCard>
-
-          {/* === CONSOLIDADO DIARIO (NUEVO) — solo en vista de día === */}
-          {isSingleDay && viewMode === 'day' && (
-            <ConsolidadoPanel selectedDate={filters.from!} onDateChange={(date) => {
-              setViewMode('day')
-              setFilters(prev => ({ ...prev, from: date, to: date }))
-              setCalendarMonth(date.substring(0, 7))
-            }} />
-          )}
         </>
       )}
     </div>

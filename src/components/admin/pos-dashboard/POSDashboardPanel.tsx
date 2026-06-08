@@ -23,6 +23,7 @@ import { DrillDownPanel } from './DrillDownPanel'
 import { CategoryCompanionsCard } from './CategoryCompanionsCard'
 import { ShiftReconciliation } from './ShiftReconciliation'
 import { CategoryPerformersCard } from './CategoryPerformersCard'
+import { ConsolidadoPanel } from '../operacion/ConsolidadoPanel'
 import { POSCostsTabContent } from './POSCostsTabContent'
 import { POSCatalogTabContent } from './POSCatalogTabContent'
 
@@ -473,6 +474,15 @@ export function POSDashboardPanel() {
           <AnimatedCard delay={0.72} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
             <DataUploadSection onUploadComplete={refetch} />
           </AnimatedCard>
+
+          {/* === CONSOLIDADO DIARIO (NUEVO) — solo en vista de día === */}
+          {isSingleDay && viewMode === 'day' && (
+            <ConsolidadoPanel selectedDate={filters.from!} onDateChange={(date) => {
+              setViewMode('day')
+              setFilters(prev => ({ ...prev, from: date, to: date }))
+              setCalendarMonth(date.substring(0, 7))
+            }} />
+          )}
         </>
       )}
     </div>

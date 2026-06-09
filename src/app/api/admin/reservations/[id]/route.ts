@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStaffUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 import { assignTable } from '@/lib/algorithms/table-assignment'
 import { getZoneLetter } from '@/lib/utils/zone-letter'
+import { logReservationChanges, ReservationLogEntry } from '@/lib/utils/reservation-logger'
+import { getBlockedTableIds } from '@/lib/utils/table-blocks'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   pending: ['confirmed', 'cancelled', 'no_show'],
@@ -65,6 +67,9 @@ export async function PATCH(
       const effectiveDate = (date as string) || reservation.date
       const effectiveTimeStart = (time_start as string) || reservation.time_start
       const effectiveTimeEnd = (time_end as string) || reservation.time_end
+
+      // Fetch blocked tables for this date/time
+      const blockedTableIds = await getBlockedTableIds(effectiveDate, effectiveTimeStart, effectiveTimeEnd)
 
       // Fetch all active tables with zone info
       const [tablesRes, reservationsRes, combosRes] = await Promise.all([
@@ -137,6 +142,7 @@ export async function PATCH(
         existing_reservations: otherResList,
         combinations: combosList,
         zone_scores: customZoneScores,
+        blocked_table_ids: blockedTableIds,
       })
 
       if (result.suggested_table_id) {
@@ -152,6 +158,69 @@ export async function PATCH(
 
   const { data, error } = await sb.from('reservations').update(updateData).eq('id', id).select('*, customers(email, full_name, phone)').single()
   if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+
+  // Build audit trail for every change
+  const logs: ReservationLogEntry[] = []
+  const logAuthor = staff.email || 'Admin'
+
+  if (updateData.status && updateData.status !== reservation.status) {
+    const actionMap: Record<string, string> = {
+      seated: 'seated', cancelled: 'cancelled', no_show: 'no_show', completed: 'completed',
+    }
+    logs.push({
+      reservation_id: id,
+      action: actionMap[updateData.status as string] || 'status_changed',
+      field_name: 'status',
+      old_value: reservation.status as string,
+      new_value: updateData.status as string,
+      performed_by_name: logAuthor,
+    })
+  }
+  if (updateData.table_id !== undefined && updateData.table_id !== reservation.table_id) {
+    logs.push({
+      reservation_id: id,
+      action: 'table_changed',
+      field_name: 'table_id',
+      old_value: reservation.table_id as string | null,
+      new_value: (updateData.table_id as string) || null,
+      performed_by_name: logAuthor,
+    })
+  }
+  if (updateData.time_start && updateData.time_start !== reservation.time_start) {
+    logs.push({
+      reservation_id: id,
+      action: 'time_changed',
+      field_name: 'time_start',
+      old_value: reservation.time_start as string,
+      new_value: updateData.time_start as string,
+      performed_by_name: logAuthor,
+    })
+  }
+  if (updateData.time_end && updateData.time_end !== reservation.time_end) {
+    logs.push({
+      reservation_id: id,
+      action: 'time_changed',
+      field_name: 'time_end',
+      old_value: (reservation as any).time_end as string,
+      new_value: updateData.time_end as string,
+      performed_by_name: logAuthor,
+    })
+  }
+  if (updateData.party_size && updateData.party_size !== reservation.party_size) {
+    logs.push({
+      reservation_id: id,
+      action: 'party_size_changed',
+      field_name: 'party_size',
+      old_value: String(reservation.party_size),
+      new_value: String(updateData.party_size),
+      performed_by_name: logAuthor,
+    })
+  }
+
+  // Fire and forget — don't block the response
+  if (logs.length > 0) {
+    logReservationChanges(logs).catch(e => console.error('[audit-log] Error:', e))
+  }
 
   if (status && status !== reservation.status) {
     const { sendReservationEmail } = await import('@/lib/email/send')

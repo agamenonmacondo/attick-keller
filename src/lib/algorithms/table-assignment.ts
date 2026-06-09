@@ -81,6 +81,29 @@ export interface AssignmentInput {
   }[];
   /** Optional override for zone scores (used by auto-learning system). */
   zone_scores?: Record<string, number>;
+  /** Table IDs that are blocked by host (for walk-ins, maintenance, etc.). The algorithm will not suggest these tables. */
+  blocked_table_ids?: string[];
+}
+
+export interface EventZoneSuggestion {
+  zone_letter: string;
+  zone_name: string;
+  total_capacity: number;       // asientos totales de la zona
+  tables_in_zone: number;       // mesas totales en la zona
+  available_tables: number;     // mesas disponibles en el horario
+  available_capacity: number;   // asientos disponibles en el horario
+  fits_zone: boolean;           // ¿cabe en la zona completa?
+  displaced_count: number;      // reservas desplazadas de esa zona
+  rehousing_possible: boolean;  // ¿se pueden reubicar en otras zonas?
+  score: number;                // prioridad evento (D=100, A=80, B=60)
+}
+
+export interface EventMultiZoneSuggestion {
+  zones: EventZoneSuggestion[];
+  combined_capacity: number;
+  combined_available: number;
+  fits: boolean;
+  total_displaced: number;
 }
 
 export interface AssignmentResult {
@@ -90,6 +113,12 @@ export interface AssignmentResult {
   score: number;
   breakdown: ScoreBreakdown;
   reason: string;
+  /** true si party_size > EVENT_THRESHOLD (evento grande) */
+  is_event?: boolean;
+  /** Opciones de zona sugeridas para eventos */
+  event_zone_suggestions?: EventZoneSuggestion[];
+  /** Sugerencia multi-zona para eventos >48 pax */
+  event_multi_zone?: EventMultiZoneSuggestion;
 }
 
 export interface AvailabilitySlot {
@@ -146,6 +175,21 @@ const SCORE_WEIGHTS = {
   WASTE_PENALTY: 0.2,
   COMBINE_BONUS: 0.1,
 } as const;
+
+/** Party size threshold above which normal table assignment stops and event mode kicks in. */
+export const EVENT_THRESHOLD = 14;
+
+/**
+ * Zone priority for EVENTS (inverted from normal: Chispas first, Tipi OK, never Jardín/Ático).
+ * These zones have open/semi-open layouts suitable for large gatherings.
+ */
+export const EVENT_ZONE_PRIORITY: Record<string, number> = {
+  D: 100,  // Chispas — best for events (largest contiguous space)
+  A: 80,   // Taller — second best (industrial, spacious)
+  B: 60,   // Tipi — acceptable (semi-open)
+  C: 0,    // Jardín — never for events (too exposed, weather-dependent)
+  E: 0,    // Ático — never for events (too enclosed, intimate space)
+};
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -414,6 +458,156 @@ function buildReason(
   return `${tableLabel} · ${zoneName} (${candidate.table.zone_letter}) · Cap:${candidate.table.capacity} · Score:${candidate.score.toFixed(1)}`;
 }
 
+// ─── Event zone evaluation ────────────────────────────────────────
+
+/**
+ * Evaluate which zones can accommodate a large event (party_size > EVENT_THRESHOLD).
+ *
+ * For each viable zone, calculates:
+ * - Total capacity and available capacity at the requested time
+ * - Whether the party fits within the zone's total seating
+ * - How many existing reservations would be displaced
+ * - Whether displaced reservations can be rehoused in other zones
+ *
+ * The host makes the final decision — this function only suggests options.
+ */
+export function evaluateEventZones(
+  partySize: number,
+  tables: TableWithZone[],
+  existingReservations: { table_id: string; time_start: string; time_end: string }[],
+  timeStart: string,
+  timeEnd: string,
+): EventZoneSuggestion[] {
+  // Group tables by zone
+  const zoneGroups = new Map<string, TableWithZone[]>();
+  for (const table of tables) {
+    const existing = zoneGroups.get(table.zone_letter) ?? [];
+    existing.push(table);
+    zoneGroups.set(table.zone_letter, existing);
+  }
+
+  // Only consider zones with non-zero event priority
+  const viableZoneLetters = Object.entries(EVENT_ZONE_PRIORITY)
+    .filter(([, score]) => score > 0)
+    .map(([letter]) => letter);
+
+  const suggestions: EventZoneSuggestion[] = [];
+
+  for (const zoneLetter of viableZoneLetters) {
+    const zoneTables = zoneGroups.get(zoneLetter) ?? [];
+    if (zoneTables.length === 0) continue;
+
+    const totalCapacity = zoneTables.reduce((sum, t) => sum + t.capacity, 0);
+
+    // Find tables available in the requested time window
+    const availableTables = zoneTables.filter(t =>
+      isTableAvailable(t.id, timeStart, timeEnd, existingReservations),
+    );
+    const availableCapacity = availableTables.reduce((sum, t) => sum + t.capacity, 0);
+
+    // Count reservations that would be displaced
+    const occupiedTables = zoneTables.filter(
+      t => !isTableAvailable(t.id, timeStart, timeEnd, existingReservations),
+    );
+    const displacedReservations = existingReservations.filter(r =>
+      occupiedTables.some(t => t.id === r.table_id),
+    );
+    const displacedCount = new Set(displacedReservations.map(r => r.table_id)).size;
+
+    // Check if displaced reservations can be rehoused in other zones
+    const otherZoneTables = tables.filter(t => t.zone_letter !== zoneLetter);
+    const availableElsewhere = otherZoneTables.filter(t =>
+      isTableAvailable(t.id, timeStart, timeEnd, existingReservations),
+    );
+    // Rough check: at least as many available seats elsewhere as displaced seats
+    const displacedCapacity = occupiedTables.reduce((sum, t) => sum + t.capacity, 0);
+    const rehousingCapacity = availableElsewhere.reduce((sum, t) => sum + t.capacity, 0);
+    const rehousingPossible = rehousingCapacity >= displacedCapacity;
+
+    suggestions.push({
+      zone_letter: zoneLetter,
+      zone_name: ZONE_NAMES[zoneLetter] ?? zoneLetter,
+      total_capacity: totalCapacity,
+      tables_in_zone: zoneTables.length,
+      available_tables: availableTables.length,
+      available_capacity: availableCapacity,
+      fits_zone: partySize <= totalCapacity,
+      displaced_count: displacedCount,
+      rehousing_possible: rehousingPossible,
+      score: EVENT_ZONE_PRIORITY[zoneLetter] ?? 0,
+    });
+  }
+
+  // Sort by event priority (highest first), then by available capacity (descending)
+  suggestions.sort((a, b) => {
+    const scoreDiff = b.score - a.score;
+    if (scoreDiff !== 0) return scoreDiff;
+    return b.available_capacity - a.available_capacity;
+  });
+
+  return suggestions;
+}
+
+/**
+ * For very large events (typically >48 pax), suggest combining multiple zones.
+ * Tries to find the minimal combination of zones that fits the party.
+ * Priority order: Chispas → Taller → Tipi (never Jardín or Ático).
+ */
+export function evaluateMultiZoneEvent(
+  partySize: number,
+  tables: TableWithZone[],
+  existingReservations: { table_id: string; time_start: string; time_end: string }[],
+  timeStart: string,
+  timeEnd: string,
+): EventMultiZoneSuggestion | null {
+  const zoneSuggestions = evaluateEventZones(partySize, tables, existingReservations, timeStart, timeEnd);
+  if (zoneSuggestions.length === 0) return null;
+
+  // Try single zone first
+  const singleZone = zoneSuggestions.find(s => s.fits_zone && s.available_capacity >= partySize);
+  if (singleZone) {
+    return {
+      zones: [singleZone],
+      combined_capacity: singleZone.total_capacity,
+      combined_available: singleZone.available_capacity,
+      fits: true,
+      total_displaced: singleZone.displaced_count,
+    };
+  }
+
+  // Try accumulating zones in priority order until capacity is met
+  let accumulatedCapacity = 0;
+  let accumulatedAvailable = 0;
+  let totalDisplaced = 0;
+  const selectedZones: EventZoneSuggestion[] = [];
+
+  for (const zone of zoneSuggestions) {
+    accumulatedCapacity += zone.total_capacity;
+    accumulatedAvailable += zone.available_capacity;
+    totalDisplaced += zone.displaced_count;
+    selectedZones.push(zone);
+
+    if (accumulatedAvailable >= partySize) {
+      return {
+        zones: selectedZones,
+        combined_capacity: accumulatedCapacity,
+        combined_available: accumulatedAvailable,
+        fits: accumulatedCapacity >= partySize,
+        total_displaced: totalDisplaced,
+      };
+    }
+  }
+
+  // Even with all viable zones, can't fit
+  return {
+    zones: selectedZones,
+    combined_capacity: accumulatedCapacity,
+    combined_available: accumulatedAvailable,
+    fits: false,
+    total_displaced: totalDisplaced,
+  };
+}
+
 // ─── Main entry point ──────────────────────────────────────────────
 
 /**
@@ -430,11 +624,17 @@ function buildReason(
 export function assignTable(input: AssignmentInput): AssignmentResult {
   const {
     reservation,
-    available_tables: availableTables,
+    available_tables: rawAvailableTables,
     existing_reservations: existingReservations,
     combinations,
     zone_scores: customZoneScores,
+    blocked_table_ids: blockedTableIds = [],
   } = input;
+
+  // Filter out blocked tables — host reserved them for walk-ins
+  const availableTables = blockedTableIds.length > 0
+    ? rawAvailableTables.filter(t => !blockedTableIds.includes(t.id))
+    : rawAvailableTables;
 
   const {
     party_size: partySize,
@@ -444,6 +644,68 @@ export function assignTable(input: AssignmentInput): AssignmentResult {
 
   const getZoneScore = (letter: string): number =>
     customZoneScores?.[letter] ?? ZONE_SCORES[letter] ?? 0;
+
+  // ── EVENT BRANCH: party_size > EVENT_THRESHOLD ──
+  // For large events (>14 pax), normal table scoring doesn't apply.
+  // Instead, suggest whole zones and let the host decide.
+  if (partySize > EVENT_THRESHOLD) {
+    const zoneSuggestions = evaluateEventZones(
+      partySize,
+      availableTables,
+      existingReservations,
+      timeStart,
+      timeEnd,
+    );
+
+    // Find the best single-zone option
+    const bestZone = zoneSuggestions.find(s => s.fits_zone && s.available_capacity >= partySize);
+
+    // For very large events (>48pax), also check multi-zone combinations
+    const multiZone = evaluateMultiZoneEvent(
+      partySize,
+      availableTables,
+      existingReservations,
+      timeStart,
+      timeEnd,
+    );
+
+    const reasonParts: string[] = [
+      `Evento ${partySize} personas — mesa individual no posible (max combo: ${EVENT_THRESHOLD})`,
+    ];
+
+    if (bestZone) {
+      reasonParts.push(
+        `Zona sugerida: ${bestZone.zone_name} (${bestZone.zone_letter}) cap.${bestZone.available_capacity}/${bestZone.total_capacity}`,
+        bestZone.displaced_count > 0
+          ? `⚠ ${bestZone.displaced_count} reservas a reubicar${bestZone.rehousing_possible ? ' (reubicación viable)' : ' (sin reubicación)'}`
+          : 'Sin conflictos de reservas',
+      );
+    } else if (multiZone?.fits) {
+      reasonParts.push(
+        `Multi-zona: ${multiZone.zones.map(z => `${z.zone_name}(${z.zone_letter})`).join(' + ')}`,
+        `Capacidad combinada: ${multiZone.combined_available}/${multiZone.combined_capacity}`,
+      );
+    } else {
+      reasonParts.push('Sin zona disponible para este tamaño de evento');
+    }
+
+    return {
+      suggested_table_id: bestZone ? zoneSuggestions[0].zone_letter : null,
+      suggested_combination_id: null,
+      alternatives: [],
+      score: bestZone?.score ?? multiZone?.zones[0]?.score ?? 0,
+      breakdown: {
+        capacity_fit: bestZone ? round1((partySize / bestZone.available_capacity) * 100) : 0,
+        zone_priority: bestZone?.score ?? multiZone?.zones[0]?.score ?? 0,
+        waste_penalty: bestZone ? round1(((bestZone.available_capacity - partySize) / bestZone.available_capacity) * 100) : 100,
+        combine_bonus: multiZone && multiZone.zones.length > 1 ? 100 : 0,
+      },
+      reason: reasonParts.join(' · '),
+      is_event: true,
+      event_zone_suggestions: zoneSuggestions.length > 0 ? zoneSuggestions : undefined,
+      event_multi_zone: multiZone && multiZone.zones.length > 1 ? multiZone : undefined,
+    };
+  }
 
   // ── 1. Filter by time availability ──
   let candidateTables = availableTables.filter(t =>

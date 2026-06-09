@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStaffUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 import { assignTable } from '@/lib/algorithms/table-assignment'
 import { getZoneLetter } from '@/lib/utils/zone-letter'
+import { logReservationChange } from '@/lib/utils/reservation-logger'
+import { getServiceType } from '@/lib/utils/serviceHours'
+import { getBlockedTableIds } from '@/lib/utils/table-blocks'
 
 export async function POST(request: NextRequest) {
   const staff = await getStaffUser(request)
@@ -56,6 +59,9 @@ export async function POST(request: NextRequest) {
   // Assign table using the algorithm (same as customer reservation flow)
   let tableId: string | null = null
   {
+    // Fetch blocked tables for this date/time
+    const blockedTableIds = await getBlockedTableIds(date, time_start, time_end)
+
     const [tablesRes, reservationsRes, combosRes] = await Promise.all([
       sb.from('tables')
         .select('id, number, capacity, capacity_min, can_combine, combine_group, zone:table_zones!zone_id(id, name, letter)')
@@ -127,12 +133,15 @@ export async function POST(request: NextRequest) {
       existing_reservations: existingResList,
       combinations: combosList,
       zone_scores: customZoneScores,
+      blocked_table_ids: blockedTableIds,
     })
 
     if (result.suggested_table_id) {
       tableId = result.suggested_table_id
     }
   }
+
+  const serviceType = getServiceType(time_start)
 
   const { data: reservation, error } = await sb
     .from('reservations')
@@ -147,11 +156,31 @@ export async function POST(request: NextRequest) {
       status: 'confirmed',
       source: source || 'phone',
       special_requests: special_requests || null,
+      service_type: serviceType,
     })
-    .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, created_at, customers(id, email, full_name, phone)')
+    .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, service_type, created_at, customers(id, email, full_name, phone)')
     .single()
 
   if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+
+  // Log creation in audit trail
+  await logReservationChange({
+    reservation_id: reservation.id,
+    action: source === 'walk-in' ? 'walk_in_created' : 'created',
+    field_name: 'status',
+    new_value: 'confirmed',
+    performed_by_name: staff.email || 'Admin',
+    notes: `Reserva creada: ${party_size} personas, ${time_start}-${time_end}`,
+  })
+  if (tableId) {
+    await logReservationChange({
+      reservation_id: reservation.id,
+      action: 'table_changed',
+      field_name: 'table_id',
+      new_value: tableId,
+      performed_by_name: staff.email || 'Admin',
+    })
+  }
 
   // Send confirmation email
   const r = reservation as Record<string, unknown>

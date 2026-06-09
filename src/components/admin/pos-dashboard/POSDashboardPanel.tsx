@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useRef } from 'react'
 import { usePOSDashboard, type POSDashboardFilters } from '@/lib/hooks/usePOSDashboard'
 import { usePOSCalendar } from '@/lib/hooks/usePOSCalendar'
 import { AnimatedCard } from '../shared/AnimatedCard'
-import { Spinner, ChartBar, ChartLine, Receipt } from '@phosphor-icons/react'
+import { Spinner, ChartBar, ChartLine, Receipt, Lightning } from '@phosphor-icons/react'
 import { POSFiltersBar } from './POSFiltersBar'
 import { RevenueHeatmapCalendar } from './RevenueHeatmapCalendar'
 import { DayKPIBar } from './DayKPIBar'
@@ -21,6 +21,7 @@ import { CategoryCompanionsCard } from './CategoryCompanionsCard'
 import { CategoryPerformersCard } from './CategoryPerformersCard'
 import { POSCostsTabContent } from './POSCostsTabContent'
 import { POSCatalogTabContent } from './POSCatalogTabContent'
+import { ResultadosConsolidados } from './ResultadosConsolidados'
 
 type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 
@@ -30,7 +31,7 @@ const DEFAULT_FILTERS: POSDashboardFilters = {
   // from/to left empty — server auto-detects latest month with data
 }
 
-type DashboardTab = 'operation' | 'costs' | 'catalog'
+type DashboardTab = 'operation' | 'results' | 'costs' | 'catalog'
 
 export function POSDashboardPanel() {
   const [activeTab, setActiveTab] = useState<DashboardTab>('operation')
@@ -217,6 +218,17 @@ export function POSDashboardPanel() {
               Operacion
             </button>
             <button
+              onClick={() => setActiveTab('results')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                activeTab === 'results'
+                  ? 'bg-[var(--color-ak-borgona)] text-white'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <Lightning size={13} />
+              Resultados
+            </button>
+            <button
               onClick={() => setActiveTab('costs')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
                 activeTab === 'costs'
@@ -240,7 +252,7 @@ export function POSDashboardPanel() {
             </button>
           </div>
           <div>
-            <h2 className="text-lg font-bold text-[var(--text-primary)]">{activeTab === 'costs' ? 'Costos POS' : activeTab === 'catalog' ? 'Catalogo de Costos' : 'Operacion POS'}</h2>
+            <h2 className="text-lg font-bold text-[var(--text-primary)]">{activeTab === 'costs' ? 'Costos POS' : activeTab === 'catalog' ? 'Catalogo de Costos' : activeTab === 'results' ? 'Resultados Consolidados' : 'Operacion POS'}</h2>
             <p className="text-xs text-[var(--text-secondary)]">
               {viewMode === 'month'
                 ? <>Vista consolidada: <span className="font-semibold text-[var(--color-ak-borgona)]">Mes completo</span></>
@@ -309,6 +321,16 @@ export function POSDashboardPanel() {
 
       {/* Catalog panel — lazy-loaded only when tab is active */}
       {activeTab === 'catalog' && <POSCatalogTabContent />}
+
+      {/* Results panel */}
+      {activeTab === 'results' && data && (
+        <ResultadosConsolidados
+          kpis={data.kpis}
+          hourlyRevenue={data.hourlyRevenue}
+          dailyTrend={data.dailyTrend}
+          filters={{ from: effectiveFilters.from, to: effectiveFilters.to }}
+        />
+      )}
 
       {data && activeTab === 'operation' && (
         <>

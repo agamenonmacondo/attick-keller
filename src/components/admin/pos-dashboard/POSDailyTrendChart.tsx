@@ -16,36 +16,19 @@ const DAY_NAMES: Record<number, { short: string; full: string; jsDay: number }> 
   7: { short: 'Dom', full: 'Domingo', jsDay: 0 },
 }
 
-// Get the Monday of the week containing a given date string (YYYY-MM-DD)
-function getMonday(dateStr: string): string {
-  const d = new Date(dateStr + 'T12:00:00')
-  const jsDay = d.getDay()
-  const isoDay = jsDay === 0 ? 7 : jsDay // 1=Mon...7=Sun
-  const diff = isoDay - 1 // days to subtract to get Monday
-  const monday = new Date(d)
-  monday.setDate(d.getDate() - diff)
-  const y = monday.getFullYear()
-  const m = String(monday.getMonth() + 1).padStart(2, '0')
-  const day = String(monday.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+// Map JS day (0=Sun, 1=Mon...6=Sat) to ISO day (1=Mon...7=Sun)
+function jsDayToIso(jsDay: number): number {
+  return jsDay === 0 ? 7 : jsDay
 }
 
-// Build a date string YYYY-MM-DD from a Date object
-function toDateStr(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-interface WeekDay {
+interface AggregatedDay {
   dayOfWeek: number  // ISO: 1=Lun, 7=Dom
   label: string      // "Lun", "Mar", etc.
   fullLabel: string  // "Lunes", "Martes", etc.
-  date: string       // actual date of this day in the latest week
-  revenue: number    // total revenue for that day
-  cheques: number
-  propina: number
+  revenue: number     // average revenue
+  cheques: number     // average cheques
+  propina: number     // average propina
+  count: number       // how many samples (days) contributed
 }
 
 interface DailyTrendChartProps {
@@ -59,15 +42,16 @@ interface TooltipPayload {
   dataKey: string
 }
 
-function CustomTooltip({ active, payload }: { active?: boolean; payload?: TooltipPayload[]; label?: string }) {
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: TooltipPayload[]; label?: string }) {
   if (!active || !payload) return null
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg px-3 py-2 shadow-lg text-xs">
+      <p className="text-[var(--text-primary)] font-medium mb-1">{label}</p>
       {payload.map((p, i) => (
         <p key={i} className="text-[var(--text-secondary)]">
           {p.dataKey === 'revenue' ? `Ventas: ${formatCOPDisplay(p.value)}` :
            p.dataKey === 'propina' ? `Propina: ${formatCOPDisplay(p.value)}` :
-           `${p.value} cheques`}
+           `${Math.round(p.value)} cheques`}
         </p>
       ))}
       <p className="text-[9px] text-[var(--color-ak-dorado)] mt-1">Click para ver en Operacion</p>
@@ -87,74 +71,42 @@ const BAR_COLORS: Record<number, string> = {
 }
 
 export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
-  // Find the last COMPLETE week (Mon-Sun) with enough data
-  const chartData = useMemo<WeekDay[]>(() => {
+  // Aggregate daily data by day of week → average per weekday
+  const chartData = useMemo<AggregatedDay[]>(() => {
     if (data.length === 0) return []
 
-    // Build a lookup map for quick date access
-    const dateMap = new Map<string, { revenue: number; cheques: number; propina: number }>()
+    const buckets: Record<number, { revenue: number; cheques: number; propina: number; count: number }> = {}
+
     for (const d of data) {
-      dateMap.set(d.date, { revenue: d.revenue, cheques: d.cheques, propina: d.propina })
-    }
-
-    // Start from the last date in the data and check weeks backwards
-    const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date))
-    const lastDate = sorted[sorted.length - 1].date
-    let mondayStr = getMonday(lastDate)
-
-    // Build the candidate week and count non-zero days
-    const tryBuildWeek = (monday: string): { days: WeekDay[]; daysWithData: number } => {
-      const days: WeekDay[] = []
-      let daysWithData = 0
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(monday + 'T12:00:00')
-        d.setDate(d.getDate() + i)
-        const dateStr = toDateStr(d)
-        const isoDay = i + 1
-        const info = DAY_NAMES[isoDay]
-        const dayData = dateMap.get(dateStr)
-        if (dayData && dayData.revenue > 0) daysWithData++
-        days.push({
-          dayOfWeek: isoDay,
-          label: info.short,
-          fullLabel: info.full,
-          date: dateStr,
-          revenue: dayData?.revenue ?? 0,
-          cheques: dayData?.cheques ?? 0,
-          propina: dayData?.propina ?? 0,
-        })
+      const dateObj = new Date(d.date + 'T12:00:00')
+      const isoDay = jsDayToIso(dateObj.getDay())
+      if (!buckets[isoDay]) {
+        buckets[isoDay] = { revenue: 0, cheques: 0, propina: 0, count: 0 }
       }
-      return { days, daysWithData }
+      buckets[isoDay].revenue += d.revenue
+      buckets[isoDay].cheques += d.cheques
+      buckets[isoDay].propina += d.propina
+      buckets[isoDay].count += 1
     }
 
-    // Try current week; if fewer than 4 days with data, go to previous week
-    let { days, daysWithData } = tryBuildWeek(mondayStr)
-    if (daysWithData < 4) {
-      // Go to previous Monday
-      const prevMonday = new Date(mondayStr + 'T12:00:00')
-      prevMonday.setDate(prevMonday.getDate() - 7)
-      mondayStr = toDateStr(prevMonday)
-      const prev = tryBuildWeek(mondayStr)
-      if (prev.daysWithData > daysWithData) {
-        days = prev.days
-        daysWithData = prev.daysWithData
-      }
+    // Build ordered array Mon-Sun with AVERAGES
+    const result: AggregatedDay[] = []
+    for (let isoDay = 1; isoDay <= 7; isoDay++) {
+      const b = buckets[isoDay]
+      if (!b) continue
+      const info = DAY_NAMES[isoDay]
+      result.push({
+        dayOfWeek: isoDay,
+        label: info.short,
+        fullLabel: info.full,
+        revenue: Math.round(b.revenue / b.count),
+        cheques: Math.round(b.cheques / b.count),
+        propina: Math.round(b.propina / b.count),
+        count: b.count,
+      })
     }
-
-    return days
+    return result
   }, [data])
-
-  // Format the week range for the subtitle
-  const weekLabel = useMemo(() => {
-    if (chartData.length < 7) return ''
-    const first = chartData[0].date
-    const last = chartData[6].date
-    const fmt = (d: string) => {
-      const dt = new Date(d + 'T12:00:00')
-      return `${dt.getDate()}/${dt.getMonth() + 1}`
-    }
-    return `${fmt(first)} - ${fmt(last)}`
-  }, [chartData])
 
   if (chartData.length === 0) {
     return (
@@ -168,12 +120,7 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2">
-          <SectionHeading>Revenue por Dia</SectionHeading>
-          {weekLabel && (
-            <span className="text-[10px] text-[var(--text-muted)]">{weekLabel}</span>
-          )}
-        </div>
+        <SectionHeading>Revenue por Dia</SectionHeading>
         {onDayClick && (
           <span className="text-[10px] text-[var(--text-muted)]">Click en barra para ver en Operacion</span>
         )}
@@ -184,7 +131,7 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
           margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
           onClick={(e: any) => {
             if (onDayClick && e?.activePayload?.[0]?.payload?.dayOfWeek) {
-              const day = e.activePayload[0].payload as WeekDay
+              const day = e.activePayload[0].payload as AggregatedDay
               onDayClick(DAY_NAMES[day.dayOfWeek].jsDay, day.fullLabel)
             }
           }}
@@ -225,7 +172,7 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
       <div className="flex items-center gap-4 mt-2">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-borgona)]" />
-          <span className="text-[10px] text-[var(--text-muted)]">Ventas</span>
+          <span className="text-[10px] text-[var(--text-muted)]">Ventas (promedio)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-dorado)]" />

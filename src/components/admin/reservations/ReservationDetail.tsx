@@ -27,6 +27,7 @@ interface ReservationDetailItem {
   source: string
   special_requests: string | null
   internal_notes?: string | null
+  created_at?: string
   customers: {
     id: string
     full_name: string | null
@@ -409,7 +410,7 @@ export function ReservationDetail({
               </div>
 
               <div className="border-t border-[var(--border-default)] pt-4">
-                <AuditTimeline reservationId={reservation.id} />
+                <AuditTimeline reservationId={reservation.id} reservationCreatedAt={reservation.created_at as string | undefined} />
               </div>
             </>
           )}

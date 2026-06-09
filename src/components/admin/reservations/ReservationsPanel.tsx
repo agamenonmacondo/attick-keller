@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Plus } from '@phosphor-icons/react'
+import { Plus, X } from '@phosphor-icons/react'
+import { motion } from 'framer-motion'
 import { useAdminDashboard } from '@/lib/hooks/useAdminDashboard'
 import { useAdminReservations } from '@/lib/hooks/useAdminReservations'
 import { useDatesWithReservations } from '@/lib/hooks/useDatesWithReservations'
@@ -174,7 +175,23 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
             onSelect={setDetailId}
           />
         </div>
-        <div className="lg:col-span-1">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="lg:col-span-1"
+        >
+          {detailId && (
+            <button
+              type="button"
+              onClick={() => setDetailId(null)}
+              className="md:hidden fixed top-4 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-ak-borgona)] text-white shadow-lg active:scale-95 dark:bg-[var(--color-ak-dorado)] dark:text-[var(--color-ak-madera)]"
+              style={{ transition: 'transform 160ms ease-out' }}
+              aria-label="Cerrar detalle"
+            >
+              <X size={20} weight="bold" />
+            </button>
+          )}
           <ReservationDetail
             reservation={detailReservation}
             onStatusChange={(id, status) => {
@@ -189,7 +206,7 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
             onEdit={handleEdit}
             onClose={() => setDetailId(null)}
           />
-        </div>
+        </motion.div>
       </div>
 
       <ConfirmDialog

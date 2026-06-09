@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
 import { formatTime } from '@/lib/utils/formatDate'
-import { SERVICE_HOURS } from '@/lib/utils/serviceHours'
+import { SERVICE_HOURS, getServiceType, SERVICE_FILTERS } from '@/lib/utils/serviceHours'
 import { StatusBadge, getStatusConfig } from '../shared/StatusBadge'
 import { Check, X } from '@phosphor-icons/react'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
@@ -104,6 +104,9 @@ export function ReservationTimeline({
               <AnimatePresence>
                 {slotReservations.map((r, i) => {
                   const cfg = getStatusConfig(r.status)
+                  const svc = getServiceType(r.time_start)
+                  const svcLabel = SERVICE_FILTERS.find(f => f.id === svc)?.label ?? ''
+
                   return (
                     <motion.div
                       key={r.id}
@@ -142,10 +145,20 @@ export function ReservationTimeline({
                         <p className="truncate text-sm font-medium text-[var(--text-primary)]">
                           {r.customers?.full_name || r.customers?.email || 'Cliente'}
                         </p>
-                        <p className="text-xs text-[var(--text-secondary)]">
-                          {formatTime(r.time_start)} - {formatTime(r.time_end)}
-                          {r.zone_name && ` \u00B7 ${r.zone_name}`}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs text-[var(--text-secondary)]">
+                            {formatTime(r.time_start)} - {formatTime(r.time_end)}
+                            {r.zone_name && ` \u00B7 ${r.zone_name}`}
+                          </p>
+                          <span className={cn(
+                            'rounded px-1.5 py-0.5 text-[10px] font-medium',
+                            svc === 'lunch' && 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+                            svc === 'dinner' && 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+                            svc === 'breakfast' && 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+                          )}>
+                            {svcLabel}
+                          </span>
+                        </div>
                       </div>
 
                       <span className="rounded bg-[var(--bg-card)] px-1.5 py-0.5 font-mono text-xs font-medium text-[var(--text-primary)]">

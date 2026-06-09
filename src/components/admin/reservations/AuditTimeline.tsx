@@ -52,10 +52,11 @@ function getFieldLabel(field: string | null | undefined): string {
 
 interface AuditTimelineProps {
   reservationId: string | null
+  reservationCreatedAt?: string
   className?: string
 }
 
-export function AuditTimeline({ reservationId, className }: AuditTimelineProps) {
+export function AuditTimeline({ reservationId, reservationCreatedAt, className }: AuditTimelineProps) {
   const [logs, setLogs] = useState<ReservationLog[]>([])
   const [loading, setLoading] = useState(false)
   const [expanded, setExpanded] = useState(false)
@@ -100,12 +101,42 @@ export function AuditTimeline({ reservationId, className }: AuditTimelineProps) 
         <div className="text-xs text-[var(--color-ak-madera)]/50 dark:text-white/40 py-2">
           Cargando bitacora...
         </div>
-      ) : logs.length === 0 ? (
+      ) : logs.length === 0 && !reservationCreatedAt ? (
         <div className="text-xs text-[var(--color-ak-madera)]/50 dark:text-white/40 py-2">
           Sin registros en la bitacora
         </div>
       ) : (
         <div className="space-y-0">
+          {/* Reservation creation entry */}
+          {reservationCreatedAt && (
+            <div className="flex gap-2 group">
+              {/* Timeline line */}
+              <div className="flex flex-col items-center">
+                <div className={cn(
+                  'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0',
+                  'bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-dorado)] dark:text-[var(--color-ak-madera)]'
+                )}>
+                  <CalendarPlus size={18} weight="fill" />
+                </div>
+                <div className="w-px flex-1 bg-[var(--color-ak-madera)]/15 dark:bg-white/10" />
+              </div>
+
+              {/* Content */}
+              <div className="pb-3">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xs font-semibold text-[var(--color-ak-madera)] dark:text-white/90">
+                    Reserva creada
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[10px] text-[var(--color-ak-madera)]/40 dark:text-white/25">
+                    {formatTime(reservationCreatedAt)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {visibleLogs.map((log, i) => {
             const IconComp = ICON_MAP[ACTION_ICONS[log.action]] || Clock
             const label = ACTION_LABELS[log.action] || log.action

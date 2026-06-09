@@ -20,6 +20,8 @@ interface ReservationTimeline {
   is_current: boolean
   is_past: boolean
   is_upcoming: boolean
+  created_at?: string
+  internal_notes?: string | null
 }
 
 interface TableItem {

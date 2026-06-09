@@ -10,6 +10,8 @@ import { SectionHeading } from '../admin/shared/SectionHeading'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import { Check, X, Armchair, CalendarX, Warning, Clock, WhatsappLogo, EnvelopeSimple, Note, CaretDown, CaretUp } from '@phosphor-icons/react'
 import { formatTime12 } from '@/lib/utils/format-time'
+import { ServiceFilter } from '../admin/reservations/ServiceFilter'
+import { getServiceType, SERVICE_FILTERS, type ServiceType } from '@/lib/utils/serviceHours'
 
 const SPRING = { stiffness: 100, damping: 20, mass: 1 }
 
@@ -59,6 +61,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
     status: string
     label: string
   }>({ open: false, reservationId: '', status: '', label: '' })
+  const [serviceFilter, setServiceFilter] = useState<ServiceType | 'all'>('all')
   const prefersReduced = usePrefersReducedMotion()
 
   const toggleExpand = (id: string) => {
@@ -108,8 +111,20 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
     return status === 'confirmed' || status === 'seated'
   })
 
+  // Service filter
+  const serviceFiltered = serviceFilter === 'all'
+    ? hostReservations
+    : hostReservations.filter(r => getServiceType(String(r.time_start || '')) === serviceFilter)
+
+  const serviceCounts = {
+    all: hostReservations.length,
+    breakfast: hostReservations.filter(r => getServiceType(String(r.time_start || '')) === 'breakfast').length,
+    lunch: hostReservations.filter(r => getServiceType(String(r.time_start || '')) === 'lunch').length,
+    dinner: hostReservations.filter(r => getServiceType(String(r.time_start || '')) === 'dinner').length,
+  }
+
   // Sort by time_start
-  const sorted = [...hostReservations].sort((a, b) =>
+  const sorted = [...serviceFiltered].sort((a, b) =>
     String(a.time_start || '').localeCompare(String(b.time_start || ''))
   )
 
@@ -129,6 +144,8 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
     <div className="space-y-3"
     >
       <SectionHeading>Reservas de Hoy</SectionHeading>
+
+      <ServiceFilter active={serviceFilter} onChange={setServiceFilter} counts={serviceCounts} />
 
       {error && (
         <motion.div
@@ -204,6 +221,10 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                     const actions = HOST_ACTION_MAP[status] || []
                     const isConfirming = confirming === id
 
+                    // Service type badge
+                    const svc = getServiceType(String(r.time_start || ''))
+                    const svcLabel = SERVICE_FILTERS.find(f => f.id === svc)?.label ?? ''
+
                     // Highlight reservations starting within 15 minutes
                     const startDateTime = new Date(`${todayStr}T${r.time_start as string}`)
                     const isUrgent = status === 'confirmed' &&
@@ -242,6 +263,14 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                             <p className="text-sm font-medium text-[var(--text-primary)] break-words">{customerName}</p>
                             <p className="text-xs text-[var(--text-secondary)]">
                               {partySize}p{r.zone_name ? ` · ${r.zone_name}` : ''}
+                              <span className={cn(
+                                'rounded px-1.5 py-0.5 text-[10px] font-medium ml-1',
+                                svc === 'lunch' && 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+                                svc === 'dinner' && 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+                                svc === 'breakfast' && 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+                              )}>
+                                {svcLabel}
+                              </span>
                             </p>
                             {(r.table_number as string | null) && (
                               <p className="text-xs text-[var(--color-ak-oliva)] flex items-center gap-1">

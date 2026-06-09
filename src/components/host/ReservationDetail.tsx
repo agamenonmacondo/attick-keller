@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
-import { formatTimeRangeColombia } from '@/lib/utils/time'
 import type { ReservationTimeline } from '@/lib/hooks/useHostOccupancy'
 import { formatTime12 } from '@/lib/utils/format-time'
 import {
@@ -14,6 +13,8 @@ import {
   Note,
   Clock,
 } from '@phosphor-icons/react'
+import { AuditTimeline } from '../admin/reservations/AuditTimeline'
+import { InternalNotesSection } from '../admin/reservations/InternalNotesSection'
 
 const STATUS_CONFIG: Record<
   ReservationTimeline['status'],
@@ -41,6 +42,7 @@ interface ReservationDetailProps {
 
 export function ReservationDetail({ reservation, compact = false }: ReservationDetailProps) {
   const [expanded, setExpanded] = useState(false)
+  const [internalNotes, setInternalNotes] = useState(reservation.internal_notes ?? '')
   const config = STATUS_CONFIG[reservation.status]
 
   const hasDetails = reservation.customer_phone || reservation.customer_email || reservation.special_requests
@@ -127,6 +129,16 @@ export function ReservationDetail({ reservation, compact = false }: ReservationD
                   <span>{reservation.special_requests}</span>
                 </div>
               )}
+            </div>
+
+            {/* Bitácora (audit timeline) */}
+            <div className="border-t border-[var(--border-default)] pt-1.5 mt-1.5">
+              <AuditTimeline reservationId={reservation.id} reservationCreatedAt={reservation.created_at} />
+            </div>
+
+            {/* Internal notes section */}
+            <div className="border-t border-[var(--border-default)] pt-1.5 mt-1.5">
+              <InternalNotesSection reservationId={reservation.id} internalNotes={internalNotes} onNotesUpdate={setInternalNotes} />
             </div>
           </motion.div>
         )}

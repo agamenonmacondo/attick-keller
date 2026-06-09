@@ -18,6 +18,8 @@ export type ReservationTimeline = {
   is_current: boolean  // reservation is happening now
   is_past: boolean     // reservation has ended
   is_upcoming: boolean // reservation hasn't started yet
+  created_at?: string
+  internal_notes?: string | null
 }
 
 /**

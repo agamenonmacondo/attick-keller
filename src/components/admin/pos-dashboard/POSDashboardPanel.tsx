@@ -22,6 +22,8 @@ import { CategoryPerformersCard } from './CategoryPerformersCard'
 import { POSCostsTabContent } from './POSCostsTabContent'
 import { POSCatalogTabContent } from './POSCatalogTabContent'
 import { POSDailyTrendChart } from './POSDailyTrendChart'
+import type { AggregatedDay } from './POSDailyTrendChart'
+import { DayOfWeekDetailCard } from './DayOfWeekDetailCard'
 
 type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 
@@ -40,6 +42,7 @@ export function POSDashboardPanel() {
   const [filters, setFilters] = useState<POSDashboardFilters>(DEFAULT_FILTERS)
   const [heatmapMetric, setHeatmapMetric] = useState<HeatmapMetric>('revenue')
   const [calendarMonth, setCalendarMonth] = useState<string | undefined>(undefined) // 'YYYY-MM' for calendar view month
+  const [selectedDayOfWeek, setSelectedDayOfWeek] = useState<AggregatedDay | null>(null)
 
   // When in month mode, derive from/to from calendarMonth so the dashboard
   // data follows the month the user is viewing (not always "latest month").
@@ -130,26 +133,10 @@ export function POSDashboardPanel() {
   }, [])
 
   // When clicking a day-of-week bar in the trend chart,
-  // find the most recent occurrence of that weekday and navigate
-  const handleDayOfWeekClick = useCallback((jsDay: number, _dayName: string) => {
-    // Search both data sources for the most recent matching day
-    const source = allData?.dailyTrend ?? data?.dailyTrend ?? []
-    let matchDate: string | undefined
-    for (let i = source.length - 1; i >= 0; i--) {
-      const d = new Date(source[i].date + 'T12:00:00')
-      if (d.getDay() === jsDay) {
-        matchDate = source[i].date
-        break
-      }
-    }
-    if (matchDate) {
-      // Switch to Operation tab in day mode showing that date
-      setActiveTab('operation')
-      setViewMode('day')
-      setFilters(prev => ({ ...prev, zone: 'all', category: 'all', from: matchDate, to: matchDate }))
-      setCalendarMonth(matchDate.substring(0, 7))
-    }
-  }, [allData, data])
+  // show detail panel in results
+  const handleDayOfWeekClick = useCallback((dayData: AggregatedDay) => {
+    setSelectedDayOfWeek(dayData)
+  }, [])
 
   const handleCalendarMonthChange = useCallback((month: string) => {
     // Navigating months in the calendar always switches to consolidated view
@@ -363,6 +350,13 @@ export function POSDashboardPanel() {
           <AnimatedCard delay={0.03} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
             <POSDailyTrendChart data={allData.dailyTrend} onDayClick={handleDayOfWeekClick} />
           </AnimatedCard>
+
+          {/* Detail panel for selected day of week */}
+          {selectedDayOfWeek && (
+            <AnimatedCard delay={0.04} className="p-0 overflow-visible">
+              <DayOfWeekDetailCard dayData={selectedDayOfWeek} onClose={() => setSelectedDayOfWeek(null)} />
+            </AnimatedCard>
+          )}
 
           {/* Desglose 3 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">

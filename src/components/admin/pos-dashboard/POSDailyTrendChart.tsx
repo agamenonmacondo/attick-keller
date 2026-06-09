@@ -21,22 +21,22 @@ function jsDayToIso(jsDay: number): number {
   return jsDay === 0 ? 7 : jsDay
 }
 
-interface AggregatedDay {
+export interface AggregatedDay {
   dayOfWeek: number      // ISO: 1=Lun, 7=Dom
   label: string          // "Lun", "Mar", etc.
   fullLabel: string      // "Lunes", "Martes", etc.
   totalRevenue: number   // total acumulado
-  avgRevenue: number     // promedio por día
+  avgRevenue: number     // promedio por dia
   totalCheques: number
   avgCheques: number
   totalPropina: number
   avgPropina: number
-  count: number          // cuántos días contribuyeron
+  count: number          // cuantos dias contribuyeron
 }
 
 interface DailyTrendChartProps {
   data: Array<{ date: string; revenue: number; cheques: number; propina: number }>
-  onDayClick?: (jsDay: number, dayName: string) => void
+  onDayClick?: (dayData: AggregatedDay) => void
 }
 
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) {
@@ -150,7 +150,7 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
       <div className="flex items-center justify-between mb-1">
         <SectionHeading>Revenue por Dia</SectionHeading>
         {onDayClick && (
-          <span className="text-[10px] text-[var(--text-muted)]">Click en barra para ver en Operacion</span>
+          <span className="text-[10px] text-[var(--text-muted)]">Click en barra para ver detalle</span>
         )}
       </div>
       <ResponsiveContainer width="100%" height={260}>
@@ -160,7 +160,7 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
           onClick={(e: any) => {
             if (onDayClick && e?.activePayload?.[0]?.payload?.dayOfWeek) {
               const day = e.activePayload[0].payload as AggregatedDay
-              onDayClick(DAY_NAMES[day.dayOfWeek].jsDay, day.fullLabel)
+              onDayClick(day)
             }
           }}
           style={{ cursor: onDayClick ? 'pointer' : 'default' }}
@@ -170,7 +170,7 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
             dataKey="label"
             tick={{ fontSize: 11, fill: 'var(--text-secondary)' }}
             axisLine={{ stroke: 'var(--border-default)' }}
-            tickLine={false}
+            tickLine={ false}
           />
           <YAxis
             tickFormatter={(v: number) => formatCOPDisplay(v)}

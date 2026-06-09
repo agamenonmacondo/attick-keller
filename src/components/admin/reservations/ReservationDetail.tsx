@@ -9,6 +9,8 @@ import { whatsappLink, emailLink } from '@/lib/utils/whatsapp'
 import { SERVICE_HOURS } from '@/lib/utils/serviceHours'
 import { StatusBadge } from '../shared/StatusBadge'
 import { SectionHeading } from '../shared/SectionHeading'
+import { AuditTimeline } from './AuditTimeline'
+import { InternalNotesSection } from './InternalNotesSection'
 
 interface Zone {
   id: string
@@ -24,6 +26,7 @@ interface ReservationDetailItem {
   status: string
   source: string
   special_requests: string | null
+  internal_notes?: string | null
   customers: {
     id: string
     full_name: string | null
@@ -73,6 +76,7 @@ export function ReservationDetail({
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [zones, setZones] = useState<Zone[]>([])
+  const [internalNotes, setInternalNotes] = useState('')
   const [form, setForm] = useState({
     date: '',
     time_start: '',
@@ -101,6 +105,7 @@ export function ReservationDetail({
         zone_id: '',
         special_requests: reservation.special_requests || '',
       })
+      setInternalNotes(reservation.internal_notes || '')
       setEditing(false)
     }
   }, [reservation])
@@ -390,6 +395,23 @@ export function ReservationDetail({
                 </button>
               ))}
             </div>
+          )}
+
+          {/* Internal notes & Audit timeline — always visible when not editing */}
+          {!editing && (
+            <>
+              <div className="border-t border-[var(--border-default)] pt-4">
+                <InternalNotesSection
+                  reservationId={reservation.id}
+                  internalNotes={internalNotes}
+                  onNotesUpdate={setInternalNotes}
+                />
+              </div>
+
+              <div className="border-t border-[var(--border-default)] pt-4">
+                <AuditTimeline reservationId={reservation.id} />
+              </div>
+            </>
           )}
         </div>
       </motion.div>

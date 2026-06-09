@@ -8,11 +8,15 @@ import { useDatesWithReservations } from '@/lib/hooks/useDatesWithReservations'
 import { ReservationCalendar } from './ReservationCalendar'
 import { DayStatsRow } from './DayStatsRow'
 import { StatusFilter } from './StatusFilter'
+import { ServiceFilter } from './ServiceFilter'
 import { ReservationTimeline } from './ReservationTimeline'
 import { ReservationDetail } from './ReservationDetail'
 import { ReservationForm } from './ReservationForm'
+import { TableBlockForm } from './TableBlockForm'
 import { ConfirmDialog } from '../shared/ConfirmDialog'
 import { Spinner } from '@phosphor-icons/react'
+import type { ServiceType } from '@/lib/utils/serviceHours'
+import { getServiceType } from '@/lib/utils/serviceHours'
 
 interface ReservationsPanelProps {
   selectedDate: string
@@ -21,8 +25,10 @@ interface ReservationsPanelProps {
 
 export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPanelProps) {
   const [filter, setFilter] = useState('all')
+  const [serviceFilter, setServiceFilter] = useState<ServiceType | 'all'>('all')
   const [detailId, setDetailId] = useState<string | null>(null)
   const [showNewForm, setShowNewForm] = useState(false)
+  const [showBlockForm, setShowBlockForm] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{
     id: string
     status: string
@@ -103,8 +109,19 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
   }
 
   const dayReservations = reservations.filter((r) => r.date === selectedDate)
+  // Apply service filter
+  const filteredReservations = serviceFilter === 'all'
+    ? dayReservations
+    : dayReservations.filter((r) => getServiceType(r.time_start) === serviceFilter)
+  // Service counts for filter badges
+  const serviceCounts = {
+    all: dayReservations.length,
+    breakfast: dayReservations.filter(r => getServiceType(r.time_start) === 'breakfast').length,
+    lunch: dayReservations.filter(r => getServiceType(r.time_start) === 'lunch').length,
+    dinner: dayReservations.filter(r => getServiceType(r.time_start) === 'dinner').length,
+  }
   const detailReservation = detailId
-    ? dayReservations.find((r) => r.id === detailId) ?? null
+    ? filteredReservations.find((r) => r.id === detailId) ?? null
     : null
 
   return (
@@ -142,10 +159,16 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
         }}
       />
 
+      <ServiceFilter
+        active={serviceFilter}
+        onChange={setServiceFilter}
+        counts={serviceCounts}
+      />
+
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <ReservationTimeline
-            reservations={dayReservations}
+            reservations={filteredReservations}
             loading={resLoading}
             detailId={detailId}
             onSelect={setDetailId}

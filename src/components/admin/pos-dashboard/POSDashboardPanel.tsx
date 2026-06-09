@@ -224,6 +224,7 @@ export function POSDashboardPanel() {
   }, [])
 
   const handleResultsClearFilter = useCallback(() => {
+    setSelectedDate(null)
     setResultsZone('all')
     setResultsCategory('all')
   }, [])
@@ -395,7 +396,9 @@ export function POSDashboardPanel() {
             <h2 className="text-lg font-bold text-[var(--text-primary)]">{activeTab === 'costs' ? 'Costos POS' : activeTab === 'catalog' ? 'Catalogo de Costos' : activeTab === 'results' ? 'Resultados Consolidados' : 'Operacion POS'}</h2>
             <p className="text-xs text-[var(--text-secondary)]">
               {activeTab === 'results'
-                ? <>Datos historicos: <span className="font-semibold text-[var(--color-ak-borgona)]">Ene – Jun 2026</span></>
+                ? selectedDate
+                  ? <>Filtrado por dia: <span className="font-semibold text-[var(--color-ak-borgona)]">{selectedDate}</span></>
+                  : <>Datos historicos: <span className="font-semibold text-[var(--color-ak-borgona)]">Ene – Jun 2026</span></>
                 : viewMode === 'month'
                 ? <>Vista consolidada: <span className="font-semibold text-[var(--color-ak-borgona)]">Mes completo</span></>
                 : isSingleDay

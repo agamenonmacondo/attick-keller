@@ -21,15 +21,28 @@ function jsDayToIso(jsDay: number): number {
   return jsDay === 0 ? 7 : jsDay
 }
 
-interface AggregatedDay {
+// Get the Monday of the week containing a given date string (YYYY-MM-DD)
+function getMonday(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00')
+  const jsDay = d.getDay()
+  const isoDay = jsDay === 0 ? 7 : jsDay // 1=Mon...7=Sun
+  const diff = isoDay - 1 // days to subtract to get Monday
+  const monday = new Date(d)
+  monday.setDate(d.getDate() - diff)
+  const y = monday.getFullYear()
+  const m = String(monday.getMonth() + 1).padStart(2, '0')
+  const day = String(monday.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+interface WeekDay {
   dayOfWeek: number  // ISO: 1=Lun, 7=Dom
   label: string      // "Lun", "Mar", etc.
   fullLabel: string  // "Lunes", "Martes", etc.
-  revenue: number     // average revenue
-  cheques: number     // average cheques
-  propina: number     // average propina
-  count: number       // how many samples (days) contributed
-  totalRevenue: number // sum for reference
+  date: string       // actual date of this day in the latest week
+  revenue: number    // total revenue for that day
+  cheques: number
+  propina: number
 }
 
 interface DailyTrendChartProps {
@@ -49,7 +62,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
     <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg px-3 py-2 shadow-lg text-xs">
       {payload.map((p, i) => (
         <p key={i} className="text-[var(--text-secondary)]">
-          {p.dataKey === 'revenue' ? `Revenue: ${formatCOPDisplay(p.value)}` :
+          {p.dataKey === 'revenue' ? `Ventas: ${formatCOPDisplay(p.value)}` :
            p.dataKey === 'propina' ? `Propina: ${formatCOPDisplay(p.value)}` :
            `${p.value} cheques`}
         </p>
@@ -65,50 +78,59 @@ const BAR_COLORS: Record<number, string> = {
   2: 'var(--color-ak-borgona)', // Mar
   3: 'var(--color-ak-borgona)', // Mié
   4: 'var(--color-ak-borgona)', // Jue
-  5: 'var(--color-ak-dorado)',  // Vie — peak
-  6: 'var(--color-ak-dorado)',  // Sáb — peak
+  5: 'var(--color-ak-dorado)',  // Vie
+  6: 'var(--color-ak-dorado)',  // Sáb
   7: 'var(--color-ak-oliva)',   // Dom
 }
 
 export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
-  // Aggregate daily data by day of week
-  const chartData = useMemo<AggregatedDay[]>(() => {
+  // Take only the LAST complete week (Mon-Sun) from the data
+  const chartData = useMemo<WeekDay[]>(() => {
     if (data.length === 0) return []
 
-    const buckets: Record<number, { revenue: number; cheques: number; propina: number; count: number; totalRevenue: number }> = {}
+    // Find the Monday of the latest week that has data
+    // Sort by date descending, take last date, find its week's Monday
+    const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date))
+    const lastDate = sorted[sorted.length - 1].date
+    const mondayStr = getMonday(lastDate)
 
-    for (const d of data) {
-      const dateObj = new Date(d.date + 'T12:00:00')
-      const isoDay = jsDayToIso(dateObj.getDay())
-      if (!buckets[isoDay]) {
-        buckets[isoDay] = { revenue: 0, cheques: 0, propina: 0, count: 0, totalRevenue: 0 }
-      }
-      buckets[isoDay].revenue += d.revenue
-      buckets[isoDay].cheques += d.cheques
-      buckets[isoDay].propina += d.propina
-      buckets[isoDay].totalRevenue += d.revenue
-      buckets[isoDay].count += 1
-    }
-
-    // Build ordered array Mon-Sun
-    const result: AggregatedDay[] = []
-    for (let isoDay = 1; isoDay <= 7; isoDay++) {
-      const b = buckets[isoDay]
-      if (!b) continue
+    // Build the 7 days of that week
+    const weekDays: WeekDay[] = []
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mondayStr + 'T12:00:00')
+      d.setDate(d.getDate() + i)
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      const isoDay = i + 1 // 1=Mon...7=Sun
       const info = DAY_NAMES[isoDay]
-      result.push({
+
+      // Find this day in the data
+      const dayData = data.find(dd => dd.date === dateStr)
+
+      weekDays.push({
         dayOfWeek: isoDay,
         label: info.short,
         fullLabel: info.full,
-        revenue: Math.round(b.revenue / b.count),
-        cheques: Math.round(b.cheques / b.count),
-        propina: Math.round(b.propina / b.count),
-        count: b.count,
-        totalRevenue: b.totalRevenue,
+        date: dateStr,
+        revenue: dayData?.revenue ?? 0,
+        cheques: dayData?.cheques ?? 0,
+        propina: dayData?.propina ?? 0,
       })
     }
-    return result
+
+    return weekDays
   }, [data])
+
+  // Format the week range for the subtitle
+  const weekLabel = useMemo(() => {
+    if (chartData.length < 7) return ''
+    const first = chartData[0].date
+    const last = chartData[6].date
+    const fmt = (d: string) => {
+      const dt = new Date(d + 'T12:00:00')
+      return `${dt.getDate()}/${dt.getMonth() + 1}`
+    }
+    return `${fmt(first)} - ${fmt(last)}`
+  }, [chartData])
 
   if (chartData.length === 0) {
     return (
@@ -122,7 +144,12 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <SectionHeading>Revenue por Dia</SectionHeading>
+        <div className="flex items-center gap-2">
+          <SectionHeading>Revenue por Dia</SectionHeading>
+          {weekLabel && (
+            <span className="text-[10px] text-[var(--text-muted)]">{weekLabel}</span>
+          )}
+        </div>
         {onDayClick && (
           <span className="text-[10px] text-[var(--text-muted)]">Click en barra para ver en Operacion</span>
         )}
@@ -133,7 +160,7 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
           margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
           onClick={(e: any) => {
             if (onDayClick && e?.activePayload?.[0]?.payload?.dayOfWeek) {
-              const day = e.activePayload[0].payload as AggregatedDay
+              const day = e.activePayload[0].payload as WeekDay
               onDayClick(DAY_NAMES[day.dayOfWeek].jsDay, day.fullLabel)
             }
           }}
@@ -174,7 +201,7 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
       <div className="flex items-center gap-4 mt-2">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-borgona)]" />
-          <span className="text-[10px] text-[var(--text-muted)]">Revenue (promedio)</span>
+          <span className="text-[10px] text-[var(--text-muted)]">Ventas</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-dorado)]" />

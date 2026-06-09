@@ -324,15 +324,15 @@ export default function SimulatorTab() {
     splits: Math.max(0, historicalSplits - totals.totalSplits),
   }
 
-  if (loading) return <div className="p-6 text-center" style={{color:'var(--text-secondary)'}}>Cargando datos...</div>
-  if (error) return <div className="p-6 text-center" style={{color:'var(--color-ak-borgona)'}}>Error: {error}</div>
+  if (loading) return <div className="p-6 text-center text-[var(--text-secondary)]">Cargando datos...</div>
+  if (error) return <div className="p-6 text-center text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">Error: {error}</div>
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold" style={{color:'var(--text-primary)'}}>Simulador de Configuraciones</h2>
-        <p className="text-sm mt-1" style={{color:'var(--text-secondary)'}}>
+        <h2 className="text-xl font-bold text-[var(--text-primary)]">Simulador de Configuraciones</h2>
+        <p className="text-sm mt-1 text-[var(--text-secondary)]">
           Experimenta con configuraciones de equipos y turnos para minimizar horas extra y turnos partidos
         </p>
       </div>
@@ -343,11 +343,11 @@ export default function SimulatorTab() {
           <button
             key={v}
             onClick={() => setView(v)}
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{
-              background: view === v ? 'var(--color-ak-borgona)' : 'var(--bg-card)',
-              color: view === v ? 'white' : 'var(--text-secondary)',
-            }}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              view === v
+                ? 'bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-borgona-light)] dark:text-[var(--color-ak-madera)]'
+                : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]'
+            }`}
           >
             {v === 'config' ? 'Cobertura' : v === 'results' ? 'Resultados' : 'Comparar'}
           </button>
@@ -362,10 +362,10 @@ export default function SimulatorTab() {
           { label: 'Horas Nocturnas', value: totals.totalNight.toFixed(1), sub: `de ${totals.totalHours.toFixed(0)}h total`, color: '#f59e0b' },
           { label: 'Costo Estimado', value: `$${(totals.totalCost/1000000).toFixed(1)}M`, sub: 'semana', color: 'var(--text-primary)' },
         ].map(kpi => (
-          <div key={kpi.label} className="rounded-xl p-4" style={{background:'var(--bg-card)', border:'1px solid var(--border)'}}>
-            <div className="text-xs" style={{color:'var(--text-secondary)'}}>{kpi.label}</div>
+          <div key={kpi.label} className="rounded-xl p-4 bg-[var(--bg-card)] border border-[var(--border-default)]">
+            <div className="text-xs text-[var(--text-secondary)]">{kpi.label}</div>
             <div className="text-2xl font-bold mt-1" style={{color: kpi.color}}>{kpi.value}</div>
-            <div className="text-xs mt-1" style={{color:'var(--text-secondary)'}}>{kpi.sub}</div>
+            <div className="text-xs mt-1 text-[var(--text-secondary)]">{kpi.sub}</div>
           </div>
         ))}
       </div>

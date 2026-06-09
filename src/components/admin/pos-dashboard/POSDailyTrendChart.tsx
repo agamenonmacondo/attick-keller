@@ -36,7 +36,7 @@ export interface AggregatedDay {
 
 interface DailyTrendChartProps {
   data: Array<{ date: string; revenue: number; cheques: number; propina: number }>
-  onDayClick?: (dayData: AggregatedDay) => void
+  onDayClick?: (dayData: AggregatedDay, date?: string) => void
 }
 
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) {
@@ -160,7 +160,12 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
           onClick={(e: any) => {
             if (onDayClick && e?.activePayload?.[0]?.payload?.dayOfWeek) {
               const day = e.activePayload[0].payload as AggregatedDay
-              onDayClick(day)
+              // Find a matching date in source data for this day of week
+              const matchingDate = data.find(d => {
+                const dObj = new Date(d.date + 'T12:00:00')
+                return jsDayToIso(dObj.getDay()) === day.dayOfWeek
+              })?.date
+              onDayClick(day, matchingDate)
             }
           }}
           style={{ cursor: onDayClick ? 'pointer' : 'default' }}

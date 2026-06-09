@@ -78,6 +78,14 @@
   --chart-text: #BCA898;
   --chart-tooltip-bg: #2C2018;
   --chart-tooltip-border: #5A4A3E;
+
+  /* Brand colors — lighter variants for visibility on dark backgrounds */
+  --color-ak-borgona: #C44D63;
+  --color-ak-madera: #A07868;
+  --color-ak-oliva: #7BA86A;
+  --color-ak-ambar: #E8A840;
+  --color-ak-ladrillo: #D4714D;
+  --color-ak-cal: #F5EDE0;
 }
 
 @keyframes float-orb-1 {

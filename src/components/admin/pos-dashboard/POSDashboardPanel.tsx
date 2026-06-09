@@ -45,6 +45,8 @@ export function POSDashboardPanel() {
   const [heatmapMetric, setHeatmapMetric] = useState<HeatmapMetric>('revenue')
   const [calendarMonth, setCalendarMonth] = useState<string | undefined>(undefined) // 'YYYY-MM' for calendar view month
   const [selectedDayOfWeek, setSelectedDayOfWeek] = useState<AggregatedDay | null>(null)
+  // Selected specific date for filtering results (overrides day-of-week aggregation)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   // ── Results filters — separate from operation filters ──
   const [resultsZone, setResultsZone] = useState<string>('all')
   const [resultsCategory, setResultsCategory] = useState<string>('all')
@@ -74,12 +76,13 @@ export function POSDashboardPanel() {
   const { data, loading, error, refetch, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown } = usePOSDashboard(effectiveFilters)
 
   // ── Results hook — all-time consolidated data, filtered by results zone/category ──
+  // If selectedDate is set, filter to that specific day; otherwise show full historical range
   const resultsFilters = useMemo<POSDashboardFilters>(() => ({
     zone: resultsZone,
     category: resultsCategory,
-    from: '2026-01-01',
-    to: '2026-06-30',
-  }), [resultsZone, resultsCategory])
+    from: selectedDate || '2026-01-01',
+    to: selectedDate || '2026-06-30',
+  }), [resultsZone, resultsCategory, selectedDate])
   const {
     data: allData,
     loading: allLoading,
@@ -169,14 +172,33 @@ export function POSDashboardPanel() {
     setCalendarMonth(date.substring(0, 7))
   }, [])
 
-  // When clicking a day-of-week bar in the trend chart,
-  // show detail panel in results — reset day filters on day change
-  const handleDayOfWeekClick = useCallback((dayData: AggregatedDay) => {
-    console.log('[POSDashboard] DayOfWeek click:', dayData.label, 'dayOfWeek:', dayData.dayOfWeek)
-    setSelectedDayOfWeek(dayData)
+  // Unified handler for selecting a specific date (from calendar or trend chart)
+  // Filters the Results tab to show only that day's data
+  const handleDateSelect = useCallback((date: string) => {
+    console.log('[POSDashboard] Date selected:', date)
+    setSelectedDate(date)
+    setSelectedDayOfWeek(null) // Clear day-of-week aggregation view
+    setResultsZone('all')
+    setResultsCategory('all')
     setDayDetailZone('all')
     setDayDetailCategory('all')
   }, [])
+
+  // When clicking a day-of-week bar in the trend chart,
+  // if a specific date is provided, filter results to that day;
+  // otherwise show day-of-week aggregated detail panel
+  const handleDayOfWeekClick = useCallback((dayData: AggregatedDay, date?: string) => {
+    console.log('[POSDashboard] DayOfWeek click:', dayData.label, 'dayOfWeek:', dayData.dayOfWeek, 'date:', date)
+    if (date) {
+      // Specific date clicked → filter results to that day
+      handleDateSelect(date)
+    } else {
+      // Day-of-week aggregation (no specific date match) → show detail panel
+      setSelectedDayOfWeek(dayData)
+      setDayDetailZone('all')
+      setDayDetailCategory('all')
+    }
+  }, [handleDateSelect])
 
   const handleCalendarMonthChange = useCallback((month: string) => {
     // Navigating months in the calendar always switches to consolidated view
@@ -265,32 +287,38 @@ export function POSDashboardPanel() {
     }, 100)
   }, [])
 
+  // When a specific date is selected, don't pass dayOfWeek (API uses from/to filters)
+  // When in day-of-week aggregation mode, pass dayOfWeek for day-specific drill-down
+  const getDrillDownDayOfWeek = useCallback(() => {
+    return selectedDate ? undefined : selectedDayOfWeek?.dayOfWeek
+  }, [selectedDate, selectedDayOfWeek])
+
   const handleResultsProductDrillDown = useCallback((productId: string, productName: string) => {
-    fetchResultsDrillDown('product', productId, productName, selectedDayOfWeek?.dayOfWeek)
+    fetchResultsDrillDown('product', productId, productName, getDrillDownDayOfWeek())
     scrollToResultsDrillDown()
-  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, getDrillDownDayOfWeek])
 
   const handleResultsStaffDrillDown = useCallback((staffId: string, staffName: string) => {
-    fetchResultsDrillDown('staff', staffId, staffName, selectedDayOfWeek?.dayOfWeek)
+    fetchResultsDrillDown('staff', staffId, staffName, getDrillDownDayOfWeek())
     scrollToResultsDrillDown()
-  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, getDrillDownDayOfWeek])
 
   const handleResultsCategoryDrillDown = useCallback((categoryId: string, categoryName: string) => {
-    fetchResultsDrillDown('category', categoryId, categoryName, selectedDayOfWeek?.dayOfWeek)
+    fetchResultsDrillDown('category', categoryId, categoryName, getDrillDownDayOfWeek())
     scrollToResultsDrillDown()
-  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, getDrillDownDayOfWeek])
 
   const handleResultsHourDrillDown = useCallback((hour: string, extra?: { tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }) => {
     const hourNum = parseInt(hour, 10)
     const label = `${hourNum === 0 ? '12' : hourNum <= 12 ? hourNum : hourNum - 12}${hourNum < 12 ? 'am' : 'pm'}`
-    fetchResultsDrillDown('hour', hour, label, selectedDayOfWeek?.dayOfWeek)
+    fetchResultsDrillDown('hour', hour, label, getDrillDownDayOfWeek())
     scrollToResultsDrillDown()
-  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, getDrillDownDayOfWeek])
 
   const handleResultsZoneDrillDown = useCallback((zoneName: string) => {
-    fetchResultsDrillDown('zone', zoneName, zoneName, selectedDayOfWeek?.dayOfWeek)
+    fetchResultsDrillDown('zone', zoneName, zoneName, getDrillDownDayOfWeek())
     scrollToResultsDrillDown()
-  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, getDrillDownDayOfWeek])
 
   const zoneListForFilter = useMemo(() => {
     if (!data) return undefined
@@ -496,8 +524,14 @@ export function POSDashboardPanel() {
           ) : (
           <>
             {/* Active filter pill — clear to see what's filtered */}
-            {(resultsZone !== 'all' || resultsCategory !== 'all') && (
+            {(resultsZone !== 'all' || resultsCategory !== 'all' || selectedDate) && (
               <div className="flex items-center gap-2 flex-wrap">
+                {selectedDate && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)] text-white text-sm font-medium">
+                    Filtrado: {selectedDate}
+                    <button onClick={() => { setSelectedDate(null); setResultsZone('all'); setResultsCategory('all'); }} className="hover:underline ml-1">&times;</button>
+                  </span>
+                )}
                 {resultsZone !== 'all' && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25">
                     Zona: {resultsZone}

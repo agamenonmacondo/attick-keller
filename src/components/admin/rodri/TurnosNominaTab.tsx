@@ -14,13 +14,13 @@ const OFF_CODES = ['X', 'VAC', 'INC', 'FEST', '']
 const fmtTooltip = (v: any) => typeof v === 'number' ? formatCOP(v) : String(v ?? '')
 
 const TURNO_STYLE: Record<string, string> = {
-  A: 'bg-[var(--color-ak-verde)]/15 text-[var(--color-ak-verde)]',
-  P1: 'bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-borgona)]',
-  P2: 'bg-[var(--color-ak-dorado)]/15 text-[var(--color-ak-dorado)]',
-  S: 'bg-[#D4922A]/15 text-[#D4922A]',
-  C: 'bg-[var(--color-ak-madera)]/15 text-[var(--color-ak-madera)]',
-  CD: 'bg-[#D4922A]/15 text-[#D4922A]',
-  CS: 'bg-[var(--color-ak-verde)]/15 text-[var(--color-ak-verde)]',
+  A: 'bg-[var(--color-ak-verde)]/15 text-[var(--color-ak-verde)] dark:bg-[var(--color-ak-verde)]/20 dark:text-[var(--color-ak-verde)]',
+  P1: 'bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]/15 dark:text-[var(--color-ak-borgona-light)]',
+  P2: 'bg-[var(--color-ak-dorado)]/15 text-[var(--color-ak-dorado)] dark:bg-[var(--color-ak-dorado)]/20 dark:text-[var(--color-ak-dorado)]',
+  S: 'bg-[#D4922A]/15 text-[#D4922A] dark:bg-[#D4922A]/20 dark:text-[#F5C563]',
+  C: 'bg-[var(--color-ak-madera)]/15 text-[var(--color-ak-madera)] dark:bg-[var(--color-ak-madera)]/20 dark:text-[var(--color-ak-madera)]',
+  CD: 'bg-[#D4922A]/15 text-[#D4922A] dark:bg-[#D4922A]/20 dark:text-[#F5C563]',
+  CS: 'bg-[var(--color-ak-verde)]/15 text-[var(--color-ak-verde)] dark:bg-[var(--color-ak-verde)]/20 dark:text-[var(--color-ak-verde)]',
 }
 
 export function TurnosNominaTab({ data }: { data: Data }) {
@@ -49,8 +49,8 @@ export function TurnosNominaTab({ data }: { data: Data }) {
             onClick={() => setWeek(w)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               week === w
-                ? 'bg-[var(--color-ak-borgona)] text-[var(--color-ak-dorado)]'
-                : 'bg-[var(--bg-card)] border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--color-ak-borgona)]'
+                ? 'bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-borgona-light)] dark:text-[var(--color-ak-madera)]'
+                : 'bg-[var(--bg-card)] border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--color-ak-borgona)] dark:hover:border-[var(--color-ak-borgona-light)]'
             }`}
           >
             {w}
@@ -128,7 +128,7 @@ export function TurnosNominaTab({ data }: { data: Data }) {
                 const style = TURNO_STYLE[s.turno] || 'bg-[var(--border-default)]/30 text-[var(--text-secondary)]'
                 return (
                   <td key={di} className="py-1.5 px-1 text-center">
-                    <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${isDom ? 'bg-[var(--color-ak-borgona)]/20 text-[var(--color-ak-borgona)]' : style}`}>
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${isDom ? 'bg-[var(--color-ak-borgona)]/20 text-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]/20 dark:text-[var(--color-ak-borgona-light)]' : style}`}>
                       {s.turno}
                     </span>
                   </td>
@@ -141,7 +141,7 @@ export function TurnosNominaTab({ data }: { data: Data }) {
                   <td className="py-2 px-2 text-[var(--text-secondary)]">{emp.team}</td>
                   {cells}
                   <td className="py-2 px-2 text-right tabular-nums font-medium text-[var(--text-primary)]">{totalHoras.toFixed(1)}h</td>
-                  <td className="py-2 px-2 text-right tabular-nums text-[var(--color-ak-borgona)]">{formatCOP(totalCosto)}</td>
+                  <td className="py-2 px-2 text-right tabular-nums text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatCOP(totalCosto)}</td>
                 </tr>
               )
             })}

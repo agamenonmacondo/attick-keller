@@ -29,11 +29,11 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  super_admin: 'bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)]',
-  store_admin: 'bg-[var(--color-ak-ambar)]/15 text-[var(--color-ak-ambar)]',
-  lider_area: 'bg-emerald-500/10 text-emerald-400',
-  colaborador: 'bg-sky-500/10 text-sky-400',
-  host: 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)]',
+  super_admin: 'bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]/10 dark:text-[var(--color-ak-borgona-light)]',
+  store_admin: 'bg-[var(--color-ak-ambar)]/15 text-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)]/15 dark:text-[var(--color-ak-ambar-light)]',
+  lider_area: 'bg-emerald-500/10 text-emerald-400 dark:bg-emerald-400/10 dark:text-emerald-300',
+  colaborador: 'bg-sky-500/10 text-sky-400 dark:bg-sky-400/10 dark:text-sky-300',
+  host: 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)] dark:bg-[var(--color-ak-oliva-light)]/10 dark:text-[var(--color-ak-oliva-light)]',
 }
 
 export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
@@ -69,7 +69,7 @@ export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
               <div>
                 <p className="text-sm font-medium text-[var(--text-primary)]">{member.email || 'Sin email'}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[member.role] || 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)]'}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[member.role] || 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)] dark:bg-[var(--color-ak-oliva-light)]/10 dark:text-[var(--color-ak-oliva-light)]'}`}>
                     {ROLE_LABELS[member.role] || member.role}
                   </span>
                   {member.area && (
@@ -89,7 +89,7 @@ export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
               <button
                 onClick={() => onToggleActive(member.id, !member.is_active)}
                 className={`p-2 rounded-lg transition-colors ${
-                  member.is_active ? 'text-[var(--color-ak-oliva)] hover:bg-[var(--color-ak-oliva)]/10' : 'text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/10'
+                  member.is_active ? 'text-[var(--color-ak-oliva)] hover:bg-[var(--color-ak-oliva)]/10 dark:text-[var(--color-ak-oliva-light)] dark:hover:bg-[var(--color-ak-oliva-light)]/10' : 'text-[var(--text-secondary)] hover:bg-[var(--text-secondary)]/10'
                 }`}
                 title={member.is_active ? 'Desactivar' : 'Activar'}
               >

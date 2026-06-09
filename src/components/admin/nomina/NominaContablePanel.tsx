@@ -94,7 +94,7 @@ function DetalleTable({ detalle, resumen }: { detalle: NominaContableDetalle[]; 
             </thead>
             <tbody>
               {sorted.map((d) => (
-                <tr key={d.id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--color-ak-borgona)]/5">
+                <tr key={d.id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--color-ak-borgona)]/5 dark:hover:bg-[var(--color-ak-borgona-light)]/5">
                   <td className="py-1.5 px-1">
                     <div className="font-medium text-[var(--text-primary)]">{d.nombre_completo}</div>
                     <div className="text-[10px] text-[var(--text-secondary)]">CC {d.cedula}</div>
@@ -105,7 +105,7 @@ function DetalleTable({ detalle, resumen }: { detalle: NominaContableDetalle[]; 
                   <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{formatCOP(d.propinas)}</td>
                   <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{formatCOP(d.salud_empleado)}</td>
                   <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{formatCOP(d.pension_empleado)}</td>
-                  <td className="py-1.5 px-1 text-right font-bold text-[var(--color-ak-borgona)]">{formatCOP(d.neto_a_pagar)}</td>
+                  <td className="py-1.5 px-1 text-right font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatCOP(d.neto_a_pagar)}</td>
                 </tr>
               ))}
             </tbody>
@@ -149,7 +149,7 @@ function HERecargosTable({ data, totals }: { data: NominaContableHERecargo[]; to
             </thead>
             <tbody>
               {data.map((d) => (
-                <tr key={d.id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--color-ak-borgona)]/5">
+                <tr key={d.id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--color-ak-borgona)]/5 dark:hover:bg-[var(--color-ak-borgona-light)]/5">
                   <td className="py-1.5 px-1">
                     <div className="font-medium text-[var(--text-primary)]">{d.nombre_completo}</div>
                     <div className="text-[10px] text-[var(--text-secondary)]">{d.cargo}</div>
@@ -161,7 +161,7 @@ function HERecargosTable({ data, totals }: { data: NominaContableHERecargo[]; to
                   <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{formatCOP(d.rd_nocturno_total)}</td>
                   <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{formatCOP(d.hedd_total)}</td>
                   <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{formatCOP(d.hddn_total)}</td>
-                  <td className="py-1.5 px-1 text-right font-bold text-[var(--color-ak-borgona)]">{formatCOP(d.total_recargos)}</td>
+                  <td className="py-1.5 px-1 text-right font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatCOP(d.total_recargos)}</td>
                 </tr>
               ))}
             </tbody>
@@ -205,7 +205,7 @@ function ProvisionesTable({ data, totals }: { data: NominaContableProvision[]; t
             </thead>
             <tbody>
               {data.map((d) => (
-                <tr key={d.id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--color-ak-borgona)]/5">
+                <tr key={d.id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--color-ak-borgona)]/5 dark:hover:bg-[var(--color-ak-borgona-light)]/5">
                   <td className="py-1.5 px-1">
                     <div className="font-medium text-[var(--text-primary)]">{d.nombre_completo}</div>
                     <div className="text-[10px] text-[var(--text-secondary)]">{d.cargo}</div>
@@ -217,7 +217,7 @@ function ProvisionesTable({ data, totals }: { data: NominaContableProvision[]; t
                   <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{formatCOP(d.cesantias_empleador)}</td>
                   <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{formatCOP(d.prima_empleador)}</td>
                   <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{formatCOP(d.vacaciones_empleador)}</td>
-                  <td className="py-1.5 px-1 text-right font-bold text-[var(--color-ak-borgona)]">{formatCOP(d.total_provision_empleador)}</td>
+                  <td className="py-1.5 px-1 text-right font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatCOP(d.total_provision_empleador)}</td>
                 </tr>
               ))}
             </tbody>
@@ -262,7 +262,7 @@ function NovedadesTable({ data }: { data: NominaContableNovedad[] }) {
             {data.map((d) => {
               const colorClass = tipoColors[d.tipo] || 'text-[var(--text-secondary)]'
               return (
-                <tr key={d.id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--color-ak-borgona)]/5">
+                <tr key={d.id} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--color-ak-borgona)]/5 dark:hover:bg-[var(--color-ak-borgona-light)]/5">
                   <td className="py-1.5 px-1">
                     <div className="font-medium text-[var(--text-primary)]">{d.nombre_completo}</div>
                     <div className="text-[10px] text-[var(--text-secondary)]">{d.cargo}</div>
@@ -330,7 +330,7 @@ function PropinasCard({ propinas }: { propinas: NominaContablePropinas | null })
           )}
           <div className="flex justify-between pt-2 border-t border-[var(--border-default)]">
             <span className="text-[var(--text-secondary)]">Valor dia/persona</span>
-            <span className="font-bold text-[var(--color-ak-borgona)]">{formatCOP(propinas.valor_dia_propina)}</span>
+            <span className="font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatCOP(propinas.valor_dia_propina)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-[var(--text-secondary)]">Dias laborados total</span>

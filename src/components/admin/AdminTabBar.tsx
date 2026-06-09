@@ -37,7 +37,7 @@ export function AdminTabBar({ active, onChange }: AdminTabBarProps) {
               onClick={() => onChange(tab.key)}
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap',
-                active === tab.key ? 'border-[var(--color-ak-borgona)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                active === tab.key ? 'border-[var(--color-ak-borgona)] dark:border-[var(--color-ak-borgona-light)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               )}
               style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
             >

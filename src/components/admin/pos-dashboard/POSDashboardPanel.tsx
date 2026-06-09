@@ -328,6 +328,13 @@ export function POSDashboardPanel() {
           kpis={data.kpis}
           hourlyRevenue={data.hourlyRevenue}
           dailyTrend={data.dailyTrend}
+          calendarTrend={calendarTrend}
+          selectedDate={isSingleDay ? filters.from : undefined}
+          onDayClick={handleDayClick}
+          calendarMonth={calendarMonth}
+          onMonthChange={handleCalendarMonthChange}
+          heatmapMetric={heatmapMetric}
+          onHeatmapMetricChange={setHeatmapMetric}
           filters={{ from: effectiveFilters.from, to: effectiveFilters.to }}
         />
       )}

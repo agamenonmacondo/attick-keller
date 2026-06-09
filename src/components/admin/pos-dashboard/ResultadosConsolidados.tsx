@@ -3,6 +3,8 @@
 import { useMemo } from 'react'
 import { TrendUp, TrendDown, Minus } from '@phosphor-icons/react'
 import type { POSDashboardData } from '@/lib/hooks/usePOSDashboard'
+import { RevenueHeatmapCalendar, type HeatmapMetric } from './RevenueHeatmapCalendar'
+import { AnimatedCard } from '../shared/AnimatedCard'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -10,6 +12,13 @@ interface ResultadosConsolidadosProps {
   kpis: POSDashboardData['kpis']
   hourlyRevenue: POSDashboardData['hourlyRevenue']
   dailyTrend: POSDashboardData['dailyTrend']
+  calendarTrend: POSDashboardData['dailyTrend']
+  selectedDate: string | undefined
+  onDayClick: (date: string) => void
+  calendarMonth: string | undefined
+  onMonthChange: (month: string) => void
+  heatmapMetric: HeatmapMetric
+  onHeatmapMetricChange: (metric: HeatmapMetric) => void
   filters: { from?: string; to?: string }
 }
 
@@ -98,7 +107,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-export function ResultadosConsolidados({ kpis, hourlyRevenue, dailyTrend, filters }: ResultadosConsolidadosProps) {
+export function ResultadosConsolidados({ kpis, hourlyRevenue, dailyTrend, calendarTrend, selectedDate, onDayClick, calendarMonth, onMonthChange, heatmapMetric, onHeatmapMetricChange, filters }: ResultadosConsolidadosProps) {
   // ── Compute franja totals from hourly revenue ──
   const franjaTotals = useMemo(() => {
     const result: Record<FranjaKey, { revenue: number; cheques: number }> = {
@@ -122,9 +131,12 @@ export function ResultadosConsolidados({ kpis, hourlyRevenue, dailyTrend, filter
 
   // ── Find last day with data ──
   const lastDay = useMemo(() => {
+    if (selectedDate) {
+      return dailyTrend.find(d => d.date === selectedDate) || null
+    }
     const sorted = [...dailyTrend].filter(d => d.cheques > 0).sort((a, b) => b.date.localeCompare(a.date))
     return sorted[0] || null
-  }, [dailyTrend])
+  }, [dailyTrend, selectedDate])
 
   const lastDayType = lastDay ? getDayType(lastDay.date) : null
   const lastDayTypeAvg = lastDayType ? PROMEDIOS[lastDayType] : null
@@ -212,6 +224,20 @@ export function ResultadosConsolidados({ kpis, hourlyRevenue, dailyTrend, filter
 
   return (
     <div className="space-y-4">
+      {/* CALENDARIO */}
+      <AnimatedCard delay={0} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+        <RevenueHeatmapCalendar
+          title="Resultados Consolidados"
+          dailyData={calendarTrend}
+          selectedDate={selectedDate}
+          onDayClick={onDayClick}
+          viewMonth={calendarMonth}
+          onMonthChange={onMonthChange}
+          metric={heatmapMetric}
+          onMetricChange={onHeatmapMetricChange}
+        />
+      </AnimatedCard>
+
       {/* ═══ SECCION 1: RESUMEN POR TIPO DE DIA ═══ */}
       <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
         <SectionTitle>Resumen por tipo de dia (Mayo 2026)</SectionTitle>

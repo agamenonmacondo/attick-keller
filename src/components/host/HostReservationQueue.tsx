@@ -12,6 +12,8 @@ import { Check, X, Armchair, CalendarX, Warning, Clock, WhatsappLogo, EnvelopeSi
 import { formatTime12 } from '@/lib/utils/format-time'
 import { ServiceFilter } from '../admin/reservations/ServiceFilter'
 import { getServiceType, SERVICE_FILTERS, type ServiceType } from '@/lib/utils/serviceHours'
+import { HostAuditTimeline } from './HostAuditTimeline'
+import { HostNotesPanel } from './HostNotesPanel'
 
 const SPRING = { stiffness: 100, damping: 20, mass: 1 }
 
@@ -55,6 +57,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
   const [confirming, setConfirming] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const [notesMap, setNotesMap] = useState<Record<string, string>>({})
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
     reservationId: string
@@ -299,10 +302,10 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                   exit={{ height: 0, opacity: 0 }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="mt-2 space-y-1 pl-3 border-l-2 border-[var(--border-default)]">
+                                  <div className="mt-2 space-y-3">
                                     {phone && (
                                       <a
-                                        href={`https://wa.me/57${phone.replace(/^0+/, '').replace(/^\+/, '')}`}
+                                        href={`https://wa.me/57${phone.replace(/^0+/, '').replace(/^\\+/, '')}`}
                                         target="_blank"
                                         className="flex items-center gap-1.5 text-xs text-[var(--color-success)] hover:underline"
                                       >
@@ -323,6 +326,16 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                         <span>{notes}</span>
                                       </div>
                                     )}
+
+                                    {/* Bitacora */}
+                                    <HostAuditTimeline reservationId={id} />
+
+                                    {/* Notas del equipo */}
+                                    <HostNotesPanel
+                                      reservationId={id}
+                                      internalNotes={notesMap[id] ?? (r.internal_notes as string) ?? ''}
+                                      onNotesUpdate={(val) => setNotesMap(prev => ({ ...prev, [id]: val }))}
+                                    />
                                   </div>
                                 </motion.div>
                               )}

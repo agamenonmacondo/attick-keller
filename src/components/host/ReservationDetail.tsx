@@ -22,10 +22,10 @@ const STATUS_CONFIG: Record<
   ReservationTimeline['status'],
   { label: string; dotClass: string; bgClass: string }
 > = {
-  confirmed: { label: 'Confirmada', dotClass: 'bg-[var(--color-ak-ambar)]', bgClass: 'bg-[var(--color-ak-ambar)]/5' },
-  pre_paid: { label: 'Confirmada', dotClass: 'bg-[var(--color-ak-ambar)]', bgClass: 'bg-[var(--color-ak-ambar)]/5' },
-  seated: { label: 'Sentados', dotClass: 'bg-[var(--color-ak-borgona)]', bgClass: 'bg-[var(--color-ak-borgona)]/5' },
-  pending: { label: 'Pendiente', dotClass: 'bg-[var(--color-ak-ambar)]', bgClass: 'bg-[var(--color-ak-ambar)]/5' },
+  confirmed: { label: 'Confirmada', dotClass: 'bg-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)]', bgClass: 'bg-[var(--color-ak-ambar)]/5 dark:bg-[var(--color-ak-ambar-light)]/10' },
+  pre_paid: { label: 'Confirmada', dotClass: 'bg-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)]', bgClass: 'bg-[var(--color-ak-ambar)]/5 dark:bg-[var(--color-ak-ambar-light)]/10' },
+  seated: { label: 'Sentados', dotClass: 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]', bgClass: 'bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/10' },
+  pending: { label: 'Pendiente', dotClass: 'bg-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)]', bgClass: 'bg-[var(--color-ak-ambar)]/5 dark:bg-[var(--color-ak-ambar-light)]/10' },
   no_show: { label: 'No asistio', dotClass: 'bg-[var(--color-danger)]', bgClass: 'bg-[var(--color-danger)]/10' },
   cancelled: { label: 'Cancelada', dotClass: 'bg-[var(--text-muted)]', bgClass: 'bg-[var(--bg-primary)]' },
   completed: { label: 'Completado', dotClass: 'bg-[var(--text-muted)]', bgClass: 'bg-[var(--bg-primary)]' },
@@ -58,7 +58,7 @@ export function ReservationDetail({ reservation, compact = false }: ReservationD
       >
         <div className="flex items-center gap-1.5 min-w-0">
           {reservation.is_current && (
-            <span className="w-2 h-2 rounded-full bg-[var(--color-ak-borgona)] shrink-0" />
+            <span className="w-2 h-2 rounded-full bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] shrink-0" />
           )}
           {reservation.is_upcoming && !reservation.is_current && (
             <Clock size={12} className="text-[var(--color-ak-ambar)] shrink-0" />

@@ -200,8 +200,8 @@ export function HostShell() {
             onClick={() => setActiveTab('mesas')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'mesas' || activeTab === 'reservas'
-                ? 'bg-[var(--color-ak-borgona)] text-white'
-                : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:border-[var(--color-ak-borgona)]'
+                ? 'bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-borgona-light)]'
+                : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:border-[var(--color-ak-borgona)] dark:hover:border-[var(--color-ak-borgona-light)]'
             }`}
           >
             <Table size={16} />
@@ -211,8 +211,8 @@ export function HostShell() {
             onClick={() => setActiveTab('plano')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'plano'
-                ? 'bg-[var(--color-ak-borgona)] text-white'
-                : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:border-[var(--color-ak-borgona)]'
+                ? 'bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-borgona-light)]'
+                : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:border-[var(--color-ak-borgona)] dark:hover:border-[var(--color-ak-borgona-light)]'
             }`}
           >
             <MapTrifold size={16} />
@@ -273,7 +273,7 @@ export function HostShell() {
       {/* Walk-in button */}
       <button
         onClick={() => setShowWalkIn(true)}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-[var(--color-ak-borgona)] text-white shadow-lg flex items-center justify-center hover:bg-[var(--color-ak-borgona)] active:scale-[0.97]"
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-borgona-light)] shadow-lg flex items-center justify-center hover:bg-[var(--color-ak-borgona)] dark:hover:bg-[var(--color-ak-borgona-light)]/80 active:scale-[0.97]"
         style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         title="Walk-in"
       >

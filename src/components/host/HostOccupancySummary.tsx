@@ -85,30 +85,30 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
       label: 'Ocupados',
       value: occupied,
       suffix: 'asientos',
-      color: 'text-[var(--color-ak-borgona)]',
-      bg: 'bg-[var(--color-ak-borgona)]/5',
-      borderColor: 'border-[var(--color-ak-borgona)]/20',
-      dotColor: 'bg-[var(--color-ak-borgona)]',
+      color: 'text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]',
+      bg: 'bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/10',
+      borderColor: 'border-[var(--color-ak-borgona)]/20 dark:border-[var(--color-ak-borgona-light)]/20',
+      dotColor: 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]',
       chipLabel: 'Ocup',
     },
     {
       label: 'Disponibles',
       value: available,
       suffix: 'asientos',
-      color: 'text-[var(--color-ak-oliva)]',
-      bg: 'bg-[var(--color-ak-oliva)]/5',
-      borderColor: 'border-[var(--color-ak-oliva)]/20',
-      dotColor: 'bg-[var(--color-ak-oliva)]',
+      color: 'text-[var(--color-ak-oliva)] dark:text-[var(--color-ak-oliva-light)]',
+      bg: 'bg-[var(--color-ak-oliva)]/5 dark:bg-[var(--color-ak-oliva-light)]/10',
+      borderColor: 'border-[var(--color-ak-oliva)]/20 dark:border-[var(--color-ak-oliva-light)]/20',
+      dotColor: 'bg-[var(--color-ak-oliva)] dark:bg-[var(--color-ak-oliva-light)]',
       chipLabel: 'Lib',
     },
     {
       label: 'Reservados',
       value: reserved,
       suffix: quickStats ? 'asientos' : undefined,
-      color: 'text-[var(--color-ak-ambar)]',
-      bg: 'bg-[var(--color-ak-ambar)]/5',
-      borderColor: 'border-[var(--color-ak-ambar)]/20',
-      dotColor: 'bg-[var(--color-ak-ambar)]',
+      color: 'text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)]',
+      bg: 'bg-[var(--color-ak-ambar)]/5 dark:bg-[var(--color-ak-ambar-light)]/10',
+      borderColor: 'border-[var(--color-ak-ambar)]/20 dark:border-[var(--color-ak-ambar-light)]/20',
+      dotColor: 'bg-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)]',
       chipLabel: 'Res',
     },
   ]
@@ -196,21 +196,21 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
                 {/* Occupancy bar */}
                 <div className="h-2 rounded-full bg-[var(--bg-input)] overflow-hidden flex">
                   <div
-                    className="h-full bg-[var(--color-ak-borgona)] rounded-l-full transition-all duration-500"
+                    className="h-full bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] rounded-l-full transition-all duration-500"
                     style={{ width: `${zone.totalSeats > 0 ? (zone.occupiedSeats / zone.totalSeats) * 100 : 0}%` }}
                   />
                   <div
-                    className="h-full bg-[var(--color-ak-ambar)] transition-all duration-500"
+                    className="h-full bg-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)] transition-all duration-500"
                     style={{ width: `${zone.totalSeats > 0 ? (zone.reservedSeats / zone.totalSeats) * 100 : 0}%` }}
                   />
                 </div>
                 <div className="flex items-center gap-3 text-xs text-[var(--text-secondary)]">
                   <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-[var(--color-ak-borgona)]" />
+                    <span className="w-2 h-2 rounded-full bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]" />
                     Ocupados: {zone.occupiedSeats}
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-[var(--color-ak-ambar)]" />
+                    <span className="w-2 h-2 rounded-full bg-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)]" />
                     Reservados: {zone.reservedSeats}
                   </span>
                   <span className="flex items-center gap-1">

@@ -103,10 +103,10 @@ function getTableCardStyle(table: TableItem): CardStyle {
   // Occupied (seated) — burgundy
   if (table.reservations?.some((r: any) => r.is_current && r.status === 'seated') || table.reservations?.some((r: any) => r.is_upcoming && r.status === 'seated')) {
     return {
-      border: 'border-[var(--color-ak-borgona)]/30',
-      bg: 'bg-[var(--color-ak-borgona)]/8',
-      dot: 'bg-[var(--color-ak-borgona)]',
-      hoverBorder: 'hover:border-[var(--color-ak-borgona)]/50',
+      border: 'border-[var(--color-ak-borgona)]/30 dark:border-[var(--color-ak-borgona-light)]/30',
+      bg: 'bg-[var(--color-ak-borgona)]/8 dark:bg-[var(--color-ak-borgona-light)]/10',
+      dot: 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]',
+      hoverBorder: 'hover:border-[var(--color-ak-borgona)]/50 dark:hover:border-[var(--color-ak-borgona-light)]/50',
       badge: '',
       pulse: '',
     }
@@ -202,7 +202,7 @@ function MiniTimeline({
             key={r.id}
             className={cn(
               'absolute top-0 h-full rounded-full transition-colors',
-              r.is_current ? 'bg-[var(--color-ak-borgona)]' : 'bg-[var(--color-ak-ambar)]/40 border border-[var(--color-ak-ambar)]/60'
+              r.is_current ? 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]' : 'bg-[var(--color-ak-ambar)]/40 dark:bg-[var(--color-ak-ambar-light)]/40 border border-[var(--color-ak-ambar)]/60 dark:border-[var(--color-ak-ambar-light)]/60'
             )}
             style={{ left: `${left}%`, width: `${w}%` }}
           />
@@ -365,7 +365,7 @@ export function HostTableMap({ zones, reservations, onAction, currentTime, onRea
           Libre
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-ak-borgona)]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]" />
           Ocupada
         </span>
         <span className="flex items-center gap-1.5">
@@ -615,7 +615,7 @@ function HostTableCard({
               )}
               <button
                 onClick={(e) => { e.stopPropagation(); onUnassign(table.current_reservation_id!) }}
-                className="w-full py-2 text-sm font-medium rounded-lg bg-[var(--color-ak-borgona)] text-white hover:bg-[var(--color-ak-borgona)] active:scale-[0.97] transition-all"
+                className="w-full py-2 text-sm font-medium rounded-lg bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-borgona-light)] hover:bg-[var(--color-ak-borgona)] dark:hover:bg-[var(--color-ak-borgona-light)]/80 active:scale-[0.97] transition-all"
                 style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
               >
                 Liberar mesa
@@ -678,7 +678,7 @@ function TimelinePopover({
             {table.name_attick || `Mesa ${table.number}`}
           </span>
           {table.zone_name && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)] font-medium">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-ak-borgona)]/10 dark:bg-[var(--color-ak-borgona-light)]/10 text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] font-medium">
               {table.zone_name}
             </span>
           )}
@@ -689,17 +689,17 @@ function TimelinePopover({
       {/* Current reservation */}
       {currentRes && (
         <div>
-          <h4 className="text-[10px] font-semibold text-[var(--color-ak-borgona)] uppercase tracking-wider mb-1.5 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-ak-borgona)]" />
+          <h4 className="text-[10px] font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]" />
             AHORA
           </h4>
-          <div className="bg-[var(--color-ak-borgona)]/5 rounded-lg border border-[var(--color-ak-borgona)]/20 p-3 space-y-2">
+          <div className="bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/10 rounded-lg border border-[var(--color-ak-borgona)]/20 dark:border-[var(--color-ak-borgona-light)]/20 p-3 space-y-2">
             <ReservationDetail reservation={currentRes} />
             <div className="flex gap-1.5 pt-1">
               {currentRes.status === 'seated' && onStatusChange && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onStatusChange(currentRes.id, 'completed') }}
-                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[var(--color-ak-borgona)] text-white hover:bg-[var(--color-ak-borgona)] active:scale-[0.97] transition-all"
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-borgona-light)] hover:bg-[var(--color-ak-borgona)] dark:hover:bg-[var(--color-ak-borgona-light)]/80 active:scale-[0.97] transition-all"
                 >
                   Liberar mesa
                 </button>
@@ -707,7 +707,7 @@ function TimelinePopover({
               {currentRes.status === 'confirmed' && onStatusChange && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onStatusChange(currentRes.id, 'seated') }}
-                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[var(--color-ak-oliva)] text-white hover:bg-[var(--color-ak-oliva)] active:scale-[0.97] transition-all"
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[var(--color-ak-oliva)] text-white dark:bg-[var(--color-ak-oliva-light)] hover:bg-[var(--color-ak-oliva)] dark:hover:bg-[var(--color-ak-oliva-light)]/80 active:scale-[0.97] transition-all"
                 >
                   Sentar
                 </button>
@@ -741,13 +741,13 @@ function TimelinePopover({
               return null
             })()}
           </h4>
-          <div className="bg-[var(--color-ak-ambar)]/5 rounded-lg border border-[var(--color-ak-ambar)]/20 p-3 space-y-2">
+          <div className="bg-[var(--color-ak-ambar)]/5 dark:bg-[var(--color-ak-ambar-light)]/10 rounded-lg border border-[var(--color-ak-ambar)]/20 dark:border-[var(--color-ak-ambar-light)]/20 p-3 space-y-2">
             <ReservationDetail reservation={nextRes} />
             <div className="flex gap-1.5 pt-1">
               {nextRes.status === 'confirmed' && onStatusChange && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onStatusChange(nextRes.id, 'seated') }}
-                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[var(--color-ak-oliva)] text-white hover:bg-[var(--color-ak-oliva)] active:scale-[0.97] transition-all"
+                  className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-[var(--color-ak-oliva)] text-white dark:bg-[var(--color-ak-oliva-light)] hover:bg-[var(--color-ak-oliva)] dark:hover:bg-[var(--color-ak-oliva-light)]/80 active:scale-[0.97] transition-all"
                 >
                   Sentar
                 </button>
@@ -877,8 +877,8 @@ function AssignmentPopover({
                     className={cn(
                       'w-full py-2 text-sm font-semibold rounded-lg text-white active:scale-[0.97] disabled:opacity-50',
                       tableId === suggestion.result!.suggested_table_id
-                        ? 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]'
-                        : 'bg-[var(--color-ak-ambar)] hover:bg-[var(--color-ak-ambar)]/90'
+                        ? 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] dark:hover:bg-[var(--color-ak-borgona-light)]/80'
+                        : 'bg-[var(--color-ak-ambar)] hover:bg-[var(--color-ak-ambar)]/90 dark:bg-[var(--color-ak-ambar-light)] dark:hover:bg-[var(--color-ak-ambar-light)]/80'
                     )}
                   >
                     {tableId === suggestion.result!.suggested_table_id

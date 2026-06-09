@@ -242,7 +242,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
                       onClick={() => setSelectedTableId(t.id)}
                       className={`w-full text-left p-2.5 rounded-xl border transition-all ${
                         selectedTableId === t.id
-                          ? 'border-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/5 ring-1 ring-[var(--color-ak-borgona)]'
+                          ? 'border-[var(--color-ak-borgona)] dark:border-[var(--color-ak-borgona-light)] bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/10 ring-1 ring-[var(--color-ak-borgona)] dark:ring-[var(--color-ak-borgona-light)]'
                           : 'border-[var(--border-default)] bg-[var(--bg-card)] hover:border-[var(--text-secondary)]'
                       }`}
                     >
@@ -292,13 +292,13 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
           </div>
 
           {error && (
-            <p className="text-sm text-[var(--color-danger)] bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+            <p className="text-sm text-[var(--color-danger)] bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={submitting || !name.trim()}
-            className="w-full py-3 rounded-xl bg-[var(--color-ak-borgona)] text-white font-medium hover:bg-[var(--color-ak-borgona)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] transition-all"
+            className="w-full py-3 rounded-xl bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-borgona-light)] font-medium hover:bg-[var(--color-ak-borgona)] dark:hover:bg-[var(--color-ak-borgona-light)]/80 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] transition-all"
           >
             {submitting ? (
               <span className="flex items-center justify-center gap-2">

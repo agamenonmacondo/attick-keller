@@ -197,10 +197,10 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-sm font-bold font-['Playfair_Display'] text-[var(--text-primary)]">{timeLabel}</span>
                   {isNow && (
-                    <span className="text-[10px] font-semibold text-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/10 px-2 py-0.5 rounded-full">AHORA</span>
+                    <span className="text-[10px] font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] bg-[var(--color-ak-borgona)]/10 dark:bg-[var(--color-ak-borgona-light)]/10 px-2 py-0.5 rounded-full">AHORA</span>
                   )}
                   {!isNow && isUpcoming && (
-                    <span className="text-[10px] font-semibold text-[var(--color-ak-ambar)] bg-[var(--color-ak-ambar)]/10 px-2 py-0.5 rounded-full">PRÓXIMAS</span>
+                    <span className="text-[10px] font-semibold text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)] bg-[var(--color-ak-ambar)]/10 dark:bg-[var(--color-ak-ambar-light)]/10 px-2 py-0.5 rounded-full">PRÓXIMAS</span>
                   )}
                   <span className="text-[10px] text-[var(--text-secondary)] ml-auto">{reservations.length} reserva{reservations.length > 1 ? 's' : ''}</span>
                   <div className="flex-1 h-px bg-[var(--border-default)] ml-2" />
@@ -350,8 +350,8 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                 disabled={isConfirming}
                                 className={cn(
                                   'px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium rounded-lg text-white active:scale-[0.97] disabled:opacity-50',
-                                  action.variant === 'primary' && 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]',
-                                  action.variant === 'warning' && 'bg-[var(--color-ak-ambar)] hover:bg-[var(--color-ak-ambar)]/90',
+                                  action.variant === 'primary' && 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] dark:hover:bg-[var(--color-ak-borgona-light)]/80',
+                                  action.variant === 'warning' && 'bg-[var(--color-ak-ambar)] hover:bg-[var(--color-ak-ambar)]/90 dark:bg-[var(--color-ak-ambar-light)] dark:hover:bg-[var(--color-ak-ambar-light)]/80',
                                   action.variant === 'danger' && 'bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/80',
                                 )}
                                 style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}

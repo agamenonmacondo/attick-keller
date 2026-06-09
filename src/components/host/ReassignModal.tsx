@@ -214,7 +214,7 @@ export function ReassignModal({
                     className={cn(
                       'w-full text-left p-3 rounded-xl border transition-all',
                       selectedTableId === t.id
-                        ? 'border-[var(--color-ak-borgona)] bg-[var(--color-ak-borgona)]/5 ring-1 ring-[var(--color-ak-borgona)]'
+                        ? 'border-[var(--color-ak-borgona)] dark:border-[var(--color-ak-borgona-light)] bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/10 ring-1 ring-[var(--color-ak-borgona)] dark:ring-[var(--color-ak-borgona-light)]'
                         : 'border-[var(--border-default)] bg-[var(--bg-card)] hover:border-[var(--text-secondary)]'
                     )}
                   >
@@ -255,7 +255,7 @@ export function ReassignModal({
             <button
               onClick={handleConfirm}
               disabled={!selectedTableId || submitting}
-              className="flex-1 py-2.5 rounded-xl bg-[var(--color-ak-borgona)] text-white text-sm font-medium hover:bg-[var(--color-ak-borgona)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] transition-all"
+              className="flex-1 py-2.5 rounded-xl bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-borgona-light)] text-sm font-medium hover:bg-[var(--color-ak-borgona)] dark:hover:bg-[var(--color-ak-borgona-light)]/80 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] transition-all"
             >
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">

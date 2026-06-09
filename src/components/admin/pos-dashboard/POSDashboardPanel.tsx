@@ -62,13 +62,28 @@ export function POSDashboardPanel() {
     return filters
   }, [viewMode, filters, calendarMonth])
 
+  // ── Operation hook ──
   const { data, loading, error, refetch, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown } = usePOSDashboard(effectiveFilters)
-  // Results tab — all-time consolidated data (full range)
+
+  // ── Results hook — all-time consolidated data ──
   const ALL_TIME_FILTERS: POSDashboardFilters = { zone: 'all', category: 'all', from: '2026-01-01', to: '2026-06-30' }
-  const { data: allData, loading: allLoading } = usePOSDashboard(ALL_TIME_FILTERS)
+  const {
+    data: allData,
+    loading: allLoading,
+    drillDown: resultsDrillDown,
+    drillDownData: resultsDrillDownData,
+    drillDownLoading: resultsDrillDownLoading,
+    drillDownError: resultsDrillDownError,
+    fetchDrillDown: fetchResultsDrillDown,
+    closeDrillDown: closeResultsDrillDown,
+  } = usePOSDashboard(ALL_TIME_FILTERS)
+
   // Calendar shows ALL days regardless of month filter
   const { dailyTrend: calendarTrend, availableMonths: calendarMonths } = usePOSCalendar(filters.zone)
+
+  // ── Refs ──
   const drillDownRef = useRef<HTMLDivElement>(null)
+  const resultsDrillDownRef = useRef<HTMLDivElement>(null)
 
   const isSingleDay = useMemo(() => {
     if (viewMode === 'month') return false
@@ -156,7 +171,7 @@ export function POSDashboardPanel() {
     setFilters(newFilters)
   }, [])
 
-  // ── Drill-down handlers ──
+  // ── Operation drill-down handlers ──
   const scrollToDrillDown = useCallback(() => {
     setTimeout(() => {
       drillDownRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -183,14 +198,46 @@ export function POSDashboardPanel() {
     const label = `${hourNum === 0 ? '12' : hourNum <= 12 ? hourNum : hourNum - 12}${hourNum < 12 ? 'am' : 'pm'}`
     fetchDrillDown('hour', hour, label)
     scrollToDrillDown()
-    // extra data available: extra?.tipTotal, extra?.cardPaidTotal, extra?.cashPaidTotal
-    // Can be used for enhanced drill-down panel in the future
   }, [fetchDrillDown, scrollToDrillDown])
 
   const handleZoneDrillDown = useCallback((zoneName: string) => {
     fetchDrillDown('zone', zoneName, zoneName)
     scrollToDrillDown()
   }, [fetchDrillDown, scrollToDrillDown])
+
+  // ── Results drill-down handlers ──
+  const scrollToResultsDrillDown = useCallback(() => {
+    setTimeout(() => {
+      resultsDrillDownRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }, [])
+
+  const handleResultsProductDrillDown = useCallback((productId: string, productName: string) => {
+    fetchResultsDrillDown('product', productId, productName)
+    scrollToResultsDrillDown()
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown])
+
+  const handleResultsStaffDrillDown = useCallback((staffId: string, staffName: string) => {
+    fetchResultsDrillDown('staff', staffId, staffName)
+    scrollToResultsDrillDown()
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown])
+
+  const handleResultsCategoryDrillDown = useCallback((categoryId: string, categoryName: string) => {
+    fetchResultsDrillDown('category', categoryId, categoryName)
+    scrollToResultsDrillDown()
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown])
+
+  const handleResultsHourDrillDown = useCallback((hour: string, extra?: { tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }) => {
+    const hourNum = parseInt(hour, 10)
+    const label = `${hourNum === 0 ? '12' : hourNum <= 12 ? hourNum : hourNum - 12}${hourNum < 12 ? 'am' : 'pm'}`
+    fetchResultsDrillDown('hour', hour, label)
+    scrollToResultsDrillDown()
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown])
+
+  const handleResultsZoneDrillDown = useCallback((zoneName: string) => {
+    fetchResultsDrillDown('zone', zoneName, zoneName)
+    scrollToResultsDrillDown()
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown])
 
   const zoneListForFilter = useMemo(() => {
     if (!data) return undefined
@@ -336,7 +383,7 @@ export function POSDashboardPanel() {
       {/* Catalog panel — lazy-loaded only when tab is active */}
       {activeTab === 'catalog' && <POSCatalogTabContent />}
 
-      {/* Results panel — same layout as Operación but with all-time consolidated data */}
+      {/* ── Results panel — all-time consolidated data with drill-down ── */}
       {activeTab === 'results' && allData && (
         <>
           {/* KPIs — promedios historicos */}
@@ -345,6 +392,20 @@ export function POSDashboardPanel() {
               <DayKPIBar kpis={allData.kpis} averages={undefined} isSingleDay={false} />
             </div>
           </AnimatedCard>
+
+          {/* Results drill-down panel */}
+          {resultsDrillDown && (
+            <div ref={resultsDrillDownRef}>
+              <DrillDownPanel
+                drillDown={resultsDrillDown}
+                data={resultsDrillDownData}
+                loading={resultsDrillDownLoading}
+                error={resultsDrillDownError}
+                onClose={closeResultsDrillDown}
+                contextLabel="Resultados"
+              />
+            </div>
+          )}
 
           {/* Tendencia Diaria — revenue por dia historico */}
           <AnimatedCard delay={0.03} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
@@ -365,20 +426,20 @@ export function POSDashboardPanel() {
                 data={allData.byZone}
                 selectedZone="all"
                 onZoneClick={() => {}}
-                onZoneDrillDown={handleZoneDrillDown}
+                onZoneDrillDown={handleResultsZoneDrillDown}
                 unknownZone={allData.unknownZone}
               />
             </AnimatedCard>
             <AnimatedCard delay={0.12} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
               <HourlyRevenueChart
                 data={allData.hourlyRevenue}
-                onHourDrillDown={handleHourDrillDown}
+                onHourDrillDown={handleResultsHourDrillDown}
               />
             </AnimatedCard>
             <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
               <TopProductsTable
                 data={allData.topProducts}
-                onProductDrillDown={handleProductDrillDown}
+                onProductDrillDown={handleResultsProductDrillDown}
                 selectedCategory="all"
                 productsByCategory={allData.productsByCategory}
                 selectedCategoryName={undefined}
@@ -393,8 +454,8 @@ export function POSDashboardPanel() {
                 data={allData.topCategories}
                 selectedCategory="all"
                 onCategoryClick={handleCategoryClick}
-                onCategoryDrillDown={handleCategoryDrillDown}
-                onProductDrillDown={handleProductDrillDown}
+                onCategoryDrillDown={handleResultsCategoryDrillDown}
+                onProductDrillDown={handleResultsProductDrillDown}
                 productsByCategory={allData.productsByCategory}
                 totalKpiRevenue={allData.kpis.revenue}
               />
@@ -402,9 +463,9 @@ export function POSDashboardPanel() {
             <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
               <TopProductByCategoryChart
                 data={allData.topProductByCategory || []}
-                onProductDrillDown={handleProductDrillDown}
+                onProductDrillDown={handleResultsProductDrillDown}
                 selectedCategory="all"
-                onCategoryDrillDown={handleCategoryDrillDown}
+                onCategoryDrillDown={handleResultsCategoryDrillDown}
                 topPerformersByCategory={allData.topPerformersByCategory}
                 bottomPerformersByCategory={allData.bottomPerformersByCategory}
                 totalKpiRevenue={allData.kpis.revenue}
@@ -417,7 +478,7 @@ export function POSDashboardPanel() {
             <AnimatedCard delay={0.36} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
               <StaffPerformanceTable
                 data={allData.staffPerformance}
-                onStaffDrillDown={handleStaffDrillDown}
+                onStaffDrillDown={handleResultsStaffDrillDown}
               />
             </AnimatedCard>
             <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
@@ -432,6 +493,7 @@ export function POSDashboardPanel() {
         </>
       )}
 
+      {/* ── Operation panel ── */}
       {data && activeTab === 'operation' && (
         <>
           {/* CALENDAR — calendar grid with day-by-day navigation */}
@@ -447,7 +509,7 @@ export function POSDashboardPanel() {
             />
           </AnimatedCard>
 
-          {/* Drill-down panel */}
+          {/* Operation drill-down panel */}
           {drillDown && (
             <div ref={drillDownRef}>
               <DrillDownPanel
@@ -456,10 +518,10 @@ export function POSDashboardPanel() {
                 loading={drillDownLoading}
                 error={drillDownError}
                 onClose={closeDrillDown}
+                contextLabel="Operacion"
               />
             </div>
           )}
-
 
           {/* Day Performance — cuando un dia seleccionado y NO en modo consolidado */}
           {isSingleDay && viewMode === 'day' && (

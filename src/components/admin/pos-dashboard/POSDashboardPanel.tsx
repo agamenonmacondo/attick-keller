@@ -129,6 +129,28 @@ export function POSDashboardPanel() {
     setCalendarMonth(date.substring(0, 7))
   }, [])
 
+  // When clicking a day-of-week bar in the trend chart,
+  // find the most recent occurrence of that weekday and navigate
+  const handleDayOfWeekClick = useCallback((jsDay: number, _dayName: string) => {
+    // Search both data sources for the most recent matching day
+    const source = allData?.dailyTrend ?? data?.dailyTrend ?? []
+    let matchDate: string | undefined
+    for (let i = source.length - 1; i >= 0; i--) {
+      const d = new Date(source[i].date + 'T12:00:00')
+      if (d.getDay() === jsDay) {
+        matchDate = source[i].date
+        break
+      }
+    }
+    if (matchDate) {
+      // Switch to Operation tab in day mode showing that date
+      setActiveTab('operation')
+      setViewMode('day')
+      setFilters(prev => ({ ...prev, zone: 'all', category: 'all', from: matchDate, to: matchDate }))
+      setCalendarMonth(matchDate.substring(0, 7))
+    }
+  }, [allData, data])
+
   const handleCalendarMonthChange = useCallback((month: string) => {
     // Navigating months in the calendar always switches to consolidated view
     setCalendarMonth(month)
@@ -339,7 +361,7 @@ export function POSDashboardPanel() {
 
           {/* Tendencia Diaria — revenue por dia historico */}
           <AnimatedCard delay={0.03} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-            <POSDailyTrendChart data={allData.dailyTrend} onDayClick={handleDayClick} />
+            <POSDailyTrendChart data={allData.dailyTrend} onDayClick={handleDayOfWeekClick} />
           </AnimatedCard>
 
           {/* Desglose 3 columnas */}
@@ -475,7 +497,7 @@ export function POSDashboardPanel() {
 
           {/* Tendencia Diaria — revenue por dia del periodo */}
           <AnimatedCard delay={0.15} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-            <POSDailyTrendChart data={data.dailyTrend} onDayClick={handleDayClick} />
+            <POSDailyTrendChart data={data.dailyTrend} onDayClick={handleDayOfWeekClick} />
           </AnimatedCard>
 
           {/* Desglose 3 columnas */}

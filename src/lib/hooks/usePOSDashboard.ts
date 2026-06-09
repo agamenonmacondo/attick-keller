@@ -282,7 +282,7 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
     manualFetch()
   }, [params])
 
-  const fetchDrillDown = useCallback(async (type: DrillDownType, id: string, label: string) => {
+  const fetchDrillDown = useCallback(async (type: DrillDownType, id: string, label: string, dayOfWeek?: number) => {
     const from = filters.from || ''
     const to = filters.to || ''
     setDrillDown({ type, id, label })
@@ -297,6 +297,9 @@ export function usePOSDashboard(filters: POSDashboardFilters) {
       p.set('to', to)
       p.set('zone', filters.zone || 'all')
       p.set('category', filters.category || 'all')
+      if (dayOfWeek !== undefined) {
+        p.set('dayOfWeek', String(dayOfWeek))
+      }
       const res = await fetch(`/api/admin/pos-dashboard/detail?${p.toString()}`, { next: { revalidate: 300 } })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))

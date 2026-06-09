@@ -111,6 +111,17 @@ function computeServiceTime(sales: any[]): { avgServiceTime: number; serviceTime
   }
 }
 
+/** Helper: filter sales by ISO day of week (1=Mon...7=Sun). Returns array unchanged if dayOfWeek is null. */
+function filterByDayOfWeek(sales: any[], dayOfWeek: number | null): any[] {
+  if (dayOfWeek === null) return sales
+  return sales.filter((s: any) => {
+    if (!s.opened_at) return false
+    const jsDay = new Date(s.opened_at).getDay()
+    const isoDay = jsDay === 0 ? 7 : jsDay
+    return isoDay === dayOfWeek
+  })
+}
+
 // ── Main handler ─────────────────────────────────────────
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -125,6 +136,11 @@ export async function GET(request: NextRequest) {
   const toParam = qparam(request, 'to') || ''
   const zoneParam = qparam(request, 'zone') || 'all'
   const categoryParam = qparam(request, 'category') || 'all'
+  const dayOfWeekParam = qparam(request, 'dayOfWeek')
+  const dayOfWeek = dayOfWeekParam ? parseInt(dayOfWeekParam, 10) : null
+  if (dayOfWeekParam && (isNaN(dayOfWeek!) || dayOfWeek! < 1 || dayOfWeek! > 7)) {
+    return NextResponse.json({ error: 'dayOfWeek debe ser un entero entre 1 (Lunes) y 7 (Domingo)' }, { status: 400 })
+  }
 
   if (!type || !id) {
     return NextResponse.json(
@@ -171,15 +187,15 @@ export async function GET(request: NextRequest) {
   // ── Route by type ──
   switch (type) {
     case 'product':
-      return handleProduct(sb, id, fromDate, toDate, zoneParam, categoryParam)
+      return handleProduct(sb, id, fromDate, toDate, zoneParam, categoryParam, dayOfWeek)
     case 'staff':
-      return handleStaff(sb, id, fromDate, toDate, zoneParam, categoryParam)
+      return handleStaff(sb, id, fromDate, toDate, zoneParam, categoryParam, dayOfWeek)
     case 'category':
-      return handleCategory(sb, id, fromDate, toDate, zoneParam)
+      return handleCategory(sb, id, fromDate, toDate, zoneParam, dayOfWeek)
     case 'hour':
-      return handleHour(sb, id, fromDate, toDate, zoneParam, categoryParam)
+      return handleHour(sb, id, fromDate, toDate, zoneParam, categoryParam, dayOfWeek)
     case 'zone':
-      return handleZone(sb, id, fromDate, toDate, categoryParam)
+      return handleZone(sb, id, fromDate, toDate, categoryParam, dayOfWeek)
     default:
       return NextResponse.json({ error: 'Tipo no implementado' }, { status: 400 })
   }
@@ -188,7 +204,7 @@ export async function GET(request: NextRequest) {
 // ════════════════════════════════════════════════════════════
 // PRODUCT DETAIL (ENRICHED: tipTotal, tipAvg, partySizeAvg, avgServiceTime, cancelledCount, service by zone/hour, payment methods)
 // ════════════════════════════════════════════════════════════
-async function handleProduct(sb: any, productId: string, from: string, to: string, zoneParam: string, categoryParam: string) {
+async function handleProduct(sb: any, productId: string, from: string, to: string, zoneParam: string, categoryParam: string, dayOfWeek: number | null) {
   // ── Product info ──
   const { data: productData } = await sb
     .from('pos_products')
@@ -246,6 +262,9 @@ async function handleProduct(sb: any, productId: string, from: string, to: strin
   if (zoneParam && zoneParam !== 'all') {
     filteredActiveSales = activeSales.filter((s: any) => (s.derived_zone_name || 'Desconocido') === zoneParam)
   }
+
+  // ── Apply day-of-week filter ──
+  filteredActiveSales = filterByDayOfWeek(filteredActiveSales, dayOfWeek)
 
   const validSaleIds = new Set(filteredActiveSales.map((s: any) => s.id))
   const validItems = allItems.filter((i: any) => validSaleIds.has(i.pos_sale_id))
@@ -413,7 +432,7 @@ async function handleProduct(sb: any, productId: string, from: string, to: strin
 // ════════════════════════════════════════════════════════════
 // STAFF DETAIL (ENRICHED: partySizeAvg, avgServiceTime, service by zone/hour, payment methods, category breakdown)
 // ════════════════════════════════════════════════════════════
-async function handleStaff(sb: any, staffId: string, from: string, to: string, zoneParam: string, categoryParam: string) {
+async function handleStaff(sb: any, staffId: string, from: string, to: string, zoneParam: string, categoryParam: string, dayOfWeek: number | null) {
   // ── Staff info (ENRICHED: staff_type) ──
   const { data: staffData } = await sb
     .from('pos_staff')
@@ -449,6 +468,9 @@ async function handleStaff(sb: any, staffId: string, from: string, to: string, z
   if (zoneParam && zoneParam !== 'all') {
     allSales = allSales.filter((s: any) => (s.derived_zone_name || 'Desconocido') === zoneParam)
   }
+
+  // ── Apply day-of-week filter ──
+  allSales = filterByDayOfWeek(allSales, dayOfWeek)
 
   // ── byZone (ENRICHED: avgServiceTime) ──
   const zoneMap = new Map<string, { cheques: number; revenue: number; propina: number; serviceTimeSum: number; serviceTimeCount: number }>()
@@ -647,7 +669,7 @@ async function handleStaff(sb: any, staffId: string, from: string, to: string, z
 // ════════════════════════════════════════════════════════════
 // CATEGORY DETAIL (ENRICHED: tipTotal, tipAvg, partySizeAvg, avgServiceTime, ticketPromedio, cancelledCount, cancelledRatio, dailyTrend, cross-category companions, service by zone/hour, payment methods, tip by zone/hour)
 // ════════════════════════════════════════════════════════════
-async function handleCategory(sb: any, groupId: string, from: string, to: string, zoneParam: string) {
+async function handleCategory(sb: any, groupId: string, from: string, to: string, zoneParam: string, dayOfWeek: number | null) {
   // ── Category info ──
   const { data: groupData } = await sb
     .from('pos_product_groups')
@@ -716,6 +738,9 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
   if (zoneParam && zoneParam !== 'all') {
     filteredActiveSales = activeSales.filter((s: any) => (s.derived_zone_name || 'Desconocido') === zoneParam)
   }
+
+  // ── Apply day-of-week filter ──
+  filteredActiveSales = filterByDayOfWeek(filteredActiveSales, dayOfWeek)
 
   const validSaleIds = new Set(filteredActiveSales.map((s: any) => s.id))
   const validItems = allItems.filter((i: any) => validSaleIds.has(i.pos_sale_id))
@@ -940,7 +965,7 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
 // ════════════════════════════════════════════════════════════
 // HOUR DETAIL (ENRICHED: tipTotal, tipAvg, partySizeAvg, avgServiceTime, payment methods)
 // ════════════════════════════════════════════════════════════
-async function handleHour(sb: any, hourStr: string, from: string, to: string, zoneParam: string, categoryParam: string) {
+async function handleHour(sb: any, hourStr: string, from: string, to: string, zoneParam: string, categoryParam: string, dayOfWeek: number | null) {
   const hour = parseInt(hourStr, 10)
   if (isNaN(hour) || hour < 0 || hour > 23) {
     return NextResponse.json({ error: 'Hora inválida. Debe ser 0-23' }, { status: 400 })
@@ -975,6 +1000,9 @@ async function handleHour(sb: any, hourStr: string, from: string, to: string, zo
   if (zoneParam && zoneParam !== 'all') {
     hourSales = hourSales.filter((s: any) => (s.derived_zone_name || 'Desconocido') === zoneParam)
   }
+
+  // ── Apply day-of-week filter ──
+  hourSales = filterByDayOfWeek(hourSales, dayOfWeek)
 
   const saleIds = hourSales.map((s: any) => s.id)
 
@@ -1111,7 +1139,7 @@ async function handleHour(sb: any, hourStr: string, from: string, to: string, zo
 // ════════════════════════════════════════════════════════════
 // ZONE DETAIL (ENRICHED: partySizeAvg, avgServiceTime, service by hour, payment methods, category breakdown)
 // ════════════════════════════════════════════════════════════
-async function handleZone(sb: any, zoneName: string, from: string, to: string, categoryParam: string) {
+async function handleZone(sb: any, zoneName: string, from: string, to: string, categoryParam: string, dayOfWeek: number | null) {
   // ── Fetch sales for this zone (ENRICHED: closed_at, party_size) ──
   let allSales: any[] = []
   let offset = 0
@@ -1132,6 +1160,9 @@ async function handleZone(sb: any, zoneName: string, from: string, to: string, c
     offset += BATCH
     hasMore = batch.length === BATCH
   }
+
+  // ── Apply day-of-week filter ──
+  allSales = filterByDayOfWeek(allSales, dayOfWeek)
 
   const saleIds = allSales.map((s: any) => s.id)
 

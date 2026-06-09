@@ -263,31 +263,31 @@ export function POSDashboardPanel() {
   }, [])
 
   const handleResultsProductDrillDown = useCallback((productId: string, productName: string) => {
-    fetchResultsDrillDown('product', productId, productName)
+    fetchResultsDrillDown('product', productId, productName, selectedDayOfWeek?.dayOfWeek)
     scrollToResultsDrillDown()
-  }, [fetchResultsDrillDown, scrollToResultsDrillDown])
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
 
   const handleResultsStaffDrillDown = useCallback((staffId: string, staffName: string) => {
-    fetchResultsDrillDown('staff', staffId, staffName)
+    fetchResultsDrillDown('staff', staffId, staffName, selectedDayOfWeek?.dayOfWeek)
     scrollToResultsDrillDown()
-  }, [fetchResultsDrillDown, scrollToResultsDrillDown])
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
 
   const handleResultsCategoryDrillDown = useCallback((categoryId: string, categoryName: string) => {
-    fetchResultsDrillDown('category', categoryId, categoryName)
+    fetchResultsDrillDown('category', categoryId, categoryName, selectedDayOfWeek?.dayOfWeek)
     scrollToResultsDrillDown()
-  }, [fetchResultsDrillDown, scrollToResultsDrillDown])
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
 
   const handleResultsHourDrillDown = useCallback((hour: string, extra?: { tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }) => {
     const hourNum = parseInt(hour, 10)
     const label = `${hourNum === 0 ? '12' : hourNum <= 12 ? hourNum : hourNum - 12}${hourNum < 12 ? 'am' : 'pm'}`
-    fetchResultsDrillDown('hour', hour, label)
+    fetchResultsDrillDown('hour', hour, label, selectedDayOfWeek?.dayOfWeek)
     scrollToResultsDrillDown()
-  }, [fetchResultsDrillDown, scrollToResultsDrillDown])
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
 
   const handleResultsZoneDrillDown = useCallback((zoneName: string) => {
-    fetchResultsDrillDown('zone', zoneName, zoneName)
+    fetchResultsDrillDown('zone', zoneName, zoneName, selectedDayOfWeek?.dayOfWeek)
     scrollToResultsDrillDown()
-  }, [fetchResultsDrillDown, scrollToResultsDrillDown])
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
 
   const zoneListForFilter = useMemo(() => {
     if (!data) return undefined
@@ -442,8 +442,15 @@ export function POSDashboardPanel() {
               <Spinner size={24} className="animate-spin text-[var(--text-secondary)]" />
             </div>
           )}
+          {/* Error state for day-of-week detail */}
+          {selectedDayOfWeek && dayDetailError && !dayDetail && (
+            <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
+              <p className="text-xs text-red-400 text-center">{dayDetailError}</p>
+              <button onClick={() => setSelectedDayOfWeek(null)} className="mt-2 text-xs text-[var(--color-ak-borgona)] hover:underline block mx-auto">Volver</button>
+            </div>
+          )}
           {/* When a day-of-week is selected, show the immersive master panel */}
-          {selectedDayOfWeek && dayDetail ? (
+          {(selectedDayOfWeek && dayDetail) ? (
             <DayOfWeekMasterPanel
               dayData={selectedDayOfWeek}
               data={dayDetail}

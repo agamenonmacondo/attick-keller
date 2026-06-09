@@ -179,6 +179,8 @@ export interface POSDashboardData {
   }>
   filters: { zone: string; category: string; from: string; to: string }
   availableMonths: string[]
+  dayCount?: number
+  dayOfWeek?: number
 }
 
 export function usePOSDashboard(filters: POSDashboardFilters) {

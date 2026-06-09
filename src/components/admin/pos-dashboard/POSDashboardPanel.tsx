@@ -52,13 +52,6 @@ export function POSDashboardPanel() {
   const [dayDetailZone, setDayDetailZone] = useState<string>('all')
   const [dayDetailCategory, setDayDetailCategory] = useState<string>('all')
 
-  // Day-of-week detail hook — fetches filtered data when a day is selected
-  const { data: dayDetail, loading: dayDetailLoading, error: dayDetailError } = usePOSDayOfWeekDetail(
-    selectedDayOfWeek?.dayOfWeek ?? null,
-    dayDetailZone,
-    dayDetailCategory
-  )
-
   // When in month mode, derive from/to from calendarMonth so the dashboard
   // data follows the month the user is viewing (not always "latest month").
   // If calendarMonth is undefined (initial state), derive from current date.
@@ -97,6 +90,15 @@ export function POSDashboardPanel() {
     fetchDrillDown: fetchResultsDrillDown,
     closeDrillDown: closeResultsDrillDown,
   } = usePOSDashboard(resultsFilters)
+
+  // ── Day-of-week detail hook — fetches filtered data when a day is selected ──
+  const { data: dayDetail, loading: dayDetailLoading, error: dayDetailError } = usePOSDayOfWeekDetail(
+    selectedDayOfWeek?.dayOfWeek ?? null,
+    dayDetailZone,
+    dayDetailCategory,
+    resultsFilters.from,
+    resultsFilters.to
+  )
 
   // Calendar shows ALL days regardless of month filter
   const { dailyTrend: calendarTrend, availableMonths: calendarMonths } = usePOSCalendar(filters.zone)

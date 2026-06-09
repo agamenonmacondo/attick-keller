@@ -6,7 +6,9 @@ import { POSDashboardData } from '@/lib/hooks/usePOSDashboard'
 export function usePOSDayOfWeekDetail(
   dayOfWeek: number | null,
   zone: string = 'all',
-  category: string = 'all'
+  category: string = 'all',
+  from: string = '2026-01-01',
+  to: string = '2026-06-30'
 ) {
   const [data, setData] = useState<POSDashboardData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -37,8 +39,8 @@ export function usePOSDayOfWeekDetail(
       try {
         const params = new URLSearchParams({
           dayOfWeek: String(dayOfWeek),
-          from: '2026-01-01',
-          to: '2026-06-30',
+          from,
+          to,
           zone,
           category,
         })
@@ -73,7 +75,7 @@ export function usePOSDayOfWeekDetail(
       cancelled = true
       controller.abort()
     }
-  }, [dayOfWeek, zone, category])
+  }, [dayOfWeek, zone, category, from, to])
 
   return { data, loading, error }
 }

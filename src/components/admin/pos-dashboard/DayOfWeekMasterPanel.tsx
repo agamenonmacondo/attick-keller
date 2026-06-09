@@ -173,7 +173,7 @@ export function DayOfWeekMasterPanel({
             selectedZone={selectedZone}
             onZoneClick={onZoneClick}
             onZoneDrillDown={onZoneDrillDown}
-            unknownZone={data.unknownZone ?? 0}
+            unknownZone={data.unknownZone}
           />
         </AnimatedCard>
         <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">

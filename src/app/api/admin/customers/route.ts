@@ -14,15 +14,39 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Telefono requerido' }, { status: 400 })
   }
 
-  const { data: existing } = await sb
+  // Search customers with this phone (may return multiple — same phone, different names)
+  const { data: existingCustomers } = await sb
     .from('customers')
     .select('id, full_name, phone, email')
     .eq('restaurant_id', RESTAURANT_ID)
     .eq('phone', phone.trim())
-    .single()
 
-  if (existing) {
-    return NextResponse.json({ customer: existing }, { status: 200 })
+  if (existingCustomers && existingCustomers.length > 0) {
+    // Try exact match by phone + name
+    const nameMatch = full_name?.trim()
+      ? existingCustomers.find(c => c.full_name?.toLowerCase() === full_name.trim().toLowerCase())
+      : null
+
+    if (nameMatch) {
+      // Exact phone+name match — update email if provided
+      const updates: Record<string, string> = {}
+      if (email?.trim() && email.trim() !== nameMatch.email) {
+        updates.email = email.trim()
+      }
+      if (Object.keys(updates).length > 0) {
+        const { data: updated } = await sb
+          .from('customers')
+          .update(updates)
+          .eq('id', nameMatch.id)
+          .select('id, full_name, phone, email')
+          .single()
+        if (updated) return NextResponse.json({ customer: updated }, { status: 200 })
+      }
+      return NextResponse.json({ customer: nameMatch }, { status: 200 })
+    }
+
+    // Phone exists but name is different — create a new customer record
+    // (two people can share the same phone number)
   }
 
   const { data, error } = await sb
@@ -38,7 +62,8 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     if (error.code === '23505') {
-      return NextResponse.json({ error: 'Ya existe un cliente con este telefono' }, { status: 409 })
+      // Unique constraint violation — same phone + name combo already exists
+      return NextResponse.json({ error: 'Ya existe un cliente con este telefono y nombre' }, { status: 409 })
     }
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }

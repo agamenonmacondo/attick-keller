@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { X, Spinner, Plus, MagnifyingGlass } from '@phosphor-icons/react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { X, Spinner, Plus, MagnifyingGlass, User } from '@phosphor-icons/react'
 import { formatDate, formatTime } from '@/lib/utils/formatDate'
 import { SERVICE_HOURS } from '@/lib/utils/serviceHours'
 
@@ -38,6 +38,9 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
   const [newPhone, setNewPhone] = useState('')
   const [newEmail, setNewEmail] = useState('')
   const [creatingCustomer, setCreatingCustomer] = useState(false)
+  const [phoneMatch, setPhoneMatch] = useState<CustomerOption | null>(null)
+  const [phoneMatchMessage, setPhoneMatchMessage] = useState('')
+  const phoneDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Reservation fields
   const [date, setDate] = useState(selectedDate)
@@ -53,6 +56,78 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
       .then(r => r.json())
       .then(d => setZones(d.zones || []))
       .catch(() => {})
+  }, [])
+
+  // Auto-search by phone with debounce — may find multiple customers sharing same number
+  const searchByPhone = useCallback(async (phone: string) => {
+    if (phone.trim().length < 7) {
+      setPhoneMatch(null)
+      setPhoneMatchMessage('')
+      return
+    }
+    try {
+      const res = await fetch(`/api/admin/customers?q=${encodeURIComponent(phone.trim())}&limit=10`)
+      if (res.ok) {
+        const d = await res.json()
+        const customers: CustomerOption[] = d.customers || []
+        // Filter to exact phone matches (last 10 digits)
+        const phoneDigits = phone.replace(/\D/g, '')
+        const exactMatches = customers.filter(c =>
+          c.phone?.replace(/\D/g, '').slice(-10) === phoneDigits.slice(-10)
+        )
+
+        if (exactMatches.length === 1) {
+          // Single match — auto-select
+          const match = exactMatches[0]
+          setPhoneMatch(match)
+          setPhoneMatchMessage(`Cliente encontrado: ${match.full_name || 'Sin nombre'}`)
+          setCustomerId(match.id)
+          setNewName(match.full_name || '')
+          setNewEmail(match.email || '')
+          setShowNewCustomer(true)
+        } else if (exactMatches.length > 1) {
+          // Multiple people share this phone — show all options
+          setPhoneMatch(null)
+          setPhoneMatchMessage(`${exactMatches.length} clientes comparten este telefono`)
+          setCustomerResults(exactMatches)
+          // Pre-fill with empty name so user can choose or create new
+          setNewName('')
+          setNewEmail('')
+          setShowNewCustomer(true)
+        } else if (customers.length > 0) {
+          // Partial matches (different number)
+          setPhoneMatch(null)
+          setPhoneMatchMessage('')
+          setCustomerResults(customers)
+        } else {
+          // New phone — will create new customer
+          setPhoneMatch(null)
+          setPhoneMatchMessage('Telefono nuevo — se creara un nuevo cliente')
+          setNewName('')
+          setNewEmail('')
+          setShowNewCustomer(true)
+        }
+      }
+    } catch {
+      // silently ignore
+    }
+  }, [])
+
+  const handlePhoneChange = useCallback((value: string) => {
+    setNewPhone(value)
+    setPhoneMatch(null)
+    setPhoneMatchMessage('')
+    if (phoneDebounceRef.current) clearTimeout(phoneDebounceRef.current)
+    phoneDebounceRef.current = setTimeout(() => {
+      searchByPhone(value)
+    }, 600)
+  }, [searchByPhone])
+
+  // Clean up debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (phoneDebounceRef.current) clearTimeout(phoneDebounceRef.current)
+    }
   }, [])
 
   const searchCustomers = useCallback(async () => {
@@ -144,7 +219,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
   }
 
   const selectedCustomer = customerId
-    ? customerResults.find(c => c.id === customerId)
+    ? customerResults.find(c => c.id === customerId) ?? phoneMatch
     : null
 
   return (
@@ -177,16 +252,17 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
           <div>
             <label className="mb-1.5 block text-sm font-medium text-[var(--text-primary)]">Cliente</label>
 
-            {selectedCustomer ? (
+            {selectedCustomer && !showNewCustomer ? (
               <div className="flex items-center justify-between rounded-lg border border-[var(--color-ak-borgona)]/30 bg-[var(--color-ak-borgona)]/5 px-3 py-2">
                 <div>
                   <p className="text-sm font-medium text-[var(--text-primary)]">{selectedCustomer.full_name || 'Sin nombre'}</p>
                   <p className="text-xs text-[var(--text-secondary)]">{selectedCustomer.phone || selectedCustomer.email}</p>
                 </div>
-                <button type="button" onClick={() => { setCustomerId('') }} className="text-xs text-[var(--color-ak-borgona)] hover:underline">Cambiar</button>
+                <button type="button" onClick={() => { setCustomerId(''); setPhoneMatch(null); }} className="text-xs text-[var(--color-ak-borgona)] hover:underline">Cambiar</button>
               </div>
             ) : (
               <>
+                {/* Search existing customer */}
                 <div className="flex gap-2">
                   <div className="flex-1 relative">
                     <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
@@ -215,7 +291,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
                       <button
                         key={c.id}
                         type="button"
-                        onClick={() => { setCustomerId(c.id); setCustomerResults([]); }}
+                        onClick={() => { setCustomerId(c.id); setCustomerResults([]); setShowNewCustomer(false); setPhoneMatch(null); }}
                         className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--bg-input)] border-b border-[var(--border-default)]/50 last:border-0"
                       >
                         <span className="font-medium text-[var(--text-primary)]">{c.full_name || 'Sin nombre'}</span>
@@ -225,6 +301,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
                   </div>
                 )}
 
+                {/* New customer form */}
                 <button
                   type="button"
                   onClick={() => setShowNewCustomer(!showNewCustomer)}
@@ -236,27 +313,106 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
 
                 {showNewCustomer && (
                   <div className="mt-2 space-y-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] p-3">
+                    {/* Phone with auto-detect */}
+                    <div>
+                      <div className="flex items-center gap-1 mb-1">
+                        <label className="text-xs font-medium text-[var(--text-secondary)]">Telefono *</label>
+                        {phoneMatchMessage && (
+                          <span className={`text-xs ${phoneMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-secondary)]'}`}>
+                            — {phoneMatchMessage}
+                          </span>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="tel"
+                          value={newPhone}
+                          onChange={(e) => handlePhoneChange(e.target.value)}
+                          placeholder="Escribe el telefono..."
+                          className={`w-full rounded-lg border bg-[var(--bg-input)] px-3 py-2 pr-9 text-sm text-[var(--text-primary)] focus:outline-none ${
+                            phoneMatch
+                              ? 'border-emerald-500 focus:border-emerald-500'
+                              : 'border-[var(--border-default)] focus:border-[var(--color-ak-borgona)]'
+                          }`}
+                        />
+                        {phoneMatch && (
+                          <User size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" weight="bold" />
+                        )}
+                      </div>
+                    </div>
                     <input
                       type="text"
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
-                      placeholder="Nombre completo"
-                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
-                    />
-                    <input
-                      type="tel"
-                      value={newPhone}
-                      onChange={(e) => setNewPhone(e.target.value)}
-                      placeholder="Telefono *"
+                      placeholder={phoneMatch ? (phoneMatch.full_name || 'Sin nombre') : 'Nombre completo'}
                       className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                     />
                     <input
                       type="email"
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
-                      placeholder="Email (opcional)"
+                      placeholder={phoneMatch ? (phoneMatch.email || 'Sin email') : 'Email (opcional)'}
                       className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--color-ak-borgona)] focus:outline-none"
                     />
+
+                    {/* Phone match feedback */}
+                    {phoneMatch && (
+                      <div className="flex items-start gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
+                        <User size={16} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" weight="bold" />
+                        <div className="text-xs">
+                          <p className="font-medium text-emerald-700 dark:text-emerald-300">
+                            Cliente existente: {phoneMatch.full_name || 'Sin nombre'}
+                          </p>
+                          <p className="text-emerald-600 dark:text-emerald-400 mt-0.5">
+                            Se usara este cliente. Si modificas nombre o email, se actualizaran.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCustomerId(phoneMatch.id)
+                              setShowNewCustomer(false)
+                              setPhoneMatch(null)
+                              setPhoneMatchMessage('')
+                            }}
+                            className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:underline"
+                          >
+                            Seleccionar este cliente directamente
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Multiple customers share this phone — show picker */}
+                    {customerResults.length > 1 && !phoneMatch && (
+                      <div className="mt-1">
+                        <p className="text-xs font-medium text-[var(--color-ak-borgona)] mb-1">
+                          Varias personas comparten este telefono. Selecciona o crea uno nuevo:
+                        </p>
+                        <div className="max-h-28 overflow-y-auto rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)]">
+                          {customerResults.map(c => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => {
+                                setCustomerId(c.id)
+                                setCustomerResults([])
+                                setShowNewCustomer(false)
+                                setPhoneMatchMessage('')
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--bg-input)] border-b border-[var(--border-default)]/50 last:border-0"
+                            >
+                              <span className="font-medium text-[var(--text-primary)]">{c.full_name || 'Sin nombre'}</span>
+                              {c.email && <span className="ml-2 text-xs text-[var(--text-secondary)]">{c.email}</span>}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* New phone — info message */}
+                    {phoneMatchMessage && !phoneMatch && customerResults.length <= 1 && (
+                      <p className="text-xs text-[var(--text-secondary)]">{phoneMatchMessage}</p>
+                    )}
                   </div>
                 )}
               </>

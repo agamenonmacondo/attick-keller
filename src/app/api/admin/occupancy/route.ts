@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const [tablesRes, zonesRes, activeResRes, combosRes] = await Promise.all([
     sb.from('tables').select('id, number, name_attick, capacity, zone_id, can_combine, combine_group, is_active, sort_order, table_zones(id, name)').eq('restaurant_id', RESTAURANT_ID).eq('is_active', true).order('sort_order', { ascending: true }),
     sb.from('table_zones').select('id, name, description, sort_order').eq('restaurant_id', RESTAURANT_ID).order('sort_order', { ascending: true }),
-    sb.from('reservations').select('id, table_id, table_combination_id, party_size, status, time_start, time_end, special_requests, customers(id, full_name, phone, email)').eq('restaurant_id', RESTAURANT_ID).eq('date', date).in('status', ['confirmed', 'pre_paid', 'seated']),
+    sb.from('reservations').select('id, table_id, table_combination_id, party_size, status, time_start, time_end, special_requests, created_at, internal_notes, customers(id, full_name, phone, email)').eq('restaurant_id', RESTAURANT_ID).eq('date', date).in('status', ['confirmed', 'pre_paid', 'seated']),
     sb.from('table_combinations').select('id, table_ids, combined_capacity, is_active').eq('restaurant_id', RESTAURANT_ID).eq('is_active', true),
   ])
 

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const [resRes, tablesRes, allTablesRes] = await Promise.all([
     sb
       .from('reservations')
-      .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, created_at, customers(id, email, full_name, phone), tables(id, number, table_zones(id, name))')
+      .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, created_at, internal_notes, customers(id, email, full_name, phone), tables(id, number, table_zones(id, name))')
       .eq('restaurant_id', RESTAURANT_ID)
       .eq('date', date)
       .in('status', ['pending', 'pre_paid', 'confirmed', 'seated'])

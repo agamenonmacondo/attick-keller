@@ -169,8 +169,8 @@ export function InformesRayoPanel() {
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-ak-borgona)', boxShadow: '0 2px 8px rgba(93,21,40,0.3)' }}>
-            <Lightning size={22} weight="fill" style={{ color: 'var(--color-ak-dorado)' }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]" style={{ boxShadow: '0 2px 8px rgba(93,21,40,0.3)' }}>
+            <Lightning size={22} weight="fill" className="text-[var(--color-ak-dorado)]" />
           </div>
           <div>
             <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Informes Rayo</h2>
@@ -183,7 +183,7 @@ export function InformesRayoPanel() {
       </div>
 
       {/* ── Period Selector ── */}
-      <div className="rounded-xl border p-4 space-y-3" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
+      <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4 space-y-3 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10">
         {/* Presets */}
         <div className="flex flex-wrap gap-1.5">
           {PRESETS.map(p => (
@@ -307,8 +307,8 @@ export function InformesRayoPanel() {
         const pct = (c: number, p: number) => !p ? '' : ` (${c >= p ? '↑' : '↓'}${Math.abs(((c - p) / p) * 100).toFixed(1)}%)`
 
         return (
-          <div className="rounded-xl border p-4" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)' }}>
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--color-ak-dorado)' }}>
+          <div className="rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2 text-[var(--color-ak-dorado)]">
               <ClipboardText size={16} weight="fill" />
               Resumen para Junta
             </h3>
@@ -330,7 +330,7 @@ export function InformesRayoPanel() {
       {/* ── Empty State ── */}
       {!data && !loading && !error && fetched && (
         <div className="text-center py-12">
-          <Lightning size={40} className="mx-auto opacity-30" style={{ color: 'var(--text-secondary)' }} />
+          <Lightning size={40} className="mx-auto opacity-30 text-[var(--text-secondary)] dark:text-[var(--color-ak-madera-light)]" />
           <p className="mt-3" style={{ color: 'var(--text-secondary)' }}>Selecciona un período para ver el informe</p>
         </div>
       )}

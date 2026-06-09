@@ -334,7 +334,7 @@ export function POSDashboardPanel() {
     return (
       <div className="py-16 text-center">
         <p className="text-sm text-[var(--color-danger)]">{error}</p>
-        <button onClick={refetch} className="mt-3 text-xs text-[var(--color-ak-borgona)] hover:underline">
+        <button onClick={refetch} className="mt-3 text-xs text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] hover:underline">
           Reintentar
         </button>
       </div>
@@ -346,12 +346,12 @@ export function POSDashboardPanel() {
       {/* Header with tab toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-3">
-          <div className="flex items-center bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg p-0.5">
+          <div className="flex items-center bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-lg p-0.5">
             <button
               onClick={() => setActiveTab('operation')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
                 activeTab === 'operation'
-                  ? 'bg-[var(--color-ak-borgona)] text-white'
+                  ? 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] text-white'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
@@ -362,7 +362,7 @@ export function POSDashboardPanel() {
               onClick={() => setActiveTab('results')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
                 activeTab === 'results'
-                  ? 'bg-[var(--color-ak-borgona)] text-white'
+                  ? 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] text-white'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
@@ -373,7 +373,7 @@ export function POSDashboardPanel() {
               onClick={() => setActiveTab('costs')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
                 activeTab === 'costs'
-                  ? 'bg-[var(--color-ak-borgona)] text-white'
+                  ? 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] text-white'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
@@ -384,7 +384,7 @@ export function POSDashboardPanel() {
               onClick={() => setActiveTab('catalog')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
                 activeTab === 'catalog'
-                  ? 'bg-[var(--color-ak-borgona)] text-white'
+                  ? 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] text-white'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
@@ -397,12 +397,12 @@ export function POSDashboardPanel() {
             <p className="text-xs text-[var(--text-secondary)]">
               {activeTab === 'results'
                 ? selectedDate
-                  ? <>Filtrado por dia: <span className="font-semibold text-[var(--color-ak-borgona)]">{selectedDate}</span></>
-                  : <>Datos historicos: <span className="font-semibold text-[var(--color-ak-borgona)]">Ene – Jun 2026</span></>
+                  ? <>Filtrado por dia: <span className="font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{selectedDate}</span></>
+                  : <>Datos historicos: <span className="font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">Ene – Jun 2026</span></>
                 : viewMode === 'month'
-                ? <>Vista consolidada: <span className="font-semibold text-[var(--color-ak-borgona)]">Mes completo</span></>
+                ? <>Vista consolidada: <span className="font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">Mes completo</span></>
                 : isSingleDay
-                  ? <>Vista por dia: <span className="font-semibold text-[var(--color-ak-borgona)]">{filters.from}</span></>
+                  ? <>Vista por dia: <span className="font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{filters.from}</span></>
                   : filters.from && filters.to
                     ? `${filters.from} — ${filters.to}`
                     : 'Todo el periodo'
@@ -417,8 +417,8 @@ export function POSDashboardPanel() {
             onClick={handleToggleViewMode}
             className={`text-[10px] font-medium px-3 py-1.5 rounded-full border transition-colors ${
               viewMode === 'month'
-                ? 'bg-[var(--color-ak-borgona)] text-white border-[var(--color-ak-borgona)]'
-                : 'text-[var(--color-ak-borgona)] border-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10'
+                ? 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] text-white border-[var(--color-ak-borgona)] dark:border-[var(--color-ak-borgona-light)]'
+                : 'text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] border-[var(--color-ak-borgona)] dark:border-[var(--color-ak-borgona-light)] hover:bg-[var(--color-ak-borgona)]/10 dark:hover:bg-[var(--color-ak-borgona-light)]/10'
             }`}
           >
             Consolidado
@@ -435,7 +435,7 @@ export function POSDashboardPanel() {
 
       {/* Loading overlay */}
       {loading && data && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-[var(--color-ak-borgona)] text-white px-3 py-1.5 rounded-lg shadow-lg text-xs font-medium animate-pulse">
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] text-white px-3 py-1.5 rounded-lg shadow-lg text-xs font-medium animate-pulse">
           <Spinner size={14} className="animate-spin" />
           Actualizando...
         </div>
@@ -477,25 +477,25 @@ export function POSDashboardPanel() {
               {dayDetailLoading && !dayDetail && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <button onClick={() => setSelectedDayOfWeek(null)} className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--color-ak-borgona)] transition-colors">
+                    <button onClick={() => setSelectedDayOfWeek(null)} className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--color-ak-borgona)] dark:hover:text-[var(--color-ak-borgona-light)] transition-colors">
                       ← Volver a Resultados
                     </button>
                     <span className="text-sm text-[var(--text-muted)]">Cargando {selectedDayOfWeek.fullLabel}...</span>
                   </div>
-                  <div className="h-16 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                  <div className="h-16 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="h-24 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
-                    <div className="h-24 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
-                    <div className="h-24 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                    <div className="h-24 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
+                    <div className="h-24 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
+                    <div className="h-24 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
                   </div>
-                  <div className="h-64 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                  <div className="h-64 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
                 </div>
               )}
               {/* Error state */}
               {dayDetailError && !dayDetail && (
-                <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-6">
+                <div className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl p-6">
                   <p className="text-sm text-red-400 text-center">{dayDetailError}</p>
-                  <button onClick={() => setSelectedDayOfWeek(null)} className="mt-3 text-xs text-[var(--color-ak-borgona)] hover:underline block mx-auto">Volver a Resultados</button>
+                  <button onClick={() => setSelectedDayOfWeek(null)} className="mt-3 text-xs text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] hover:underline block mx-auto">Volver a Resultados</button>
                 </div>
               )}
               {/* Day-of-week detail data loaded */}
@@ -530,19 +530,19 @@ export function POSDashboardPanel() {
             {(resultsZone !== 'all' || resultsCategory !== 'all' || selectedDate) && (
               <div className="flex items-center gap-2 flex-wrap">
                 {selectedDate && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)] text-white text-sm font-medium">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] text-white text-sm font-medium">
                     Filtrado: {selectedDate}
                     <button onClick={() => { setSelectedDate(null); setResultsZone('all'); setResultsCategory('all'); }} className="hover:underline ml-1">&times;</button>
                   </span>
                 )}
                 {resultsZone !== 'all' && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 dark:bg-[var(--color-ak-borgona-light)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25 dark:border-[var(--color-ak-borgona-light)]/25">
                     Zona: {resultsZone}
                     <button onClick={() => setResultsZone('all')} className="hover:text-white ml-1">&times;</button>
                   </span>
                 )}
                 {resultsCategory !== 'all' && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 dark:bg-[var(--color-ak-borgona-light)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25 dark:border-[var(--color-ak-borgona-light)]/25">
                     {allData.topCategories?.find(c => c.categoryId === resultsCategory)?.categoryName || resultsCategory}
                     <button onClick={() => setResultsCategory('all')} className="hover:text-white ml-1">&times;</button>
                   </span>
@@ -574,13 +574,13 @@ export function POSDashboardPanel() {
             )}
 
             {/* Tendencia Diaria — revenue por dia historico */}
-            <AnimatedCard delay={0.03} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <AnimatedCard delay={0.03} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
               <POSDailyTrendChart data={allData.dailyTrend} onDayClick={handleDayOfWeekClick} />
             </AnimatedCard>
 
             {/* Desglose 3 columnas */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-              <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
                 <ZoneRevenueChart
                   data={allData.byZone}
                   selectedZone={resultsZone}
@@ -589,13 +589,13 @@ export function POSDashboardPanel() {
                   unknownZone={allData.unknownZone}
                 />
               </AnimatedCard>
-              <AnimatedCard delay={0.12} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <AnimatedCard delay={0.12} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
                 <HourlyRevenueChart
                   data={allData.hourlyRevenue}
                   onHourDrillDown={handleResultsHourDrillDown}
                 />
               </AnimatedCard>
-              <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
                 <TopProductsTable
                   data={allData.topProducts}
                   onProductDrillDown={handleResultsProductDrillDown}
@@ -608,7 +608,7 @@ export function POSDashboardPanel() {
 
             {/* Detalle expandido — 2 columnas */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-              <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3 sm:p-4">
+              <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-3 sm:p-4">
                 <CategoryBreakdown
                   data={allData.topCategories}
                   selectedCategory={resultsCategory}
@@ -619,7 +619,7 @@ export function POSDashboardPanel() {
                   totalKpiRevenue={allData.kpis.revenue}
                 />
               </AnimatedCard>
-              <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
                 <TopProductByCategoryChart
                   data={allData.topProductByCategory || []}
                   onProductDrillDown={handleResultsProductDrillDown}
@@ -634,19 +634,19 @@ export function POSDashboardPanel() {
 
             {/* Staff + Pagos */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-              <AnimatedCard delay={0.36} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <AnimatedCard delay={0.36} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
                 <StaffPerformanceTable
                   data={allData.staffPerformance}
                   onStaffDrillDown={handleResultsStaffDrillDown}
                 />
               </AnimatedCard>
-              <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
                 <PaymentMethodsChart data={allData.paymentMethods} />
               </AnimatedCard>
             </div>
 
             {/* Category Companions */}
-            <AnimatedCard delay={0.48} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <AnimatedCard delay={0.48} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
               <CategoryCompanionsCard data={allData.categoryCompanions || []} />
             </AnimatedCard>
           </>
@@ -658,7 +658,7 @@ export function POSDashboardPanel() {
       {data && activeTab === 'operation' && (
         <>
           {/* CALENDAR — calendar grid with day-by-day navigation */}
-          <AnimatedCard delay={0} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+          <AnimatedCard delay={0} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
             <RevenueHeatmapCalendar
               dailyData={calendarTrend}
               selectedDate={isSingleDay ? filters.from : undefined}
@@ -686,7 +686,7 @@ export function POSDashboardPanel() {
 
           {/* Day Performance — cuando un dia seleccionado y NO en modo consolidado */}
           {isSingleDay && viewMode === 'day' && (
-            <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-5">
+            <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-5">
               <DayPerformanceCard
                 date={filters.from!}
                 kpis={data.kpis}
@@ -714,7 +714,7 @@ export function POSDashboardPanel() {
 
           {/* Desglose 3 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
               <ZoneRevenueChart
                 data={data.byZone}
                 selectedZone={filters.zone}
@@ -723,13 +723,13 @@ export function POSDashboardPanel() {
                 unknownZone={data.unknownZone}
               />
             </AnimatedCard>
-            <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
               <HourlyRevenueChart
                 data={data.hourlyRevenue}
                 onHourDrillDown={handleHourDrillDown}
               />
             </AnimatedCard>
-            <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
               <TopProductsTable
                 data={data.topProducts}
                 onProductDrillDown={handleProductDrillDown}
@@ -742,7 +742,7 @@ export function POSDashboardPanel() {
 
           {/* Detalle expandido — 2 columnas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-            <AnimatedCard delay={0.36} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3 sm:p-4">
+            <AnimatedCard delay={0.36} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-3 sm:p-4">
               <CategoryBreakdown
                 data={data.topCategories}
                 selectedCategory={filters.category}
@@ -753,7 +753,7 @@ export function POSDashboardPanel() {
                 totalKpiRevenue={data.kpis.revenue}
               />
             </AnimatedCard>
-            <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
               <TopProductByCategoryChart
                 data={data.topProductByCategory || []}
                 onProductDrillDown={handleProductDrillDown}
@@ -767,12 +767,12 @@ export function POSDashboardPanel() {
           </div>
 
           {/* Category Companions — new */}
-          <AnimatedCard delay={0.44} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+          <AnimatedCard delay={0.44} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
             <CategoryCompanionsCard data={data.categoryCompanions || []} />
           </AnimatedCard>
 
           {/* Category Performers — Top 2 / Bottom 2 per category */}
-          <AnimatedCard delay={0.45} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+          <AnimatedCard delay={0.45} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
             <CategoryPerformersCard
               topPerformersByCat={data.topPerformersByCategory || {}}
               bottomPerformersByCat={data.bottomPerformersByCategory || {}}
@@ -785,13 +785,13 @@ export function POSDashboardPanel() {
           </AnimatedCard>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-            <AnimatedCard delay={0.48} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <AnimatedCard delay={0.48} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
               <StaffPerformanceTable
                 data={data.staffPerformance}
                 onStaffDrillDown={handleStaffDrillDown}
               />
             </AnimatedCard>
-            <AnimatedCard delay={0.54} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <AnimatedCard delay={0.54} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
               <PaymentMethodsChart data={data.paymentMethods} />
             </AnimatedCard>
           </div>

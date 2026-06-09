@@ -132,7 +132,7 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
         <button
           type="button"
           onClick={() => setShowNewForm(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97]"
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 dark:hover:bg-[var(--color-ak-borgona-light)]/90 active:scale-[0.97]"
           style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         >
           <Plus size={16} weight="bold" />

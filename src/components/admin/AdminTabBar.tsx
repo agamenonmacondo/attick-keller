@@ -28,7 +28,7 @@ interface AdminTabBarProps {
 
 export function AdminTabBar({ active, onChange }: AdminTabBarProps) {
   return (
-    <div className="border-b border-[var(--border-default)] bg-[var(--bg-card)]">
+    <div className="border-b border-[var(--border-default)] bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6">
         <nav className="flex gap-1 overflow-x-auto -mb-px">
           {TABS.map(tab => (

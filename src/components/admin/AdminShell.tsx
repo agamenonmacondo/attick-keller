@@ -48,7 +48,7 @@ export function AdminShell() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)] dark:bg-[var(--color-ak-madera-light)]/5">
       <AdminHeader />
       <AdminTabBar active={activeTab} onChange={setActiveTab} />
       <main className="max-w-[1400px] mx-auto px-4 md:px-6 py-6">

@@ -37,7 +37,7 @@ export function KPICard({ label, value, icon, subtext, className }: KPICardProps
   const displayValue = typeof value === 'number' ? formatCOPCompact(value) : value
 
   return (
-    <div className={`bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4 flex flex-col gap-1.5 ${className || ''}`}>
+    <div className={`bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4 flex flex-col gap-1.5 ${className || ''}`}>
       <div className="flex items-center gap-1.5">
         {icon && <span className="text-[var(--text-secondary)]">{icon}</span>}
         <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">{label}</span>

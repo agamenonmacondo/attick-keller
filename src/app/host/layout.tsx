@@ -1,7 +1,5 @@
-'use client'
-
-import { ThemeProvider } from '@/lib/ThemeProvider'
+export const dynamic = 'force-dynamic'
 
 export default function HostLayout({ children }: { children: React.ReactNode }) {
-  return <ThemeProvider>{children}</ThemeProvider>
+  return <>{children}</>
 }

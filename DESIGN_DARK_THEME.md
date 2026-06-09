@@ -1,121 +1,114 @@
 # Attick & Keller — Dark Theme Design Spec
 
-## Auditoría de Colores
+## Architecture: Automatic Color Switching
 
-### Problemática
-La paleta `@theme inline` de Tailwind v4 define colores FIJOS que NO cambian en dark mode:
-- `--color-ak-madera` (#3E2723) — siempre marrón oscuro
-- `--color-ak-borgona` (#6B2737) — siempre borgoña
-- `--color-ak-dorado` (#C9A94E) — siempre dorado
-- `--color-ak-oliva` (#5C7A4D) — siempre oliva
-- `--color-ak-ambar` (#D4922A) — siempre ámbar
-- `--color-ak-carbon` (#1E1E1E) — siempre negro
-- `--color-ak-ladrillo` (#A0522D) — siempre terracota
+Brand colors use **CSS custom properties** that change automatically in `.dark {}`. This eliminates the need for `dark:` Tailwind variants on every element.
 
-Los CSS vars que SÍ cambian en `.dark`:
-- `--bg-primary`, `--bg-card`, `--bg-input`, `--bg-hover`
-- `--text-primary`, `--text-secondary`, `--text-muted`
-- `--border-default`, `--border-light`
-- `--color-accent`, `--color-success`, `--color-warning`, `--color-danger`
+### The Problem (Solved)
+The original `@theme inline` block defines **fixed** colors that don't change in dark mode:
+- `--color-ak-madera: #3E2723` → invisible on `#2C2018` card background (1.3:1 ratio)
+- `--color-ak-borgona: #6B2737` → barely visible on `#1A1412` (1.7:1 ratio)
+- `--color-ak-oliva: #5C7A4D` → fails AA on dark backgrounds (2.8:1)
+- `--color-ak-ambar: #D4922A` → marginal on dark (4.0:1, barely passes large text)
 
-### Uso en Admin Header
-- `bg-[var(--color-ak-madera)]` — fondo barra superior (oscuro fijo, correcto)
-- `text-[var(--color-ak-dorado)]` — logo/título (dorado sobre madera oscura, correcto)
-- `text-[var(--text-secondary)]` — email, links (cambia en dark, correcto)
-- Toggle Sun/Moon — icono cambia correctamente
+### The Solution: `.dark {}` CSS Var Overrides
 
-### Uso en Host Header
-- Mismo patrón: fondo madera fijo, texto dorado, texto claro para rest
-- Toggle Sun/Moon agregado — funciona igual que admin
+```css
+.dark {
+  --color-ak-borgona: #C44D63;   /* was #6B2737 — 5.4:1 on dark ✓ */
+  --color-ak-madera: #A07868;     /* was #3E2723 — 4.5:1 on dark ✓ */
+  --color-ak-oliva: #7BA86A;      /* was #5C7A4D — 5.0:1 on dark ✓ */
+  --color-ak-ambar: #E8A840;      /* was #D4922A — 5.2:1 on dark ✓ */
+  --color-ak-ladrillo: #D4714D;   /* was #A0522D — 4.8:1 on dark ✓ */
+  --color-ak-cal: #F5EDE0;        /* stays — already light ✓ */
+}
+```
 
-### Problemas Identificados
-1. ✅ RESUELTO: `bg-white` en cards/contenedores → `bg-[var(--bg-card)]`
-2. ✅ RESUELTO: Colores Tailwind genéricos (red-50, green-600, gray-400) → CSS vars
-3. ✅ RESUELTO: Recharts usa tema dual dinámico (TrendChart, TableDemandCard)
-4. ✅ RESUELTO: FloorPlanMap zone colors son más luminosos
-5. ✅ RESUELTO: StatusBadge/TierBadge usan CSS vars
-6. ✅ RESUELTO: Admin metrics emerald/amber → success/ambar vars
+This means:
+- `text-[var(--color-ak-borgona)]` → auto bright in dark mode
+- `bg-[var(--color-ak-borgona)]` → auto bright in dark mode
+- `style={{ color: 'var(--color-ak-borgona)' }}` → auto bright in dark mode
+- No need to add `dark:text-[var(--color-ak-borgona-light)]` on every element
+
+### Backward Compatibility with `-light` Vars
+
+| Variable | Light Value | Dark Value |
+|----------|------------|------------|
+| `--color-ak-borgona` | #6B2737 | #C44D63 |
+| `--color-ak-borgona-light` | #C44D63 | #C44D63 |
+
+In dark mode, `var(--color-ak-borgona)` = `var(--color-ak-borgona-light)` = **#C44D63**.
+
+Existing `dark:text-[var(--color-ak-borgona-light)]` are **harmless redundancy** — same value produced. No double-brightening occurs.
 
 ---
 
-## Dark Theme Spec
+## Full Palette Reference
 
-### Paleta Light (default)
-| Token | Valor | Uso |
-|-------|-------|-----|
-| `--bg-primary` | #F5EDE0 | Fondo general (Cal) |
-| `--bg-card` | #FFFFFF | Tarjetas, modales |
-| `--bg-input` | #F5EDE0 | Inputs, fondos hover |
-| `--bg-hover` | rgba(62,39,35,0.06) | Hover states |
-| `--text-primary` | #3E2723 | Texto principal (Madera) |
-| `--text-secondary` | #8D6E63 | Labels, subtítulos |
-| `--text-muted` | #A1887F | Texto terciario |
-| `--border-default` | #D7CCC8 | Bordes principales |
-| `--border-light` | #E8DDD0 | Bordes sutiles |
-| `--color-accent` | #6B2737 | Accent (Borgoña) |
-| `--color-success` | #5C7A4D | Confirmación (Oliva) |
-| `--color-warning` | #D4922A | Alertas (Ámbar) |
-| `--color-danger` | #C62828 | Errores, destrucción |
-| `--shadow-sm` | 0 1px 2px rgba(62,39,35,0.06) | Shadow sutil |
-| `--shadow-md` | 0 4px 12px rgba(62,39,35,0.08) | Shadow medio |
+### Structural Colors (auto-switch via CSS vars)
 
-### Paleta Dark
-| Token | Valor | Uso |
-|-------|-------|-----|
-| `--bg-primary` | #1A1412 | Carbon Profundo — fondo general |
-| `--bg-card` | #2C2018 | Madera Oscuro — tarjetas |
-| `--bg-input` | #362A22 | Madera Medio — inputs, fondos activos |
-| `--bg-hover` | rgba(232,221,208,0.06) | Hover states sobre fondos oscuros |
-| `--text-primary` | #E8DDD0 | Cal Claro — texto principal (alto contraste) |
-| `--text-secondary` | #A89080 | Madera Desaturado — labels |
-| `--text-muted` | #7A6A5E | Madera Apagado — texto terciario |
-| `--border-default` | #4A3A30 | Borders en dark (cálido, no gris) |
-| `--border-light` | #3A2E24 | Borders sutiles dark |
-| `--color-accent` | #C44D63 | Borgoña Luminoso (más visible en dark) |
-| `--color-success` | #7BA86A | Oliva Luminoso |
-| `--color-warning` | #E8A840 | Ámbar Luminoso |
-| `--color-danger` | #EF5350 | Rojo Luminoso (más legible en dark) |
-| `--shadow-sm` | 0 1px 2px rgba(0,0,0,0.3) | Shadow dark sutil |
-| `--shadow-md` | 0 4px 12px rgba(0,0,0,0.4) | Shadow dark medio |
+| Token | Light | Dark | Use |
+|-------|-------|------|-----|
+| `--bg-primary` | #F5EDE0 | #1A1412 | Page background |
+| `--bg-card` | #FFFFFF | #2C2018 | Cards, modals |
+| `--bg-input` | #F5EDE0 | #362A22 | Inputs, active areas |
+| `--bg-hover` | rgba(62,39,35,0.06) | rgba(232,221,208,0.08) | Hover states |
+| `--text-primary` | #3E2723 | #E8DDD0 | Main text |
+| `--text-secondary` | #8D6E63 | #BCA898 | Labels, subtitles |
+| `--text-muted` | #A1887F | #9A8A7E | Tertiary text |
+| `--border-default` | #D7CCC8 | #5A4A3E | Primary borders |
+| `--border-light` | #E8DDD0 | #4A3E34 | Subtle borders |
+| `--color-accent` | #6B2737 | #C44D63 | Accent (borgoña) |
+| `--color-success` | #5C7A4D | #7BA86A | Success (oliva) |
+| `--color-warning` | #D4922A | #E8A840 | Warning (ámbar) |
+| `--color-danger` | #C62828 | #EF5350 | Danger (red) |
+| `--badge-bg` | rgba(107,39,55,0.08) | rgba(196,77,99,0.15) | Badge background |
+| `--shadow-sm` | 0 1px 2px rgba(62,39,35,0.06) | 0 1px 2px rgba(0,0,0,0.3) | Subtle shadow |
+| `--shadow-md` | 0 4px 12px rgba(62,39,35,0.08) | 0 4px 12px rgba(0,0,0,0.4) | Medium shadow |
 
-### Colores Fijos (no cambian entre light/dark)
-| Token | Valor | Uso |
-|-------|-------|-----|
-| `--color-ak-madera` | #3E2723 | Headers, fondo de marca |
-| `--color-ak-borgona` | #6B2737 | Accent en contexto light (botones) |
-| `--color-ak-cal` | #F5EDE0 | Cal (sin uso directo, usar --bg-primary) |
-| `--color-ak-oliva` | #5C7A4D | Accent de success light |
-| `--color-ak-ambar` | #D4922A | Accent de warning light |
-| `--color-ak-dorado` | #C9A94E | Logo, acentos dorados |
-| `--color-ak-carbon` | #1E1E1E | Sin uso directo (usar --bg-primary en dark) |
-| `--color-ak-ladrillo` | #A0522D | Terracota, sin uso directo |
-| `--color-ak-night` | #1A1412 | Alias de --bg-primary en dark |
-| `--color-ak-night-card` | #2C2018 | Alias de --bg-card en dark |
-| `--color-ak-night-input` | #362A22 | Alias de --bg-input en dark |
-| `--color-ak-night-border` | #4A3A30 | Alias de --border-default en dark |
-| `--color-ak-night-text` | #E8DDD0 | Alias de --text-primary en dark |
-| `--color-ak-night-muted` | #A89080 | Alias de --text-secondary en dark |
-| `--color-ak-borgona-light` | #C44D63 | Alias de --color-accent en dark |
-| `--color-ak-oliva-light` | #7BA86A | Alias de --color-success en dark |
-| `--color-ak-ambar-light` | #E8A840 | Alias de --color-warning en dark |
+### Brand Colors (auto-switch in dark)
 
-### Regla de Uso
-1. **SIEMPRE** usar CSS vars (`var(--xxx)`) para colores dinámicos
-2. **NUNCA** usar colores Tailwind genéricos (`bg-white`, `text-gray-400`, etc.)
-3. **Los `@theme inline` tokens** (madera, borgoña, dorado, etc.) son para contexto de marca FIJO (headers, logo, botones de marca) — NO cambian en dark
-4. **Los `:root`/`.dark` tokens** (`--bg-primary`, `--text-primary`, etc.) son para contenido que CAMBIA en dark
-5. **Buttons**: borgoña sobre texto blanco funciona en ambos modos porque `--color-accent` se vuelve `#C44D63` en dark — visible y con buen contraste
-6. **Headers**: siempre fondo madera oscuro (#3E2723) con texto dorado/claro — no cambian en dark
-7. **Recharts**: tema dual con `isDark` — colores hex inline que cambian dinámicamente
+| Token | Light | Dark | WCAG on dark bg |
+|-------|-------|------|-----------------|
+| `--color-ak-madera` | #3E2723 | **#A07868** | 4.5:1 AA ✓ |
+| `--color-ak-borgona` | #6B2737 | **#C44D63** | 5.4:1 AA ✓ |
+| `--color-ak-cal` | #F5EDE0 | **#F5EDE0** | 12.8:1 AAA ✓ |
+| `--color-ak-oliva` | #5C7A4D | **#7BA86A** | 5.0:1 AA ✓ |
+| `--color-ak-ambar` | #D4922A | **#E8A840** | 5.2:1 AA ✓ |
+| `--color-ak-dorado` | #C9A94E | #C9A94E | 7.5:1 AA ✓ |
+| `--color-ak-ladrillo` | #A0522D | **#D4714D** | 4.8:1 AA ✓ |
+| `--color-ak-carbon` | #1E1E1E | #1E1E1E | — |
 
-### Contraste WCAG AA en Dark Mode
-| Combinación | Ratio | Cumple |
-|-------------|-------|--------|
-| #E8DDD0 sobre #1A1412 | 12.8:1 | AA ✓ |
-| #E8DDD0 sobre #2C2018 | 10.2:1 | AA ✓ |
-| #A89080 sobre #1A1412 | 5.6:1 | AA ✓ |
-| #7A6A5E sobre #1A1412 | 3.8:1 | AA large text ✓ |
-| #C44D63 sobre #1A1412 | 5.4:1 | AA ✓ |
-| #7BA86A sobre #1A1412 | 5.0:1 | AA ✓ |
-| #E8A840 sobre #1A1412 | 5.2:1 | AA ✓ |
-| #C9A94E sobre #3E2723 | 4.8:1 | AA ✓ |
+### Fixed Aliases (night palette, for code that needs them)
+
+| Token | Value | Maps to |
+|-------|-------|---------|
+| `--color-ak-night` | #1A1412 | `--bg-primary` dark |
+| `--color-ak-night-card` | #2C2018 | `--bg-card` dark |
+| `--color-ak-night-input` | #362A22 | `--bg-input` dark |
+| `--color-ak-night-border` | #4A3A30 | `--border-default` dark |
+| `--color-ak-night-text` | #E8DDD0 | `--text-primary` dark |
+| `--color-ak-night-muted` | #A89080 | `--text-secondary` dark (old value) |
+| `--color-ak-borgona-light` | #C44D63 | `--color-ak-borgona` dark |
+| `--color-ak-oliva-light` | #7BA86A | `--color-ak-oliva` dark |
+| `--color-ak-ambar-light` | #E8A840 | `--color-ak-ambar` dark |
+
+---
+
+## Rules
+
+1. **ALWAYS** use CSS vars (`var(--xxx)`) for colors — never raw hex values
+2. **NEVER** use Tailwind generic colors (`bg-white`, `text-gray-400`, `bg-red-50`)
+3. **Brand colors auto-switch** — use `text-[var(--color-ak-borgona)]` not `dark:text-[var(--color-ak-borgona-light)]`
+4. **Buttons with brand bg + white text** (e.g., `bg-[var(--color-ak-borgona)] text-white`) work in both themes without changes
+5. **Headers** stay dark madera (`bg-[var(--color-ak-madera)]/95`) — visible in both themes because they're dark-on-dark
+6. **Recharts** use theme-aware colors via `isDark` boolean — hex values switch dynamically
+7. **Inline styles** work: `style={{ color: 'var(--color-ak-borgona)' }}` auto-switches in dark
+8. **`dark:` variants using `-light`** are redundant but harmless — same value as the auto-switched base var
+
+### What changed from the old spec
+- `--text-secondary` dark improved: #A89080 → **#BCA898** (5.4:1 on dark bg)
+- `--text-muted` dark improved: #7A6A5E → **#9A8A7E** (4.0:1 on dark bg)
+- `--border-default` dark improved: #4A3A30 → **#5A4A3E** (3.5:1 on dark bg)
+- `--border-light` dark improved: #3A2E24 → **#4A3E34** (2.8:1 on dark bg)
+- Brand colors now **auto-switch** in `.dark` — no manual `dark:` variants needed

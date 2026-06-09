@@ -197,15 +197,20 @@ function computeUrgency(nowHHMM: string, nextStart: string | null): UrgencyLevel
 
 ## 4. COLORES Y ANIMACIONES
 
+Todos los colores usan CSS custom properties que cambian automáticamente en dark mode. No se necesitan `dark:` variants manuales.
+
 | Estado | Borde | Badge | Animación |
-|--------|-------|-------|-----------|
-| Disponible | Verde #5C7A4D | — | Ninguna |
-| Reservado (lejos) | Ámbar #D4922A | — | Ninguna |
-| Info (31-60 min) | Azul #1565C0 | "1h" | Ninguna |
-| Warning (16-30 min) | Naranja #E65100 | "30m" | Suave pulso |
-| Urgent (≤15 min) | Rojo #C62828 | "15m" | Pulso fuerte |
-| Ocupado (sentado) | Burdeos #6B2737 | — | Ninguna |
-| Transición (entre reservas) | Púrpura #7B1FA2 | — | Ninguna |
+|--------|------|-------|-----------|
+| Disponible | `var(--color-ak-oliva)` → #5C7A4D light / #7BA86A dark | — | Ninguna |
+| Reservado (lejos) | `var(--color-ak-ambar)` → #D4922A light / #E8A840 dark | — | Ninguna |
+| Info (31-60 min) | `var(--color-accent)` azul-info | "1h" | Ninguna |
+| Warning (16-30 min) | `var(--color-warning)` → #D4922A light / #E8A840 dark | "30m" | Suave pulso |
+| Urgent (≤15 min) | `var(--color-danger)` → #C62828 light / #EF5350 dark | "15m" | Pulso fuerte |
+| Ocupado (sentado) | `var(--color-ak-borgona)` → #6B2737 light / #C44D63 dark | — | Ninguna |
+| Transición (entre reservas) | púrpura #7B1FA2 (contraste alto en ambos) | — | Ninguna |
+
+### Nota sobre dark mode
+Los colores de marca (borgoña, oliva, ámbar, madera, ladrillo) cambian automáticamente a variantes más claras en dark mode via CSS var overrides en `.dark {}`. Un solo `text-[var(--color-ak-borgona)]` funciona en ambos temas sin `dark:` adicional.
 
 ---
 

@@ -22,13 +22,16 @@ function jsDayToIso(jsDay: number): number {
 }
 
 interface AggregatedDay {
-  dayOfWeek: number  // ISO: 1=Lun, 7=Dom
-  label: string      // "Lun", "Mar", etc.
-  fullLabel: string  // "Lunes", "Martes", etc.
-  revenue: number     // average revenue
-  cheques: number     // average cheques
-  propina: number     // average propina
-  count: number       // how many samples (days) contributed
+  dayOfWeek: number      // ISO: 1=Lun, 7=Dom
+  label: string          // "Lun", "Mar", etc.
+  fullLabel: string      // "Lunes", "Martes", etc.
+  totalRevenue: number   // total acumulado
+  avgRevenue: number     // promedio por día
+  totalCheques: number
+  avgCheques: number
+  totalPropina: number
+  avgPropina: number
+  count: number          // cuántos días contribuyeron
 }
 
 interface DailyTrendChartProps {
@@ -36,25 +39,47 @@ interface DailyTrendChartProps {
   onDayClick?: (jsDay: number, dayName: string) => void
 }
 
-interface TooltipPayload {
-  value: number
-  name: string
-  dataKey: string
-}
-
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: TooltipPayload[]; label?: string }) {
-  if (!active || !payload) return null
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) {
+  if (!active || !payload || payload.length === 0) return null
+  const day = payload[0].payload as AggregatedDay
   return (
-    <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg px-3 py-2 shadow-lg text-xs">
-      <p className="text-[var(--text-primary)] font-medium mb-1">{label}</p>
-      {payload.map((p, i) => (
-        <p key={i} className="text-[var(--text-secondary)]">
-          {p.dataKey === 'revenue' ? `Ventas: ${formatCOPDisplay(p.value)}` :
-           p.dataKey === 'propina' ? `Propina: ${formatCOPDisplay(p.value)}` :
-           `${Math.round(p.value)} cheques`}
-        </p>
-      ))}
-      <p className="text-[9px] text-[var(--color-ak-dorado)] mt-1">Click para ver en Operacion</p>
+    <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg px-3 py-2 shadow-lg text-xs min-w-[180px]">
+      <p className="text-[var(--text-primary)] font-medium mb-1">{day.fullLabel}</p>
+
+      {/* Revenue */}
+      <div className="flex justify-between gap-3 mb-0.5">
+        <span className="text-[var(--text-secondary)]">Ventas total:</span>
+        <span className="text-[var(--text-primary)] font-medium">{formatCOPDisplay(day.totalRevenue)}</span>
+      </div>
+      <div className="flex justify-between gap-3 mb-0.5">
+        <span className="text-[var(--text-muted)]">Promedio/dia:</span>
+        <span className="text-[var(--text-muted)]">{formatCOPDisplay(day.avgRevenue)}</span>
+      </div>
+
+      {/* Cheques */}
+      <div className="flex justify-between gap-3 mb-0.5">
+        <span className="text-[var(--text-secondary)]">Cheques total:</span>
+        <span className="text-[var(--text-primary)] font-medium">{Math.round(day.totalCheques)}</span>
+      </div>
+      <div className="flex justify-between gap-3 mb-0.5">
+        <span className="text-[var(--text-muted)]">Promedio/dia:</span>
+        <span className="text-[var(--text-muted)]">{Math.round(day.avgCheques)}</span>
+      </div>
+
+      {/* Propina */}
+      <div className="flex justify-between gap-3 mb-0.5">
+        <span className="text-[var(--text-secondary)]">Propina total:</span>
+        <span className="text-[var(--text-primary)] font-medium">{formatCOPDisplay(day.totalPropina)}</span>
+      </div>
+      <div className="flex justify-between gap-3 mb-0.5">
+        <span className="text-[var(--text-muted)]">Promedio/dia:</span>
+        <span className="text-[var(--text-muted)]">{formatCOPDisplay(day.avgPropina)}</span>
+      </div>
+
+      {/* Count */}
+      <p className="text-[var(--text-muted)] mt-1 pt-1 border-t border-[var(--border-default)] text-[10px]">
+        {day.count} {day.count === 1 ? 'dia' : 'dias'} de datos
+      </p>
     </div>
   )
 }
@@ -71,44 +96,47 @@ const BAR_COLORS: Record<number, string> = {
 }
 
 export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
-  // Aggregate daily data by day of week → average per weekday
+  // Aggregate by day of week: total acumulado + promedio
   const chartData = useMemo<AggregatedDay[]>(() => {
-    if (data.length === 0) return []
-
+    // Initialize ALL 7 days (even if no data for some)
     const buckets: Record<number, { revenue: number; cheques: number; propina: number; count: number }> = {}
+    for (let isoDay = 1; isoDay <= 7; isoDay++) {
+      buckets[isoDay] = { revenue: 0, cheques: 0, propina: 0, count: 0 }
+    }
 
+    // Accumulate totals
     for (const d of data) {
       const dateObj = new Date(d.date + 'T12:00:00')
       const isoDay = jsDayToIso(dateObj.getDay())
-      if (!buckets[isoDay]) {
-        buckets[isoDay] = { revenue: 0, cheques: 0, propina: 0, count: 0 }
-      }
       buckets[isoDay].revenue += d.revenue
       buckets[isoDay].cheques += d.cheques
       buckets[isoDay].propina += d.propina
       buckets[isoDay].count += 1
     }
 
-    // Build ordered array Mon-Sun with AVERAGES
+    // Build ordered array Mon-Sun with totals AND averages
     const result: AggregatedDay[] = []
     for (let isoDay = 1; isoDay <= 7; isoDay++) {
       const b = buckets[isoDay]
-      if (!b) continue
       const info = DAY_NAMES[isoDay]
+      const count = b.count
       result.push({
         dayOfWeek: isoDay,
         label: info.short,
         fullLabel: info.full,
-        revenue: Math.round(b.revenue / b.count),
-        cheques: Math.round(b.cheques / b.count),
-        propina: Math.round(b.propina / b.count),
-        count: b.count,
+        totalRevenue: Math.round(b.revenue),
+        avgRevenue: count > 0 ? Math.round(b.revenue / count) : 0,
+        totalCheques: Math.round(b.cheques),
+        avgCheques: count > 0 ? Math.round(b.cheques / count) : 0,
+        totalPropina: Math.round(b.propina),
+        avgPropina: count > 0 ? Math.round(b.propina / count) : 0,
+        count,
       })
     }
     return result
   }, [data])
 
-  if (chartData.length === 0) {
+  if (data.length === 0) {
     return (
       <div>
         <SectionHeading>Revenue por Dia</SectionHeading>
@@ -152,8 +180,10 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
             width={55}
           />
           <Tooltip content={<CustomTooltip />} />
+          {/* Total Revenue bar — colored by day type */}
           <Bar
-            dataKey="revenue"
+            dataKey="totalRevenue"
+            name="Ventas total"
             radius={[4, 4, 0, 0]}
             style={{ transition: 'all 300ms ease-out', cursor: 'pointer' }}
           >
@@ -161,26 +191,32 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
               <Cell key={index} fill={BAR_COLORS[entry.dayOfWeek] || 'var(--color-ak-borgona)'} />
             ))}
           </Bar>
+          {/* Total Propina bar */}
           <Bar
-            dataKey="propina"
+            dataKey="totalPropina"
+            name="Propina total"
             fill="var(--color-ak-oliva)"
             radius={[4, 4, 0, 0]}
             style={{ transition: 'all 300ms ease-out', cursor: 'pointer' }}
           />
         </BarChart>
       </ResponsiveContainer>
-      <div className="flex items-center gap-4 mt-2">
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-4 mt-2">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-borgona)]" />
-          <span className="text-[10px] text-[var(--text-muted)]">Ventas (promedio)</span>
+          <span className="text-[10px] text-[var(--text-muted)]">Ventas Lun-Jue (total)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-dorado)]" />
-          <span className="text-[10px] text-[var(--text-muted)]">Vie/Sab</span>
+          <span className="text-[10px] text-[var(--text-muted)]">Ventas Vie-Sab (total)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-sm bg-[var(--color-ak-oliva)]" />
-          <span className="text-[10px] text-[var(--text-muted)]">Propina</span>
+          <span className="text-[10px] text-[var(--text-muted)]">Propina (total)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] text-[var(--text-muted)]">| Tooltip: total y promedio/dia</span>
         </div>
       </div>
     </div>

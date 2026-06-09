@@ -16,11 +16,6 @@ const DAY_NAMES: Record<number, { short: string; full: string; jsDay: number }> 
   7: { short: 'Dom', full: 'Domingo', jsDay: 0 },
 }
 
-// Map JS day (0=Sun, 1=Mon...6=Sat) to ISO day (1=Mon...7=Sun)
-function jsDayToIso(jsDay: number): number {
-  return jsDay === 0 ? 7 : jsDay
-}
-
 // Get the Monday of the week containing a given date string (YYYY-MM-DD)
 function getMonday(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00')
@@ -32,6 +27,14 @@ function getMonday(dateStr: string): string {
   const y = monday.getFullYear()
   const m = String(monday.getMonth() + 1).padStart(2, '0')
   const day = String(monday.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+// Build a date string YYYY-MM-DD from a Date object
+function toDateStr(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
 }
 
@@ -84,40 +87,61 @@ const BAR_COLORS: Record<number, string> = {
 }
 
 export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
-  // Take only the LAST complete week (Mon-Sun) from the data
+  // Find the last COMPLETE week (Mon-Sun) with enough data
   const chartData = useMemo<WeekDay[]>(() => {
     if (data.length === 0) return []
 
-    // Find the Monday of the latest week that has data
-    // Sort by date descending, take last date, find its week's Monday
-    const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date))
-    const lastDate = sorted[sorted.length - 1].date
-    const mondayStr = getMonday(lastDate)
-
-    // Build the 7 days of that week
-    const weekDays: WeekDay[] = []
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(mondayStr + 'T12:00:00')
-      d.setDate(d.getDate() + i)
-      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-      const isoDay = i + 1 // 1=Mon...7=Sun
-      const info = DAY_NAMES[isoDay]
-
-      // Find this day in the data
-      const dayData = data.find(dd => dd.date === dateStr)
-
-      weekDays.push({
-        dayOfWeek: isoDay,
-        label: info.short,
-        fullLabel: info.full,
-        date: dateStr,
-        revenue: dayData?.revenue ?? 0,
-        cheques: dayData?.cheques ?? 0,
-        propina: dayData?.propina ?? 0,
-      })
+    // Build a lookup map for quick date access
+    const dateMap = new Map<string, { revenue: number; cheques: number; propina: number }>()
+    for (const d of data) {
+      dateMap.set(d.date, { revenue: d.revenue, cheques: d.cheques, propina: d.propina })
     }
 
-    return weekDays
+    // Start from the last date in the data and check weeks backwards
+    const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date))
+    const lastDate = sorted[sorted.length - 1].date
+    let mondayStr = getMonday(lastDate)
+
+    // Build the candidate week and count non-zero days
+    const tryBuildWeek = (monday: string): { days: WeekDay[]; daysWithData: number } => {
+      const days: WeekDay[] = []
+      let daysWithData = 0
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday + 'T12:00:00')
+        d.setDate(d.getDate() + i)
+        const dateStr = toDateStr(d)
+        const isoDay = i + 1
+        const info = DAY_NAMES[isoDay]
+        const dayData = dateMap.get(dateStr)
+        if (dayData && dayData.revenue > 0) daysWithData++
+        days.push({
+          dayOfWeek: isoDay,
+          label: info.short,
+          fullLabel: info.full,
+          date: dateStr,
+          revenue: dayData?.revenue ?? 0,
+          cheques: dayData?.cheques ?? 0,
+          propina: dayData?.propina ?? 0,
+        })
+      }
+      return { days, daysWithData }
+    }
+
+    // Try current week; if fewer than 4 days with data, go to previous week
+    let { days, daysWithData } = tryBuildWeek(mondayStr)
+    if (daysWithData < 4) {
+      // Go to previous Monday
+      const prevMonday = new Date(mondayStr + 'T12:00:00')
+      prevMonday.setDate(prevMonday.getDate() - 7)
+      mondayStr = toDateStr(prevMonday)
+      const prev = tryBuildWeek(mondayStr)
+      if (prev.daysWithData > daysWithData) {
+        days = prev.days
+        daysWithData = prev.daysWithData
+      }
+    }
+
+    return days
   }, [data])
 
   // Format the week range for the subtitle

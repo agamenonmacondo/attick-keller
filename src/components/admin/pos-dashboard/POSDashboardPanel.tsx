@@ -21,6 +21,7 @@ import { CategoryCompanionsCard } from './CategoryCompanionsCard'
 import { CategoryPerformersCard } from './CategoryPerformersCard'
 import { POSCostsTabContent } from './POSCostsTabContent'
 import { POSCatalogTabContent } from './POSCatalogTabContent'
+import { POSDailyTrendChart } from './POSDailyTrendChart'
 
 type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 
@@ -336,6 +337,11 @@ export function POSDashboardPanel() {
             </div>
           </AnimatedCard>
 
+          {/* Tendencia Diaria — revenue por dia historico */}
+          <AnimatedCard delay={0.03} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <POSDailyTrendChart data={allData.dailyTrend} onDayClick={handleDayClick} />
+          </AnimatedCard>
+
           {/* Desglose 3 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
@@ -465,6 +471,11 @@ export function POSDashboardPanel() {
                 isSingleDay={isSingleDay}
               />
             </div>
+          </AnimatedCard>
+
+          {/* Tendencia Diaria — revenue por dia del periodo */}
+          <AnimatedCard delay={0.15} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <POSDailyTrendChart data={data.dailyTrend} onDayClick={handleDayClick} />
           </AnimatedCard>
 
           {/* Desglose 3 columnas */}

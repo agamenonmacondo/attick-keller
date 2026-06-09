@@ -45,6 +45,9 @@ export function POSDashboardPanel() {
   const [heatmapMetric, setHeatmapMetric] = useState<HeatmapMetric>('revenue')
   const [calendarMonth, setCalendarMonth] = useState<string | undefined>(undefined) // 'YYYY-MM' for calendar view month
   const [selectedDayOfWeek, setSelectedDayOfWeek] = useState<AggregatedDay | null>(null)
+  // ── Results filters — separate from operation filters ──
+  const [resultsZone, setResultsZone] = useState<string>('all')
+  const [resultsCategory, setResultsCategory] = useState<string>('all')
 
   // Day-of-week detail hook — fetches filtered data when a day is selected
   const { data: dayDetail, loading: dayDetailLoading, error: dayDetailError } = usePOSDayOfWeekDetail(
@@ -72,8 +75,13 @@ export function POSDashboardPanel() {
   // ── Operation hook ──
   const { data, loading, error, refetch, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown } = usePOSDashboard(effectiveFilters)
 
-  // ── Results hook — all-time consolidated data ──
-  const ALL_TIME_FILTERS: POSDashboardFilters = { zone: 'all', category: 'all', from: '2026-01-01', to: '2026-06-30' }
+  // ── Results hook — all-time consolidated data, filtered by results zone/category ──
+  const resultsFilters = useMemo<POSDashboardFilters>(() => ({
+    zone: resultsZone,
+    category: resultsCategory,
+    from: '2026-01-01',
+    to: '2026-06-30',
+  }), [resultsZone, resultsCategory])
   const {
     data: allData,
     loading: allLoading,
@@ -83,7 +91,7 @@ export function POSDashboardPanel() {
     drillDownError: resultsDrillDownError,
     fetchDrillDown: fetchResultsDrillDown,
     closeDrillDown: closeResultsDrillDown,
-  } = usePOSDashboard(ALL_TIME_FILTERS)
+  } = usePOSDashboard(resultsFilters)
 
   // Calendar shows ALL days regardless of month filter
   const { dailyTrend: calendarTrend, availableMonths: calendarMonths } = usePOSCalendar(filters.zone)
@@ -172,6 +180,20 @@ export function POSDashboardPanel() {
 
   const handleCategoryClick = useCallback((categoryId: string) => {
     setFilters(prev => ({ ...prev, category: categoryId }))
+  }, [])
+
+  // ── Results zone/category handlers — filter allData ──
+  const handleResultsZoneClick = useCallback((zone: string) => {
+    setResultsZone(zone)
+  }, [])
+
+  const handleResultsCategoryClick = useCallback((categoryId: string) => {
+    setResultsCategory(categoryId)
+  }, [])
+
+  const handleResultsClearFilter = useCallback(() => {
+    setResultsZone('all')
+    setResultsCategory('all')
   }, [])
 
   const handleFilterChange = useCallback((newFilters: POSDashboardFilters) => {
@@ -420,6 +442,27 @@ export function POSDashboardPanel() {
             />
           ) : (
           <>
+            {/* Active filter pill — clear to see what's filtered */}
+            {(resultsZone !== 'all' || resultsCategory !== 'all') && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {resultsZone !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25">
+                    Zona: {resultsZone}
+                    <button onClick={() => setResultsZone('all')} className="hover:text-white ml-1">&times;</button>
+                  </span>
+                )}
+                {resultsCategory !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25">
+                    {allData.topCategories?.find(c => c.categoryId === resultsCategory)?.categoryName || resultsCategory}
+                    <button onClick={() => setResultsCategory('all')} className="hover:text-white ml-1">&times;</button>
+                  </span>
+                )}
+                <button onClick={handleResultsClearFilter} className="text-sm text-[var(--text-secondary)] hover:text-[var(--color-ak-dorado)] underline underline-offset-2">
+                  Limpiar filtros
+                </button>
+              </div>
+            )}
+
             <AnimatedCard delay={0} className="p-0 overflow-visible">
               <div className="p-4">
                 <DayKPIBar kpis={allData.kpis} averages={undefined} isSingleDay={false} />
@@ -450,8 +493,8 @@ export function POSDashboardPanel() {
               <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
                 <ZoneRevenueChart
                   data={allData.byZone}
-                  selectedZone="all"
-                  onZoneClick={() => {}}
+                  selectedZone={resultsZone}
+                  onZoneClick={handleResultsZoneClick}
                   onZoneDrillDown={handleResultsZoneDrillDown}
                   unknownZone={allData.unknownZone}
                 />
@@ -466,9 +509,9 @@ export function POSDashboardPanel() {
                 <TopProductsTable
                   data={allData.topProducts}
                   onProductDrillDown={handleResultsProductDrillDown}
-                  selectedCategory="all"
+                  selectedCategory={resultsCategory}
                   productsByCategory={allData.productsByCategory}
-                  selectedCategoryName={undefined}
+                  selectedCategoryName={allData.topCategories?.find(c => c.categoryId === resultsCategory)?.categoryName}
                 />
               </AnimatedCard>
             </div>
@@ -478,8 +521,8 @@ export function POSDashboardPanel() {
               <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3 sm:p-4">
                 <CategoryBreakdown
                   data={allData.topCategories}
-                  selectedCategory="all"
-                  onCategoryClick={handleCategoryClick}
+                  selectedCategory={resultsCategory}
+                  onCategoryClick={handleResultsCategoryClick}
                   onCategoryDrillDown={handleResultsCategoryDrillDown}
                   onProductDrillDown={handleResultsProductDrillDown}
                   productsByCategory={allData.productsByCategory}
@@ -490,7 +533,7 @@ export function POSDashboardPanel() {
                 <TopProductByCategoryChart
                   data={allData.topProductByCategory || []}
                   onProductDrillDown={handleResultsProductDrillDown}
-                  selectedCategory="all"
+                  selectedCategory={resultsCategory}
                   onCategoryDrillDown={handleResultsCategoryDrillDown}
                   topPerformersByCategory={allData.topPerformersByCategory}
                   bottomPerformersByCategory={allData.bottomPerformersByCategory}

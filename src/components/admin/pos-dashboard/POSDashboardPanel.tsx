@@ -172,6 +172,7 @@ export function POSDashboardPanel() {
   // When clicking a day-of-week bar in the trend chart,
   // show detail panel in results — reset day filters on day change
   const handleDayOfWeekClick = useCallback((dayData: AggregatedDay) => {
+    console.log('[POSDashboard] DayOfWeek click:', dayData.label, 'dayOfWeek:', dayData.dayOfWeek)
     setSelectedDayOfWeek(dayData)
     setDayDetailZone('all')
     setDayDetailCategory('all')

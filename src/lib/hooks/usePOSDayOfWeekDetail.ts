@@ -36,6 +36,7 @@ export function usePOSDayOfWeekDetail(
     async function fetchDayOfWeek() {
       setLoading(true)
       setError(null)
+      console.log('[POSDayOfWeekDetail] Fetching dayOfWeek:', dayOfWeek, 'from:', from, 'to:', to)
       try {
         const params = new URLSearchParams({
           dayOfWeek: String(dayOfWeek),
@@ -45,18 +46,22 @@ export function usePOSDayOfWeekDetail(
           category,
         })
         const url = `/api/admin/pos-dashboard/day-of-week?${params.toString()}`
-        const res = await fetch(url, { signal, next: { revalidate: 300 } } as any)
+        const t0 = Date.now()
+        const res = await fetch(url, { signal })
         if (signal.aborted) return
+        const elapsed = Date.now() - t0
+        console.log('[POSDayOfWeekDetail] Response:', res.status, 'in', elapsed, 'ms')
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))
           if (signal.aborted) return
           console.error('[POSDayOfWeekDetail] API error:', res.status, d)
-          if (!cancelled) setError(d.error || 'Error cargando datos')
+          if (!cancelled) setError(d.error || `Error ${res.status}`)
           return
         }
         const d = await res.json()
         if (signal.aborted) return
         if (!cancelled) {
+          console.log('[POSDayOfWeekDetail] Got data, keys:', Object.keys(d).join(','))
           setData(d)
           setError(null)
         }

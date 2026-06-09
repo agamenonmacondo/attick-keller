@@ -439,43 +439,60 @@ export function POSDashboardPanel() {
       {/* ── Results panel — all-time consolidated data with drill-down ── */}
       {activeTab === 'results' && allData && (
         <>
-          {/* Full-page spinner while day detail is loading */}
-          {selectedDayOfWeek && dayDetailLoading && !dayDetail && (
-            <div className="py-8 flex items-center justify-center">
-              <Spinner size={24} className="animate-spin text-[var(--text-secondary)]" />
-            </div>
-          )}
-          {/* Error state for day-of-week detail */}
-          {selectedDayOfWeek && dayDetailError && !dayDetail && (
-            <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
-              <p className="text-xs text-red-400 text-center">{dayDetailError}</p>
-              <button onClick={() => setSelectedDayOfWeek(null)} className="mt-2 text-xs text-[var(--color-ak-borgona)] hover:underline block mx-auto">Volver</button>
-            </div>
-          )}
-          {/* When a day-of-week is selected, show the immersive master panel */}
-          {(selectedDayOfWeek && dayDetail) ? (
-            <DayOfWeekMasterPanel
-              dayData={selectedDayOfWeek}
-              data={dayDetail}
-              loading={dayDetailLoading}
-              error={dayDetailError}
-              onBack={() => setSelectedDayOfWeek(null)}
-              selectedZone={dayDetailZone}
-              selectedCategory={dayDetailCategory}
-              onZoneClick={handleDayDetailZoneClick}
-              onCategoryClick={handleDayDetailCategoryClick}
-              onClearFilters={handleDayDetailClearFilter}
-              onProductDrillDown={handleResultsProductDrillDown}
-              onCategoryDrillDown={handleResultsCategoryDrillDown}
-              onStaffDrillDown={handleResultsStaffDrillDown}
-              onZoneDrillDown={handleResultsZoneDrillDown}
-              onHourDrillDown={handleResultsHourDrillDown}
-              drillDown={resultsDrillDown}
-              drillDownData={resultsDrillDownData}
-              drillDownLoading={resultsDrillDownLoading}
-              drillDownError={resultsDrillDownError}
-              onCloseDrillDown={closeResultsDrillDown}
-            />
+          {selectedDayOfWeek ? (
+            /* ── Day-of-week detail selected: show detail panel ── */
+            <>
+              {/* Loading skeleton while day detail is fetching */}
+              {dayDetailLoading && !dayDetail && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setSelectedDayOfWeek(null)} className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--color-ak-borgona)] transition-colors">
+                      ← Volver a Resultados
+                    </button>
+                    <span className="text-sm text-[var(--text-muted)]">Cargando {selectedDayOfWeek.fullLabel}...</span>
+                  </div>
+                  <div className="h-16 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="h-24 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                    <div className="h-24 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                    <div className="h-24 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                  </div>
+                  <div className="h-64 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                </div>
+              )}
+              {/* Error state */}
+              {dayDetailError && !dayDetail && (
+                <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-6">
+                  <p className="text-sm text-red-400 text-center">{dayDetailError}</p>
+                  <button onClick={() => setSelectedDayOfWeek(null)} className="mt-3 text-xs text-[var(--color-ak-borgona)] hover:underline block mx-auto">Volver a Resultados</button>
+                </div>
+              )}
+              {/* Day-of-week detail data loaded */}
+              {dayDetail && (
+                <DayOfWeekMasterPanel
+                  dayData={selectedDayOfWeek}
+                  data={dayDetail}
+                  loading={dayDetailLoading}
+                  error={dayDetailError}
+                  onBack={() => setSelectedDayOfWeek(null)}
+                  selectedZone={dayDetailZone}
+                  selectedCategory={dayDetailCategory}
+                  onZoneClick={handleDayDetailZoneClick}
+                  onCategoryClick={handleDayDetailCategoryClick}
+                  onClearFilters={handleDayDetailClearFilter}
+                  onProductDrillDown={handleResultsProductDrillDown}
+                  onCategoryDrillDown={handleResultsCategoryDrillDown}
+                  onStaffDrillDown={handleResultsStaffDrillDown}
+                  onZoneDrillDown={handleResultsZoneDrillDown}
+                  onHourDrillDown={handleResultsHourDrillDown}
+                  drillDown={resultsDrillDown}
+                  drillDownData={resultsDrillDownData}
+                  drillDownLoading={resultsDrillDownLoading}
+                  drillDownError={resultsDrillDownError}
+                  onCloseDrillDown={closeResultsDrillDown}
+                />
+              )}
+            </>
           ) : (
           <>
             {/* Active filter pill — clear to see what's filtered */}

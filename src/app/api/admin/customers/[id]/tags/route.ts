@@ -29,7 +29,7 @@ export async function POST(
     .from('customer_tag_links')
     .upsert({ customer_id: customerId, tag_id }, { onConflict: 'customer_id, tag_id' })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   return NextResponse.json({ success: true })
 }
 
@@ -48,7 +48,7 @@ export async function GET(
     .select('tag_id, customer_tags!inner(id, name, color)')
     .eq('customer_id', customerId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   const tags = (data || []).map((row: Record<string, unknown>) => {
     const ctArr = row.customer_tags as unknown as Array<{ id: string; name: string; color: string }> | null
@@ -77,6 +77,6 @@ export async function DELETE(
     .eq('customer_id', customerId)
     .eq('tag_id', tagId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   return NextResponse.json({ success: true })
 }

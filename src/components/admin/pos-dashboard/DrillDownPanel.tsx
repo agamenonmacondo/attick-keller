@@ -816,15 +816,16 @@ interface DrillDownPanelProps {
   loading: boolean
   error: string | null
   onClose: () => void
+  contextLabel?: string  // 'Operacion' | 'Resultados' — shows in breadcrumb
 }
 
-export function DrillDownPanel({ drillDown, data, loading, error, onClose }: DrillDownPanelProps) {
+export function DrillDownPanel({ drillDown, data, loading, error, onClose, contextLabel }: DrillDownPanelProps) {
   return (
     <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--color-ak-borgona)]/30 p-5 animate-in fade-in slide-in-from-top-2 duration-300">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[11px] text-[var(--text-secondary)]">Operacion</span>
+          <span className="text-[11px] text-[var(--text-secondary)]">{contextLabel || 'Operacion'}</span>
           <span className="text-[11px] text-[var(--text-secondary)]">/</span>
           <span className="text-[11px] font-medium text-[var(--color-ak-borgona)]">
             {TYPE_LABELS[drillDown.type] || drillDown.type}

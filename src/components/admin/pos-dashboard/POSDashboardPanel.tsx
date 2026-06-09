@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useRef } from 'react'
 import { usePOSDashboard, type POSDashboardFilters } from '@/lib/hooks/usePOSDashboard'
 import { usePOSCalendar } from '@/lib/hooks/usePOSCalendar'
 import { AnimatedCard } from '../shared/AnimatedCard'
-import { Spinner, ChartBar, ChartLine, Receipt } from '@phosphor-icons/react'
+import { Spinner, ChartBar, ChartLine, Receipt, Lightning } from '@phosphor-icons/react'
 import { POSFiltersBar } from './POSFiltersBar'
 import { RevenueHeatmapCalendar } from './RevenueHeatmapCalendar'
 import { DayKPIBar } from './DayKPIBar'
@@ -14,17 +14,18 @@ import { TopProductsTable } from './TopProductsTable'
 import { CategoryBreakdown } from './CategoryBreakdown'
 import { StaffPerformanceTable } from './StaffPerformanceTable'
 import { PaymentMethodsChart } from './PaymentMethodsChart'
-import { ClientTiersCard } from './ClientTiersCard'
-import { ClientSplitCard } from './ClientSplitCard'
 import { TopProductByCategoryChart } from './TopProductByCategoryChart'
 import { DayPerformanceCard } from './DayPerformanceCard'
-import { DataUploadSection } from './DataUploadSection'
 import { DrillDownPanel } from './DrillDownPanel'
 import { CategoryCompanionsCard } from './CategoryCompanionsCard'
-import { ShiftReconciliation } from './ShiftReconciliation'
 import { CategoryPerformersCard } from './CategoryPerformersCard'
 import { POSCostsTabContent } from './POSCostsTabContent'
 import { POSCatalogTabContent } from './POSCatalogTabContent'
+import { POSDailyTrendChart } from './POSDailyTrendChart'
+import type { AggregatedDay } from './POSDailyTrendChart'
+import { DayOfWeekDetailCard } from './DayOfWeekDetailCard'
+import { DayOfWeekMasterPanel } from './DayOfWeekMasterPanel'
+import { usePOSDayOfWeekDetail } from '@/lib/hooks/usePOSDayOfWeekDetail'
 
 type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 
@@ -34,7 +35,7 @@ const DEFAULT_FILTERS: POSDashboardFilters = {
   // from/to left empty — server auto-detects latest month with data
 }
 
-type DashboardTab = 'operation' | 'costs' | 'catalog'
+type DashboardTab = 'operation' | 'results' | 'costs' | 'catalog'
 
 export function POSDashboardPanel() {
   const [activeTab, setActiveTab] = useState<DashboardTab>('operation')
@@ -43,6 +44,13 @@ export function POSDashboardPanel() {
   const [filters, setFilters] = useState<POSDashboardFilters>(DEFAULT_FILTERS)
   const [heatmapMetric, setHeatmapMetric] = useState<HeatmapMetric>('revenue')
   const [calendarMonth, setCalendarMonth] = useState<string | undefined>(undefined) // 'YYYY-MM' for calendar view month
+  const [selectedDayOfWeek, setSelectedDayOfWeek] = useState<AggregatedDay | null>(null)
+  // ── Results filters — separate from operation filters ──
+  const [resultsZone, setResultsZone] = useState<string>('all')
+  const [resultsCategory, setResultsCategory] = useState<string>('all')
+  // ── Day-of-week detail filters — separate from results and operation ──
+  const [dayDetailZone, setDayDetailZone] = useState<string>('all')
+  const [dayDetailCategory, setDayDetailCategory] = useState<string>('all')
 
   // When in month mode, derive from/to from calendarMonth so the dashboard
   // data follows the month the user is viewing (not always "latest month").
@@ -62,10 +70,42 @@ export function POSDashboardPanel() {
     return filters
   }, [viewMode, filters, calendarMonth])
 
+  // ── Operation hook ──
   const { data, loading, error, refetch, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown } = usePOSDashboard(effectiveFilters)
+
+  // ── Results hook — all-time consolidated data, filtered by results zone/category ──
+  const resultsFilters = useMemo<POSDashboardFilters>(() => ({
+    zone: resultsZone,
+    category: resultsCategory,
+    from: '2026-01-01',
+    to: '2026-06-30',
+  }), [resultsZone, resultsCategory])
+  const {
+    data: allData,
+    loading: allLoading,
+    drillDown: resultsDrillDown,
+    drillDownData: resultsDrillDownData,
+    drillDownLoading: resultsDrillDownLoading,
+    drillDownError: resultsDrillDownError,
+    fetchDrillDown: fetchResultsDrillDown,
+    closeDrillDown: closeResultsDrillDown,
+  } = usePOSDashboard(resultsFilters)
+
+  // ── Day-of-week detail hook — fetches filtered data when a day is selected ──
+  const { data: dayDetail, loading: dayDetailLoading, error: dayDetailError } = usePOSDayOfWeekDetail(
+    selectedDayOfWeek?.dayOfWeek ?? null,
+    dayDetailZone,
+    dayDetailCategory,
+    resultsFilters.from,
+    resultsFilters.to
+  )
+
   // Calendar shows ALL days regardless of month filter
   const { dailyTrend: calendarTrend, availableMonths: calendarMonths } = usePOSCalendar(filters.zone)
+
+  // ── Refs ──
   const drillDownRef = useRef<HTMLDivElement>(null)
+  const resultsDrillDownRef = useRef<HTMLDivElement>(null)
 
   const isSingleDay = useMemo(() => {
     if (viewMode === 'month') return false
@@ -129,6 +169,15 @@ export function POSDashboardPanel() {
     setCalendarMonth(date.substring(0, 7))
   }, [])
 
+  // When clicking a day-of-week bar in the trend chart,
+  // show detail panel in results — reset day filters on day change
+  const handleDayOfWeekClick = useCallback((dayData: AggregatedDay) => {
+    console.log('[POSDashboard] DayOfWeek click:', dayData.label, 'dayOfWeek:', dayData.dayOfWeek)
+    setSelectedDayOfWeek(dayData)
+    setDayDetailZone('all')
+    setDayDetailCategory('all')
+  }, [])
+
   const handleCalendarMonthChange = useCallback((month: string) => {
     // Navigating months in the calendar always switches to consolidated view
     setCalendarMonth(month)
@@ -143,11 +192,39 @@ export function POSDashboardPanel() {
     setFilters(prev => ({ ...prev, category: categoryId }))
   }, [])
 
+  // ── Results zone/category handlers — filter allData ──
+  const handleResultsZoneClick = useCallback((zone: string) => {
+    setResultsZone(zone)
+  }, [])
+
+  const handleResultsCategoryClick = useCallback((categoryId: string) => {
+    setResultsCategory(categoryId)
+  }, [])
+
+  const handleResultsClearFilter = useCallback(() => {
+    setResultsZone('all')
+    setResultsCategory('all')
+  }, [])
+
+  // ── Day-of-week detail zone/category handlers ──
+  const handleDayDetailZoneClick = useCallback((zone: string) => {
+    setDayDetailZone(zone)
+  }, [])
+
+  const handleDayDetailCategoryClick = useCallback((categoryId: string) => {
+    setDayDetailCategory(categoryId)
+  }, [])
+
+  const handleDayDetailClearFilter = useCallback(() => {
+    setDayDetailZone('all')
+    setDayDetailCategory('all')
+  }, [])
+
   const handleFilterChange = useCallback((newFilters: POSDashboardFilters) => {
     setFilters(newFilters)
   }, [])
 
-  // ── Drill-down handlers ──
+  // ── Operation drill-down handlers ──
   const scrollToDrillDown = useCallback(() => {
     setTimeout(() => {
       drillDownRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -169,7 +246,7 @@ export function POSDashboardPanel() {
     scrollToDrillDown()
   }, [fetchDrillDown, scrollToDrillDown])
 
-  const handleHourDrillDown = useCallback((hour: string) => {
+  const handleHourDrillDown = useCallback((hour: string, extra?: { tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }) => {
     const hourNum = parseInt(hour, 10)
     const label = `${hourNum === 0 ? '12' : hourNum <= 12 ? hourNum : hourNum - 12}${hourNum < 12 ? 'am' : 'pm'}`
     fetchDrillDown('hour', hour, label)
@@ -180,6 +257,40 @@ export function POSDashboardPanel() {
     fetchDrillDown('zone', zoneName, zoneName)
     scrollToDrillDown()
   }, [fetchDrillDown, scrollToDrillDown])
+
+  // ── Results drill-down handlers ──
+  const scrollToResultsDrillDown = useCallback(() => {
+    setTimeout(() => {
+      resultsDrillDownRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }, [])
+
+  const handleResultsProductDrillDown = useCallback((productId: string, productName: string) => {
+    fetchResultsDrillDown('product', productId, productName, selectedDayOfWeek?.dayOfWeek)
+    scrollToResultsDrillDown()
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
+
+  const handleResultsStaffDrillDown = useCallback((staffId: string, staffName: string) => {
+    fetchResultsDrillDown('staff', staffId, staffName, selectedDayOfWeek?.dayOfWeek)
+    scrollToResultsDrillDown()
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
+
+  const handleResultsCategoryDrillDown = useCallback((categoryId: string, categoryName: string) => {
+    fetchResultsDrillDown('category', categoryId, categoryName, selectedDayOfWeek?.dayOfWeek)
+    scrollToResultsDrillDown()
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
+
+  const handleResultsHourDrillDown = useCallback((hour: string, extra?: { tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }) => {
+    const hourNum = parseInt(hour, 10)
+    const label = `${hourNum === 0 ? '12' : hourNum <= 12 ? hourNum : hourNum - 12}${hourNum < 12 ? 'am' : 'pm'}`
+    fetchResultsDrillDown('hour', hour, label, selectedDayOfWeek?.dayOfWeek)
+    scrollToResultsDrillDown()
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
+
+  const handleResultsZoneDrillDown = useCallback((zoneName: string) => {
+    fetchResultsDrillDown('zone', zoneName, zoneName, selectedDayOfWeek?.dayOfWeek)
+    scrollToResultsDrillDown()
+  }, [fetchResultsDrillDown, scrollToResultsDrillDown, selectedDayOfWeek])
 
   const zoneListForFilter = useMemo(() => {
     if (!data) return undefined
@@ -219,6 +330,17 @@ export function POSDashboardPanel() {
               Operacion
             </button>
             <button
+              onClick={() => setActiveTab('results')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                activeTab === 'results'
+                  ? 'bg-[var(--color-ak-borgona)] text-white'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <Lightning size={13} />
+              Resultados
+            </button>
+            <button
               onClick={() => setActiveTab('costs')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
                 activeTab === 'costs'
@@ -242,9 +364,11 @@ export function POSDashboardPanel() {
             </button>
           </div>
           <div>
-            <h2 className="text-lg font-bold text-[var(--text-primary)]">{activeTab === 'costs' ? 'Costos POS' : activeTab === 'catalog' ? 'Catalogo de Costos' : 'Operacion POS'}</h2>
+            <h2 className="text-lg font-bold text-[var(--text-primary)]">{activeTab === 'costs' ? 'Costos POS' : activeTab === 'catalog' ? 'Catalogo de Costos' : activeTab === 'results' ? 'Resultados Consolidados' : 'Operacion POS'}</h2>
             <p className="text-xs text-[var(--text-secondary)]">
-              {viewMode === 'month'
+              {activeTab === 'results'
+                ? <>Datos historicos: <span className="font-semibold text-[var(--color-ak-borgona)]">Ene – Jun 2026</span></>
+                : viewMode === 'month'
                 ? <>Vista consolidada: <span className="font-semibold text-[var(--color-ak-borgona)]">Mes completo</span></>
                 : isSingleDay
                   ? <>Vista por dia: <span className="font-semibold text-[var(--color-ak-borgona)]">{filters.from}</span></>
@@ -312,6 +436,188 @@ export function POSDashboardPanel() {
       {/* Catalog panel — lazy-loaded only when tab is active */}
       {activeTab === 'catalog' && <POSCatalogTabContent />}
 
+      {/* ── Results panel — all-time consolidated data with drill-down ── */}
+      {activeTab === 'results' && allData && (
+        <>
+          {selectedDayOfWeek ? (
+            /* ── Day-of-week detail selected: show detail panel ── */
+            <>
+              {/* Loading skeleton while day detail is fetching */}
+              {dayDetailLoading && !dayDetail && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setSelectedDayOfWeek(null)} className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--color-ak-borgona)] transition-colors">
+                      ← Volver a Resultados
+                    </button>
+                    <span className="text-sm text-[var(--text-muted)]">Cargando {selectedDayOfWeek.fullLabel}...</span>
+                  </div>
+                  <div className="h-16 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="h-24 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                    <div className="h-24 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                    <div className="h-24 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                  </div>
+                  <div className="h-64 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl animate-pulse" />
+                </div>
+              )}
+              {/* Error state */}
+              {dayDetailError && !dayDetail && (
+                <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-6">
+                  <p className="text-sm text-red-400 text-center">{dayDetailError}</p>
+                  <button onClick={() => setSelectedDayOfWeek(null)} className="mt-3 text-xs text-[var(--color-ak-borgona)] hover:underline block mx-auto">Volver a Resultados</button>
+                </div>
+              )}
+              {/* Day-of-week detail data loaded */}
+              {dayDetail && (
+                <DayOfWeekMasterPanel
+                  dayData={selectedDayOfWeek}
+                  data={dayDetail}
+                  loading={dayDetailLoading}
+                  error={dayDetailError}
+                  onBack={() => setSelectedDayOfWeek(null)}
+                  selectedZone={dayDetailZone}
+                  selectedCategory={dayDetailCategory}
+                  onZoneClick={handleDayDetailZoneClick}
+                  onCategoryClick={handleDayDetailCategoryClick}
+                  onClearFilters={handleDayDetailClearFilter}
+                  onProductDrillDown={handleResultsProductDrillDown}
+                  onCategoryDrillDown={handleResultsCategoryDrillDown}
+                  onStaffDrillDown={handleResultsStaffDrillDown}
+                  onZoneDrillDown={handleResultsZoneDrillDown}
+                  onHourDrillDown={handleResultsHourDrillDown}
+                  drillDown={resultsDrillDown}
+                  drillDownData={resultsDrillDownData}
+                  drillDownLoading={resultsDrillDownLoading}
+                  drillDownError={resultsDrillDownError}
+                  onCloseDrillDown={closeResultsDrillDown}
+                />
+              )}
+            </>
+          ) : (
+          <>
+            {/* Active filter pill — clear to see what's filtered */}
+            {(resultsZone !== 'all' || resultsCategory !== 'all') && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {resultsZone !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25">
+                    Zona: {resultsZone}
+                    <button onClick={() => setResultsZone('all')} className="hover:text-white ml-1">&times;</button>
+                  </span>
+                )}
+                {resultsCategory !== 'all' && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25">
+                    {allData.topCategories?.find(c => c.categoryId === resultsCategory)?.categoryName || resultsCategory}
+                    <button onClick={() => setResultsCategory('all')} className="hover:text-white ml-1">&times;</button>
+                  </span>
+                )}
+                <button onClick={handleResultsClearFilter} className="text-sm text-[var(--text-secondary)] hover:text-[var(--color-ak-dorado)] underline underline-offset-2">
+                  Limpiar filtros
+                </button>
+              </div>
+            )}
+
+            <AnimatedCard delay={0} className="p-0 overflow-visible">
+              <div className="p-4">
+                <DayKPIBar kpis={allData.kpis} averages={undefined} isSingleDay={false} />
+              </div>
+            </AnimatedCard>
+
+            {/* Results drill-down panel */}
+            {resultsDrillDown && (
+              <div ref={resultsDrillDownRef}>
+                <DrillDownPanel
+                  drillDown={resultsDrillDown}
+                  data={resultsDrillDownData}
+                  loading={resultsDrillDownLoading}
+                  error={resultsDrillDownError}
+                  onClose={closeResultsDrillDown}
+                  contextLabel="Resultados"
+                />
+              </div>
+            )}
+
+            {/* Tendencia Diaria — revenue por dia historico */}
+            <AnimatedCard delay={0.03} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <POSDailyTrendChart data={allData.dailyTrend} onDayClick={handleDayOfWeekClick} />
+            </AnimatedCard>
+
+            {/* Desglose 3 columnas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+                <ZoneRevenueChart
+                  data={allData.byZone}
+                  selectedZone={resultsZone}
+                  onZoneClick={handleResultsZoneClick}
+                  onZoneDrillDown={handleResultsZoneDrillDown}
+                  unknownZone={allData.unknownZone}
+                />
+              </AnimatedCard>
+              <AnimatedCard delay={0.12} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+                <HourlyRevenueChart
+                  data={allData.hourlyRevenue}
+                  onHourDrillDown={handleResultsHourDrillDown}
+                />
+              </AnimatedCard>
+              <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+                <TopProductsTable
+                  data={allData.topProducts}
+                  onProductDrillDown={handleResultsProductDrillDown}
+                  selectedCategory={resultsCategory}
+                  productsByCategory={allData.productsByCategory}
+                  selectedCategoryName={allData.topCategories?.find(c => c.categoryId === resultsCategory)?.categoryName}
+                />
+              </AnimatedCard>
+            </div>
+
+            {/* Detalle expandido — 2 columnas */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+              <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3 sm:p-4">
+                <CategoryBreakdown
+                  data={allData.topCategories}
+                  selectedCategory={resultsCategory}
+                  onCategoryClick={handleResultsCategoryClick}
+                  onCategoryDrillDown={handleResultsCategoryDrillDown}
+                  onProductDrillDown={handleResultsProductDrillDown}
+                  productsByCategory={allData.productsByCategory}
+                  totalKpiRevenue={allData.kpis.revenue}
+                />
+              </AnimatedCard>
+              <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+                <TopProductByCategoryChart
+                  data={allData.topProductByCategory || []}
+                  onProductDrillDown={handleResultsProductDrillDown}
+                  selectedCategory={resultsCategory}
+                  onCategoryDrillDown={handleResultsCategoryDrillDown}
+                  topPerformersByCategory={allData.topPerformersByCategory}
+                  bottomPerformersByCategory={allData.bottomPerformersByCategory}
+                  totalKpiRevenue={allData.kpis.revenue}
+                />
+              </AnimatedCard>
+            </div>
+
+            {/* Staff + Pagos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+              <AnimatedCard delay={0.36} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+                <StaffPerformanceTable
+                  data={allData.staffPerformance}
+                  onStaffDrillDown={handleResultsStaffDrillDown}
+                />
+              </AnimatedCard>
+              <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+                <PaymentMethodsChart data={allData.paymentMethods} />
+              </AnimatedCard>
+            </div>
+
+            {/* Category Companions */}
+            <AnimatedCard delay={0.48} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <CategoryCompanionsCard data={allData.categoryCompanions || []} />
+            </AnimatedCard>
+          </>
+          )}
+        </>
+      )}
+
+      {/* ── Operation panel ── */}
       {data && activeTab === 'operation' && (
         <>
           {/* CALENDAR — calendar grid with day-by-day navigation */}
@@ -327,7 +633,7 @@ export function POSDashboardPanel() {
             />
           </AnimatedCard>
 
-          {/* Drill-down panel */}
+          {/* Operation drill-down panel */}
           {drillDown && (
             <div ref={drillDownRef}>
               <DrillDownPanel
@@ -336,10 +642,10 @@ export function POSDashboardPanel() {
                 loading={drillDownLoading}
                 error={drillDownError}
                 onClose={closeDrillDown}
+                contextLabel="Operacion"
               />
             </div>
           )}
-
 
           {/* Day Performance — cuando un dia seleccionado y NO en modo consolidado */}
           {isSingleDay && viewMode === 'day' && (
@@ -452,25 +758,6 @@ export function POSDashboardPanel() {
               <PaymentMethodsChart data={data.paymentMethods} />
             </AnimatedCard>
           </div>
-
-          {/* Shift Reconciliation — new */}
-          <AnimatedCard delay={0.56} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-            <ShiftReconciliation data={data.shifts || []} />
-          </AnimatedCard>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-            <AnimatedCard delay={0.60} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <ClientTiersCard data={data.clientTiers} />
-            </AnimatedCard>
-            <AnimatedCard delay={0.66} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <ClientSplitCard data={data.clientSplit} />
-            </AnimatedCard>
-          </div>
-
-          {/* Upload */}
-          <AnimatedCard delay={0.72} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-            <DataUploadSection onUploadComplete={refetch} />
-          </AnimatedCard>
         </>
       )}
     </div>

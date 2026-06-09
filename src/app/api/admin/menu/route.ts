@@ -20,8 +20,8 @@ export async function GET(request: NextRequest) {
       .order('sort_order'),
   ])
 
-  if (categoriesRes.error) return NextResponse.json({ error: categoriesRes.error.message }, { status: 500 })
-  if (itemsRes.error) return NextResponse.json({ error: itemsRes.error.message }, { status: 500 })
+  if (categoriesRes.error) return NextResponse.json({ error: 'Error fetching categories' }, { status: 500 })
+  if (itemsRes.error) return NextResponse.json({ error: 'Error fetching items' }, { status: 500 })
 
   return NextResponse.json({
     categories: categoriesRes.data || [],

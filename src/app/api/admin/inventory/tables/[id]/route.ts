@@ -35,7 +35,7 @@ export async function PATCH(
       .select('*, zone:zone_id(name)')
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
     if (!data) return NextResponse.json({ error: 'Mesa no encontrada' }, { status: 404 })
 
     return NextResponse.json({ table: data })
@@ -61,7 +61,7 @@ export async function DELETE(
     .eq('id', id)
     .eq('restaurant_id', RESTAURANT_ID)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   return NextResponse.json({ success: true })
 }

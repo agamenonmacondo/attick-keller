@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     .lte('date', fmt(to))
     .in('status', ['pending', 'pre_paid', 'confirmed', 'seated'])
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   // Count reservations per date
   const days: Record<string, number> = {}

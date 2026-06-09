@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     .in('role', ['host', 'store_admin', 'super_admin', 'lider_area', 'colaborador', 'reservante'])
     .order('created_at', { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   // Look up emails via Supabase admin API
   const { data: { users } } = await sb.auth.admin.listUsers()
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         .eq('id', existing.id)
         .select('id, auth_user_id, role, is_active, created_at, pos_nomina_staff_id, area')
         .single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
       return NextResponse.json({ staff: { ...data, email: user.email } })
     }
     return NextResponse.json({ error: 'Este usuario ya tiene este rol' }, { status: 409 })
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     .select('id, auth_user_id, role, is_active, created_at, pos_nomina_staff_id, area')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   return NextResponse.json({ staff: { ...data, email: user.email } }, { status: 201 })
 }

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     .eq('restaurant_id', RESTAURANT_ID)
     .order('created_at', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   return NextResponse.json({ templates: data || [] })
 }
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     if (error.code === '23505') {
       return NextResponse.json({ error: 'Ya existe un template con este nombre' }, { status: 409 })
     }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 
   return NextResponse.json({ template: data }, { status: 201 })
@@ -67,6 +67,6 @@ export async function DELETE(request: NextRequest) {
     .eq('id', id)
     .eq('restaurant_id', RESTAURANT_ID)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   return NextResponse.json({ success: true })
 }

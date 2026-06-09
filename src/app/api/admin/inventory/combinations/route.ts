@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     .eq('restaurant_id', RESTAURANT_ID)
     .order('created_at', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   return NextResponse.json({ combinations: data || [] })
 }
 
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       .select('*')
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
     return NextResponse.json({ combination: data }, { status: 201 })
   } catch {
     return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
@@ -133,7 +133,7 @@ export async function PATCH(request: NextRequest) {
       .select('*')
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
     if (!data) return NextResponse.json({ error: 'Combinación no encontrada' }, { status: 404 })
 
     return NextResponse.json({ combination: data })

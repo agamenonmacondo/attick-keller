@@ -3,6 +3,8 @@ import { Playfair_Display, DM_Sans, Caveat } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/lib/auth/auth-provider"
 
+export const dynamic = 'force-dynamic'
+
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm" })
 const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat" })

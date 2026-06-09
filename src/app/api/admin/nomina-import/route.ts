@@ -4,16 +4,13 @@ import { getServiceClient, getAdminUser } from '@/lib/utils/admin-auth'
 // ── Nómina Import API ──────────────────────────────────
 // Accepts imports via X-Import-Token header (for scripts) or admin session cookie
 // Secret token for script access — loaded from env for security
-const IMPORT_TOKEN = process.env.NOMINA_IMPORT_TOKEN || ''
+const IMPORT_TOKEN = process.env.NOMINA_IMPORT_TOKEN
 
 function isAuthorized(request: NextRequest): boolean {
-  // Check import token header (for scripts)
+  if (!IMPORT_TOKEN) return false
   const token = request.headers.get('X-Import-Token')
-  if (token === IMPORT_TOKEN) return true
-  
-  // Could also check admin session cookie for browser access
-  // but for now, token is enough
-  return false
+  if (!token) return false
+  return token === IMPORT_TOKEN
 }
 
 export async function POST(request: NextRequest) {
@@ -96,7 +93,7 @@ export async function POST(request: NextRequest) {
           .from('nomina_detalle')
           .insert(data)
           .select('id')
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
         return NextResponse.json({ action: 'insert_detalle', count: inserted?.length || 0 })
       }
 
@@ -105,7 +102,7 @@ export async function POST(request: NextRequest) {
           .from('nomina_he_recargos')
           .insert(data)
           .select('id')
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
         return NextResponse.json({ action: 'insert_he_recargos', count: inserted?.length || 0 })
       }
 
@@ -114,7 +111,7 @@ export async function POST(request: NextRequest) {
           .from('nomina_novedades')
           .insert(data)
           .select('id')
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
         return NextResponse.json({ action: 'insert_novedades', count: inserted?.length || 0 })
       }
 
@@ -123,7 +120,7 @@ export async function POST(request: NextRequest) {
           .from('nomina_provisiones')
           .insert(data)
           .select('id')
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
         return NextResponse.json({ action: 'insert_provisiones', count: inserted?.length || 0 })
       }
 
@@ -132,7 +129,7 @@ export async function POST(request: NextRequest) {
           .from('nomina_propinas')
           .insert(data)
           .select('id')
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
         return NextResponse.json({ action: 'insert_propinas', count: inserted?.length || 0 })
       }
 
@@ -142,7 +139,7 @@ export async function POST(request: NextRequest) {
           .from('nomina_periodos')
           .update(updates)
           .eq('id', id)
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+        if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
         return NextResponse.json({ action: 'update_periodo', id, status: 'ok' })
       }
 

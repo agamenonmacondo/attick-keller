@@ -151,7 +151,7 @@ export async function PATCH(
   if (Object.keys(updateData).length === 0) return NextResponse.json({ error: 'Sin cambios' }, { status: 400 })
 
   const { data, error } = await sb.from('reservations').update(updateData).eq('id', id).select('*, customers(email, full_name, phone)').single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   if (status && status !== reservation.status) {
     const { sendReservationEmail } = await import('@/lib/email/send')

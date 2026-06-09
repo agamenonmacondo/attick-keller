@@ -1,9 +1,9 @@
 'use client'
 
 import { cn } from '@/lib/utils/cn'
-import { CalendarDots, Table, ChartBar, ChartPieSlice, Users, ForkKnife, IdentificationBadge, Coffee, MapTrifold, Buildings, Money, ClockClockwise } from '@phosphor-icons/react'
+import { CalendarDots, Table, ChartBar, ChartPieSlice, Users, ForkKnife, IdentificationBadge, Coffee, MapTrifold, Buildings, Money, ClockClockwise, Lightning } from '@phosphor-icons/react'
 
-export type AdminTab = 'reservas' | 'ocupacion' | 'mesas' | 'plano' | 'metricas' | 'operacion' | 'clientes' | 'menu' | 'equipo' | 'nomina' | 'turnos' | 'app-rodri'
+export type AdminTab = 'reservas' | 'ocupacion' | 'mesas' | 'plano' | 'metricas' | 'operacion' | 'clientes' | 'menu' | 'equipo' | 'nomina' | 'turnos' | 'app-rodri' | 'informes'
 
 const TABS: { key: AdminTab; label: string; icon: React.ReactNode }[] = [
   { key: 'reservas', label: 'Reservas', icon: <CalendarDots size={18} weight="regular" /> },
@@ -18,6 +18,7 @@ const TABS: { key: AdminTab; label: string; icon: React.ReactNode }[] = [
   { key: 'nomina', label: 'Nomina', icon: <Money size={18} weight="regular" /> },
   { key: 'turnos', label: 'Turnos', icon: <ClockClockwise size={18} weight="regular" /> },
   { key: 'app-rodri', label: 'App Rodri', icon: <Buildings size={18} weight="regular" /> },
+  { key: 'informes', label: 'Informes', icon: <Lightning size={18} weight="fill" /> },
 ]
 
 interface AdminTabBarProps {
@@ -41,7 +42,7 @@ export function AdminTabBar({ active, onChange }: AdminTabBarProps) {
               style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
             >
               {tab.icon}
-              {tab.label}
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </nav>

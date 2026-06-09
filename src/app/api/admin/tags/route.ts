@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     if (error.message && error.message.includes('does not exist')) {
       return NextResponse.json({ tags: [] })
     }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
   return NextResponse.json({ tags: data || [] })
 }
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     if (error.code === '23505') {
       return NextResponse.json({ error: 'Ya existe una etiqueta con este nombre' }, { status: 409 })
     }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 
   return NextResponse.json({ tag: data }, { status: 201 })

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth';
 
 export async function GET(request: NextRequest) {
+  const admin = await getAdminUser(request);
+  if (!admin) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
+  const supabase = getServiceClient();
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get('q') || '';
   const groupId = searchParams.get('group_id') || '';
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   const { data: products, error, count } = await qb;
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 
   const productIds = (products || []).map(p => p.pos_product_id);
@@ -95,6 +95,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const admin = await getAdminUser(request);
+  if (!admin) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
+  const supabase = getServiceClient();
   const body = await request.json();
   const { pos_product_id, category_id, name, description, price, restaurant_id } = body;
 
@@ -148,7 +153,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 
   // Create mapping

@@ -2,17 +2,16 @@
 SYNC INCREMENTAL INTELIGENTE
 - Primera corrida: trae TODO desde May 27 + items + pagos + zona
 - Corridas subsecuentes: solo ventas NUEVAS desde la ultima fecha en Supabase
-- KPIs: solo recalcula las ventas sincronizadas (no todas)
+- Costos: siempre se sincronizan (upsert merge-duplicates). Purchases incremental sin --full
 - Costos/catálogos: solo con --full, o primera corrida
 
 Ejecutar:
-    python sync.py          # sync rapido: ventas + items + pagos + KPIs (~2 min)
+    python sync.py          # sync rapido: ventas + items + pagos (~1 min)
     python sync.py --full   # sync completo: agrega catálogos + 12 tablas costos (~5 min)
 """
 import os, sys, time, re, requests, pyodbc
 from datetime import datetime, timedelta
 from decimal import Decimal
-from collections import defaultdict
 
 try: sys.stdout.reconfigure(line_buffering=True)
 except: pass
@@ -39,7 +38,10 @@ LOG_FILE = os.path.join(DIR, "sync_hourly.log")
 def log(msg):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     line = "[%s] %s" % (ts, msg)
-    print(line)
+    try:
+        print(line)
+    except UnicodeEncodeError:
+        print(line.encode("ascii", "replace").decode("ascii"))
     try:
         with open(LOG_FILE, "a", encoding="utf-8") as fh:
             fh.write(line + "\n")
@@ -172,19 +174,6 @@ def batch_post(table, rows, batch_size=200, return_data=False):
         time.sleep(0.1)
     return inserted, errors
 
-def batch_patch(table, updates, batch_size=100):
-    if not updates: return 0
-    patched = 0
-    for i in range(0, len(updates), batch_size):
-        batch = updates[i:i+batch_size]
-        for uid, data in batch:
-            for attempt in range(2):
-                try:
-                    r = requests.patch(f"{URL}/rest/v1/{table}?id=eq.{uid}", headers=HDR_POST, json=data, timeout=15)
-                    if r.status_code in (200, 204): patched += 1; break
-                except: pass
-    return patched
-
 def batch_delete(table, sale_ids, batch_size=50):
     deleted = 0
     for i in range(0, len(sale_ids), batch_size):
@@ -207,7 +196,7 @@ def main():
     if DO_FULL:
         log("MODO: sync completo (--full)")
     else:
-        log("MODO: sync rápido (ventas+KPIs. Usar --full para catálogos+costos)")
+        log("MODO: sync rapido (ventas+items+pagos+catalogos+costos)")
     log("=" * 60)
     log("SYNC INCREMENTAL - " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     log("=" * 60)
@@ -430,45 +419,6 @@ def main():
     log("Insertando %d pagos (solo ventas nuevas)..." % len(pagos_new))
     ins_p, err_p = batch_post("pos_sale_payments", pagos_new, 200)
     log("  %d OK | %d errors" % (ins_p, err_p))
-
-    # ── RECALCULAR KPIs (solo ventas de este sync) ──
-    all_sale_ids = [folio_to_uuid[f] for f in all_folios if f in folio_to_uuid]
-    log("Recalculando KPIs para %d ventas..." % len(all_sale_ids))
-    sale_id_filter = ",".join('"' + sid + '"' for sid in all_sale_ids)
-
-    # item_count y food_total: solo items de las ventas sincronizadas
-    r = requests.get(
-        f"{URL}/rest/v1/pos_sale_items?select=pos_sale_id,quantity,unit_price&pos_sale_id=in.({sale_id_filter})&limit=100000",
-        headers=HDR_GET, timeout=120)
-    if r.status_code == 200:
-        stats = defaultdict(lambda: {"item_count": 0, "food_total": 0.0})
-        for i in r.json():
-            sid = i["pos_sale_id"]
-            qty = i.get("quantity", 0) or 0
-            stats[sid]["item_count"] += int(qty)
-            stats[sid]["food_total"] += qty * (i.get("unit_price", 0) or 0)
-        updates = [(sid, {"item_count": s["item_count"], "food_total": s["food_total"]})
-                   for sid, s in stats.items() if s["item_count"] > 0]
-        n = batch_patch("pos_sales", updates)
-        log("  item_count: %d ventas" % n)
-
-    # card_paid / cash_paid: solo pagos de las ventas sincronizadas
-    r = requests.get(
-        f"{URL}/rest/v1/pos_sale_payments?select=pos_sale_id,pos_payment_method_id,amount&pos_sale_id=in.({sale_id_filter})&limit=100000",
-        headers=HDR_GET, timeout=120)
-    if r.status_code == 200:
-        card = defaultdict(float)
-        cash = defaultdict(float)
-        for p in r.json():
-            sid = p["pos_sale_id"]
-            amt = p.get("amount", 0) or 0
-            if p.get("pos_payment_method_id") in ("01", "1"): cash[sid] += amt
-            else: card[sid] += amt
-        updates = []
-        for sid in set(card.keys()) | set(cash.keys()):
-            updates.append((sid, {"card_paid": card.get(sid, 0), "cash_paid": cash.get(sid, 0)}))
-        n = batch_patch("pos_sales", updates)
-        log("  card/cash_paid: %d ventas" % n)
 
     # ── CATALOGOS (siempre, son ligeros) ──
     conn2 = getconn()
@@ -762,15 +712,25 @@ def sync_costs():
         log("  purchase_items: %d filas | %d OK | %d err" % (len(data), ok, err))
 
     # 11. pos_stock_thresholds (17 rows) — stockinsumos
+    # DEDUPLICAR: SQL Server puede tener filas repetidas con misma clave compuesta,
+    # ON CONFLICT DO UPDATE no permite duplicados en el mismo batch.
     cur.execute("SELECT idinsumo, idalmacen, stockminimo, stockideal, stockmaximo, idempresa FROM stockinsumos")
     rows = cur.fetchall()
-    data = [{"restaurant_id": REST_ID,
-             "pos_ingredient_id": str(r[0]).strip(),
-             "pos_warehouse_id": str(r[1]).strip() if r[1] else None,
-             "min_stock": to_float(r[2]) if r[2] is not None else 0,
-             "ideal_stock": to_float(r[3]) if r[3] is not None else 0,
-             "max_stock": to_float(r[4]) if r[4] is not None else 0,
-             "pos_company_id": str(r[5]).strip() if r[5] else None} for r in rows]
+    seen_st = {}
+    for r in rows:
+        iid = str(r[0]).strip()
+        wid = str(r[1]).strip() if r[1] else ""
+        cid = str(r[5]).strip() if r[5] else ""
+        key = (iid, wid, cid)
+        seen_st[key] = {"restaurant_id": REST_ID,
+                        "pos_ingredient_id": iid,
+                        "pos_warehouse_id": wid if wid else None,
+                        "min_stock": to_float(r[2]) if r[2] is not None else 0,
+                        "ideal_stock": to_float(r[3]) if r[3] is not None else 0,
+                        "max_stock": to_float(r[4]) if r[4] is not None else 0,
+                        "pos_company_id": cid if cid else None}
+    data = list(seen_st.values())
+    log("  stock_thresholds: %d filas SQL -> %d deduplicadas" % (len(rows), len(data)))
     _, ok, err = batch_upsert("pos_stock_thresholds", data, 200, on_conflict="restaurant_id,pos_ingredient_id,pos_warehouse_id,pos_company_id")
     log("  stock_thresholds: %d OK | %d err" % (ok, err))
 
@@ -793,7 +753,7 @@ def sync_costs():
                      "pos_company_id": str(r[3]).strip() if r[3] else None,
                      "pos_ingredient_id": iid}
     data = list(seen.values())
-    log("  recipe_warehouses: %d filas SQL → %d deduplicadas" % (len(rows), len(data)))
+    log("  recipe_warehouses: %d filas SQL -> %d deduplicadas" % (len(rows), len(data)))
     _, ok, err = batch_upsert("pos_recipe_warehouses", data, 200, on_conflict="restaurant_id,pos_product_id,pos_ingredient_id,pos_warehouse_id,pos_area_id")
     log("  recipe_warehouses: %d OK | %d err" % (ok, err))
 

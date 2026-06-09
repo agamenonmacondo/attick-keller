@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { sanitizeLike } from '@/lib/utils/sanitize'
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -21,7 +22,8 @@ export async function GET(request: NextRequest) {
     .eq('restaurant_id', RESTAURANT_ID)
 
   if (q) {
-    customersQuery = customersQuery.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`)
+    const safeQ = sanitizeLike(q)
+    customersQuery = customersQuery.or(`full_name.ilike.%${safeQ}%,phone.ilike.%${safeQ}%,email.ilike.%${safeQ}%`)
   }
 
   if (hasEmail === 'true') {
@@ -81,7 +83,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await customersQuery
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   const ids = (data || []).map((c: { id: string }) => c.id)
 

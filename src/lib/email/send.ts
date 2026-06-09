@@ -4,6 +4,7 @@ import { getWeekStr, getWeekDates, dayIndexToDateIndex } from '@/lib/utils/costC
 // Uses Resend API
 
 const RESEND_API_KEY = () => process.env.RESEND_API_KEY!
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://web-rosy-nine-64.vercel.app'
 const FROM = 'Attick & Keller <ventas@ccs724.com>'
 
 interface EmailData {
@@ -31,7 +32,7 @@ const statusConfig: Record<string, {
     statusTitle: 'Reserva Recibida',
     statusMessage: 'Tu reserva ha sido registrada exitosamente. Te confirmaremos pronto.',
     ctaText: 'Ver Mi Reserva',
-    ctaUrl: 'https://web-rosy-nine-64.vercel.app/perfil',
+    ctaUrl: `${BASE_URL}/perfil`,
   },
   confirmed: {
     statusBgColor: '#E8F5E9',
@@ -39,7 +40,7 @@ const statusConfig: Record<string, {
     statusTitle: 'Reserva Confirmada',
     statusMessage: 'Tu mesa esta lista! Te esperamos en Attick & Keller.',
     ctaText: 'Ver Detalles',
-    ctaUrl: 'https://web-rosy-nine-64.vercel.app/perfil',
+    ctaUrl: `${BASE_URL}/perfil`,
   },
   cancelled: {
     statusBgColor: '#FFEBEE',
@@ -47,7 +48,7 @@ const statusConfig: Record<string, {
     statusTitle: 'Reserva Cancelada',
     statusMessage: 'Tu reserva ha sido cancelada. Si crees que es un error, contactanos.',
     ctaText: 'Hacer Nueva Reserva',
-    ctaUrl: 'https://web-rosy-nine-64.vercel.app/reservar',
+    ctaUrl: `${BASE_URL}/reservar`,
   },
   completed: {
     statusBgColor: '#E3F2FD',
@@ -55,7 +56,7 @@ const statusConfig: Record<string, {
     statusTitle: 'Gracias por Visitarnos!',
     statusMessage: 'Esperamos que hayas disfrutado tu experiencia. Vuelve pronto!',
     ctaText: 'Reservar de Nuevo',
-    ctaUrl: 'https://web-rosy-nine-64.vercel.app/reservar',
+    ctaUrl: `${BASE_URL}/reservar`,
   },
   seated: {
     statusBgColor: '#E8F5E9',
@@ -63,7 +64,7 @@ const statusConfig: Record<string, {
     statusTitle: 'Tu Mesa Esta Lista',
     statusMessage: 'Te hemos asignado una mesa. Bienvenido a Attick & Keller!',
     ctaText: 'Ver Mi Reserva',
-    ctaUrl: 'https://web-rosy-one-64.vercel.app/perfil',
+    ctaUrl: `${BASE_URL}/perfil`,
   },
   no_show: {
     statusBgColor: '#FFF3E0',
@@ -71,7 +72,7 @@ const statusConfig: Record<string, {
     statusTitle: 'Reserva No Atendida',
     statusMessage: 'Lamentamos que no hayas podido asistir. Te esperamos en tu proxima visita!',
     ctaText: 'Hacer Nueva Reserva',
-    ctaUrl: 'https://web-rosy-nine-64.vercel.app/reservar',
+    ctaUrl: `${BASE_URL}/reservar`,
   },
 }
 
@@ -147,7 +148,7 @@ export async function sendWelcomeEmail(to: string, name: string): Promise<{ succ
   const apiKey = RESEND_API_KEY()
   if (!apiKey) return { success: false, error: 'No API key' }
 
-  const html = '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F5EDE0;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#3E2723;padding:32px 40px;text-align:center;">\n        <h1 style="color:#C9A94E;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;text-align:center;background:#E8F5E9;">\n        <h2 style="color:#2E7D32;font-size:20px;margin:0;">Cuenta creada exitosamente</h2>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#3E2723;font-size:16px;margin:0 0 16px 0;">Hola ' + name + ',</p>\n        <p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Tu cuenta ha sido creada exitosamente. Ya puedes hacer reservas en Attick &amp; Keller.</p>\n        <div style="text-align:center;">\n          <a href="https://web-rosy-nine-64.vercel.app/reservar" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Hacer una Reserva</a>\n        </div>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#3E2723;text-align:center;">\n        <p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
+  const html = '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F5EDE0;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#3E2723;padding:32px 40px;text-align:center;">\n        <h1 style="color:#C9A94E;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;text-align:center;background:#E8F5E9;">\n        <h2 style="color:#2E7D32;font-size:20px;margin:0;">Cuenta creada exitosamente</h2>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#3E2723;font-size:16px;margin:0 0 16px 0;">Hola ' + name + ',</p>\n        <p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Tu cuenta ha sido creada exitosamente. Ya puedes hacer reservas en Attick &amp; Keller.</p>\n        <div style="text-align:center;">\n          <a href="' + BASE_URL + '/reservar" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Hacer una Reserva</a>\n        </div>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#3E2723;text-align:center;">\n        <p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -183,7 +184,7 @@ export async function sendFirstLoginEmail(to: string, name: string): Promise<{ s
   const apiKey = RESEND_API_KEY()
   if (!apiKey) return { success: false, error: 'No API key' }
 
-  const html = '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F5EDE0;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#3E2723;padding:32px 40px;text-align:center;">\n        <h1 style="color:#C9A94E;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;text-align:center;background:#E8F5E9;">\n        <h2 style="color:#2E7D32;font-size:20px;margin:0;">Bienvenido de vuelta</h2>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#3E2723;font-size:16px;margin:0 0 16px 0;">Hola ' + name + ',</p>\n        <p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Que alegría tenerte de vuelta en Attick &amp; Keller. Tu cuenta esta lista y puedes hacer reservas cuando quieras.</p>\n        <div style="text-align:center;">\n          <a href="https://web-rosy-one-64.vercel.app/reservar" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Hacer una Reserva</a>\n        </div>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#3E2723;text-align:center;">\n        <p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
+  const html = '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F5EDE0;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#3E2723;padding:32px 40px;text-align:center;">\n        <h1 style="color:#C9A94E;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;text-align:center;background:#E8F5E9;">\n        <h2 style="color:#2E7D32;font-size:20px;margin:0;">Bienvenido de vuelta</h2>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#3E2723;font-size:16px;margin:0 0 16px 0;">Hola ' + name + ',</p>\n        <p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Que alegría tenerte de vuelta en Attick &amp; Keller. Tu cuenta esta lista y puedes hacer reservas cuando quieras.</p>\n        <div style="text-align:center;">\n          <a href="' + BASE_URL + '/reservar" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Hacer una Reserva</a>\n        </div>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#3E2723;text-align:center;">\n        <p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -409,7 +410,7 @@ function buildShiftScheduleHtml(data: ShiftScheduleData, employeeName: string): 
     '</tr>' + rows +
     '</table>' +
     '<div style="text-align:center;margin-top:24px;">' +
-    '<a href="https://web-rosy-nine-64.vercel.app/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
+    '<a href="' + BASE_URL + '/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
     '</div>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
@@ -454,7 +455,7 @@ function buildShiftReminderHtml(data: ShiftReminderData): string {
     '</td></tr>' +
     '</table>' +
     '<div style="text-align:center;margin-top:24px;">' +
-    '<a href="https://web-rosy-nine-64.vercel.app/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Entrada</a>' +
+    '<a href="' + BASE_URL + '/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Entrada</a>' +
     '</div>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
@@ -497,7 +498,7 @@ function buildShiftCheckoutHtml(data: ShiftCheckoutData): string {
     '</td></tr>' +
     '</table>' +
     '<div style="text-align:center;margin-top:24px;">' +
-    '<a href="https://web-rosy-nine-64.vercel.app/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Salida</a>' +
+    '<a href="' + BASE_URL + '/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Salida</a>' +
     '</div>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
@@ -548,7 +549,7 @@ function buildShiftChangeHtml(data: ShiftScheduleData, employeeName: string): st
     '</tr>' + rows +
     '</table>' +
     '<div style="text-align:center;margin-top:24px;">' +
-    '<a href="https://web-rosy-nine-64.vercel.app/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
+    '<a href="' + BASE_URL + '/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
     '</div>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
@@ -1315,7 +1316,7 @@ export async function sendShiftNovedadEmail(
       '</td></tr>' +
       '</table>' +
       '<div style="text-align:center;margin-top:24px;">' +
-      '<a href="https://web-rosy-nine-64.vercel.app/admin/turnos" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Cronograma</a>' +
+      '<a href="' + BASE_URL + '/admin/turnos" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Cronograma</a>' +
       '</div>' +
       '</td></tr>' +
       '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +

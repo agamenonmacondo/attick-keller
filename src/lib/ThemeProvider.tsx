@@ -53,11 +53,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setThemeState(t)
   }
 
-  // Prevent flash of wrong theme
-  if (!mounted) {
-    return <>{children}</>
-  }
-
+  // Siempre renderizar Provider para evitar hydration mismatch
+  // El theme inicial es 'light' hasta que monte y lea localStorage
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
       {children}

@@ -18,6 +18,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'area y week_str son requeridos' }, { status: 400 })
   }
 
+  const VALID_AREAS = ['cocina', 'barra', 'servicio']
+  if (!VALID_AREAS.includes(area)) {
+    return NextResponse.json({ error: 'Area invalida' }, { status: 400 })
+  }
+
   // Obtener cronograma
   const { data: schedule, error: schedError } = await sb
     .from('shift_schedules')
@@ -39,7 +44,7 @@ export async function GET(request: NextRequest) {
       .select('id, nombre_completo, cargo, area, secondary_areas, salario')
       .eq('sede', 'C75')
       .not('area', 'in', '(apoyo,admin)')
-      .or(`area.eq.${area},secondary_areas.cs.{${area}}`)
+      .eq('area', area)
       .order('nombre_completo')
 
     const { data: shiftTypes } = await sb
@@ -105,7 +110,7 @@ export async function GET(request: NextRequest) {
     .select('id, nombre_completo, cargo, area, secondary_areas, salario')
     .eq('sede', 'C75')
     .not('area', 'in', '(apoyo,admin)')
-    .or(`area.eq.${area},secondary_areas.cs.{${area}}`)
+    .eq('area', area)
     .order('nombre_completo')
 
   const { data: shiftTypes } = await sb
@@ -173,6 +178,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'area y week_str son requeridos' }, { status: 400 })
   }
 
+  const VALID_AREAS = ['cocina', 'barra', 'servicio']
+  if (!VALID_AREAS.includes(area)) {
+    return NextResponse.json({ error: 'Area invalida' }, { status: 400 })
+  }
+
   // Verificar permiso de lider_area (solo puede crear en su area)
   if (admin.role === 'lider_area') {
     // TODO: verificar area del lider cuando user_roles tenga columna area
@@ -193,7 +203,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 
   return NextResponse.json(schedule, { status: 201 })

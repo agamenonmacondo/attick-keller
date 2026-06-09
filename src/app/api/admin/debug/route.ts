@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 
 export async function GET(request: NextRequest) {
+  if (process.env.ALLOW_DEBUG !== 'true') {
+    return NextResponse.json({ error: 'Debug endpoint disabled' }, { status: 404 })
+  }
+
   const steps: { step: string; ok: boolean; detail: string }[] = []
 
   // Step 1: Check env vars
@@ -11,7 +15,7 @@ export async function GET(request: NextRequest) {
   steps.push({
     step: '1. Env vars',
     ok: hasUrl && hasAnonKey && hasServiceKey,
-    detail: `URL: ${hasUrl}, ANON_KEY: ${hasAnonKey}, SERVICE_KEY: ${hasServiceKey} (len=${process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0})`,
+    detail: `URL: ${hasUrl}, ANON_KEY: ${hasAnonKey}, SERVICE_KEY: ${hasServiceKey}`,
   })
 
   if (!hasUrl || !hasAnonKey || !hasServiceKey) {

@@ -24,6 +24,8 @@ import { POSCatalogTabContent } from './POSCatalogTabContent'
 import { POSDailyTrendChart } from './POSDailyTrendChart'
 import type { AggregatedDay } from './POSDailyTrendChart'
 import { DayOfWeekDetailCard } from './DayOfWeekDetailCard'
+import { DayOfWeekMasterPanel } from './DayOfWeekMasterPanel'
+import { usePOSDayOfWeekDetail } from '@/lib/hooks/usePOSDayOfWeekDetail'
 
 type HeatmapMetric = 'revenue' | 'propina' | 'cheques' | 'personas'
 
@@ -43,6 +45,11 @@ export function POSDashboardPanel() {
   const [heatmapMetric, setHeatmapMetric] = useState<HeatmapMetric>('revenue')
   const [calendarMonth, setCalendarMonth] = useState<string | undefined>(undefined) // 'YYYY-MM' for calendar view month
   const [selectedDayOfWeek, setSelectedDayOfWeek] = useState<AggregatedDay | null>(null)
+
+  // Day-of-week detail hook — fetches filtered data when a day is selected
+  const { data: dayDetail, loading: dayDetailLoading, error: dayDetailError } = usePOSDayOfWeekDetail(
+    selectedDayOfWeek?.dayOfWeek ?? null
+  )
 
   // When in month mode, derive from/to from calendarMonth so the dashboard
   // data follows the month the user is viewing (not always "latest month").
@@ -386,110 +393,127 @@ export function POSDashboardPanel() {
       {/* ── Results panel — all-time consolidated data with drill-down ── */}
       {activeTab === 'results' && allData && (
         <>
-          {/* KPIs — promedios historicos */}
-          <AnimatedCard delay={0} className="p-0 overflow-visible">
-            <div className="p-4">
-              <DayKPIBar kpis={allData.kpis} averages={undefined} isSingleDay={false} />
+          {/* When a day-of-week is selected, show the immersive master panel */}
+          {selectedDayOfWeek && dayDetail ? (
+            <DayOfWeekMasterPanel
+              dayData={selectedDayOfWeek}
+              data={dayDetail}
+              loading={dayDetailLoading}
+              error={dayDetailError}
+              onBack={() => setSelectedDayOfWeek(null)}
+              onProductDrillDown={handleResultsProductDrillDown}
+              onCategoryDrillDown={handleResultsCategoryDrillDown}
+              onStaffDrillDown={handleResultsStaffDrillDown}
+              onZoneDrillDown={handleResultsZoneDrillDown}
+              onHourDrillDown={handleResultsHourDrillDown}
+            />
+          ) : (
+          <>
+            {/* KPIs — promedios historicos */}
+            {selectedDayOfWeek && dayDetailLoading && (
+              <div className="py-8 flex items-center justify-center">
+                <Spinner size={24} className="animate-spin text-[var(--text-secondary)]" />
+              </div>
+            )}
+
+            <AnimatedCard delay={0} className="p-0 overflow-visible">
+              <div className="p-4">
+                <DayKPIBar kpis={allData.kpis} averages={undefined} isSingleDay={false} />
+              </div>
+            </AnimatedCard>
+
+            {/* Results drill-down panel */}
+            {resultsDrillDown && (
+              <div ref={resultsDrillDownRef}>
+                <DrillDownPanel
+                  drillDown={resultsDrillDown}
+                  data={resultsDrillDownData}
+                  loading={resultsDrillDownLoading}
+                  error={resultsDrillDownError}
+                  onClose={closeResultsDrillDown}
+                  contextLabel="Resultados"
+                />
+              </div>
+            )}
+
+            {/* Tendencia Diaria — revenue por dia historico */}
+            <AnimatedCard delay={0.03} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <POSDailyTrendChart data={allData.dailyTrend} onDayClick={handleDayOfWeekClick} />
+            </AnimatedCard>
+
+            {/* Desglose 3 columnas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+                <ZoneRevenueChart
+                  data={allData.byZone}
+                  selectedZone="all"
+                  onZoneClick={() => {}}
+                  onZoneDrillDown={handleResultsZoneDrillDown}
+                  unknownZone={allData.unknownZone}
+                />
+              </AnimatedCard>
+              <AnimatedCard delay={0.12} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+                <HourlyRevenueChart
+                  data={allData.hourlyRevenue}
+                  onHourDrillDown={handleResultsHourDrillDown}
+                />
+              </AnimatedCard>
+              <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+                <TopProductsTable
+                  data={allData.topProducts}
+                  onProductDrillDown={handleResultsProductDrillDown}
+                  selectedCategory="all"
+                  productsByCategory={allData.productsByCategory}
+                  selectedCategoryName={undefined}
+                />
+              </AnimatedCard>
             </div>
-          </AnimatedCard>
 
-          {/* Results drill-down panel */}
-          {resultsDrillDown && (
-            <div ref={resultsDrillDownRef}>
-              <DrillDownPanel
-                drillDown={resultsDrillDown}
-                data={resultsDrillDownData}
-                loading={resultsDrillDownLoading}
-                error={resultsDrillDownError}
-                onClose={closeResultsDrillDown}
-                contextLabel="Resultados"
-              />
+            {/* Detalle expandido — 2 columnas */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+              <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3 sm:p-4">
+                <CategoryBreakdown
+                  data={allData.topCategories}
+                  selectedCategory="all"
+                  onCategoryClick={handleCategoryClick}
+                  onCategoryDrillDown={handleResultsCategoryDrillDown}
+                  onProductDrillDown={handleResultsProductDrillDown}
+                  productsByCategory={allData.productsByCategory}
+                  totalKpiRevenue={allData.kpis.revenue}
+                />
+              </AnimatedCard>
+              <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+                <TopProductByCategoryChart
+                  data={allData.topProductByCategory || []}
+                  onProductDrillDown={handleResultsProductDrillDown}
+                  selectedCategory="all"
+                  onCategoryDrillDown={handleResultsCategoryDrillDown}
+                  topPerformersByCategory={allData.topPerformersByCategory}
+                  bottomPerformersByCategory={allData.bottomPerformersByCategory}
+                  totalKpiRevenue={allData.kpis.revenue}
+                />
+              </AnimatedCard>
             </div>
+
+            {/* Staff + Pagos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+              <AnimatedCard delay={0.36} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+                <StaffPerformanceTable
+                  data={allData.staffPerformance}
+                  onStaffDrillDown={handleResultsStaffDrillDown}
+                />
+              </AnimatedCard>
+              <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+                <PaymentMethodsChart data={allData.paymentMethods} />
+              </AnimatedCard>
+            </div>
+
+            {/* Category Companions */}
+            <AnimatedCard delay={0.48} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <CategoryCompanionsCard data={allData.categoryCompanions || []} />
+            </AnimatedCard>
+          </>
           )}
-
-          {/* Tendencia Diaria — revenue por dia historico */}
-          <AnimatedCard delay={0.03} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-            <POSDailyTrendChart data={allData.dailyTrend} onDayClick={handleDayOfWeekClick} />
-          </AnimatedCard>
-
-          {/* Detail panel for selected day of week */}
-          {selectedDayOfWeek && (
-            <AnimatedCard delay={0.04} className="p-0 overflow-visible">
-              <DayOfWeekDetailCard dayData={selectedDayOfWeek} dateRange="Ene – Jun 2026" onClose={() => setSelectedDayOfWeek(null)} />
-            </AnimatedCard>
-          )}
-
-          {/* Desglose 3 columnas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <ZoneRevenueChart
-                data={allData.byZone}
-                selectedZone="all"
-                onZoneClick={() => {}}
-                onZoneDrillDown={handleResultsZoneDrillDown}
-                unknownZone={allData.unknownZone}
-              />
-            </AnimatedCard>
-            <AnimatedCard delay={0.12} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <HourlyRevenueChart
-                data={allData.hourlyRevenue}
-                onHourDrillDown={handleResultsHourDrillDown}
-              />
-            </AnimatedCard>
-            <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <TopProductsTable
-                data={allData.topProducts}
-                onProductDrillDown={handleResultsProductDrillDown}
-                selectedCategory="all"
-                productsByCategory={allData.productsByCategory}
-                selectedCategoryName={undefined}
-              />
-            </AnimatedCard>
-          </div>
-
-          {/* Detalle expandido — 2 columnas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-            <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3 sm:p-4">
-              <CategoryBreakdown
-                data={allData.topCategories}
-                selectedCategory="all"
-                onCategoryClick={handleCategoryClick}
-                onCategoryDrillDown={handleResultsCategoryDrillDown}
-                onProductDrillDown={handleResultsProductDrillDown}
-                productsByCategory={allData.productsByCategory}
-                totalKpiRevenue={allData.kpis.revenue}
-              />
-            </AnimatedCard>
-            <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <TopProductByCategoryChart
-                data={allData.topProductByCategory || []}
-                onProductDrillDown={handleResultsProductDrillDown}
-                selectedCategory="all"
-                onCategoryDrillDown={handleResultsCategoryDrillDown}
-                topPerformersByCategory={allData.topPerformersByCategory}
-                bottomPerformersByCategory={allData.bottomPerformersByCategory}
-                totalKpiRevenue={allData.kpis.revenue}
-              />
-            </AnimatedCard>
-          </div>
-
-          {/* Staff + Pagos */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-            <AnimatedCard delay={0.36} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <StaffPerformanceTable
-                data={allData.staffPerformance}
-                onStaffDrillDown={handleResultsStaffDrillDown}
-              />
-            </AnimatedCard>
-            <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-              <PaymentMethodsChart data={allData.paymentMethods} />
-            </AnimatedCard>
-          </div>
-
-          {/* Category Companions */}
-          <AnimatedCard delay={0.48} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-            <CategoryCompanionsCard data={allData.categoryCompanions || []} />
-          </AnimatedCard>
         </>
       )}
 

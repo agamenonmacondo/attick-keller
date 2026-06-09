@@ -4,7 +4,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
 import { SectionHeading } from '../shared/SectionHeading'
 import { formatCOPDisplay } from './KPICard'
 
-const PALETTE = ['#6B2737', '#5C7A4D', '#D4922A', '#C9A94E', '#3E2723', '#8B5E3C', '#2D5016', '#B8860B']
+const PALETTE = ['var(--color-ak-borgona)', 'var(--color-ak-oliva)', 'var(--color-ak-ambar)', 'var(--color-ak-dorado)', 'var(--color-ak-madera)', '#8B5E3C', '#2D5016', '#B8860B']
 
 interface PaymentMethodsChartProps {
   data: Array<{

@@ -36,12 +36,12 @@ export function TableDemandCard() {
   if (!data) return null
 
   const isDark = theme === 'dark'
-  const DEMAND_COLORS = isDark ? ['#C44D63', '#7BA86A', '#E8A840', '#E8DDD0'] : ['#6B2737', '#5C7A4D', '#D4922A', '#3E2723']
+  const DEMAND_COLORS = isDark ? ['var(--color-danger)', 'var(--color-success)', 'var(--color-warning)', 'var(--color-ak-cal)'] : ['var(--color-ak-borgona)', 'var(--color-ak-oliva)', 'var(--color-ak-ambar)', 'var(--color-ak-madera)']
   const SUPPLY_COLORS = isDark ? ['#7a4a56', '#5a7049', '#b89050', '#6a5a48'] : ['#a87891', '#9ab88d', '#e6b86a', '#7a6654']
-  const gridColor = isDark ? '#4A3A30' : '#E8DDD0'
-  const tickColor = isDark ? '#A89080' : '#8D6E63'
-  const tooltipBg = isDark ? '#2C2018' : '#FFFFFF'
-  const tooltipBorder = isDark ? '#4A3A30' : '#D7CCC8'
+  const gridColor = isDark ? 'var(--border-default)' : 'var(--border-light)'
+  const tickColor = isDark ? 'var(--text-muted)' : 'var(--text-secondary)'
+  const tooltipBg = isDark ? 'var(--bg-card)' : 'var(--bg-card)'
+  const tooltipBorder = isDark ? 'var(--border-default)' : 'var(--border-light)'
 
   const chartData = [
     { name: '2', demanda: data.demand.size2, oferta: data.supply.size2 },
@@ -71,7 +71,7 @@ export function TableDemandCard() {
             <XAxis dataKey="name" tick={{ fontSize: 11, fill: tickColor }} label={{ value: 'Personas', position: 'insideBottom', offset: -2, fontSize: 11, fill: tickColor }} />
             <YAxis tick={{ fontSize: 11, fill: tickColor }} unit="%" />
             <Tooltip
-              contentStyle={{ borderRadius: '8px', border: `1px solid ${tooltipBorder}`, fontSize: '12px', background: tooltipBg, color: isDark ? '#E8DDD0' : '#3E2723' }}
+              contentStyle={{ borderRadius: '8px', border: `1px solid ${tooltipBorder}`, fontSize: '12px', background: tooltipBg, color: isDark ? 'var(--text-primary)' : 'var(--text-primary)' }}
               formatter={((value: any, name: any) => [`${value}%`, name === 'demanda' ? 'Demanda' : 'Oferta de mesas']) as any}
             />
             <Legend formatter={(value: string) => value === 'demanda' ? 'Demanda' : 'Mesas disponibles'} />

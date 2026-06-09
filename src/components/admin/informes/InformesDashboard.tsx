@@ -7,15 +7,15 @@ import {
 } from 'recharts'
 import { Trophy, CreditCard, MapPin } from '@phosphor-icons/react'
 
-// ═══ A&K Brand Colors ═══
-const CHART_DORADO = '#C9A94E'
-const CHART_DORADO_LIGHT = '#E8D48B'
-const CHART_BORGONA = '#6B2737'
-const CHART_MADERA = '#3E2723'
-const CHART_NEUTRAL = '#8B7B6E'
+// ═══ A&K Brand Colors (CSS vars auto-switch in dark mode) ═══
+const CHART_DORADO = 'var(--color-ak-dorado)'
+const CHART_DORADO_LIGHT = 'var(--color-ak-ambar)'
+const CHART_BORGONA = 'var(--color-ak-borgona)'
+const CHART_MADERA = 'var(--color-ak-madera)'
+const CHART_NEUTRAL = 'var(--text-secondary)'
 
 const BAR_COLORS = [CHART_DORADO, CHART_DORADO, CHART_DORADO, CHART_DORADO_LIGHT, CHART_DORADO_LIGHT, CHART_DORADO_LIGHT, CHART_NEUTRAL, CHART_NEUTRAL, CHART_NEUTRAL, CHART_NEUTRAL]
-const PIE_COLORS = [CHART_DORADO, CHART_BORGONA, CHART_NEUTRAL, CHART_MADERA, '#A0522D']
+const PIE_COLORS = [CHART_DORADO, CHART_BORGONA, CHART_NEUTRAL, CHART_MADERA, 'var(--color-ak-ladrillo)']
 
 const fmt = (n: number) => {
   if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`

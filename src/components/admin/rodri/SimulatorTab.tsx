@@ -39,12 +39,12 @@ interface DaySlot {
 
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
 const TEAM_COLORS: Record<string, string> = {
-  'Cocina': '#ef4444',
-  'Pizzeria': '#eab308',
-  'Servicio': '#f97316',
-  'Ático - barra': '#ec4899',
-  'keller - barra': '#C1121F',
-  'Taller - barra': '#22c55e',
+  'Cocina': 'var(--color-danger)',
+  'Pizzeria': 'var(--color-ak-ambar)',
+  'Servicio': 'var(--color-ak-borgona)',
+  'Ático - barra': 'var(--color-ak-dorado)',
+  'keller - barra': 'var(--color-danger)',
+  'Taller - barra': 'var(--color-ak-oliva)',
 }
 
 const SHIFT_DEFS: Record<string, { name: string; entrada: string; salida: string; hours: number }> = {
@@ -357,9 +357,9 @@ export default function SimulatorTab() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Horas Extra', value: totals.totalOT.toFixed(1), sub: `${totals.overLimit}/${totals.count} empleados`, color: totals.totalOT > 0 ? '#ef4444' : '#22c55e' },
-          { label: 'Turnos Partidos', value: totals.totalSplits, sub: 'esta semana', color: totals.totalSplits > 5 ? '#ef4444' : '#22c55e' },
-          { label: 'Horas Nocturnas', value: totals.totalNight.toFixed(1), sub: `de ${totals.totalHours.toFixed(0)}h total`, color: '#f59e0b' },
+          { label: 'Horas Extra', value: totals.totalOT.toFixed(1), sub: `${totals.overLimit}/${totals.count} empleados`, color: totals.totalOT > 0 ? 'var(--color-danger)' : 'var(--color-success)' },
+          { label: 'Turnos Partidos', value: totals.totalSplits, sub: 'esta semana', color: totals.totalSplits > 5 ? 'var(--color-danger)' : 'var(--color-success)' },
+          { label: 'Horas Nocturnas', value: totals.totalNight.toFixed(1), sub: `de ${totals.totalHours.toFixed(0)}h total`, color: 'var(--color-ak-ambar)' },
           { label: 'Costo Estimado', value: `$${(totals.totalCost/1000000).toFixed(1)}M`, sub: 'semana', color: 'var(--text-primary)' },
         ].map(kpi => (
           <div key={kpi.label} className="rounded-xl p-4 bg-[var(--bg-card)] border border-[var(--border-default)]">
@@ -442,7 +442,7 @@ export default function SimulatorTab() {
                             />
                           </td>
                         ))}
-                        <td className="text-center p-2 font-semibold" style={{color: total > empsInTeam * maxDays ? '#ef4444' : '#22c55e'}}>
+                        <td className="text-center p-2 font-semibold" style={{color: total > empsInTeam * maxDays ? 'var(--color-danger)' : 'var(--color-success)'}}>
                           {total}
                         </td>
                       </tr>
@@ -503,14 +503,14 @@ export default function SimulatorTab() {
                     </td>
                     <td className="p-3" style={{color:'var(--text-secondary)'}}>{r.cargo}</td>
                     <td className="p-3" style={{color:'var(--text-primary)'}}>{r.daysWorked}</td>
-                    <td className="p-3 font-medium" style={{color: r.weeklyHours > maxHours ? '#ef4444' : 'var(--text-primary)'}}>
+                    <td className="p-3 font-medium" style={{color: r.weeklyHours > maxHours ? 'var(--color-danger)' : 'var(--text-primary)'}}>
                       {r.weeklyHours}h
                     </td>
-                    <td className="p-3 font-medium" style={{color: r.overtimeHours > 0 ? '#ef4444' : '#22c55e'}}>
+                    <td className="p-3 font-medium" style={{color: r.overtimeHours > 0 ? 'var(--color-danger)' : 'var(--color-success)'}}>
                       {r.overtimeHours > 0 ? `+${r.overtimeHours}h` : '0'}
                     </td>
                     <td className="p-3" style={{color:'var(--text-secondary)'}}>{r.nightHours}h</td>
-                    <td className="p-3" style={{color: r.splitShifts > maxSplits ? '#ef4444' : 'var(--text-secondary)'}}>
+                    <td className="p-3" style={{color: r.splitShifts > maxSplits ? 'var(--color-danger)' : 'var(--text-secondary)'}}>
                       {r.splitShifts}
                     </td>
                     <td className="p-3" style={{color:'var(--text-primary)'}}>${(r.cost/1000).toFixed(0)}k</td>
@@ -530,22 +530,22 @@ export default function SimulatorTab() {
             <div className="grid grid-cols-2 gap-6">
               {/* Current */}
               <div className="rounded-lg p-4" style={{background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.3)'}}>
-                <div className="text-sm font-semibold" style={{color:'#ef4444'}}>Semana Actual (W20)</div>
+                <div className="text-sm font-semibold" style={{color:'var(--color-danger)'}}>Semana Actual (W20)</div>
                 <div className="mt-3 space-y-2">
-                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Horas extra totales</span><span className="font-bold" style={{color:'#ef4444'}}>63h</span></div>
-                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Turnos partidos</span><span className="font-bold" style={{color:'#ef4444'}}>8</span></div>
-                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Empleados en exceso</span><span className="font-bold" style={{color:'#ef4444'}}>2 de 4</span></div>
-                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Mayor exceso</span><span className="font-bold" style={{color:'#ef4444'}}>Carlos 79h/6d</span></div>
+                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Horas extra totales</span><span className="font-bold" style={{color:'var(--color-danger)'}}>63h</span></div>
+                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Turnos partidos</span><span className="font-bold" style={{color:'var(--color-danger)'}}>8</span></div>
+                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Empleados en exceso</span><span className="font-bold" style={{color:'var(--color-danger)'}}>2 de 4</span></div>
+                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Mayor exceso</span><span className="font-bold" style={{color:'var(--color-danger)'}}>Carlos 79h/6d</span></div>
                 </div>
               </div>
               {/* Simulated */}
               <div className="rounded-lg p-4" style={{background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.3)'}}>
-                <div className="text-sm font-semibold" style={{color:'#22c55e'}}>Configuracion Simulada</div>
+                <div className="text-sm font-semibold" style={{color:'var(--color-success)'}}>Configuracion Simulada</div>
                 <div className="mt-3 space-y-2">
-                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Horas extra totales</span><span className="font-bold" style={{color: totals.totalOT > 0 ? '#ef4444' : '#22c55e'}}>{totals.totalOT.toFixed(1)}h</span></div>
-                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Turnos partidos</span><span className="font-bold" style={{color: totals.totalSplits > 5 ? '#ef4444' : '#22c55e'}}>{totals.totalSplits}</span></div>
-                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Empleados en exceso</span><span className="font-bold" style={{color: totals.overLimit > 0 ? '#ef4444' : '#22c55e'}}>{totals.overLimit}/{totals.count}</span></div>
-                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Costo estimado</span><span className="font-bold" style={{color:'#22c55e'}}>${(totals.totalCost/1000000).toFixed(2)}M</span></div>
+                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Horas extra totales</span><span className="font-bold" style={{color: totals.totalOT > 0 ? 'var(--color-danger)' : 'var(--color-success)'}}>{totals.totalOT.toFixed(1)}h</span></div>
+                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Turnos partidos</span><span className="font-bold" style={{color: totals.totalSplits > 5 ? 'var(--color-danger)' : 'var(--color-success)'}}>{totals.totalSplits}</span></div>
+                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Empleados en exceso</span><span className="font-bold" style={{color: totals.overLimit > 0 ? 'var(--color-danger)' : 'var(--color-success)'}}>{totals.overLimit}/{totals.count}</span></div>
+                  <div className="flex justify-between"><span style={{color:'var(--text-secondary)'}}>Costo estimado</span><span className="font-bold" style={{color:'var(--color-success)'}}>${(totals.totalCost/1000000).toFixed(2)}M</span></div>
                 </div>
               </div>
             </div>
@@ -554,15 +554,15 @@ export default function SimulatorTab() {
             <div className="mt-4 rounded-lg p-4" style={{background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)'}}>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold" style={{color:'#22c55e'}}>{savings.ot > 0 ? `-${savings.ot.toFixed(0)}h` : 'N/A'}</div>
+                  <div className="text-2xl font-bold" style={{color:'var(--color-success)'}}>{savings.ot > 0 ? `-${savings.ot.toFixed(0)}h` : 'N/A'}</div>
                   <div className="text-xs" style={{color:'var(--text-secondary)'}}>Reduccion Horas Extra</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold" style={{color:'#22c55e'}}>{savings.splits > 0 ? `-${savings.splits}` : 'N/A'}</div>
+                  <div className="text-2xl font-bold" style={{color:'var(--color-success)'}}>{savings.splits > 0 ? `-${savings.splits}` : 'N/A'}</div>
                   <div className="text-xs" style={{color:'var(--text-secondary)'}}>Reduccion Turnos Partidos</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold" style={{color:'#f59e0b'}}>A configurar</div>
+                  <div className="text-2xl font-bold" style={{color:'var(--color-ak-ambar)'}}>A configurar</div>
                   <div className="text-xs" style={{color:'var(--text-secondary)'}}>Ajusta cobertura para optimizar</div>
                 </div>
               </div>
@@ -571,13 +571,13 @@ export default function SimulatorTab() {
 
           {/* Missing teams warning */}
           <div className="rounded-xl p-4" style={{background:'rgba(245,158,11,0.1)', border:'1px solid rgba(245,158,11,0.3)'}}>
-            <h3 className="font-semibold" style={{color:'#f59e0b'}}>Equipos sin personal asignado</h3>
+            <h3 className="font-semibold" style={{color:'var(--color-ak-ambar)'}}>Equipos sin personal asignado</h3>
             <p className="text-sm mt-2" style={{color:'var(--text-secondary)'}}>
               Los siguientes equipos existen pero no tienen empleados activos. Agrega personal para simulaciones mas precisas:
             </p>
             <div className="flex flex-wrap gap-2 mt-2">
               {teams.filter(t => !employees.some(e => e.activo && e.team === t.nombre)).map(t => (
-                <span key={t.id} className="px-3 py-1 rounded-full text-xs font-medium" style={{background:'rgba(245,158,11,0.15)', color:'#f59e0b', border:'1px solid rgba(245,158,11,0.3)'}}>
+                <span key={t.id} className="px-3 py-1 rounded-full text-xs font-medium" style={{background:'rgba(245,158,11,0.15)', color:'var(--color-ak-ambar)', border:'1px solid rgba(245,158,11,0.3)'}}>
                   {t.nombre} (0 empleados)
                 </span>
               ))}

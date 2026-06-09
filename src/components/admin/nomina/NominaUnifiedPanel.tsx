@@ -48,10 +48,10 @@ function HoursBarChart({ resumen }: { resumen: NominaResumen }) {
   const items = [
     { label: 'Ordinarias', mins: resumen.hoMins, color: 'var(--color-ak-borgona)' },
     { label: 'Extra Diurna', mins: resumen.hedMins, color: 'var(--color-ak-crema)' },
-    { label: 'Extra Nocturna', mins: resumen.henMins, color: '#7c3aed' },
-    { label: 'Dom. Diurna', mins: resumen.hddMins, color: '#f59e0b' },
-    { label: 'Dom. Nocturna', mins: resumen.hdnMins, color: '#ef4444' },
-    { label: 'Rec. Nocturno', mins: resumen.rnMins, color: '#06b6d4' },
+    { label: 'Extra Nocturna', mins: resumen.henMins, color: 'var(--color-ak-borgona)' },
+    { label: 'Dom. Diurna', mins: resumen.hddMins, color: 'var(--color-ak-ambar)' },
+    { label: 'Dom. Nocturna', mins: resumen.hdnMins, color: 'var(--color-danger)' },
+    { label: 'Rec. Nocturno', mins: resumen.rnMins, color: 'var(--color-success)' },
   ]
   const total = items.reduce((s, i) => s + i.mins, 0) || 1
 
@@ -151,10 +151,10 @@ function StaffDetailPanel({
           {[
             { label: 'HO', val: totals.ho, hrs: totals.hoHours, color: 'var(--color-ak-borgona)' },
             { label: 'HED', val: totals.hed, hrs: totals.hedHours, color: 'var(--color-ak-crema)' },
-            { label: 'HEN', val: totals.hen, hrs: totals.henHours, color: '#7c3aed' },
-            { label: 'HDD', val: totals.hdd, color: '#f59e0b' },
-            { label: 'HDN', val: totals.hdn, color: '#ef4444' },
-            { label: 'RN', val: totals.rn, color: '#06b6d4' },
+            { label: 'HEN', val: totals.hen, hrs: totals.henHours, color: 'var(--color-ak-borgona)' },
+            { label: 'HDD', val: totals.hdd, color: 'var(--color-ak-ambar)' },
+            { label: 'HDN', val: totals.hdn, color: 'var(--color-danger)' },
+            { label: 'RN', val: totals.rn, color: 'var(--color-success)' },
           ].map(item => (
             <div key={item.label} className="text-center">
               <div className="text-xs text-[var(--text-secondary)]">{item.label}</div>
@@ -419,12 +419,12 @@ function OperativoTab() {
           </AnimatedCard>
           <AnimatedCard className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Sun size={16} className="text-[#f59e0b]" />
+              <Sun size={16} className="text-[var(--color-ak-ambar)]" />
               <span className="text-xs text-[var(--text-secondary)]">Dominicales diurnos</span>
             </div>
             <div className="text-lg font-bold text-[var(--text-primary)]">{resumen.totalHorasDominicales}h</div>
             <div className="flex items-center gap-2 mt-2">
-              <Moon size={16} className="text-[#7c3aed]" />
+              <Moon size={16} className="text-[var(--color-ak-borgona)]" />
               <span className="text-xs text-[var(--text-secondary)]">Extra nocturnos</span>
             </div>
             <div className="text-lg font-bold text-[var(--text-primary)]">{resumen.totalHorasExtras}h</div>
@@ -497,7 +497,7 @@ function OperativoTab() {
                 <div className="flex-1 h-5 bg-[var(--bg-secondary)] rounded overflow-hidden">
                   <div
                     className="h-full rounded flex items-center pl-1.5 text-[10px] font-medium text-white"
-                    style={{ width: `${Math.max(barP, 12)}%`, backgroundColor: isMin ? '#ef4444' : 'var(--color-ak-borgona)', transition: 'width 0.5s' }}
+                    style={{ width: `${Math.max(barP, 12)}%`, backgroundColor: isMin ? 'var(--color-danger)' : 'var(--color-ak-borgona)', transition: 'width 0.5s' }}
                   >
                     {w.avgPersonas}
                   </div>

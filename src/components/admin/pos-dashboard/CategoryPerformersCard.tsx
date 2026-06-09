@@ -126,15 +126,15 @@ export function CategoryPerformersCard({
                   {top2.map((p, i) => (
                     <div
                       key={`top-${p.productId}`}
-                      className={`flex items-center gap-2 py-1 px-2 rounded-sm cursor-pointer hover:bg-[#5C7A4D10] ${onProductDrillDown ? 'cursor-pointer' : ''}`}
+                      className={`flex items-center gap-2 py-1 px-2 rounded-sm cursor-pointer hover:bg-[var(--color-ak-oliva)]/10 ${onProductDrillDown ? 'cursor-pointer' : ''}`}
                       onClick={onProductDrillDown ? () => onProductDrillDown(p.productId, p.productName) : undefined}
                       title={onProductDrillDown ? `Ver detalle: ${p.productName}` : undefined}
                     >
-                      <Trophy size={10} className="text-[#5C7A4D] shrink-0" weight="fill" />
-                      <span className="text-[10px] sm:text-[11px] font-medium text-[#5C7A4D] truncate flex-1">
+                      <Trophy size={10} className="text-[var(--color-ak-oliva)] shrink-0" weight="fill" />
+                      <span className="text-[10px] sm:text-[11px] font-medium text-[var(--color-ak-oliva)] truncate flex-1">
                         #{i + 1} {p.productName}
                       </span>
-                      <span className="text-[10px] sm:text-[11px] font-mono tabular-nums text-[#5C7A4D] shrink-0">
+                      <span className="text-[10px] sm:text-[11px] font-mono tabular-nums text-[var(--color-ak-oliva)] shrink-0">
                         {formatCOP(p.revenue)}
                       </span>
                       <span className="text-[9px] text-[var(--text-secondary)] shrink-0 hidden sm:inline">
@@ -147,15 +147,15 @@ export function CategoryPerformersCard({
                   {bottom2.map((p, i) => (
                     <div
                       key={`bottom-${p.productId}`}
-                      className={`flex items-center gap-2 py-1 px-2 rounded-sm cursor-pointer hover:bg-[#6B273710] ${onProductDrillDown ? 'cursor-pointer' : ''}`}
+                      className={`flex items-center gap-2 py-1 px-2 rounded-sm cursor-pointer hover:bg-[var(--color-ak-borgona)]/10 ${onProductDrillDown ? 'cursor-pointer' : ''}`}
                       onClick={onProductDrillDown ? () => onProductDrillDown(p.productId, p.productName) : undefined}
                       title={onProductDrillDown ? `Ver detalle: ${p.productName}` : undefined}
                     >
-                      <Warning size={10} className="text-[#6B2737] shrink-0" weight="fill" />
-                      <span className="text-[10px] sm:text-[11px] font-medium text-[#6B2737] truncate flex-1">
+                      <Warning size={10} className="text-[var(--color-ak-borgona)] shrink-0" weight="fill" />
+                      <span className="text-[10px] sm:text-[11px] font-medium text-[var(--color-ak-borgona)] truncate flex-1">
                         #{bottom2.length - i} {p.productName}
                       </span>
-                      <span className="text-[10px] sm:text-[11px] font-mono tabular-nums text-[#6B2737] shrink-0">
+                      <span className="text-[10px] sm:text-[11px] font-mono tabular-nums text-[var(--color-ak-borgona)] shrink-0">
                         {formatCOP(p.revenue)}
                       </span>
                       <span className="text-[9px] text-[var(--text-secondary)] shrink-0 hidden sm:inline">

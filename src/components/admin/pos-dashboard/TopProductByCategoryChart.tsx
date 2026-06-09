@@ -29,7 +29,7 @@ interface TopProductByCategoryChartProps {
   totalKpiRevenue?: number
 }
 
-const PALETTE = ['#6B2737', '#5C7A4D', '#D4922A', '#C9A94E', '#3E2723', '#8B5E3C', '#2C5530', '#7B3F00']
+const PALETTE = ['var(--color-ak-borgona)', 'var(--color-ak-oliva)', 'var(--color-ak-ambar)', 'var(--color-ak-dorado)', 'var(--color-ak-madera)', '#8B5E3C', '#2C5530', '#7B3F00']
 
 function formatCOP(n: number): string {
   const abs = Math.abs(n)
@@ -153,18 +153,18 @@ export function TopProductByCategoryChart({
       {/* When a category is filtered, show top 2 and bottom 2 */}
       {isFiltered && selectedTopPerformers.length > 0 && (
         <div className="mt-5">
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#5C7A4D] mb-2">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[var(--color-ak-oliva)] mb-2">
             Top 2 — Mejores
           </p>
           <div className="space-y-1.5">
             {selectedTopPerformers.map((p, i) => (
               <div
                 key={`top-${p.productId}`}
-                className={`flex items-center gap-2 py-1.5 px-2 rounded-sm ${onProductDrillDown ? 'cursor-pointer hover:bg-[#5C7A4D10]' : ''}`}
+                className={`flex items-center gap-2 py-1.5 px-2 rounded-sm ${onProductDrillDown ? 'cursor-pointer hover:bg-[var(--color-ak-oliva)]/10' : ''}`}
                 onClick={onProductDrillDown ? () => onProductDrillDown(p.productId, p.productName) : undefined}
                 title={onProductDrillDown ? `Ver detalle: ${p.productName}` : undefined}
               >
-                <span className="text-[10px] sm:text-xs font-bold text-[#5C7A4D] shrink-0">#{i + 1}</span>
+                <span className="text-[10px] sm:text-xs font-bold text-[var(--color-ak-oliva)] shrink-0">#{i + 1}</span>
                 <span className="text-[10px] sm:text-xs text-[var(--text-primary)] truncate flex-1">{p.productName}</span>
                 <span className="text-[10px] sm:text-xs font-mono tabular-nums text-[var(--text-primary)] shrink-0">{formatCOP(p.revenue)}</span>
                 <span className="text-[9px] text-[var(--text-secondary)] shrink-0 hidden sm:inline">{p.quantity} uds</span>
@@ -177,18 +177,18 @@ export function TopProductByCategoryChart({
       {/* Bottom performers (worst) */}
       {isFiltered && selectedBottomPerformers.length > 0 && (
         <div className="mt-4">
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#6B2737] mb-2">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[var(--color-ak-borgona)] mb-2">
             Bottom 2 — Peor producto
           </p>
           <div className="space-y-1.5">
             {selectedBottomPerformers.map((p, i) => (
               <div
                 key={`bottom-${p.productId}`}
-                className={`flex items-center gap-2 py-1.5 px-2 rounded-sm opacity-75 ${onProductDrillDown ? 'cursor-pointer hover:bg-[#6B273710]' : ''}`}
+                className={`flex items-center gap-2 py-1.5 px-2 rounded-sm opacity-75 ${onProductDrillDown ? 'cursor-pointer hover:bg-[var(--color-ak-borgona)]/10' : ''}`}
                 onClick={onProductDrillDown ? () => onProductDrillDown(p.productId, p.productName) : undefined}
                 title={onProductDrillDown ? `Ver detalle: ${p.productName}` : undefined}
               >
-                <span className="text-[10px] sm:text-xs font-bold text-[#6B2737] shrink-0">
+                <span className="text-[10px] sm:text-xs font-bold text-[var(--color-ak-borgona)] shrink-0">
                   #{selectedTopPerformers.length > 0 ? selectedTopPerformers.length + i + 1 : i + 1}
                 </span>
                 <span className="text-[10px] sm:text-xs text-[var(--text-secondary)] truncate flex-1">{p.productName}</span>

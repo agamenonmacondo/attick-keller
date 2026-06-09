@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import type { useRodriData } from '@/lib/hooks/useRodriData'
 import { formatCOP } from '@/lib/hooks/useRodriData'
 
-const COLORS = ['var(--color-ak-borgona)', 'var(--color-ak-verde)', 'var(--color-ak-dorado)', 'var(--color-ak-madera)', '#D4922A', 'var(--text-secondary)', 'var(--text-primary)', 'var(--border-default)', 'var(--bg-primary)', '#B8860B']
+const COLORS = ['var(--color-ak-borgona)', 'var(--color-ak-oliva)', 'var(--color-ak-dorado)', 'var(--color-ak-madera)', 'var(--color-ak-ambar)', 'var(--text-secondary)', 'var(--text-primary)', 'var(--border-default)', 'var(--bg-primary)', '#B8860B']
 
 type Data = ReturnType<typeof useRodriData>
 
@@ -95,7 +95,7 @@ export function ProductMixTab({ data }: { data: Data }) {
               <YAxis tickFormatter={v => v >= 1e6 ? (v / 1e6).toFixed(0) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(0) + 'K' : ''} tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
               <Tooltip formatter={fmtTooltip} labelStyle={{ color: 'var(--text-primary)' }} />
               <Bar dataKey="Ventas" fill="var(--color-ak-borgona)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Costo" fill="#D4922A" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Costo" fill="var(--color-ak-ambar)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -107,7 +107,7 @@ export function ProductMixTab({ data }: { data: Data }) {
             <PieChart>
               <Pie data={donutData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={40}>
                 {donutData.map((_, i) => (
-                  <Cell key={i} fill={['#6B2737','#5C7A4D','#C9A94E','#A0522D','#D4922A','#8D6E63','#3E2723','#D7CCC8','#B8860B','#F5EDE0'][i % 10]} />
+                  <Cell key={i} fill={['var(--color-ak-borgona)','var(--color-ak-oliva)','var(--color-ak-dorado)','var(--color-ak-ladrillo)','var(--color-ak-ambar)','var(--text-secondary)','var(--color-ak-madera)','var(--border-light)','#B8860B','var(--color-ak-cal)'][i % 10]} />
                 ))}
               </Pie>
               <Tooltip formatter={fmtTooltip} />
@@ -126,7 +126,7 @@ export function ProductMixTab({ data }: { data: Data }) {
             <YAxis type="category" dataKey="categoria" tick={{ fill: 'var(--text-primary)', fontSize: 11 }} width={100} />
             <Tooltip formatter={fmtTooltip} />
             <Bar dataKey="Ventas" fill="var(--color-ak-borgona)" radius={[0, 4, 4, 0]} />
-            <Bar dataKey="Costo" fill="#D4922A" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="Costo" fill="var(--color-ak-ambar)" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -166,7 +166,7 @@ export function ProductMixTab({ data }: { data: Data }) {
                           className="h-full rounded-full"
                           style={{
                             width: `${margen}%`,
-                            backgroundColor: margen > 70 ? '#5C7A4D' : margen > 50 ? '#D4922A' : '#6B2737',
+                            backgroundColor: margen > 70 ? 'var(--color-success)' : margen > 50 ? 'var(--color-warning)' : 'var(--color-danger)',
                           }}
                         />
                       </div>

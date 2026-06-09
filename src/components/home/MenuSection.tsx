@@ -84,7 +84,7 @@ export default function MenuSection() {
 
   if (loading) {
     return (
-      <section className="py-20 px-6" style={{ backgroundColor: '#F5EDE0' }}>
+      <section className="py-20 px-6" style={{ backgroundColor: 'var(--color-ak-cal)' }}>
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 space-y-4">
             <div className="h-6 w-24 mx-auto rounded animate-pulse" style={{ backgroundColor: 'rgba(201,169,78,0.2)' }} />
@@ -107,7 +107,7 @@ export default function MenuSection() {
 
   if (categories.length === 0) {
     return (
-      <section id="menu" className="py-20 px-6" style={{ backgroundColor: '#F5EDE0' }}>
+      <section id="menu" className="py-20 px-6" style={{ backgroundColor: 'var(--color-ak-cal)' }}>
         <div className="max-w-4xl mx-auto text-center">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -115,7 +115,7 @@ export default function MenuSection() {
             viewport={viewOptions}
             transition={{ duration: 0.5, ease: EASE_OUT }}
             className="text-xl md:text-2xl mb-2"
-            style={{ fontFamily: 'Caveat, cursive', color: '#D4922A' }}
+            style={{ fontFamily: 'Caveat, cursive', color: 'var(--color-ak-ambar)' }}
           >
             Próximamente
           </motion.p>
@@ -125,7 +125,7 @@ export default function MenuSection() {
             viewport={viewOptions}
             transition={{ duration: 0.6, delay: 0.1, ease: EASE_OUT }}
             className="text-4xl md:text-5xl font-bold tracking-tight leading-none mb-4"
-            style={{ fontFamily: "'Playfair Display', serif", color: '#3E2723' }}
+            style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
           >
             Nuestro Menú
           </motion.h2>
@@ -135,7 +135,7 @@ export default function MenuSection() {
             viewport={viewOptions}
             transition={{ duration: 0.8, delay: 0.3, ease: EASE_IN_OUT }}
             className="h-px w-24 mx-auto mb-6"
-            style={{ background: 'linear-gradient(to right, transparent, #C9A94E, transparent)' }}
+            style={{ background: 'linear-gradient(to right, transparent, var(--color-ak-dorado), transparent)' }}
           />
           <p className="text-lg" style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.5)' }}>
             Estamos preparando nuestra carta. Vuelve pronto para descubrir nuestras creaciones mediterráneas.
@@ -150,9 +150,9 @@ export default function MenuSection() {
 
   return (
     <>
-      <div className="h-16" style={{ background: 'linear-gradient(to bottom, #3E2723, #4E342E, #F5EDE0)' }} />
+      <div className="h-16" style={{ background: 'linear-gradient(to bottom, var(--color-ak-madera), var(--color-ak-madera), var(--color-ak-cal))' }} />
 
-      <section id="menu" style={{ backgroundColor: '#F5EDE0' }} className="py-12 md:py-20">
+      <section id="menu" style={{ backgroundColor: 'var(--color-ak-cal)' }} className="py-12 md:py-20">
         <div className="max-w-4xl mx-auto px-4 md:px-6">
           {/* Header */}
           <div className="text-center mb-10 md:mb-14">
@@ -162,7 +162,7 @@ export default function MenuSection() {
               viewport={viewOptions}
               transition={{ duration: 0.5, ease: EASE_OUT }}
               className="text-xl md:text-2xl mb-1"
-              style={{ fontFamily: 'Caveat, cursive', color: '#D4922A' }}
+              style={{ fontFamily: 'Caveat, cursive', color: 'var(--color-ak-ambar)' }}
             >
               Descubre
             </motion.p>
@@ -172,7 +172,7 @@ export default function MenuSection() {
               viewport={viewOptions}
               transition={{ duration: 0.6, delay: 0.1, ease: EASE_OUT }}
               className="text-4xl md:text-5xl font-bold tracking-tight leading-none mb-3"
-              style={{ fontFamily: "'Playfair Display', serif", color: '#3E2723' }}
+              style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
             >
               Nuestra Carta
             </motion.h2>
@@ -182,7 +182,7 @@ export default function MenuSection() {
               viewport={viewOptions}
               transition={{ duration: 0.8, delay: 0.3, ease: EASE_IN_OUT }}
               className="h-px w-24 mx-auto"
-              style={{ background: 'linear-gradient(to right, transparent, #C9A94E, transparent)', transformOrigin: 'center' }}
+              style={{ background: 'linear-gradient(to right, transparent, var(--color-ak-dorado), transparent)', transformOrigin: 'center' }}
             />
           </div>
 
@@ -213,7 +213,7 @@ export default function MenuSection() {
                     )}
                     style={{
                       fontFamily: "'DM Sans', sans-serif",
-                      color: isActive ? '#F5EDE0' : '#3E2723',
+                      color: isActive ? 'var(--color-ak-cal)' : 'var(--color-ak-madera)',
                       letterSpacing: '0.02em',
                     }}
                   >
@@ -221,7 +221,7 @@ export default function MenuSection() {
                       <motion.div
                         layoutId="activeTabBg"
                         className="absolute inset-0 rounded-full"
-                        style={{ backgroundColor: '#6B2737' }}
+                        style={{ backgroundColor: 'var(--color-ak-borgona)' }}
                         transition={{ type: 'spring', duration: 0.45, bounce: 0.18 }}
                       />
                     )}
@@ -232,7 +232,7 @@ export default function MenuSection() {
             </div>
             <div
               className="pointer-events-none absolute inset-y-0 right-0 w-12"
-              style={{ background: 'linear-gradient(to right, transparent, #F5EDE0)' }}
+              style={{ background: 'linear-gradient(to right, transparent, var(--color-ak-cal))' }}
             />
           </motion.div>
 
@@ -256,7 +256,7 @@ export default function MenuSection() {
                   <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, transparent, rgba(201,169,78,0.5), transparent)' }} />
                   <h3
                     className="text-2xl md:text-3xl font-bold text-center"
-                    style={{ fontFamily: "'Playfair Display', serif", color: '#3E2723' }}
+                    style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
                   >
                     {activeCategory.name}
                   </h3>
@@ -291,7 +291,7 @@ export default function MenuSection() {
                         <div className="flex items-baseline justify-between gap-4">
                           <h4
                             className="text-lg md:text-xl font-semibold transition-colors duration-200 ease-out"
-                            style={{ fontFamily: "'Playfair Display', serif", color: '#3E2723' }}
+                            style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
                           >
                             {item.name}
                           </h4>
@@ -301,7 +301,7 @@ export default function MenuSection() {
                           />
                           <span
                             className="font-bold text-base md:text-lg whitespace-nowrap shrink-0 transition-colors duration-200 ease-out"
-                            style={{ fontFamily: "'DM Sans', sans-serif", color: '#6B2737' }}
+                            style={{ fontFamily: "'DM Sans', sans-serif", color: 'var(--color-ak-borgona)' }}
                           >
                             {formatPrice(item.price)}
                           </span>
@@ -330,9 +330,9 @@ export default function MenuSection() {
         }
         @media (hover: hover) and (pointer: fine) {
           .dish-row:hover h4 {
-            color: #6B2737 !important;
+            color: var(--color-ak-borgona) !important;
           }
-          .dish-row:hover .group-hover\:opacity-70 {
+          .dish-row:hover .group-hover\\:opacity-70 {
             opacity: 0.7 !important;
           }
         }

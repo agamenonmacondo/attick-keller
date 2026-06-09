@@ -5,10 +5,10 @@ import { formatCOPDisplay } from './KPICard'
 import { Crown, Medal } from '@phosphor-icons/react'
 
 const TIER_STYLES: Record<string, { bg: string; text: string }> = {
-  'VIP': { bg: 'var(--color-ak-dorado)', text: '#3E2723' },
-  'Oro': { bg: 'var(--color-ak-ambar)', text: '#3E2723' },
-  'Plata': { bg: '#9E9E9E', text: '#fff' },
-  'Bronce': { bg: 'var(--color-ak-madera)', text: '#F5EDE0' },
+  'VIP': { bg: 'var(--color-ak-dorado)', text: 'var(--color-ak-madera)' },
+  'Oro': { bg: 'var(--color-ak-ambar)', text: 'var(--color-ak-madera)' },
+  'Plata': { bg: '#9E9E9E', text: 'var(--color-ak-cal)' },
+  'Bronce': { bg: 'var(--color-ak-madera)', text: 'var(--color-ak-cal)' },
 }
 
 interface ClientTiersCardProps {

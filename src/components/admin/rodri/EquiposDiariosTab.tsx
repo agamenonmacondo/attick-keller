@@ -13,9 +13,9 @@ const TURNO_STYLE: Record<string, string> = {
   A: 'bg-[var(--color-ak-verde)]/15 text-[var(--color-ak-verde)]',
   P1: 'bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-borgona)]',
   P2: 'bg-[var(--color-ak-dorado)]/15 text-[var(--color-ak-dorado)]',
-  S: 'bg-[#D4922A]/15 text-[#D4922A]',
+  S: 'bg-[var(--color-ak-ambar)]/15 text-[var(--color-ak-ambar)]',
   C: 'bg-[var(--color-ak-madera)]/15 text-[var(--color-ak-madera)]',
-  CD: 'bg-[#D4922A]/15 text-[#D4922A]',
+  CD: 'bg-[var(--color-ak-ambar)]/15 text-[var(--color-ak-ambar)]',
   CS: 'bg-[var(--color-ak-verde)]/15 text-[var(--color-ak-verde)]',
 }
 

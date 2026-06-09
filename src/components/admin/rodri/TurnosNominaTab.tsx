@@ -17,9 +17,9 @@ const TURNO_STYLE: Record<string, string> = {
   A: 'bg-[var(--color-ak-verde)]/15 text-[var(--color-ak-verde)] dark:bg-[var(--color-ak-verde)]/20 dark:text-[var(--color-ak-verde)]',
   P1: 'bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]/15 dark:text-[var(--color-ak-borgona-light)]',
   P2: 'bg-[var(--color-ak-dorado)]/15 text-[var(--color-ak-dorado)] dark:bg-[var(--color-ak-dorado)]/20 dark:text-[var(--color-ak-dorado)]',
-  S: 'bg-[#D4922A]/15 text-[#D4922A] dark:bg-[#D4922A]/20 dark:text-[#F5C563]',
+  S: 'bg-[var(--color-ak-ambar)]/15 text-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar)]/20 dark:text-[var(--color-ak-ambar)]',
   C: 'bg-[var(--color-ak-madera)]/15 text-[var(--color-ak-madera)] dark:bg-[var(--color-ak-madera)]/20 dark:text-[var(--color-ak-madera)]',
-  CD: 'bg-[#D4922A]/15 text-[#D4922A] dark:bg-[#D4922A]/20 dark:text-[#F5C563]',
+  CD: 'bg-[var(--color-ak-ambar)]/15 text-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar)]/20 dark:text-[var(--color-ak-ambar)]',
   CS: 'bg-[var(--color-ak-verde)]/15 text-[var(--color-ak-verde)] dark:bg-[var(--color-ak-verde)]/20 dark:text-[var(--color-ak-verde)]',
 }
 

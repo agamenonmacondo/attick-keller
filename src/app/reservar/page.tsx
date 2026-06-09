@@ -237,7 +237,7 @@ export default function ReservarPage() {
 
         {/* Step 1: Date, Party Size & Time */}
         {step === 1 && (
-          <div className="bg-white rounded-2xl shadow-xl border border-[var(--border-default)] overflow-hidden">
+          <div className="bg-[var(--bg-card)] rounded-2xl shadow-xl border border-[var(--border-default)] overflow-hidden">
             {/* Card header */}
             <div className="bg-[var(--color-ak-borgona)]/5 border-b border-[var(--border-default)] px-6 py-4">
               <h2 className="font-['Playfair_Display'] text-xl font-bold text-[var(--color-ak-madera)]">
@@ -364,7 +364,7 @@ export default function ReservarPage() {
 
         {/* Step 2: Confirm + Phone + Notes */}
         {step === 2 && (
-          <div className="bg-white rounded-2xl shadow-xl border border-[var(--border-default)] overflow-hidden">
+          <div className="bg-[var(--bg-card)] rounded-2xl shadow-xl border border-[var(--border-default)] overflow-hidden">
             {/* Card header */}
             <div className="bg-[var(--color-ak-borgona)]/5 border-b border-[var(--border-default)] px-6 py-4">
               <h2 className="font-['Playfair_Display'] text-xl font-bold text-[var(--color-ak-madera)]">

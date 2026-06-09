@@ -78,9 +78,9 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; d
   pending: {
     label: 'Pendiente',
     bg: 'bg-[var(--color-ak-ambar)]/10',
-    text: 'text-[#B0781E]',
+    text: 'text-[var(--color-ak-ambar)]',
     dot: 'bg-[var(--color-ak-ambar)]',
-    icon: <ClockClockwise size={14} weight="fill" className="text-[#B0781E]" />,
+    icon: <ClockClockwise size={14} weight="fill" className="text-[var(--color-ak-ambar)]" />,
   },
   confirmed: {
     label: 'Confirmada',
@@ -527,7 +527,7 @@ export default function PerfilPage() {
               {isAdminUser && (
                 <Link
                   href="/admin"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-ak-madera)] text-[var(--bg-primary)] rounded-xl text-sm font-semibold hover:bg-[#2A1A16] active:scale-[0.97] transition-colors shadow-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-ak-madera)] text-[var(--bg-primary)] rounded-xl text-sm font-semibold hover:bg-[var(--color-ak-madera)] active:scale-[0.97] transition-colors shadow-sm"
                   style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                 >
                   <ComputerTower size={16} weight="fill" />
@@ -581,7 +581,7 @@ export default function PerfilPage() {
                   <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium mt-0.5">Total</p>
                 </div>
                 <div>
-                  <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[#B0781E]">{reservationStats.pending}</p>
+                  <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--color-ak-ambar)]">{reservationStats.pending}</p>
                   <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium mt-0.5">Pendientes</p>
                 </div>
                 <div>
@@ -647,7 +647,7 @@ export default function PerfilPage() {
                         {tab.label}
                         <span className={cn(
                           'inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold',
-                          filter === tab.key ? 'bg-white/25 text-white' : 'bg-[var(--border-default)]/60 text-[var(--text-secondary)]',
+                          filter === tab.key ? 'bg-[var(--bg-card)]/25 text-white' : 'bg-[var(--border-default)]/60 text-[var(--text-secondary)]',
                         )}>
                           {count}
                         </span>

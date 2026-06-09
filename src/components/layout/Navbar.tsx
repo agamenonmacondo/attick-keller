@@ -17,7 +17,7 @@ export default function Navbar() {
   return (
     <nav className={cn(
       'fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-6 py-4',
-      scrolled ? 'bg-[#3E2723] shadow-lg' : 'bg-transparent'
+      scrolled ? 'bg-[var(--color-ak-madera)] shadow-lg' : 'bg-transparent'
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link href="/" className="font-['Playfair_Display'] text-2xl font-bold text-white">
@@ -26,7 +26,7 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           <Link
             href="/reservar"
-            className="px-5 py-2 bg-[#6B2737] text-white rounded-full font-semibold hover:bg-[#8B3747] transition-colors text-sm"
+            className="px-5 py-2 bg-[var(--color-ak-borgona)] text-white rounded-full font-semibold hover:bg-[var(--color-accent)] transition-colors text-sm"
           >
             Reservar Mesa
           </Link>
@@ -46,7 +46,7 @@ function ProfileLink() {
     return (
       <Link
         href={isAdmin ? '/admin' : '/perfil'}
-        className="text-white hover:text-[#C9A94E] transition-colors text-sm font-medium"
+        className="text-white hover:text-[var(--color-ak-dorado)] transition-colors text-sm font-medium"
       >
         {isAdmin ? 'Admin' : 'Mi Perfil'}
       </Link>
@@ -56,7 +56,7 @@ function ProfileLink() {
   return (
     <Link
       href="/auth/login"
-      className="text-white hover:text-[#C9A94E] transition-colors text-sm font-medium"
+      className="text-white hover:text-[var(--color-ak-dorado)] transition-colors text-sm font-medium"
     >
       Ingresar
     </Link>

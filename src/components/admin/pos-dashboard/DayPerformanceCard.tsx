@@ -53,9 +53,9 @@ interface DayPerformanceProps {
 }
 
 const ZONE_COLORS: Record<string, string> = {
-  'Tipi': '#6B2737',
-  'Attic': '#5C7A4D',
-  'Chispas': '#D4922A',
+  'Tipi': 'var(--color-ak-borgona)',
+  'Attic': 'var(--color-ak-oliva)',
+  'Chispas': 'var(--color-ak-ambar)',
 }
 
 function formatCOP(n: number): string {
@@ -115,7 +115,7 @@ export function DayPerformanceCard({ date, kpis, byZone, topProducts, hourlyReve
           <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Por zona</h4>
           <div className="space-y-2">
             {byZone.map(z => {
-              const color = ZONE_COLORS[z.zone] || '#C9A94E'
+              const color = ZONE_COLORS[z.zone] || 'var(--color-ak-dorado)'
               return (
                 <div
                   key={z.zone}

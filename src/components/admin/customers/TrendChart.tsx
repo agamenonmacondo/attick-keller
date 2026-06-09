@@ -56,13 +56,13 @@ export function TrendChart() {
   }
 
   const isDark = theme === 'dark'
-  const gridColor = isDark ? '#4A3A30' : '#E8DDD0'
-  const tickColor = isDark ? '#A89080' : '#8D6E63'
-  const tooltipBg = isDark ? '#2C2018' : '#FFFFFF'
-  const tooltipBorder = isDark ? '#4A3A30' : '#D7CCC8'
-  const lineActive = isDark ? '#C44D63' : '#6B2737'
-  const lineNew = isDark ? '#7BA86A' : '#5C7A4D'
-  const lineNoShow = isDark ? '#E8A840' : '#D4922A'
+  const gridColor = isDark ? 'var(--border-default)' : 'var(--border-light)'
+  const tickColor = isDark ? 'var(--text-muted)' : 'var(--text-secondary)'
+  const tooltipBg = isDark ? 'var(--bg-card)' : 'var(--bg-card)'
+  const tooltipBorder = isDark ? 'var(--border-default)' : 'var(--border-light)'
+  const lineActive = 'var(--color-ak-borgona)'
+  const lineNew = 'var(--color-ak-oliva)'
+  const lineNoShow = 'var(--color-ak-ambar)'
 
   return (
     <AnimatedCard delay={0.5}>
@@ -83,7 +83,7 @@ export function TrendChart() {
             />
             <YAxis tick={{ fontSize: 11, fill: tickColor }} />
             <Tooltip
-              contentStyle={{ borderRadius: '8px', border: `1px solid ${tooltipBorder}`, fontSize: '12px', background: tooltipBg, color: isDark ? '#E8DDD0' : '#3E2723' }}
+              contentStyle={{ borderRadius: '8px', border: `1px solid ${tooltipBorder}`, fontSize: '12px', background: tooltipBg, color: 'var(--text-primary)' }}
               formatter={((value: any, name: any) => {
                 const labels: Record<string, string> = {
                   activeCount: 'Clientes activos',

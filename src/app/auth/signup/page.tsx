@@ -64,7 +64,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+      <div className="w-full max-w-md bg-[var(--bg-card)] rounded-2xl shadow-xl p-8">
         <h1 className="font-['Playfair_Display'] text-3xl font-bold text-[var(--color-ak-madera)] text-center mb-2">
           Crear Cuenta
         </h1>

@@ -49,7 +49,7 @@ export function ServiceFilter({ active, onChange, counts }: ServiceFilterProps) 
                   'ml-1 px-1.5 py-0.5 text-xs rounded-full',
                   isActive
                     ? 'bg-[var(--color-ak-borgona)]/15 dark:bg-[var(--color-ak-dorado)]/20 text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-dorado)]'
-                    : 'bg-[var(--color-ak-madera)]/10 dark:bg-white/10 text-[var(--color-ak-madera)]/60 dark:text-white/40'
+                    : 'bg-[var(--color-ak-madera)]/10 dark:bg-[var(--bg-card)]/10 text-[var(--color-ak-madera)]/60 dark:text-white/40'
                 )}>
                   {count}
                 </span>

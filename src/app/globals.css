@@ -86,6 +86,112 @@
   --color-ak-ambar: #E8A840;
   --color-ak-ladrillo: #D4714D;
   --color-ak-cal: #F5EDE0;
+
+  /* ===========================================
+   * TAILWIND GENERIC COLOR OVERRIDES IN DARK MODE
+   * Maps generic Tailwind colors to our semantic palette.
+   * One change here fixes 50+ components simultaneously.
+   * =========================================== */
+
+  /* White backgrounds → dark card bg */
+  .dark .bg-white { background-color: var(--bg-card) !important; }
+
+  /* Gray text → warm neutral text */
+  .dark .text-gray-100 { color: var(--text-primary); }
+  .dark .text-gray-200 { color: var(--text-primary); }
+  .dark .text-gray-300 { color: var(--text-secondary); }
+  .dark .text-gray-400 { color: var(--text-muted); }
+  .dark .text-gray-500 { color: var(--text-muted); }
+  .dark .text-gray-600 { color: var(--text-muted); }
+  .dark .text-gray-700 { color: #8A7A6E; }
+  .dark .text-gray-800 { color: #7A6A5E; }
+  .dark .text-gray-900 { color: #6A5A4E; }
+
+  /* Gray backgrounds → warm dark surfaces */
+  .dark .bg-gray-50 { background-color: var(--bg-primary); }
+  .dark .bg-gray-100 { background-color: var(--bg-input); }
+  .dark .bg-gray-200 { background-color: var(--bg-hover); }
+  .dark .bg-gray-300 { background-color: var(--bg-hover); }
+  .dark .bg-gray-400 { background-color: var(--border-default); }
+  .dark .bg-gray-500 { background-color: var(--border-default); }
+  .dark .bg-gray-600 { background-color: var(--border-default); }
+  .dark .bg-gray-700 { background-color: var(--bg-input); }
+  .dark .bg-gray-800 { background-color: var(--bg-card); }
+  .dark .bg-gray-900 { background-color: var(--bg-primary); }
+
+  /* Gray borders → warm dark borders */
+  .dark .border-gray-100 { border-color: var(--border-light); }
+  .dark .border-gray-200 { border-color: var(--border-light); }
+  .dark .border-gray-300 { border-color: var(--border-default); }
+  .dark .border-gray-400 { border-color: var(--border-default); }
+  .dark .border-gray-500 { border-color: var(--border-default); }
+  .dark .border-gray-600 { border-color: var(--border-default); }
+  .dark .border-gray-700 { border-color: var(--border-default); }
+  .dark .border-gray-800 { border-color: var(--bg-input); }
+  .dark .border-gray-900 { border-color: var(--bg-input); }
+
+  /* Red → danger */
+  .dark .text-red-300 { color: #F87171; }
+  .dark .text-red-400 { color: var(--color-danger); }
+  .dark .text-red-500 { color: #EF5350; }
+  .dark .text-red-600 { color: var(--color-danger); }
+  .dark .text-red-700 { color: #EF5350; }
+  .dark .bg-red-50 { background-color: rgba(239, 83, 80, 0.08); }
+  .dark .bg-red-400 { background-color: rgba(239, 83, 80, 0.3); }
+  .dark .bg-red-500 { background-color: var(--color-danger); }
+  .dark .bg-red-600 { background-color: #C62828; }
+  .dark .bg-red-700 { background-color: #B71C1C; }
+  .dark .bg-red-900 { background-color: #4A1414; }
+  .dark .border-red-100 { border-color: rgba(239, 83, 80, 0.15); }
+  .dark .border-red-200 { border-color: rgba(239, 83, 80, 0.2); }
+  .dark .border-red-500 { border-color: var(--color-danger); }
+  .dark .border-red-800 { border-color: #B71C1C; }
+
+  /* Green → success */
+  .dark .text-green-300 { color: #86EFAC; }
+  .dark .text-green-400 { color: var(--color-success); }
+  .dark .text-green-500 { color: #7BA86A; }
+  .dark .text-green-700 { color: var(--color-success); }
+  .dark .bg-green-50 { background-color: rgba(123, 168, 106, 0.08); }
+  .dark .bg-green-100 { background-color: rgba(123, 168, 106, 0.1); }
+  .dark .bg-green-500 { background-color: var(--color-success); }
+  .dark .bg-green-900 { background-color: #1A3A14; }
+
+  /* Emerald → success (same as green) */
+  .dark .text-emerald-300 { color: #86EFAC; }
+  .dark .text-emerald-400 { color: var(--color-success); }
+  .dark .text-emerald-500 { color: #7BA86A; }
+  .dark .text-emerald-600 { color: var(--color-success); }
+  .dark .text-emerald-700 { color: #5C7A4D; }
+  .dark .bg-emerald-400 { background-color: rgba(123, 168, 106, 0.3); }
+  .dark .bg-emerald-500 { background-color: var(--color-success); }
+  .dark .bg-emerald-600 { background-color: #5C7A4D; }
+  .dark .bg-emerald-700 { background-color: #4A6A3D; }
+
+  /* Amber → warning */
+  .dark .text-amber-300 { color: #FCD34D; }
+  .dark .text-amber-400 { color: var(--color-warning); }
+  .dark .text-amber-500 { color: #E8A840; }
+  .dark .text-amber-800 { color: #D4922A; }
+  .dark .bg-amber-100 { background-color: rgba(232, 168, 64, 0.08); }
+  .dark .bg-amber-400 { background-color: rgba(232, 168, 64, 0.3); }
+  .dark .bg-amber-500 { background-color: var(--color-warning); }
+  .dark .bg-amber-600 { background-color: #D4922A; }
+  .dark .bg-amber-700 { background-color: #B87A1A; }
+  .dark .bg-amber-900 { background-color: #3A2800; }
+
+  /* Yellow → warning */
+  .dark .text-yellow-400 { color: var(--color-warning); }
+  .dark .text-yellow-500 { color: #E8A840; }
+
+  /* Blue → info accent */
+  .dark .text-blue-300 { color: #93C5FD; }
+  .dark .text-blue-400 { color: #60A5FA; }
+  .dark .text-blue-500 { color: #3B82F6; }
+  .dark .bg-blue-500 { background-color: rgba(59, 130, 246, 0.6); }
+
+  /* Border white → subtle warm border */
+  .dark .border-white { border-color: var(--border-light); }
 }
 
 @keyframes float-orb-1 {

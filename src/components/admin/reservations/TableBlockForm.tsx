@@ -102,7 +102,7 @@ export function TableBlockForm({ date, tables, existingBlocks, onBlock, onClose,
   }
 
   return (
-    <div className={cn('space-y-3 p-4 rounded-lg border border-[var(--color-ak-madera)]/15 dark:border-white/10 bg-white/50 dark:bg-white/5', className)}>
+    <div className={cn('space-y-3 p-4 rounded-lg border border-[var(--color-ak-madera)]/15 dark:border-white/10 bg-[var(--bg-card)]/50 dark:bg-[var(--bg-card)]/5', className)}>
       <h4 className="text-sm font-semibold text-[var(--color-ak-madera)] dark:text-white/80 flex items-center gap-1.5">
         <LockSimpleOpen size={16} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-dorado)]" />
         Bloquear mesa para walk-in
@@ -115,7 +115,7 @@ export function TableBlockForm({ date, tables, existingBlocks, onBlock, onClose,
           <select
             value={tableId}
             onChange={e => setTableId(e.target.value)}
-            className="w-full px-2 py-1.5 text-sm rounded border border-[var(--color-ak-madera)]/20 dark:border-white/15 bg-white dark:bg-[#1a1a1a] text-[var(--color-ak-madera)] dark:text-white"
+            className="w-full px-2 py-1.5 text-sm rounded border border-[var(--color-ak-madera)]/20 dark:border-white/15 bg-[var(--bg-card)] dark:bg-[var(--bg-primary)] text-[var(--color-ak-madera)] dark:text-white"
           >
             <option value="">Seleccionar...</option>
             {availableTables.map(t => (
@@ -132,7 +132,7 @@ export function TableBlockForm({ date, tables, existingBlocks, onBlock, onClose,
           <select
             value={timeStart}
             onChange={e => setTimeStart(e.target.value)}
-            className="w-full px-2 py-1.5 text-sm rounded border border-[var(--color-ak-madera)]/20 dark:border-white/15 bg-white dark:bg-[#1a1a1a] text-[var(--color-ak-madera)] dark:text-white"
+            className="w-full px-2 py-1.5 text-sm rounded border border-[var(--color-ak-madera)]/20 dark:border-white/15 bg-[var(--bg-card)] dark:bg-[var(--bg-primary)] text-[var(--color-ak-madera)] dark:text-white"
           >
             {TIME_SLOTS.map(t => (
               <option key={t} value={t}>{t}</option>
@@ -146,7 +146,7 @@ export function TableBlockForm({ date, tables, existingBlocks, onBlock, onClose,
           <select
             value={timeEnd}
             onChange={e => setTimeEnd(e.target.value)}
-            className="w-full px-2 py-1.5 text-sm rounded border border-[var(--color-ak-madera)]/20 dark:border-white/15 bg-white dark:bg-[#1a1a1a] text-[var(--color-ak-madera)] dark:text-white"
+            className="w-full px-2 py-1.5 text-sm rounded border border-[var(--color-ak-madera)]/20 dark:border-white/15 bg-[var(--bg-card)] dark:bg-[var(--bg-primary)] text-[var(--color-ak-madera)] dark:text-white"
           >
             {TIME_SLOTS.map(t => (
               <option key={t} value={t}>{t}</option>
@@ -163,7 +163,7 @@ export function TableBlockForm({ date, tables, existingBlocks, onBlock, onClose,
           value={reason}
           onChange={e => setReason(e.target.value)}
           placeholder="Walk-in, mantenimiento, etc."
-          className="w-full px-2 py-1.5 text-sm rounded border border-[var(--color-ak-madera)]/20 dark:border-white/15 bg-white dark:bg-[#1a1a1a] text-[var(--color-ak-madera)] dark:text-white"
+          className="w-full px-2 py-1.5 text-sm rounded border border-[var(--color-ak-madera)]/20 dark:border-white/15 bg-[var(--bg-card)] dark:bg-[var(--bg-primary)] text-[var(--color-ak-madera)] dark:text-white"
         />
       </div>
 

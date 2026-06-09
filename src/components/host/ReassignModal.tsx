@@ -167,7 +167,7 @@ export function ReassignModal({
         <div className="sticky top-0 bg-[var(--bg-primary)] border-b border-[var(--border-default)] px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ArrowsLeftRight size={18} className="text-[var(--color-ak-borgona)]" />
+              <ArrowsLeftRight size={18} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
               <h2 className="font-['Playfair_Display'] text-lg font-bold text-[var(--text-primary)]">
                 Reasignar Reserva
               </h2>
@@ -230,7 +230,7 @@ export function ReassignModal({
                         </span>
                       </div>
                       {selectedTableId === t.id && (
-                        <Check size={14} weight="bold" className="text-[var(--color-ak-borgona)]" />
+                        <Check size={14} weight="bold" className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
                       )}
                     </div>
                     <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">

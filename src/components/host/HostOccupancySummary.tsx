@@ -167,10 +167,10 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
           transition={{ type: 'spring', ...SPRING, delay: 0.2 }}
           className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-default)]"
         >
-          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-ak-oliva)] flex-shrink-0" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-ak-oliva)] dark:bg-[var(--color-ak-oliva-light)] flex-shrink-0" />
           <span className="text-xs text-[var(--text-secondary)]">
             {quickStats.available} asientos disponibles para walk-in
-            <span className="text-[var(--color-ak-ambar)] ml-1">(referencia visual, sin límite estricto)</span>
+            <span className="text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)] ml-1">(referencia visual, sin límite estricto)</span>
           </span>
         </motion.div>
       )}
@@ -214,7 +214,7 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
                     Reservados: {zone.reservedSeats}
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-[var(--color-ak-oliva)]" />
+                    <span className="w-2 h-2 rounded-full bg-[var(--color-ak-oliva)] dark:bg-[var(--color-ak-oliva-light)]" />
                     Libres: {zone.availableSeats}
                   </span>
                   <span className="ml-auto font-medium text-[var(--text-primary)]">

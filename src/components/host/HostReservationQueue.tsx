@@ -243,7 +243,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                         variants={prefersReduced ? undefined : itemVariants}
                         className={cn(
                           'bg-[var(--bg-card)] rounded-xl border p-3 md:p-4',
-                          isUrgent ? 'border-[var(--color-ak-ambar)]/50 bg-[var(--color-ak-ambar)]/5' : 'border-[var(--border-default)]',
+                          isUrgent ? 'border-[var(--color-ak-ambar)]/50 dark:border-[var(--color-ak-ambar-light)]/50 bg-[var(--color-ak-ambar)]/5 dark:bg-[var(--color-ak-ambar-light)]/10' : 'border-[var(--border-default)]',
                           status === 'seated' && 'opacity-60',
                         )}
                       >
@@ -256,7 +256,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                               <span className="text-xs text-[var(--text-secondary)]">{timeDisplay}</span>
                               <StatusBadge status={status} />
                               {isUrgent && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[var(--color-ak-ambar)] bg-[var(--color-ak-ambar)]/10 px-2 py-0.5 rounded-full"
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)] bg-[var(--color-ak-ambar)]/10 dark:bg-[var(--color-ak-ambar-light)]/10 px-2 py-0.5 rounded-full"
                                 >
                                   <Clock size={10} weight="fill" />
                                   Proxima
@@ -276,7 +276,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                               </span>
                             </p>
                             {(r.table_number as string | null) && (
-                              <p className="text-xs text-[var(--color-ak-oliva)] flex items-center gap-1">
+                              <p className="text-xs text-[var(--color-ak-oliva)] dark:text-[var(--color-ak-oliva-light)] flex items-center gap-1">
                                 <Armchair size={12} />
                                 Mesa {r.table_number as string}{r.zone_name ? ` · ${r.zone_name as string}` : ''}
                               </p>
@@ -286,7 +286,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                               <div className="mt-1">
                                 <button
                                   onClick={() => toggleExpand(id)}
-                                  className="text-[10px] text-[var(--color-ak-ambar)] flex items-center gap-0.5"
+                                  className="text-[10px] text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)] flex items-center gap-0.5"
                                 >
                                   {isExpanded ? <CaretUp size={10} /> : <CaretDown size={10} />}
                                   {isExpanded ? 'Menos' : 'Ver detalles'}
@@ -322,7 +322,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                     )}
                                     {notes && (
                                       <div className="flex items-start gap-1.5 text-xs text-[var(--text-primary)] bg-[var(--bg-primary)] rounded-md px-2 py-1">
-                                        <Note size={12} className="text-[var(--color-ak-ambar)] shrink-0 mt-0.5" />
+                                        <Note size={12} className="text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)] shrink-0 mt-0.5" />
                                         <span>{notes}</span>
                                       </div>
                                     )}

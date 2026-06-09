@@ -186,7 +186,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
               value={name}
               onChange={e => setName(e.target.value)}
               required
-              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30 dark:focus:ring-[var(--color-ak-borgona-light)]/30"
               placeholder="Nombre del cliente"
             />
           </div>
@@ -197,7 +197,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
               type="tel"
               value={phone}
               onChange={e => setPhone(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30 dark:focus:ring-[var(--color-ak-borgona-light)]/30"
               placeholder="+57 ..."
             />
           </div>
@@ -256,13 +256,13 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
                             {t.capacity}p
                           </span>
                           {i === 0 && (
-                            <span className="text-[10px] font-medium text-[var(--color-ak-ambar)]">
+                            <span className="text-[10px] font-medium text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)]">
                               ★ Mejor opción
                             </span>
                           )}
                         </div>
                         {selectedTableId === t.id && (
-                          <Check size={14} weight="bold" className="text-[var(--color-ak-borgona)] shrink-0" />
+                          <Check size={14} weight="bold" className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] shrink-0" />
                         )}
                       </div>
                       <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
@@ -282,7 +282,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
             <select
               value={zoneId}
               onChange={e => { setZoneId(e.target.value); setSelectedTableId(null) }}
-              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30 dark:focus:ring-[var(--color-ak-borgona-light)]/30"
             >
               <option value="">Sin zona</option>
               {zones.map(z => (

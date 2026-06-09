@@ -146,20 +146,20 @@ function getTableCardStyle(table: TableItem): CardStyle {
       // Has upcoming reservation but >60min away → amber
       if (table.next_reservation) {
         return {
-          border: 'border-[var(--color-ak-ambar)]/30',
-          bg: 'bg-[var(--color-ak-ambar)]/8',
-          dot: 'bg-[var(--color-ak-ambar)]',
-          hoverBorder: 'hover:border-[var(--color-ak-ambar)]/50',
+          border: 'border-[var(--color-ak-ambar)]/30 dark:border-[var(--color-ak-ambar-light)]/30',
+          bg: 'bg-[var(--color-ak-ambar)]/8 dark:bg-[var(--color-ak-ambar-light)]/10',
+          dot: 'bg-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)]',
+          hoverBorder: 'hover:border-[var(--color-ak-ambar)]/50 dark:hover:border-[var(--color-ak-ambar-light)]/50',
           badge: '',
           pulse: '',
         }
       }
       // Available — green
       return {
-        border: 'border-[var(--color-ak-oliva)]/30',
-        bg: 'bg-[var(--color-ak-oliva)]/5',
-        dot: 'bg-[var(--color-ak-oliva)]',
-        hoverBorder: 'hover:border-[var(--color-ak-oliva)]/50',
+        border: 'border-[var(--color-ak-oliva)]/30 dark:border-[var(--color-ak-oliva-light)]/30',
+        bg: 'bg-[var(--color-ak-oliva)]/5 dark:bg-[var(--color-ak-oliva-light)]/8',
+        dot: 'bg-[var(--color-ak-oliva)] dark:bg-[var(--color-ak-oliva-light)]',
+        hoverBorder: 'hover:border-[var(--color-ak-oliva)]/50 dark:hover:border-[var(--color-ak-oliva-light)]/50',
         badge: '',
         pulse: '',
       }
@@ -224,7 +224,7 @@ function StatusDot({ status }: { status: ReservationTimeline['status'] }) {
     confirmed: 'bg-[var(--color-success)]',
     pre_paid: 'bg-[var(--color-success)]',
     seated: 'bg-[var(--color-success)]',
-    pending: 'bg-[var(--color-ak-ambar)]',
+    pending: 'bg-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)]',
     no_show: 'bg-[var(--color-danger)]',
     cancelled: 'bg-[var(--text-muted)]',
     completed: 'bg-[var(--text-muted)]',
@@ -361,7 +361,7 @@ export function HostTableMap({ zones, reservations, onAction, currentTime, onRea
       {/* Status legend */}
       <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-ak-oliva)]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-ak-oliva)] dark:bg-[var(--color-ak-oliva-light)]" />
           Libre
         </span>
         <span className="flex items-center gap-1.5">
@@ -369,7 +369,7 @@ export function HostTableMap({ zones, reservations, onAction, currentTime, onRea
           Ocupada
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-ak-ambar)]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)]" />
           Reservada
         </span>
         <span className="flex items-center gap-1.5">
@@ -494,7 +494,7 @@ function HostTableCard({
           style.bg,
           style.hoverBorder,
           style.pulse,
-          isActive && 'ring-2 ring-[var(--color-ak-ambar)] ring-offset-1'
+          isActive && 'ring-2 ring-[var(--color-ak-ambar)] dark:ring-[var(--color-ak-ambar-light)] ring-offset-1'
         )}
         style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out' }}
         whileTap={prefersReduced ? undefined : { scale: 0.97 }}
@@ -673,7 +673,7 @@ function TimelinePopover({
       {/* Popover header */}
       <div className="flex items-center justify-between mb-3 pr-6">
         <div className="flex items-center gap-2">
-          <Armchair size={16} className="text-[var(--color-ak-borgona)]" />
+          <Armchair size={16} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
           <span className="font-bold text-base text-[var(--text-primary)] font-['Playfair_Display']">
             {table.name_attick || `Mesa ${table.number}`}
           </span>
@@ -728,8 +728,8 @@ function TimelinePopover({
       {/* Next reservation */}
       {nextRes && !nextRes.is_current && (
         <div>
-          <h4 className="text-[11px] font-semibold text-[var(--color-ak-ambar)] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-            <Clock size={11} weight="fill" className="text-[var(--color-ak-ambar)]" />
+          <h4 className="text-[11px] font-semibold text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+            <Clock size={11} weight="fill" className="text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)]" />
             PRÓXIMA
             {currentTime && (() => {
               const diff = timeToMinutes(nextRes.time_start) - timeToMinutes(currentTime)
@@ -836,7 +836,7 @@ function AssignmentPopover({
         <div className="space-y-3">
           {suggestion.loading && (
             <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)] py-2">
-              <Sparkle size={14} className="animate-pulse text-[var(--color-ak-ambar)]" />
+              <Sparkle size={14} className="animate-pulse text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)]" />
               Calculando mejor mesa...
             </div>
           )}
@@ -846,10 +846,10 @@ function AssignmentPopover({
           {suggestion.result && !suggestion.loading && (
             <>
               {suggestion.result.suggested_table_id && (
-                <div className="rounded-lg border-2 border-[var(--color-ak-ambar)]/40 bg-[var(--color-ak-ambar)]/5 p-3">
+                <div className="rounded-lg border-2 border-[var(--color-ak-ambar)]/40 dark:border-[var(--color-ak-ambar-light)]/40 bg-[var(--color-ak-ambar)]/5 dark:bg-[var(--color-ak-ambar-light)]/5 p-3">
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <Lightbulb size={14} weight="fill" className="text-[var(--color-ak-ambar)]" />
-                    <span className="text-xs font-semibold text-[var(--color-ak-ambar)] uppercase tracking-wider">Sugerencia</span>
+                    <Lightbulb size={14} weight="fill" className="text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)]" />
+                    <span className="text-xs font-semibold text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)] uppercase tracking-wider">Sugerencia</span>
                   </div>
                   <p className="text-sm font-bold text-[var(--text-primary)] mb-1">
                     {suggestion.result.alternatives[0]?.table_numbers.join(' + ')}
@@ -860,7 +860,7 @@ function AssignmentPopover({
                   <p className="text-[11px] text-[var(--text-secondary)] mb-2">{suggestion.result.reason}</p>
                   <div className="flex items-center gap-2 mb-2">
                     <div className="flex-1 h-1.5 rounded-full bg-[var(--border-default)] overflow-hidden">
-                      <div className="h-full rounded-full bg-[var(--color-ak-ambar)]" style={{ width: `${Math.min(suggestion.result.score, 100)}%` }} />
+                      <div className="h-full rounded-full bg-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)]" style={{ width: `${Math.min(suggestion.result.score, 100)}%` }} />
                     </div>
                     <span className="text-[10px] font-medium text-[var(--text-secondary)]">{Math.round(suggestion.result.score)}%</span>
                   </div>
@@ -930,7 +930,7 @@ function AssignmentPopover({
               className="w-full text-left p-2 rounded-lg bg-[var(--bg-primary)] hover:bg-[var(--border-default)]/50 text-xs transition-colors active:scale-[0.97]"
             >
               <div className="flex items-center gap-2">
-                <Sparkle size={12} className="text-[var(--color-ak-ambar)] shrink-0" />
+                <Sparkle size={12} className="text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)] shrink-0" />
                 <span className="font-medium text-[var(--text-primary)] truncate">{r.customers?.full_name || 'Sin nombre'}</span>
                 <span className="text-[var(--text-secondary)] ml-auto shrink-0">{r.party_size}p · {r.time_start?.slice(0, 5)}</span>
               </div>

@@ -119,7 +119,7 @@ export function HostAuditTimeline({ reservationId, reservationCreatedAt, classNa
 
       {loading ? (
         <div className="flex items-center gap-2 py-3">
-          <div className="w-4 h-4 border-2 border-[var(--color-ak-borgona)] border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-[var(--color-ak-borgona)] dark:border-[var(--color-ak-borgona-light)] border-t-transparent rounded-full animate-spin" />
           <span className="text-xs text-[var(--text-secondary)]">Cargando...</span>
         </div>
       ) : logs.length === 0 && !reservationCreatedAt ? (

@@ -61,7 +61,7 @@ export function ReservationDetail({ reservation, compact = false }: ReservationD
             <span className="w-2 h-2 rounded-full bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] shrink-0" />
           )}
           {reservation.is_upcoming && !reservation.is_current && (
-            <Clock size={12} className="text-[var(--color-ak-ambar)] shrink-0" />
+            <Clock size={12} className="text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)] shrink-0" />
           )}
           <span className="font-medium text-[var(--text-primary)] break-words">
             {reservation.customer_name || 'Sin nombre'}
@@ -121,7 +121,7 @@ export function ReservationDetail({ reservation, compact = false }: ReservationD
                 )}
                 {reservation.special_requests && (
                   <div className="flex items-start gap-1.5 text-xs text-[var(--text-primary)] bg-[var(--bg-primary)] rounded-lg px-3 py-2">
-                    <Note size={14} className="mt-0.5 shrink-0 text-[var(--color-ak-ambar)]" />
+                    <Note size={14} className="mt-0.5 shrink-0 text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)]" />
                     <span>{reservation.special_requests}</span>
                   </div>
                 )}

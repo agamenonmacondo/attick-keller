@@ -195,7 +195,7 @@ export function HostNotesPanel({ reservationId, internalNotes, onNotesUpdate, cl
           <div className="mt-3 space-y-2">
             {loading ? (
               <div className="flex items-center gap-2 py-3">
-                <div className="w-4 h-4 border-2 border-[var(--color-ak-borgona)] border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-[var(--color-ak-borgona)] dark:border-[var(--color-ak-borgona-light)] border-t-transparent rounded-full animate-spin" />
                 <span className="text-xs text-[var(--text-secondary)]">Cargando notas...</span>
               </div>
             ) : notes.length === 0 ? (
@@ -242,7 +242,7 @@ export function HostNotesPanel({ reservationId, internalNotes, onNotesUpdate, cl
                 onChange={e => { setNewNote(e.target.value); setError(null) }}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAddNote() } }}
                 placeholder="Agregar nota..."
-                className="flex-1 px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30"
+                className="flex-1 px-3 py-2 text-sm rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ak-borgona)]/30 dark:focus:ring-[var(--color-ak-borgona-light)]/30"
               />
               <button
                 type="button"

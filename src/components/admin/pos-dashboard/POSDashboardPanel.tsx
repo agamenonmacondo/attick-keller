@@ -48,10 +48,15 @@ export function POSDashboardPanel() {
   // ── Results filters — separate from operation filters ──
   const [resultsZone, setResultsZone] = useState<string>('all')
   const [resultsCategory, setResultsCategory] = useState<string>('all')
+  // ── Day-of-week detail filters — separate from results and operation ──
+  const [dayDetailZone, setDayDetailZone] = useState<string>('all')
+  const [dayDetailCategory, setDayDetailCategory] = useState<string>('all')
 
   // Day-of-week detail hook — fetches filtered data when a day is selected
   const { data: dayDetail, loading: dayDetailLoading, error: dayDetailError } = usePOSDayOfWeekDetail(
-    selectedDayOfWeek?.dayOfWeek ?? null
+    selectedDayOfWeek?.dayOfWeek ?? null,
+    dayDetailZone,
+    dayDetailCategory
   )
 
   // When in month mode, derive from/to from calendarMonth so the dashboard
@@ -163,9 +168,11 @@ export function POSDashboardPanel() {
   }, [])
 
   // When clicking a day-of-week bar in the trend chart,
-  // show detail panel in results
+  // show detail panel in results — reset day filters on day change
   const handleDayOfWeekClick = useCallback((dayData: AggregatedDay) => {
     setSelectedDayOfWeek(dayData)
+    setDayDetailZone('all')
+    setDayDetailCategory('all')
   }, [])
 
   const handleCalendarMonthChange = useCallback((month: string) => {
@@ -194,6 +201,20 @@ export function POSDashboardPanel() {
   const handleResultsClearFilter = useCallback(() => {
     setResultsZone('all')
     setResultsCategory('all')
+  }, [])
+
+  // ── Day-of-week detail zone/category handlers ──
+  const handleDayDetailZoneClick = useCallback((zone: string) => {
+    setDayDetailZone(zone)
+  }, [])
+
+  const handleDayDetailCategoryClick = useCallback((categoryId: string) => {
+    setDayDetailCategory(categoryId)
+  }, [])
+
+  const handleDayDetailClearFilter = useCallback(() => {
+    setDayDetailZone('all')
+    setDayDetailCategory('all')
   }, [])
 
   const handleFilterChange = useCallback((newFilters: POSDashboardFilters) => {
@@ -429,6 +450,11 @@ export function POSDashboardPanel() {
               loading={dayDetailLoading}
               error={dayDetailError}
               onBack={() => setSelectedDayOfWeek(null)}
+              selectedZone={dayDetailZone}
+              selectedCategory={dayDetailCategory}
+              onZoneClick={handleDayDetailZoneClick}
+              onCategoryClick={handleDayDetailCategoryClick}
+              onClearFilters={handleDayDetailClearFilter}
               onProductDrillDown={handleResultsProductDrillDown}
               onCategoryDrillDown={handleResultsCategoryDrillDown}
               onStaffDrillDown={handleResultsStaffDrillDown}

@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { POSDashboardData } from '@/lib/hooks/usePOSDashboard'
 
-export function usePOSDayOfWeekDetail(dayOfWeek: number | null) {
+export function usePOSDayOfWeekDetail(
+  dayOfWeek: number | null,
+  zone: string = 'all',
+  category: string = 'all'
+) {
   const [data, setData] = useState<POSDashboardData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,8 +35,15 @@ export function usePOSDayOfWeekDetail(dayOfWeek: number | null) {
       setLoading(true)
       setError(null)
       try {
-        const url = `/api/admin/pos-dashboard/day-of-week?dayOfWeek=${dayOfWeek}&from=2026-01-01&to=2026-06-30&zone=all`
-        const res = await fetch(url, { signal, next: { revalidate: 300 } })
+        const params = new URLSearchParams({
+          dayOfWeek: String(dayOfWeek),
+          from: '2026-01-01',
+          to: '2026-06-30',
+          zone,
+          category,
+        })
+        const url = `/api/admin/pos-dashboard/day-of-week?${params.toString()}`
+        const res = await fetch(url, { signal, next: { revalidate: 300 } } as any)
         if (signal.aborted) return
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))
@@ -62,7 +73,7 @@ export function usePOSDayOfWeekDetail(dayOfWeek: number | null) {
       cancelled = true
       controller.abort()
     }
-  }, [dayOfWeek])
+  }, [dayOfWeek, zone, category])
 
   return { data, loading, error }
 }

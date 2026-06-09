@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useRef } from 'react'
 import { usePOSDashboard, type POSDashboardFilters } from '@/lib/hooks/usePOSDashboard'
 import { usePOSCalendar } from '@/lib/hooks/usePOSCalendar'
 import { AnimatedCard } from '../shared/AnimatedCard'
-import { Spinner, ChartBar, ChartLine, Receipt } from '@phosphor-icons/react'
+import { Spinner, ChartBar, ChartLine, Receipt, Lightning } from '@phosphor-icons/react'
 import { POSFiltersBar } from './POSFiltersBar'
 import { RevenueHeatmapCalendar } from './RevenueHeatmapCalendar'
 import { DayKPIBar } from './DayKPIBar'
@@ -30,7 +30,7 @@ const DEFAULT_FILTERS: POSDashboardFilters = {
   // from/to left empty — server auto-detects latest month with data
 }
 
-type DashboardTab = 'operation' | 'costs' | 'catalog'
+type DashboardTab = 'operation' | 'results' | 'costs' | 'catalog'
 
 export function POSDashboardPanel() {
   const [activeTab, setActiveTab] = useState<DashboardTab>('operation')
@@ -59,6 +59,9 @@ export function POSDashboardPanel() {
   }, [viewMode, filters, calendarMonth])
 
   const { data, loading, error, refetch, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown } = usePOSDashboard(effectiveFilters)
+  // Results tab — all-time consolidated data (full range)
+  const ALL_TIME_FILTERS: POSDashboardFilters = { zone: 'all', category: 'all', from: '2026-01-01', to: '2026-06-30' }
+  const { data: allData, loading: allLoading } = usePOSDashboard(ALL_TIME_FILTERS)
   // Calendar shows ALL days regardless of month filter
   const { dailyTrend: calendarTrend, availableMonths: calendarMonths } = usePOSCalendar(filters.zone)
   const drillDownRef = useRef<HTMLDivElement>(null)
@@ -217,6 +220,17 @@ export function POSDashboardPanel() {
               Operacion
             </button>
             <button
+              onClick={() => setActiveTab('results')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                activeTab === 'results'
+                  ? 'bg-[var(--color-ak-borgona)] text-white'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <Lightning size={13} />
+              Resultados
+            </button>
+            <button
               onClick={() => setActiveTab('costs')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
                 activeTab === 'costs'
@@ -240,9 +254,11 @@ export function POSDashboardPanel() {
             </button>
           </div>
           <div>
-            <h2 className="text-lg font-bold text-[var(--text-primary)]">{activeTab === 'costs' ? 'Costos POS' : activeTab === 'catalog' ? 'Catalogo de Costos' : 'Operacion POS'}</h2>
+            <h2 className="text-lg font-bold text-[var(--text-primary)]">{activeTab === 'costs' ? 'Costos POS' : activeTab === 'catalog' ? 'Catalogo de Costos' : activeTab === 'results' ? 'Resultados Consolidados' : 'Operacion POS'}</h2>
             <p className="text-xs text-[var(--text-secondary)]">
-              {viewMode === 'month'
+              {activeTab === 'results'
+                ? <>Datos historicos: <span className="font-semibold text-[var(--color-ak-borgona)]">Ene – Jun 2026</span></>
+                : viewMode === 'month'
                 ? <>Vista consolidada: <span className="font-semibold text-[var(--color-ak-borgona)]">Mes completo</span></>
                 : isSingleDay
                   ? <>Vista por dia: <span className="font-semibold text-[var(--color-ak-borgona)]">{filters.from}</span></>
@@ -309,6 +325,90 @@ export function POSDashboardPanel() {
 
       {/* Catalog panel — lazy-loaded only when tab is active */}
       {activeTab === 'catalog' && <POSCatalogTabContent />}
+
+      {/* Results panel — same layout as Operación but with all-time consolidated data */}
+      {activeTab === 'results' && allData && (
+        <>
+          {/* KPIs — promedios historicos */}
+          <AnimatedCard delay={0} className="p-0 overflow-visible">
+            <div className="p-4">
+              <DayKPIBar kpis={allData.kpis} averages={undefined} isSingleDay={false} />
+            </div>
+          </AnimatedCard>
+
+          {/* Desglose 3 columnas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <ZoneRevenueChart
+                data={allData.byZone}
+                selectedZone="all"
+                onZoneClick={() => {}}
+                onZoneDrillDown={handleZoneDrillDown}
+                unknownZone={allData.unknownZone}
+              />
+            </AnimatedCard>
+            <AnimatedCard delay={0.12} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <HourlyRevenueChart
+                data={allData.hourlyRevenue}
+                onHourDrillDown={handleHourDrillDown}
+              />
+            </AnimatedCard>
+            <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <TopProductsTable
+                data={allData.topProducts}
+                onProductDrillDown={handleProductDrillDown}
+                selectedCategory="all"
+                productsByCategory={allData.productsByCategory}
+                selectedCategoryName={undefined}
+              />
+            </AnimatedCard>
+          </div>
+
+          {/* Detalle expandido — 2 columnas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+            <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-3 sm:p-4">
+              <CategoryBreakdown
+                data={allData.topCategories}
+                selectedCategory="all"
+                onCategoryClick={handleCategoryClick}
+                onCategoryDrillDown={handleCategoryDrillDown}
+                onProductDrillDown={handleProductDrillDown}
+                productsByCategory={allData.productsByCategory}
+                totalKpiRevenue={allData.kpis.revenue}
+              />
+            </AnimatedCard>
+            <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <TopProductByCategoryChart
+                data={allData.topProductByCategory || []}
+                onProductDrillDown={handleProductDrillDown}
+                selectedCategory="all"
+                onCategoryDrillDown={handleCategoryDrillDown}
+                topPerformersByCategory={allData.topPerformersByCategory}
+                bottomPerformersByCategory={allData.bottomPerformersByCategory}
+                totalKpiRevenue={allData.kpis.revenue}
+              />
+            </AnimatedCard>
+          </div>
+
+          {/* Staff + Pagos */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+            <AnimatedCard delay={0.36} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <StaffPerformanceTable
+                data={allData.staffPerformance}
+                onStaffDrillDown={handleStaffDrillDown}
+              />
+            </AnimatedCard>
+            <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+              <PaymentMethodsChart data={allData.paymentMethods} />
+            </AnimatedCard>
+          </div>
+
+          {/* Category Companions */}
+          <AnimatedCard delay={0.48} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
+            <CategoryCompanionsCard data={allData.categoryCompanions || []} />
+          </AnimatedCard>
+        </>
+      )}
 
       {data && activeTab === 'operation' && (
         <>

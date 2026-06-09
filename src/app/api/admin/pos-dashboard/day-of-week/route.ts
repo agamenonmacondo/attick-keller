@@ -78,6 +78,7 @@ export async function GET(request: NextRequest) {
   const fromParam = qparam(request, 'from') || ''
   const toParam = qparam(request, 'to') || ''
   const zoneParam = qparam(request, 'zone') || 'all'
+  const categoryParam = qparam(request, 'category') || 'all'
 
   if (!dayOfWeekParam) {
     return NextResponse.json({ error: 'dayOfWeek es requerido (1-7)' }, { status: 400 })
@@ -115,6 +116,22 @@ export async function GET(request: NextRequest) {
   const fromDate = `${from}T00:00:00`
   const toDate = `${to}T23:59:59`
 
+  // ── Available months ──
+  const { data: monthsData } = await sb.rpc('pos_dashboard_months')
+  const availableMonths = (monthsData || []).map((m: any) => m.month)
+  // Also gather from the sales themselves as a fallback
+  if (availableMonths.length === 0) {
+    const monthSet = new Set<string>()
+    for (const s of []) { /* sales not yet fetched */ }
+  }
+
+  // ── Fetch groups list (for categoryList) ──
+  const { data: allGroupsData } = await sb
+    .from('pos_product_groups')
+    .select('pos_group_id, name')
+    .order('pos_group_id')
+  const allGroups = (allGroupsData || []) as any[]
+
   // ════════════════════════════════════════════════════════════
   // 1. Fetch all sales in date range, filter client-side by ISODOW
   // ════════════════════════════════════════════════════════════
@@ -124,7 +141,7 @@ export async function GET(request: NextRequest) {
   while (true) {
     const { data: salesBatch, error } = await sb
       .from('pos_sales')
-      .select('id, total, tip_amount, opened_at, closed_at, party_size, derived_zone_name, is_cancelled, pos_staff_id')
+      .select('id, total, tip_amount, opened_at, closed_at, party_size, derived_zone_name, is_cancelled, pos_staff_id, customer_id, pos_customer_id')
       .eq('restaurant_id', RESTAURANT_ID)
       .gte('opened_at', fromDate)
       .lte('opened_at', toDate)
@@ -245,6 +262,13 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Also merge groups from the full groups list
+  for (const g of allGroups) {
+    if (g.pos_group_id && !groupNames.has(g.pos_group_id)) {
+      groupNames.set(g.pos_group_id, g.name)
+    }
+  }
+
   // ════════════════════════════════════════════════════════════
   // 4. KPIs
   // ════════════════════════════════════════════════════════════
@@ -265,13 +289,52 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // ── Card/Cash totals from payment methods ──
+  let cardPaidTotal = 0
+  let cashPaidTotal = 0
+  if (saleIds.length > 0) {
+    let allPaymentsForKpi: any[] = []
+    for (let i = 0; i < saleIds.length; i += BATCH) {
+      const batch = saleIds.slice(i, i + BATCH)
+      const { data: payData } = await sb
+        .from('pos_sale_payments')
+        .select('pos_sale_id, pos_payment_method_id, amount')
+        .in('pos_sale_id', batch)
+      if (payData) allPaymentsForKpi.push(...payData)
+    }
+    const methodIdsForKpi = [...new Set(allPaymentsForKpi.map((p: any) => p.pos_payment_method_id).filter(Boolean))]
+    const methodNamesForKpi = new Map<string, string>()
+    for (let i = 0; i < methodIdsForKpi.length; i += BATCH) {
+      const batch = methodIdsForKpi.slice(i, i + BATCH)
+      const { data: methods } = await sb
+        .from('pos_payment_methods')
+        .select('pos_payment_method_id, name')
+        .in('pos_payment_method_id', batch)
+      if (methods) {
+        for (const m of methods) methodNamesForKpi.set(m.pos_payment_method_id, m.name)
+      }
+    }
+    for (const p of allPaymentsForKpi) {
+      const mName = (methodNamesForKpi.get(p.pos_payment_method_id) || '').toLowerCase()
+      const amt = Number(p.amount) || 0
+      if (mName.includes('tarjeta') || mName.includes('card') || mName.includes('credito') || mName.includes('crédito') || mName.includes('credit')) {
+        cardPaidTotal += amt
+      } else if (mName.includes('efectivo') || mName.includes('cash') || mName.includes('cash_paid')) {
+        cashPaidTotal += amt
+      }
+    }
+  }
+
   const kpis = {
     revenue: Math.round(totalRevenue),
     cheques,
-    tipTotal: Math.round(totalTip),
-    tipAvg: cheques > 0 ? Math.round(totalTip / cheques) : 0,
     ticketPromedio: cheques > 0 ? Math.round(totalRevenue / cheques) : 0,
-    partySizeAvg: cheques > 0 ? Math.round((totalPartySize / cheques) * 10) / 10 : 0,
+    propinaTotal: Math.round(totalTip),
+    propinaPromedio: cheques > 0 ? Math.round(totalTip / cheques) : 0,
+    personas: totalPartySize,
+    partySizePromedio: cheques > 0 ? Math.round((totalPartySize / cheques) * 10) / 10 : 0,
+    cardPaidTotal: Math.round(cardPaidTotal),
+    cashPaidTotal: Math.round(cashPaidTotal),
     avgServiceTime: serviceTimeCount > 0 ? Math.round(serviceTimeSum / serviceTimeCount) : 0,
   }
 
@@ -299,6 +362,7 @@ export async function GET(request: NextRequest) {
 
   const totalZoneRevenue = [...zoneAgg.values()].reduce((s, d) => s + d.revenue, 0)
   const byZone = [...zoneAgg.entries()]
+    .filter(([zone]) => zone !== 'Desconocido')
     .map(([zone, d]) => ({
       zone,
       revenue: Math.round(d.revenue),
@@ -310,20 +374,75 @@ export async function GET(request: NextRequest) {
     }))
     .sort((a, b) => b.revenue - a.revenue)
 
+  // ── Unknown zone ──
+  const unknownZone = (() => {
+    const unk = zoneAgg.get('Desconocido')
+    if (unk) {
+      return {
+        revenue: Math.round(unk.revenue),
+        cheques: unk.cheques,
+        pct: totalZoneRevenue > 0 ? Math.round((unk.revenue / (totalZoneRevenue + unk.revenue)) * 100) : 0,
+      }
+    }
+    return { revenue: 0, cheques: 0, pct: 0 }
+  })()
+
   // ════════════════════════════════════════════════════════════
   // 6. Hourly Revenue
   // ════════════════════════════════════════════════════════════
-  const hourAgg = new Map<number, { revenue: number; cheques: number; tipTotal: number }>()
+  // Payment methods per sale for hourly card/cash breakdown
+  const salePaymentMap = new Map<string, { card: number; cash: number }>()
+  if (saleIds.length > 0) {
+    let allPayForHourly: any[] = []
+    for (let i = 0; i < saleIds.length; i += BATCH) {
+      const batch = saleIds.slice(i, i + BATCH)
+      const { data: payData } = await sb
+        .from('pos_sale_payments')
+        .select('pos_sale_id, pos_payment_method_id, amount')
+        .in('pos_sale_id', batch)
+      if (payData) allPayForHourly.push(...payData)
+    }
+    const methodIdsHourly = [...new Set(allPayForHourly.map((p: any) => p.pos_payment_method_id).filter(Boolean))]
+    const methodNamesHourly = new Map<string, string>()
+    for (let i = 0; i < methodIdsHourly.length; i += BATCH) {
+      const batch = methodIdsHourly.slice(i, i + BATCH)
+      const { data: methods } = await sb
+        .from('pos_payment_methods')
+        .select('pos_payment_method_id, name')
+        .in('pos_payment_method_id', batch)
+      if (methods) {
+        for (const m of methods) methodNamesHourly.set(m.pos_payment_method_id, m.name)
+      }
+    }
+    for (const p of allPayForHourly) {
+      const mName = (methodNamesHourly.get(p.pos_payment_method_id) || '').toLowerCase()
+      const amt = Number(p.amount) || 0
+      if (!salePaymentMap.has(p.pos_sale_id)) salePaymentMap.set(p.pos_sale_id, { card: 0, cash: 0 })
+      const entry = salePaymentMap.get(p.pos_sale_id)!
+      if (mName.includes('tarjeta') || mName.includes('card') || mName.includes('credito') || mName.includes('crédito') || mName.includes('credit')) {
+        entry.card += amt
+      } else if (mName.includes('efectivo') || mName.includes('cash') || mName.includes('cash_paid')) {
+        entry.cash += amt
+      }
+    }
+  }
+
+  const hourAgg = new Map<number, { revenue: number; cheques: number; tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }>()
   for (const s of sales) {
     if (!s.opened_at) continue
     const hour = new Date(s.opened_at).getHours()
     if (!hourAgg.has(hour)) {
-      hourAgg.set(hour, { revenue: 0, cheques: 0, tipTotal: 0 })
+      hourAgg.set(hour, { revenue: 0, cheques: 0, tipTotal: 0, cardPaidTotal: 0, cashPaidTotal: 0 })
     }
     const d = hourAgg.get(hour)!
     d.revenue += Number(s.total) || 0
     d.cheques += 1
     d.tipTotal += Number(s.tip_amount) || 0
+    const payInfo = salePaymentMap.get(s.id)
+    if (payInfo) {
+      d.cardPaidTotal += payInfo.card
+      d.cashPaidTotal += payInfo.cash
+    }
   }
 
   const hourlyRevenue = [...hourAgg.entries()]
@@ -332,14 +451,51 @@ export async function GET(request: NextRequest) {
       revenue: Math.round(d.revenue),
       cheques: d.cheques,
       tipTotal: Math.round(d.tipTotal),
+      cardPaidTotal: Math.round(d.cardPaidTotal),
+      cashPaidTotal: Math.round(d.cashPaidTotal),
     }))
     .sort((a, b) => parseInt(a.hour) - parseInt(b.hour))
 
   // ════════════════════════════════════════════════════════════
-  // 7. Top Products
+  // 7. Daily Trend
   // ════════════════════════════════════════════════════════════
+  const dayMap = new Map<string, { revenue: number; cheques: number; propina: number; personas: number }>()
+  for (const s of sales) {
+    if (!s.opened_at) continue
+    const date = s.opened_at.slice(0, 10)
+    if (!dayMap.has(date)) dayMap.set(date, { revenue: 0, cheques: 0, propina: 0, personas: 0 })
+    const d = dayMap.get(date)!
+    d.revenue += Number(s.total) || 0
+    d.cheques += 1
+    d.propina += Number(s.tip_amount) || 0
+    d.personas += Number(s.party_size) || 0
+  }
+  const dailyTrend = [...dayMap.entries()]
+    .map(([date, d]) => ({
+      date,
+      revenue: Math.round(d.revenue),
+      cheques: d.cheques,
+      propina: Math.round(d.propina),
+      personas: d.personas,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+
+  // ════════════════════════════════════════════════════════════
+  // 8. Top Products
+  // ════════════════════════════════════════════════════════════
+  // Apply category filter for topProducts
+  let filteredItems = allItems
+  if (categoryParam && categoryParam !== 'all') {
+    const categoryProductIds = new Set(
+      [...productInfo.entries()]
+        .filter(([, info]) => info.groupId === categoryParam)
+        .map(([pid]) => pid)
+    )
+    filteredItems = allItems.filter((item: any) => categoryProductIds.has(String(item.pos_product_id)))
+  }
+
   const productRevenueMap = new Map<string, { name: string; category: string; quantity: number; revenue: number }>()
-  for (const item of allItems) {
+  for (const item of filteredItems) {
     const info = productInfo.get(item.pos_product_id)
     if (!info) continue
     const cat = groupNames.get(info.groupId) || 'Sin categoria'
@@ -364,7 +520,7 @@ export async function GET(request: NextRequest) {
     }))
 
   // ════════════════════════════════════════════════════════════
-  // 8. Top Categories (with enrichment: tipTotal, avgServiceTime, partySizeAvg)
+  // 9. Top Categories (with enrichment: tipTotal, avgServiceTime, partySizeAvg)
   // ════════════════════════════════════════════════════════════
   const saleToCategories = new Map<string, Set<string>>()
   const categoryRevenueMap = new Map<string, {
@@ -453,7 +609,7 @@ export async function GET(request: NextRequest) {
     .sort((a, b) => b.revenue - a.revenue)
 
   // ════════════════════════════════════════════════════════════
-  // 9. Products by Category
+  // 10. Products by Category + Top Product by Category + Top/Bottom Performers
   // ════════════════════════════════════════════════════════════
   const perCatProduct = new Map<string, Map<string, { quantity: number; revenue: number }>>()
   for (const item of allItems) {
@@ -494,8 +650,55 @@ export async function GET(request: NextRequest) {
     productsByCategory[String(catId)] = products
   }
 
+  // Top Product by Category
+  const topProductByCategory = [...perCatProduct.entries()]
+    .map(([groupId, prodMap]) => {
+      let topProd = { productId: '', productName: '', quantity: 0, revenue: 0 }
+      for (const [prodId, stats] of prodMap.entries()) {
+        if (stats.revenue > topProd.revenue) {
+          const info = productInfo.get(prodId)
+          topProd = { productId: prodId, productName: info?.name || 'Desconocido', quantity: stats.quantity, revenue: stats.revenue }
+        }
+      }
+      return {
+        categoryId: groupId,
+        categoryName: groupNames.get(groupId) || 'Sin categoria',
+        ...topProd,
+        revenue: Math.round(topProd.revenue),
+      }
+    })
+    .filter(c => c.categoryName !== 'Sin categoria')
+    .sort((a, b) => b.revenue - a.revenue)
+
+  // Top & Bottom Performers per Category
+  const topPerformersByCategory: Record<string, Array<{ productId: string; productName: string; quantity: number; revenue: number; cheques: number }>> = {}
+  const bottomPerformersByCategory: Record<string, Array<{ productId: string; productName: string; quantity: number; revenue: number; cheques: number }>> = {}
+  for (const [catId, prodMap] of perCatProduct.entries()) {
+    const allProds = [...prodMap.entries()]
+      .map(([prodId, stats]) => {
+        const info = productInfo.get(prodId)
+        return {
+          productId: prodId,
+          productName: info?.name || 'Desconocido',
+          quantity: stats.quantity,
+          revenue: Math.round(stats.revenue),
+          cheques: productSaleIds.get(prodId)?.size || 0,
+        }
+      })
+      .sort((a, b) => b.revenue - a.revenue)
+    const key = String(catId)
+    topPerformersByCategory[key] = allProds.slice(0, 2)
+    bottomPerformersByCategory[key] = allProds.length > 2 ? allProds.slice(-2).reverse() : []
+  }
+
+  // ── Category List ──
+  const categoriesWithProducts = new Set(Array.from(productInfo.values()).map(v => v.groupId).filter(Boolean))
+  const categoryList = allGroups
+    .filter((g: any) => g.pos_group_id && !g.pos_group_id.startsWith('SG_') && categoriesWithProducts.has(g.pos_group_id))
+    .map((g: any) => ({ id: g.pos_group_id, name: g.name }))
+
   // ════════════════════════════════════════════════════════════
-  // 10. Staff Performance
+  // 11. Staff Performance
   // ════════════════════════════════════════════════════════════
   const staffAgg = new Map<string, { cheques: number; revenue: number; tipTotal: number }>()
   for (const s of sales) {
@@ -545,12 +748,12 @@ export async function GET(request: NextRequest) {
     .sort((a, b) => b.revenue - a.revenue)
 
   // ════════════════════════════════════════════════════════════
-  // 11. Payment Methods
+  // 12. Payment Methods
   // ════════════════════════════════════════════════════════════
   const paymentMethods = await fetchPaymentMethodsForSales(sb, saleIds)
 
   // ════════════════════════════════════════════════════════════
-  // 12. Category Companions
+  // 13. Category Companions
   // ════════════════════════════════════════════════════════════
   const pairMap = new Map<string, { cat1Id: string; cat1Name: string; cat2Id: string; cat2Name: string; sharedCheques: number }>()
   for (const [, catSet] of saleToCategories.entries()) {
@@ -579,6 +782,151 @@ export async function GET(request: NextRequest) {
     .slice(0, 20)
 
   // ════════════════════════════════════════════════════════════
+  // 14. Client Split & Client Tiers
+  // ════════════════════════════════════════════════════════════
+  const consumidorFinalSales = sales.filter((s: any) => !s.customer_id && !s.pos_customer_id)
+  const identificadosSales = sales.filter((s: any) => s.customer_id || s.pos_customer_id)
+  const consumidorFinalRevenue = consumidorFinalSales.reduce((s: number, r: any) => s + (Number(r.total) || 0), 0)
+  const identificadosRevenue = identificadosSales.reduce((s: number, r: any) => s + (Number(r.total) || 0), 0)
+  const clientSplit = {
+    consumidorFinal: { cheques: consumidorFinalSales.length, revenue: Math.round(consumidorFinalRevenue) },
+    identificados: { cheques: identificadosSales.length, revenue: Math.round(identificadosRevenue) },
+  }
+
+  // Client Tiers
+  let customerIdSet = new Set<string>()
+  for (const s of sales) {
+    const cid = s.customer_id || s.pos_customer_id
+    if (cid) customerIdSet.add(cid)
+  }
+  const customerIds = [...customerIdSet]
+  const tierMap = new Map<string, { count: number; totalSpent: number }>()
+  if (customerIds.length > 0) {
+    const custBatches: string[][] = []
+    for (let i = 0; i < customerIds.length; i += BATCH) {
+      custBatches.push(customerIds.slice(i, i + BATCH))
+    }
+    const tierPromises = custBatches.map(async (batch) => {
+      const { data: tierData } = await sb
+        .from('customer_stats')
+        .select('loyalty_tier, total_spent')
+        .in('customer_id', batch)
+        .not('loyalty_tier', 'is', null)
+      return tierData || []
+    })
+    const tierArrays = await Promise.all(tierPromises)
+    for (const t of tierArrays.flat()) {
+      const tier = t.loyalty_tier
+      if (!tier) continue
+      if (!tierMap.has(tier)) tierMap.set(tier, { count: 0, totalSpent: 0 })
+      const d = tierMap.get(tier)!
+      d.count += 1
+      d.totalSpent += Number(t.total_spent) || 0
+    }
+  }
+  const clientTiers = [...tierMap.entries()]
+    .map(([tier, d]) => ({ tier, count: d.count, totalSpent: Math.round(d.totalSpent) }))
+    .sort((a, b) => {
+      const order = ['vip', 'oro', 'plata', 'bronce', 'new', 'none', 'occasional', 'regular']
+      return order.indexOf(a.tier.toLowerCase()) - order.indexOf(b.tier.toLowerCase())
+    })
+
+  // ════════════════════════════════════════════════════════════
+  // 15. Shifts
+  // ════════════════════════════════════════════════════════════
+  const { data: shiftsData } = await sb
+    .from('pos_shifts')
+    .select('pos_shift_id, station, cashier, cash_total, card_total, credit_total, opened_at, closed_at, is_closed')
+    .gte('opened_at', fromDate)
+    .lte('opened_at', toDate)
+    .order('opened_at', { ascending: false })
+    .range(0, 9)
+  const shifts = (shiftsData || []).map((s: any) => ({
+    shiftId: s.pos_shift_id,
+    station: s.station,
+    cashier: s.cashier,
+    cashTotal: Number(s.cash_total) || 0,
+    cardTotal: Number(s.card_total) || 0,
+    creditTotal: Number(s.credit_total) || 0,
+    openedAt: s.opened_at,
+    closedAt: s.closed_at,
+    isClosed: s.is_closed,
+  }))
+
+  // ════════════════════════════════════════════════════════════
+  // 16. By Zone Payment
+  // ════════════════════════════════════════════════════════════
+  // Build zone -> payments map from sales + payment data already fetched
+  const zonePayments = new Map<string, Map<string, { amount: number; count: number }>>()
+  // We need payment data per sale, and we know the zone per sale
+  // Re-fetch zone-payment mapping using the existing payment data
+  if (saleIds.length > 0) {
+    // Get all payments grouped by sale
+    let allPaymentsByZone: any[] = []
+    for (let i = 0; i < saleIds.length; i += BATCH) {
+      const batch = saleIds.slice(i, i + BATCH)
+      const { data: payData } = await sb
+        .from('pos_sale_payments')
+        .select('pos_sale_id, pos_payment_method_id, amount')
+        .in('pos_sale_id', batch)
+      if (payData) allPaymentsByZone.push(...payData)
+    }
+
+    const methodIdsZP = [...new Set(allPaymentsByZone.map((p: any) => p.pos_payment_method_id).filter(Boolean))]
+    const methodNamesZP = new Map<string, string>()
+    for (let i = 0; i < methodIdsZP.length; i += BATCH) {
+      const batch = methodIdsZP.slice(i, i + BATCH)
+      const { data: methods } = await sb
+        .from('pos_payment_methods')
+        .select('pos_payment_method_id, name')
+        .in('pos_payment_method_id', batch)
+      if (methods) {
+        for (const m of methods) methodNamesZP.set(m.pos_payment_method_id, m.name)
+      }
+    }
+
+    for (const p of allPaymentsByZone) {
+      const sale = saleMap.get(p.pos_sale_id)
+      if (!sale) continue
+      const zone = sale.derived_zone_name || 'Desconocido'
+      const mName = methodNamesZP.get(p.pos_payment_method_id) || 'Otro'
+      if (!zonePayments.has(zone)) zonePayments.set(zone, new Map())
+      const zMap = zonePayments.get(zone)!
+      if (!zMap.has(mName)) zMap.set(mName, { amount: 0, count: 0 })
+      const d = zMap.get(mName)!
+      d.amount += Number(p.amount) || 0
+      d.count += 1
+    }
+  }
+
+  const byZonePayment = [...zonePayments.entries()]
+    .map(([zone, methods]) => {
+      const sorted = [...methods.entries()]
+        .map(([method, d]) => ({ method, amount: Math.round(d.amount), count: d.count }))
+        .sort((a, b) => b.amount - a.amount)
+      const total = sorted.reduce((s, m) => s + m.amount, 0)
+      return {
+        zone,
+        methods: sorted.map(m => ({
+          ...m,
+          pct: total > 0 ? Math.round((m.amount / total) * 100) : 0,
+        })),
+      }
+    })
+    .sort((a, b) => {
+      const totalA = a.methods.reduce((s, m) => s + m.amount, 0)
+      const totalB = b.methods.reduce((s, m) => s + m.amount, 0)
+      return totalB - totalA
+    })
+
+  // ════════════════════════════════════════════════════════════
+  // 17. Items Revenue Total
+  // ════════════════════════════════════════════════════════════
+  const itemsRevenueTotal = Math.round(
+    allItems.reduce((s: number, item: any) => s + (Number(item.quantity) || 0) * (Number(item.unit_price) || 0), 0)
+  )
+
+  // ════════════════════════════════════════════════════════════
   // Return response
   // ════════════════════════════════════════════════════════════
   return NextResponse.json({
@@ -586,14 +934,27 @@ export async function GET(request: NextRequest) {
     from,
     to,
     kpis,
+    itemsRevenueTotal,
     byZone,
+    unknownZone,
     hourlyRevenue,
+    dailyTrend,
     topProducts,
     topCategories,
+    topProductByCategory,
     productsByCategory,
     staffPerformance,
     paymentMethods,
+    clientTiers,
+    clientSplit,
+    categoryList,
+    shifts,
     categoryCompanions,
+    byZonePayment,
+    topPerformersByCategory,
+    bottomPerformersByCategory,
+    filters: { zone: zoneParam, category: categoryParam, from, to },
+    availableMonths,
     dayCount,
   })
 }

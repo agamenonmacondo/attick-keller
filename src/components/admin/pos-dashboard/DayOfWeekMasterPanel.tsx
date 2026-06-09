@@ -2,7 +2,7 @@
 
 import { ArrowLeft } from '@phosphor-icons/react'
 import type { AggregatedDay } from './POSDailyTrendChart'
-import type { POSDashboardData } from '@/lib/hooks/usePOSDashboard'
+import type { POSDashboardData, DrillDownState, DrillDownData } from '@/lib/hooks/usePOSDashboard'
 import { AnimatedCard } from '../shared/AnimatedCard'
 import { SectionHeading } from '../shared/SectionHeading'
 import { formatCOPDisplay } from './KPICard'
@@ -11,6 +11,7 @@ import { HourlyRevenueChart } from './HourlyRevenueChart'
 import { StaffPerformanceTable } from './StaffPerformanceTable'
 import { PaymentMethodsChart } from './PaymentMethodsChart'
 import { CategoryDayDetail } from './CategoryDayDetail'
+import { DrillDownPanel } from './DrillDownPanel'
 
 interface DayOfWeekMasterPanelProps {
   dayData: AggregatedDay
@@ -23,6 +24,11 @@ interface DayOfWeekMasterPanelProps {
   onStaffDrillDown: (id: string, name: string) => void
   onZoneDrillDown: (zoneName: string) => void
   onHourDrillDown: (hour: string, extra?: { tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }) => void
+  drillDown: DrillDownState | null
+  drillDownData: DrillDownData | null
+  drillDownLoading: boolean
+  drillDownError: string | null
+  onCloseDrillDown: () => void
 }
 
 function formatCOP(n: number): string {
@@ -43,6 +49,11 @@ export function DayOfWeekMasterPanel({
   onStaffDrillDown,
   onZoneDrillDown,
   onHourDrillDown,
+  drillDown,
+  drillDownData,
+  drillDownLoading,
+  drillDownError,
+  onCloseDrillDown,
 }: DayOfWeekMasterPanelProps) {
   if (loading) {
     return (
@@ -117,16 +128,16 @@ export function DayOfWeekMasterPanel({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         <AnimatedCard delay={0.03} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
           <ZoneRevenueChart
-            data={data.byZone}
+            data={data.byZone ?? []}
             selectedZone="all"
             onZoneClick={() => {}}
             onZoneDrillDown={onZoneDrillDown}
-            unknownZone={data.unknownZone}
+            unknownZone={data.unknownZone ?? 0}
           />
         </AnimatedCard>
         <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
           <HourlyRevenueChart
-            data={data.hourlyRevenue}
+            data={data.hourlyRevenue ?? []}
             onHourDrillDown={onHourDrillDown}
           />
         </AnimatedCard>
@@ -135,8 +146,8 @@ export function DayOfWeekMasterPanel({
       {/* ── Category detail (full width) ── */}
       <AnimatedCard delay={0.09} className="p-4">
         <CategoryDayDetail
-          categories={data.topCategories}
-          productsByCategory={data.productsByCategory}
+          categories={data.topCategories ?? []}
+          productsByCategory={data.productsByCategory ?? {}}
           onProductDrillDown={onProductDrillDown}
         />
       </AnimatedCard>
@@ -179,14 +190,26 @@ export function DayOfWeekMasterPanel({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         <AnimatedCard delay={0.15} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
           <StaffPerformanceTable
-            data={data.staffPerformance}
+            data={data.staffPerformance ?? []}
             onStaffDrillDown={onStaffDrillDown}
           />
         </AnimatedCard>
         <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
-          <PaymentMethodsChart data={data.paymentMethods} />
+          <PaymentMethodsChart data={data.paymentMethods ?? []} />
         </AnimatedCard>
       </div>
+
+      {/* ── Drill-down detail panel ── */}
+      {drillDown && (
+        <DrillDownPanel
+          drillDown={drillDown}
+          data={drillDownData}
+          loading={drillDownLoading}
+          error={drillDownError}
+          onClose={onCloseDrillDown}
+          contextLabel={dayData.fullLabel}
+        />
+      )}
     </div>
   )
 }

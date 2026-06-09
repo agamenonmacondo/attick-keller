@@ -393,6 +393,12 @@ export function POSDashboardPanel() {
       {/* ── Results panel — all-time consolidated data with drill-down ── */}
       {activeTab === 'results' && allData && (
         <>
+          {/* Full-page spinner while day detail is loading */}
+          {selectedDayOfWeek && dayDetailLoading && !dayDetail && (
+            <div className="py-8 flex items-center justify-center">
+              <Spinner size={24} className="animate-spin text-[var(--text-secondary)]" />
+            </div>
+          )}
           {/* When a day-of-week is selected, show the immersive master panel */}
           {selectedDayOfWeek && dayDetail ? (
             <DayOfWeekMasterPanel
@@ -406,16 +412,14 @@ export function POSDashboardPanel() {
               onStaffDrillDown={handleResultsStaffDrillDown}
               onZoneDrillDown={handleResultsZoneDrillDown}
               onHourDrillDown={handleResultsHourDrillDown}
+              drillDown={resultsDrillDown}
+              drillDownData={resultsDrillDownData}
+              drillDownLoading={resultsDrillDownLoading}
+              drillDownError={resultsDrillDownError}
+              onCloseDrillDown={closeResultsDrillDown}
             />
           ) : (
           <>
-            {/* KPIs — promedios historicos */}
-            {selectedDayOfWeek && dayDetailLoading && (
-              <div className="py-8 flex items-center justify-center">
-                <Spinner size={24} className="animate-spin text-[var(--text-secondary)]" />
-              </div>
-            )}
-
             <AnimatedCard delay={0} className="p-0 overflow-visible">
               <div className="p-4">
                 <DayKPIBar kpis={allData.kpis} averages={undefined} isSingleDay={false} />

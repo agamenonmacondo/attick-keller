@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { cn } from '@/lib/utils/cn'
-import { NotePencil, LockKey, PaperPlane, Trash } from '@phosphor-icons/react/dist/ssr'
+import { NotePencil, LockKey, PaperPlane, Trash, Check, Spinner } from '@phosphor-icons/react/dist/ssr'
 
 interface ReservationNote {
   id: string
@@ -26,6 +26,9 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
   const [newNote, setNewNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [showNotes, setShowNotes] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!reservationId || !showNotes) {
@@ -33,18 +36,27 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
       return
     }
     setLoading(true)
+    setError(null)
     fetch(`/api/admin/reservation-notes?reservation_id=${reservationId}`)
-      .then(r => r.ok ? r.json() : [])
+      .then(r => {
+        if (!r.ok) throw new Error(`Error ${r.status}`)
+        return r.json()
+      })
       .then(data => {
         setNotes(Array.isArray(data) ? data : [])
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch((err) => {
+        console.error('[InternalNotes] Failed to load notes:', err)
+        setError('Error al cargar notas')
+        setLoading(false)
+      })
   }, [reservationId, showNotes])
 
-  const handleAddNote = async () => {
+  const handleAddNote = useCallback(async () => {
     if (!reservationId || !newNote.trim()) return
     setSubmitting(true)
+    setError(null)
     try {
       const res = await fetch('/api/admin/reservation-notes', {
         method: 'POST',
@@ -55,39 +67,71 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
           author_name: 'Admin',
         }),
       })
-      if (res.ok) {
-        const saved = await res.json()
-        setNotes(prev => [...prev, saved])
-        setNewNote('')
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || `Error ${res.status}`)
       }
+      const saved = await res.json()
+      setNotes(prev => [...prev, saved])
+      setNewNote('')
+    } catch (err) {
+      console.error('[InternalNotes] Failed to add note:', err)
+      setError('Error al guardar la nota. Intenta de nuevo.')
     } finally {
       setSubmitting(false)
     }
-  }
+  }, [reservationId, newNote])
 
-  const handleDeleteNote = async (noteId: string) => {
+  const handleDeleteNote = useCallback(async (noteId: string) => {
     try {
       const res = await fetch(`/api/admin/reservation-notes?id=${noteId}`, { method: 'DELETE' })
       if (res.ok) {
         setNotes(prev => prev.filter(n => n.id !== noteId))
       }
     } catch { /* ignore */ }
-  }
+  }, [])
 
-  const handleSaveNotes = async () => {
+  const handleSaveNotes = useCallback(async () => {
     if (!reservationId) return
+    setSaving(true)
+    setError(null)
     try {
-      await fetch(`/api/admin/reservations/${reservationId}/internal-notes`, {
+      const res = await fetch(`/api/admin/reservations/${reservationId}/internal-notes`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ internal_notes: internalNotes }),
       })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || `Error ${res.status}`)
+      }
       onNotesUpdate(internalNotes)
-    } catch { /* ignore */ }
-  }
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      console.error('[InternalNotes] Failed to save notes:', err)
+      setError('Error al guardar. Intenta de nuevo.')
+    } finally {
+      setSaving(false)
+    }
+  }, [reservationId, internalNotes, onNotesUpdate])
 
   return (
     <div className={cn('space-y-3', className)}>
+      {/* Error message */}
+      {error && (
+        <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-xs text-red-700 dark:text-red-300">
+          {error}
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="ml-2 underline"
+          >
+            Cerrar
+          </button>
+        </div>
+      )}
+
       {/* Internal notes field (stored on reservation row) */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
@@ -96,15 +140,28 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
             Notas internas del equipo
           </label>
           <button
+            type="button"
             onClick={handleSaveNotes}
-            className="text-xs text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-dorado)] hover:underline"
+            disabled={saving}
+            className={cn(
+              'flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded transition-colors',
+              saved
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                : 'text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-dorado)] hover:bg-[var(--color-ak-borgona)]/10 dark:hover:bg-[var(--color-ak-dorado)]/10',
+              saving && 'opacity-50 cursor-wait',
+            )}
           >
-            Guardar
+            {saving ? (
+              <Spinner size={12} className="animate-spin" />
+            ) : saved ? (
+              <Check size={12} weight="bold" />
+            ) : null}
+            {saved ? 'Guardado' : 'Guardar'}
           </button>
         </div>
         <textarea
           value={internalNotes}
-          onChange={e => onNotesUpdate(e.target.value)}
+          onChange={e => { onNotesUpdate(e.target.value); setSaved(false) }}
           placeholder="Notas visibles solo para el equipo host..."
           rows={2}
           className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-ak-madera)]/15 dark:border-white/10 bg-white/70 dark:bg-white/5 text-[var(--color-ak-madera)] dark:text-white placeholder:text-[var(--color-ak-madera)]/30 dark:placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-[var(--color-ak-borgona)] dark:focus:ring-[var(--color-ak-dorado)]"
@@ -114,6 +171,7 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
       {/* Notes timeline (separate table) */}
       <div>
         <button
+          type="button"
           onClick={() => setShowNotes(!showNotes)}
           className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-dorado)] hover:underline"
         >
@@ -124,7 +182,8 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
         {showNotes && (
           <div className="mt-2 space-y-2">
             {loading ? (
-              <div className="text-xs text-[var(--color-ak-madera)]/50 dark:text-white/40 py-2">
+              <div className="flex items-center gap-2 text-xs text-[var(--color-ak-madera)]/50 dark:text-white/40 py-2">
+                <Spinner size={14} className="animate-spin" />
                 Cargando notas...
               </div>
             ) : notes.length === 0 ? (
@@ -149,6 +208,7 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
                     <p className="text-xs text-[var(--color-ak-madera)] dark:text-white/80 mt-0.5">{note.note}</p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => handleDeleteNote(note.id)}
                     className="text-[var(--color-ak-madera)]/30 dark:text-white/20 hover:text-red-500 dark:hover:text-red-400 flex-shrink-0"
                     title="Eliminar nota"
@@ -164,17 +224,22 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
               <input
                 type="text"
                 value={newNote}
-                onChange={e => setNewNote(e.target.value)}
+                onChange={e => { setNewNote(e.target.value); setError(null) }}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAddNote() } }}
                 placeholder="Agregar nota para el equipo..."
                 className="flex-1 px-2 py-1 text-xs rounded border border-[var(--color-ak-madera)]/15 dark:border-white/10 bg-white dark:bg-white/5 text-[var(--color-ak-madera)] dark:text-white"
               />
               <button
+                type="button"
                 onClick={handleAddNote}
                 disabled={!newNote.trim() || submitting}
-                className="px-2 py-1 text-xs bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-dorado)] text-white dark:text-[var(--color-ak-madera)] rounded disabled:opacity-40"
+                className={cn(
+                  'px-2 py-1 text-xs rounded flex items-center justify-center transition-colors',
+                  'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-dorado)] text-white dark:text-[var(--color-ak-madera)]',
+                  (!newNote.trim() || submitting) && 'opacity-40 cursor-not-allowed',
+                )}
               >
-                <PaperPlane size={12} />
+                {submitting ? <Spinner size={12} className="animate-spin" /> : <PaperPlane size={12} />}
               </button>
             </div>
           </div>

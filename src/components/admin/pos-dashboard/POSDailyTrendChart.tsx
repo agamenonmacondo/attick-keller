@@ -78,7 +78,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 
       {/* Count */}
       <p className="text-[var(--text-muted)] mt-1 pt-1 border-t border-[var(--border-default)] text-[10px]">
-        {day.count} {day.count === 1 ? 'dia' : 'dias'} de datos
+        {day.count} {day.count === 1 ? 'dia' : 'dias'} {day.fullLabel.toLowerCase()} con datos
       </p>
     </div>
   )

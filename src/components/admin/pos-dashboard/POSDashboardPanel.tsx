@@ -354,7 +354,7 @@ export function POSDashboardPanel() {
           {/* Detail panel for selected day of week */}
           {selectedDayOfWeek && (
             <AnimatedCard delay={0.04} className="p-0 overflow-visible">
-              <DayOfWeekDetailCard dayData={selectedDayOfWeek} onClose={() => setSelectedDayOfWeek(null)} />
+              <DayOfWeekDetailCard dayData={selectedDayOfWeek} dateRange="Ene – Jun 2026" onClose={() => setSelectedDayOfWeek(null)} />
             </AnimatedCard>
           )}
 

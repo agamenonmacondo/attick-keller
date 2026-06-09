@@ -5,6 +5,7 @@ import type { AggregatedDay } from './POSDailyTrendChart'
 
 interface DayOfWeekDetailCardProps {
   dayData: AggregatedDay
+  dateRange?: string  // "Ene – Jun 2026" for context
   onClose: () => void
 }
 
@@ -15,44 +16,7 @@ function formatCOP(n: number): string {
   return `$${Math.round(abs).toLocaleString('es-CO')}`
 }
 
-function DiffBadge({ value, avg }: { value: number; avg: number }) {
-  if (avg === 0) return null
-  const pct = ((value - avg) / avg) * 100
-  if (Math.abs(pct) < 1) return (
-    <span className="flex items-center gap-0.5 text-[9px] text-[var(--text-secondary)]">
-      <Minus size={9} />
-    </span>
-  )
-  const isUp = pct > 0
-  return (
-    <span className={`flex items-center gap-0.5 text-[9px] font-medium ${isUp ? 'text-green-500' : 'text-red-400'}`}>
-      {isUp ? <TrendUp size={9} /> : <TrendDown size={9} />}
-      {isUp ? '+' : ''}{pct.toFixed(0)}%
-    </span>
-  )
-}
-
-function MetricRow({ label, total, avg, unit }: { label: string; total: number; avg: number; unit?: string }) {
-  const fmt = unit === 'cop' ? formatCOP : (n: number) => Math.round(n).toLocaleString('es-CO')
-  return (
-    <div className="flex items-center justify-between py-1.5 border-b border-[var(--border-default)] last:border-0">
-      <span className="text-xs text-[var(--text-secondary)]">{label}</span>
-      <div className="flex items-center gap-3">
-        <div className="text-right">
-          <span className="text-xs font-bold text-[var(--text-primary)]">{fmt(total)}</span>
-          <span className="text-[9px] text-[var(--text-muted)] ml-1">total</span>
-        </div>
-        <div className="text-right">
-          <span className="text-xs text-[var(--text-muted)]">{fmt(avg)}</span>
-          <span className="text-[9px] text-[var(--text-muted)] ml-0.5">prom/dia</span>
-        </div>
-        <DiffBadge value={avg} avg={0} />
-      </div>
-    </div>
-  )
-}
-
-export function DayOfWeekDetailCard({ dayData, onClose }: DayOfWeekDetailCardProps) {
+export function DayOfWeekDetailCard({ dayData, dateRange, onClose }: DayOfWeekDetailCardProps) {
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4 sm:p-5">
       {/* Header */}
@@ -60,7 +24,8 @@ export function DayOfWeekDetailCard({ dayData, onClose }: DayOfWeekDetailCardPro
         <div>
           <h3 className="text-sm font-bold text-[var(--text-primary)]">{dayData.fullLabel}</h3>
           <p className="text-[10px] text-[var(--text-muted)]">
-            {dayData.count} {dayData.count === 1 ? 'dia' : 'dias'} de datos · Promedio/dia vs total acumulado
+            {dayData.count} {dayData.count === 1 ? 'dia' : 'dias'} {dayData.fullLabel.toLowerCase()}
+            {dateRange && <> · <span className="text-[var(--color-ak-borgona)]">{dateRange}</span></>}
           </p>
         </div>
         <button

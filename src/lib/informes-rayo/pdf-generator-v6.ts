@@ -146,35 +146,14 @@ function emptySlide(title: string): string {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CSS — Claude Design (Source Serif 4 + Inter + Caveat)
-// NIVEL 1 FIXES APPLIED:
-// 1. @import Google Fonts INSIDE <style> so renderer extracts it
-// 2. Explicit @font-face fallbacks with font-display: swap
-// 3. All font-family references match exactly what @font-face registers
+// CSS — Sistema nativo (Georgia + Arial + Comic Sans MS)
+// NIVEL 2 FIX: Eliminadas Google Fonts. html2canvas NO las renderiza.
+// Usamos fuentes del sistema que html2canvas captura perfectamente.
+// Georgia ≈ Source Serif 4, Arial ≈ Inter, Comic Sans MS ≈ Caveat
 // ═══════════════════════════════════════════════════════════════
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@300;400;500;600;700&family=Caveat:wght@400;500;600&display=swap');
-
-/* ── @font-face FALLBACKS (Nivel 1 Fix 1.4) ──
-   Solo para Inter y Caveat. Source Serif 4 se carga via Google Fonts @import
-   con display=swap + stack CSS fallback (Georgia, serif).
-   NOTA: No definir @font-face para Source Serif 4 para evitar conflicto de nombres
-   entre Google Fonts (sin comillas) y fallback (con comillas). */
-@font-face {
-  font-family: Inter;
-  src: local('Arial'), local('Helvetica'), local('system-ui');
-  font-weight: 300 700;
-  font-display: swap;
-}
-@font-face {
-  font-family: Caveat;
-  src: local('Comic Sans MS'), local('cursive');
-  font-weight: 400 600;
-  font-display: swap;
-}
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Inter",system-ui,sans-serif;background:#0D0D0C;color:#F0EDE8;line-height:1.4;-webkit-font-smoothing:antialiased;width:450px}
+body{font-family:Arial,Helvetica,system-ui,sans-serif;background:#0D0D0C;color:#F0EDE8;line-height:1.4;-webkit-font-smoothing:antialiased;width:450px}
 
 :root{
   --bg:#0D0D0C;--surface:#141414;--surface-2:#1A1A1A;
@@ -183,9 +162,9 @@ body{font-family:"Inter",system-ui,sans-serif;background:#0D0D0C;color:#F0EDE8;l
   --borgona:#5D1528;--borgona-light:#7A1E35;--ladrillo:#A0522D;
   --verde:#4ADE80;--verde-muted:#2D6A3F;--amarillo:#FACC15;--rojo:#EF4444;
   --track:#1A1A1A;--border:#262626;
-  --font-serif:"Source Serif 4",Georgia,serif;
-  --font-sans:"Inter",Arial,system-ui,sans-serif;
-  --font-script:"Caveat","Comic Sans MS",cursive;
+  --font-serif:Georgia,"Times New Roman",serif;
+  --font-sans:Arial,Helvetica,system-ui,sans-serif;
+  --font-script:"Comic Sans MS",cursive;
 }
 
 .slide{width:450px;height:800px;overflow:hidden;position:relative;background:var(--bg);padding:32px 28px;display:flex;flex-direction:column}

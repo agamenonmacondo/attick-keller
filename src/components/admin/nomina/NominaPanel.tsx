@@ -345,7 +345,7 @@ export function NominaPanel() {
           </AnimatedCard>
           <AnimatedCard className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Sun size={16} className="text-[#f59e0b]" />
+              <Sun size={16} className="text-[var(--color-warning)]" />
               <span className="text-xs text-[var(--text-secondary)]">Dominicales diurnos</span>
             </div>
             <div className="text-lg font-bold text-[var(--text-primary)]">{resumen.totalHorasDominicales}h</div>

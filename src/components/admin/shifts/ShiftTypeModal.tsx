@@ -390,13 +390,13 @@ export default function ShiftTypeModal({ isOpen, onClose, area, shiftType, onSav
               <span style={{ color: 'var(--text-primary)' }}>
                 {isSplit ? `${segments.length} segmentos` : '1 segmento'}
               </span>
-              <span className="font-semibold" style={{ color: esExtra ? '#ef4444' : '#22c55e' }}>
+              <span className="font-semibold" style={{ color: esExtra ? 'var(--color-danger)' : 'var(--color-success)' }}>
                 {totalHoras}h total
               </span>
-              <span style={{ color: '#34d399' }}>HO: {totalOrdinarias}h</span>
-              <span style={{ color: '#fbbf24' }}>HN: {totalNocturnas}h</span>
+              <span style={{ color: 'var(--color-success)' }}>HO: {totalOrdinarias}h</span>
+              <span style={{ color: 'var(--color-warning)' }}>HN: {totalNocturnas}h</span>
               {esExtra && (
-                <span className="font-bold" style={{ color: '#ef4444' }}>
+                <span className="font-bold" style={{ color: 'var(--color-danger)' }}>
                   +{Number((totalHoras - JORNADA_DIARIA).toFixed(1))}h extra
                 </span>
               )}

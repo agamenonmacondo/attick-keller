@@ -795,22 +795,22 @@ function ShiftTypeEditor({
     if (!form.entrada || !form.salida) return null;
     const esExtra = horasCalc.total > JORNADA_DIARIA;
     return (
-      <div className="flex items-center gap-3 text-xs py-1.5 px-3 rounded-lg"
-        style={{ background: esExtra ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', border: `1px solid ${esExtra ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'}` }}>
+      <div className="flex items-center gap-3 text-xs py-1.5 px-3 rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20"
+        style={esExtra ? {} : { background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
         <span style={{ color: 'var(--text-primary)' }}>
           {form.entrada} - {form.salida}
         </span>
-        <span className="font-semibold" style={{ color: esExtra ? '#ef4444' : '#22c55e' }}>
+        <span className="font-semibold" style={{ color: esExtra ? 'var(--color-danger)' : 'var(--color-success)' }}>
           {horasCalc.total}h total
         </span>
-        <span style={{ color: '#34d399' }}>
+        <span style={{ color: 'var(--color-success)' }}>
           HO: {horasCalc.ordinarias}h
         </span>
-        <span style={{ color: '#fbbf24' }}>
+        <span style={{ color: 'var(--color-warning)' }}>
           HN: {horasCalc.nocturnas}h
         </span>
         {esExtra && (
-          <span className="font-bold" style={{ color: '#ef4444' }}>
+          <span className="font-bold" style={{ color: 'var(--color-danger)' }}>
             +{Number((horasCalc.total - JORNADA_DIARIA).toFixed(1))}h extra
           </span>
         )}
@@ -861,7 +861,7 @@ function ShiftTypeEditor({
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-3 text-xs text-[var(--text-secondary)]">
                       <span>{st.entrada.slice(0, 5)} - {st.salida.slice(0, 5)}</span>
-                      <span className="font-semibold" style={{ color: stHoras.total > 8 ? '#ef4444' : 'var(--text-primary)' }}>
+                      <span className="font-semibold" style={{ color: stHoras.total > 8 ? 'var(--color-danger)' : 'var(--text-primary)' }}>
                         {stHoras.total}h
                       </span>
                       <span className="text-emerald-400">HO:{st.ordinarias}</span>

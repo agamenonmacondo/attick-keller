@@ -560,7 +560,7 @@ export default function PerfilPage() {
                 </div>
                 <Link
                   href="/host"
-                  className="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-ak-borgona)] text-white rounded-xl text-sm font-semibold hover:bg-[#7A2D40] active:scale-[0.97] transition-colors shadow-lg shadow-black/20"
+                  className="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-ak-borgona)] text-white rounded-xl text-sm font-semibold hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] transition-colors shadow-lg shadow-black/20"
                   style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                 >
                   Abrir Portal

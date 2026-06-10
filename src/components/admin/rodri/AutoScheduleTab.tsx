@@ -126,6 +126,7 @@ const SHIFT_HOURS: Record<string, number> = {
   'S':  10,
 }
 
+// Shift type identifier colors — not themeable
 const SHIFT_COLORS: Record<string, string> = {
   'A':  '#22c55e',
   'S':  '#3b82f6',
@@ -885,17 +886,17 @@ export default function AutoScheduleTab() {
 
   // ── SWC-safe pre-computed style booleans ──
   const hasOT = totals.totalOT > 0
-  const otColor = hasOT ? '#ef4444' : '#22c55e'
-  const spColor = totals.totalSplits > 0 ? '#ef4444' : '#22c55e'
-  const olColor = totals.overLimit > 0 ? '#ef4444' : '#22c55e'
-  const tcColor = totals.totalTerceros > 0 ? '#f59e0b' : '#22c55e'
+  const otColor = hasOT ? 'var(--color-danger)' : 'var(--color-success)'
+  const spColor = totals.totalSplits > 0 ? 'var(--color-danger)' : 'var(--color-success)'
+  const olColor = totals.overLimit > 0 ? 'var(--color-danger)' : 'var(--color-success)'
+  const tcColor = totals.totalTerceros > 0 ? 'var(--color-warning)' : 'var(--color-success)'
   const hasData = generated && schedules.length > 0
   const showSims = simsRun && simulations.length === 3
   const showUnassigned = unassignedCount > 0
   const isBestBalanced = bestScenario ? bestScenario.name === 'Balanceado' : false
   const bestBg = isBestBalanced ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)'
   const bestBorder = isBestBalanced ? 'rgba(34,197,94,0.3)' : 'rgba(245,158,11,0.3)'
-  const bestClr = isBestBalanced ? '#22c55e' : '#f59e0b'
+  const bestClr = isBestBalanced ? 'var(--color-success)' : 'var(--color-warning)'
   const hasValidationIssues = validationIssues.some(i => !i.passed)
   const showValidation = validationIssues.length > 0
 
@@ -996,9 +997,9 @@ export default function AutoScheduleTab() {
             const r = isProhibido ? 239 : (isLimitado ? Math.round(200 + intensity * 55) : Math.round(160 + intensity * 95))
             const g = isProhibido ? 68 : (isLimitado ? Math.round(150 + intensity * 70) : Math.round(220 - intensity * 60))
             const b2 = isProhibido ? 68 : (isLimitado ? Math.round(50 + intensity * 170) : Math.round(220 - intensity * 180))
-            const borderClr = isProhibido ? '#ef4444' : (isLimitado ? '#f59e0b' : '#22c55e')
+            const borderClr = isProhibido ? 'var(--color-danger)' : (isLimitado ? 'var(--color-warning)' : 'var(--color-success)')
             const bgClr = isProhibido ? 'rgba(239,68,68,0.15)' : (isLimitado ? 'rgba(245,158,11,0.12)' : 'rgba(34,197,94,0.08)')
-            const txtClr = isProhibido ? '#ef4444' : (isLimitado ? '#f59e0b' : '#22c55e')
+            const txtClr = isProhibido ? 'var(--color-danger)' : (isLimitado ? 'var(--color-warning)' : 'var(--color-success)')
             return (
               <div key={d} className="rounded-lg p-3 text-center" style={{ background: bgClr, borderWidth: 2, borderStyle: 'solid', borderColor: borderClr }}>
                 <div className="text-[10px] font-bold uppercase tracking-wide" style={{ color: txtClr }}>{label}</div>
@@ -1006,7 +1007,7 @@ export default function AutoScheduleTab() {
                 <div className="text-xl font-bold mt-1" style={{ color: txtClr }}>{demand}</div>
                 <div className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>colab/dia</div>
                 {isProhibido && (
-                  <div className="text-[10px] font-bold mt-1 px-1 py-0.5 rounded" style={{ color: '#ef4444', background: 'rgba(239,68,68,0.2)' }}>
+                  <div className="text-[10px] font-bold mt-1 px-1 py-0.5 rounded bg-[var(--color-danger)]/20 text-[var(--color-danger)]">
                     NUNCA
                   </div>
                 )}
@@ -1028,14 +1029,14 @@ export default function AutoScheduleTab() {
               const sabLabel = getDayLabel(6, team)
               const sabIsLimitado = sabLabel === 'Limitado'
               const sabIsDescanso = sabLabel === 'Descanso'
-              const sabClr = sabIsLimitado ? '#f59e0b' : '#22c55e'
+              const sabClr = sabIsLimitado ? 'var(--color-warning)' : 'var(--color-success)'
               return (
                 <div key={team} className="rounded-lg p-2" style={{ background: 'var(--bg-card)' }}>
                   <div className="font-medium mb-1" style={{ color: 'var(--text-primary)' }}>{team}</div>
                   <div className="space-y-0.5">
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Vie (max):</span>
-                      <span className="font-bold" style={{ color: '#ef4444' }}>{tMax}</span>
+                      <span className="font-bold" style={{ color: 'var(--color-danger)' }}>{tMax}</span>
                     </div>
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Sab:</span>
@@ -1045,7 +1046,7 @@ export default function AutoScheduleTab() {
                     </div>
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Dom:</span>
-                      <span className="font-bold" style={{ color: '#22c55e' }}>{domDemand} — Descanso</span>
+                      <span className="font-bold" style={{ color: 'var(--color-success)' }}>{domDemand} — Descanso</span>
                     </div>
                   </div>
                 </div>
@@ -1090,7 +1091,7 @@ export default function AutoScheduleTab() {
       {showValidation && (
         <div className="rounded-xl p-4" style={{ background: hasValidationIssues ? 'rgba(245,158,11,0.08)' : 'rgba(34,197,94,0.08)', border: `1px solid ${hasValidationIssues ? 'rgba(245,158,11,0.3)' : 'rgba(34,197,94,0.3)'}` }}>
           <h3 className="font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-            <Scales size={18} weight="bold" style={{ color: hasValidationIssues ? '#f59e0b' : '#22c55e' }} />
+            <Scales size={18} weight="bold" style={{ color: hasValidationIssues ? 'var(--color-warning)' : 'var(--color-success)' }} />
             Verificacion de Algoritmo ({validationIssues.filter(i => i.passed).length}/{validationIssues.length} OK)
           </h3>
           <div className="space-y-1.5">
@@ -1101,11 +1102,11 @@ export default function AutoScheduleTab() {
                 style={{ background: issue.passed ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)' }}
               >
                 {issue.passed
-                  ? <CheckCircle size={14} weight="bold" style={{ color: '#22c55e', flexShrink: 0, marginTop: 1 }} />
-                  : <Warning size={14} weight="bold" style={{ color: '#ef4444', flexShrink: 0, marginTop: 1 }} />
+                  ? <CheckCircle size={14} weight="bold" style={{ color: 'var(--color-success)', flexShrink: 0, marginTop: 1 }} />
+                  : <Warning size={14} weight="bold" style={{ color: 'var(--color-danger)', flexShrink: 0, marginTop: 1 }} />
                 }
                 <div>
-                  <span className="font-medium" style={{ color: issue.passed ? '#22c55e' : '#ef4444' }}>{issue.test}:</span>
+                  <span className="font-medium" style={{ color: issue.passed ? 'var(--color-success)' : 'var(--color-danger)' }}>{issue.test}:</span>
                   <span className="ml-1" style={{ color: 'var(--text-secondary)' }}>{issue.detail}</span>
                 </div>
               </div>
@@ -1120,7 +1121,7 @@ export default function AutoScheduleTab() {
           {[
             { label: 'Horas Extra', value: `${totals.totalOT.toFixed(1)}h`, sub: `${totals.overLimit}/${totals.count} empleados`, color: otColor },
             { label: 'Partidos', value: '0', sub: 'eliminados', color: spColor },
-            { label: 'Nocturnas', value: `${totals.totalNight.toFixed(1)}h`, sub: `de ${totals.totalHours.toFixed(0)}h`, color: '#f59e0b' },
+            { label: 'Nocturnas', value: `${totals.totalNight.toFixed(1)}h`, sub: `de ${totals.totalHours.toFixed(0)}h`, color: 'var(--color-warning)' },
             { label: 'Terceros', value: `${totals.totalTerceros}`, sub: formatCOP(totals.tercerosCost) + '/sem', color: tcColor },
             { label: 'Nomina', value: formatCOP(totals.totalCost), sub: 'estimado/sem', color: 'var(--text-primary)' },
           ].map(kpi => (
@@ -1149,7 +1150,7 @@ export default function AutoScheduleTab() {
                 const deficit = Math.max(0, cov.needed - cov.working)
                 const pct = Math.min(100, (cov.working / Math.max(cov.needed, 1)) * 100)
                 const isOk = deficit === 0
-                const barColor = isOk ? '#22c55e' : (pct >= 75 ? '#f59e0b' : '#ef4444')
+                const barColor = isOk ? 'var(--color-success)' : (pct >= 75 ? 'var(--color-warning)' : 'var(--color-danger)')
                 return (
                   <div key={d} className="rounded-lg p-2 text-center" style={{ background: 'var(--bg-card-hover)' }}>
                     <div className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{DAY_NAMES[d]}</div>
@@ -1158,8 +1159,8 @@ export default function AutoScheduleTab() {
                       <div className="h-full rounded-full transition-all" style={{ background: barColor, width: `${pct}%` }} />
                     </div>
                     {deficit > 0
-                      ? <div className="text-[10px] font-medium mt-1" style={{ color: '#f59e0b' }}>Faltan {deficit}</div>
-                      : <div className="text-[10px] font-medium mt-1" style={{ color: '#22c55e' }}>Cubierto</div>
+                      ? <div className="text-[10px] font-medium mt-1" style={{ color: 'var(--color-warning)' }}>Faltan {deficit}</div>
+                      : <div className="text-[10px] font-medium mt-1" style={{ color: 'var(--color-success)' }}>Cubierto</div>
                     }
                   </div>
                 )
@@ -1177,7 +1178,7 @@ export default function AutoScheduleTab() {
               {[0, 1, 2, 3, 4, 5, 6].map(d => {
                 const count = restDayDist[d] || 0
                 const demand = getTotalDemand(d)
-                const barColor = d === 5 ? '#6b7280' : (count === 0 ? '#22c55e' : '#3b82f6')
+                const barColor = d === 5 ? 'var(--text-muted)' : (count === 0 ? 'var(--color-success)' : '#3b82f6')
                 return (
                   <div key={d} className="rounded-lg p-2 text-center" style={{ background: 'var(--bg-card-hover)' }}>
                     <div className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{DAY_NAMES[d]}</div>
@@ -1285,7 +1286,7 @@ export default function AutoScheduleTab() {
                     {simulations.map(sim => {
                       const val = row.get(sim)
                       const isWarn = row.warn && val !== '0' && val !== '0.0h' && val !== 'No'
-                      const valColor = row.highlight ? 'var(--color-ak-borgona)' : (isWarn ? '#ef4444' : 'var(--text-primary)')
+                      const valColor = row.highlight ? 'var(--color-ak-borgona)' : (isWarn ? 'var(--color-danger)' : 'var(--text-primary)')
                       const fw = row.highlight ? 700 : (isWarn ? 600 : 500)
                       return (
                         <td key={sim.name} className="text-center p-3" style={{ color: valColor, fontWeight: fw }}>{val}</td>
@@ -1315,7 +1316,7 @@ export default function AutoScheduleTab() {
                           title={`${sim.name}: ${t}`}
                           style={{
                             background: tZero ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)',
-                            color: tZero ? '#22c55e' : '#f59e0b',
+                            color: tZero ? 'var(--color-success)' : 'var(--color-warning)',
                           }}
                         >
                           {t}
@@ -1394,8 +1395,8 @@ export default function AutoScheduleTab() {
                   const empHasOT = s.totalOvertime > 0
                   const rowBg = empHasOT ? 'rgba(239,68,68,0.05)' : 'transparent'
                   const stickyBg = empHasOT ? rowBg : 'var(--bg-card)'
-                  const hrColor = empHasOT ? '#ef4444' : 'var(--text-primary)'
-                  const exColor = empHasOT ? '#ef4444' : '#22c55e'
+                  const hrColor = empHasOT ? 'var(--color-danger)' : 'var(--text-primary)'
+                  const exColor = empHasOT ? 'var(--color-danger)' : 'var(--color-success)'
                   const exText = empHasOT ? `+${s.totalOvertime.toFixed(1)}` : '-'
                   return (
                     <tr key={s.employeeId} style={{ background: rowBg, borderTop: '1px solid var(--border)' }}>
@@ -1406,7 +1407,7 @@ export default function AutoScheduleTab() {
                         </div>
                       </td>
                       <td className="text-center p-2">
-                        <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ background: 'rgba(107,114,128,0.2)', color: '#9ca3af' }}>
+                        <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-[var(--text-muted)]/20 text-[var(--text-muted)]">
                           {DAY_NAMES[s.restDay]}
                         </span>
                       </td>
@@ -1414,7 +1415,7 @@ export default function AutoScheduleTab() {
                         if (!day) {
                           return (
                             <td key={di} className="text-center p-1">
-                              <div className="rounded px-1 py-0.5 text-xs" style={{ background: 'rgba(107,114,128,0.15)', color: '#6b7280' }}>
+                              <div className="rounded px-1 py-0.5 text-xs bg-[var(--text-muted)]/15 text-[var(--text-muted)]">
                                 Libre
                               </div>
                             </td>
@@ -1495,8 +1496,8 @@ export default function AutoScheduleTab() {
       {showUnassigned && (
         <div className="rounded-xl p-4" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)' }}>
           <div className="flex items-center gap-2 mb-2">
-            <Warning size={18} weight="bold" style={{ color: '#f59e0b' }} />
-            <h3 className="font-semibold" style={{ color: '#f59e0b' }}>Empleados sin equipo asignado</h3>
+            <Warning size={18} weight="bold" style={{ color: 'var(--color-warning)' }} />
+            <h3 className="font-semibold" style={{ color: 'var(--color-warning)' }}>Empleados sin equipo asignado</h3>
           </div>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             {unassignedCount} empleados activos sin equipo. Asignar equipos mejora la precision del algoritmo y reduce la necesidad de terceros.

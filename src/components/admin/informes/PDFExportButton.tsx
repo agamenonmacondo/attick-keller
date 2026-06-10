@@ -2,8 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { Lightning } from '@phosphor-icons/react'
-import { generatePDFHtmlV6 } from '@/lib/informes-rayo/pdf-generator-v6'
-import { renderHtmlToPDF } from '@/lib/informes-rayo/pdf-renderer-v6'
+import { generatePDF } from '@/lib/informes-rayo/pdf-chartjs/index'
 import type { SlideAnalysisV2 } from '@/lib/informes-rayo/analysis-pipeline-v2'
 
 interface PDFExportButtonProps {
@@ -47,22 +46,13 @@ export function PDFExportButton({ data, from, to }: PDFExportButtonProps) {
           }
         }
       } catch (analyzeErr) {
-        console.log('[PDFv5] Analyze-v2 failed, continuing without analysis:', analyzeErr)
+        console.log('[PDF] Analyze-v2 failed, continuing without analysis:', analyzeErr)
       }
 
-      // 3. Generate HTML with v6 template (Claude Design + Analysis LLM)
-      const html = generatePDFHtmlV6({
-        data,
-        from,
-        to,
-        margins: marginsData,
-        analysis,
-      })
+      // 3. Generate PDF with jsPDF vectorial (NO html2canvas)
+      const blob = await generatePDF({ data, from, to, margins: marginsData, analysis })
 
-      // 4. Render HTML → PDF via html2canvas + jsPDF
-      const blob = await renderHtmlToPDF(html)
-
-      // 5. Download
+      // 4. Download
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -72,7 +62,7 @@ export function PDFExportButton({ data, from, to }: PDFExportButtonProps) {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
     } catch (err: any) {
-      console.error('[PDFv5] Error:', err)
+      console.error('[PDF] Error:', err)
       setError(err.message || 'Error generando PDF')
     } finally {
       setLoading(false)

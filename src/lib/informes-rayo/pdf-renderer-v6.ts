@@ -7,9 +7,9 @@ import html2canvas from 'html2canvas'
 // @ts-ignore
 import { jsPDF } from 'jspdf'
 
-const SLIDE_WIDTH = 450
+const SLIDE_WIDTH = 520
 const SLIDE_HEIGHT = 800
-const SCALE = 3
+const SCALE = 2
 
 const pdfW = (SLIDE_WIDTH / 96) * 25.4
 const pdfH = (SLIDE_HEIGHT / 96) * 25.4

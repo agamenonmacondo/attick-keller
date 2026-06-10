@@ -1,66 +1,99 @@
 /**
  * Entry point: generatePDF(data) → Promise<Blob>
- * PDF vectorial puro con jsPDF (sin Chart.js, sin html2canvas)
+ * PDF vectorial puro con jsPDF — Dark Claude Design
+ * 8 slides, 520×800px equivalent, Helvetica nativa
  */
 
-import { jsPDF } from 'jspdf';
-import { AllData } from './types';
-import { renderPortada } from './slides/01-portada';
-import { renderKPIs } from './slides/02-kpis';
-import { renderZonas } from './slides/03-zonas';
-import { renderPagos } from './slides/04-pagos';
-import { renderRentabilidad } from './slides/05-rentabilidad';
-import { renderImportan } from './slides/06-importan';
-import { renderComposicion } from './slides/07-composicion';
-import { renderEstrellasLastre } from './slides/08-estrellas-lastre';
-import { renderInsights } from './slides/09-insights';
-import { renderJunta } from './slides/10-junta';
+import { jsPDF } from 'jspdf'
+import { AllData, SlideAnalysisV2 } from './types'
+import { renderPortada } from './slides/01-portada'
+import { renderMetricas } from './slides/02-metricas'
+import { renderDrena } from './slides/03-drena'
+import { renderImportan } from './slides/04-importan'
+import { renderComposicion } from './slides/05-composicion'
+import { renderEstrellasLastre } from './slides/06-estrellas-lastre'
+import { renderInsights } from './slides/07-insights'
+import { renderJunta } from './slides/08-junta'
 
-export type { AllData, KPIData, ZoneData, PaymentData, MarginKPIs, CategorySummary, ProductMargin, LLMAnalysis, DailyData } from './types';
+export type { AllData } from './types'
 
-export async function generatePDF(data: AllData): Promise<Blob> {
-  const doc = new jsPDF('p', 'mm', 'a4');
-  const pageW = 210;
-  const pageH = 297;
+interface GeneratorInput {
+  data: any        // raw API data (same as v6)
+  from: string
+  to: string
+  margins: any     // margins data
+  analysis: SlideAnalysisV2 | null
+}
 
-  // Slide 1: Portada
-  renderPortada(doc, data, pageW, pageH);
+export async function generatePDF(input: GeneratorInput): Promise<Blob> {
+  const { data, from, to, margins, analysis } = input
 
-  // Slide 2: KPIs
-  doc.addPage();
-  await renderKPIs(doc, data, pageW, pageH);
+  // Build AllData from v6-compatible inputs
+  const allData: AllData = {
+    from,
+    to,
+    kpis: {
+      total_ventas: data?.kpis?.total_ventas ?? 0,
+      total_cheques: data?.kpis?.total_cheques ?? 0,
+      ticket_promedio: data?.kpis?.ticket_promedio ?? 0,
+      propina_total: data?.kpis?.propina_total ?? 0,
+      personas: data?.kpis?.personas ?? 0,
+      propina_promedio: data?.kpis?.propina_promedio ?? 0,
+      avg_service_time: data?.kpis?.avg_service_time ?? 0,
+      card_paid: data?.kpis?.card_paid ?? 0,
+      cash_paid: data?.kpis?.cash_paid ?? 0,
+    },
+    marginKPIs: {
+      total_revenue: margins?.kpis?.total_revenue ?? 0,
+      margin_bruto: margins?.kpis?.margin_bruto ?? 0,
+      margin_pct: margins?.kpis?.margin_pct ?? 0,
+      total_productos: margins?.kpis?.total_productos ?? 0,
+    },
+    categories: margins?.resumen_ejecutivo?.categorias ?? [],
+    importan: margins?.importan ?? [],
+    drenan: margins?.drenan ?? [],
+    analysis,
+    zones: data?.zones ?? [],
+    payments: data?.payments ?? [],
+    topProducts: data?.topProducts ?? [],
+    daily: data?.daily ?? [],
+    comparison: data?.comparison ?? null,
+  }
 
-  // Slide 3: Zonas
-  doc.addPage();
-  renderZonas(doc, data, pageW, pageH);
+  const doc = new jsPDF('p', 'mm', 'a4')
+  const pageW = 210
+  const pageH = 297
 
-  // Slide 4: Métodos de Pago
-  doc.addPage();
-  renderPagos(doc, data, pageW, pageH);
+  // Slide 1: Portada (borgona)
+  renderPortada(doc, allData, pageW, pageH)
 
-  // Slide 5: Rentabilidad
-  doc.addPage();
-  renderRentabilidad(doc, data, pageW, pageH);
+  // Slide 2: Métricas clave
+  doc.addPage()
+  renderMetricas(doc, allData, pageW, pageH)
 
-  // Slide 6: Lo que importa
-  doc.addPage();
-  renderImportan(doc, data, pageW, pageH);
+  // Slide 3: Lo que drena
+  doc.addPage()
+  renderDrena(doc, allData, pageW, pageH)
 
-  // Slide 7: Composición por categoría
-  doc.addPage();
-  renderComposicion(doc, data, pageW, pageH);
+  // Slide 4: Lo que importa (Top 7)
+  doc.addPage()
+  renderImportan(doc, allData, pageW, pageH)
 
-  // Slide 8: Estrellas vs Lastre
-  doc.addPage();
-  renderEstrellasLastre(doc, data, pageW, pageH);
+  // Slide 5: Composición del margen
+  doc.addPage()
+  renderComposicion(doc, allData, pageW, pageH)
 
-  // Slide 9: Insights
-  doc.addPage();
-  renderInsights(doc, data, pageW, pageH);
+  // Slide 6: Estrellas vs Lastre
+  doc.addPage()
+  renderEstrellasLastre(doc, allData, pageW, pageH)
 
-  // Slide 10: Para la Junta
-  doc.addPage();
-  renderJunta(doc, data, pageW, pageH);
+  // Slide 7: Datos que importan (insights)
+  doc.addPage()
+  renderInsights(doc, allData, pageW, pageH)
 
-  return doc.output('blob');
+  // Slide 8: Para la junta + mensaje al equipo
+  doc.addPage()
+  renderJunta(doc, allData, pageW, pageH)
+
+  return doc.output('blob')
 }

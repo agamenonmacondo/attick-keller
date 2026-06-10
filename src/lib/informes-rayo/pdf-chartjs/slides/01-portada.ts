@@ -1,12 +1,11 @@
 /**
- * SLIDE 1 — PORTADA
- * Fondo borgona, título, fecha, badge de margen
+ * SLIDE 1 — PORTADA (Dark Claude Design)
+ * Fondo borgona, título "Informe Rayo", fecha
  */
 
-import { jsPDF } from 'jspdf';
-import { COLORS, fmtDateRange, fmtPct } from '../helpers';
-import { AllData } from '../types';
-import { drawWatermark } from '../helpers';
+import { jsPDF } from 'jspdf'
+import { COLORS, fmtDateRange, drawWatermark } from '../helpers'
+import { AllData } from '../types'
 
 export function renderPortada(
   doc: jsPDF,
@@ -14,66 +13,63 @@ export function renderPortada(
   pageW: number,
   pageH: number
 ): void {
-  const margin = 20;
+  const margin = 24
 
   // Fondo borgona completo
-  doc.setFillColor(COLORS.borgona);
-  doc.rect(0, 0, pageW, pageH, 'F');
+  doc.setFillColor(COLORS.borgona)
+  doc.rect(0, 0, pageW, pageH, 'F')
 
-  // Línea decorativa dorada arriba
-  doc.setDrawColor(COLORS.dorado);
-  doc.setLineWidth(0.5);
-  doc.line(margin, 35, pageW - margin, 35);
-
-  // Título principal
-  doc.setTextColor(COLORS.crema);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(32);
-  doc.text('INFORME RAYO', pageW / 2, 70, { align: 'center' });
-
-  // Subtítulo
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(14);
-  doc.text('Análisis de Rentabilidad', pageW / 2, 85, { align: 'center' });
+  // Logo
+  doc.setFontSize(11)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(COLORS.gold)
+  doc.text('ATTICK & KELLER', margin, 30)
 
   // Fecha
-  doc.setFontSize(11);
-  doc.setTextColor(COLORS.dorado);
-  const dateStr = fmtDateRange(data.from, data.to);
-  doc.text(dateStr, pageW / 2, 100, { align: 'center' });
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(COLORS.textSecondary)
+  const today = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
+  doc.text(today, pageW - margin, 30, { align: 'right' })
 
-  // Badge de margen grande
-  const marginPct = data.marginKPIs?.margin_pct || data.kpis?.total_ventas ? 72.8 : 0;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(48);
-  doc.setTextColor(COLORS.dorado);
-  doc.text(`MARGEN ${fmtPct(marginPct)}`, pageW / 2, 140, { align: 'center' });
+  // Script subtitle
+  doc.setFontSize(24)
+  doc.setFont('helvetica', 'italic')
+  doc.setTextColor(COLORS.goldLight)
+  doc.text('Informe de rentabilidad', pageW / 2, 105, { align: 'center' })
 
-  // Línea decorativa dorada abajo del badge
-  doc.setDrawColor(COLORS.dorado);
-  doc.setLineWidth(0.3);
-  doc.line(pageW / 2 - 40, 150, pageW / 2 + 40, 150);
+  // Título principal
+  doc.setFontSize(40)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(COLORS.textPrimary)
+  doc.text('INFORME', pageW / 2, 132, { align: 'center' })
+  doc.text('RAYO', pageW / 2, 155, { align: 'center' })
 
-  // Logo placeholder
-  doc.setDrawColor(COLORS.dorado);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(pageW / 2 - 20, 170, 40, 20, 3, 3, 'S');
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(COLORS.crema);
-  doc.text('A&K', pageW / 2, 182, { align: 'center' });
+  // Subtítulo
+  doc.setFontSize(11)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(COLORS.textSecondary)
+  doc.text('Análisis de márgenes y decisiones', pageW / 2, 178, { align: 'center' })
+  doc.text('para la junta directiva', pageW / 2, 192, { align: 'center' })
 
-  // Footer
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(COLORS.crema);
-  doc.text('Attick & Keller · Restaurante & Bar', pageW / 2, pageH - 40, { align: 'center' });
+  // Línea separatora
+  doc.setDrawColor(COLORS.gold + '40')
+  doc.setLineWidth(0.3)
+  doc.line(margin, 210, pageW - margin, 210)
+
+  // Período + página
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(COLORS.goldLight)
+  const dateLabel = fmtDateRange(data.from, data.to)
+  doc.text(dateLabel, margin, 224)
+
+  doc.setFontSize(10)
+  doc.setTextColor(COLORS.textMuted)
+  doc.text('01 / 8', pageW - margin, 224, { align: 'right' })
 
   // Confidencial
-  doc.setFontSize(8);
-  doc.setTextColor(COLORS.crema + '80'); // semitransparente aproximado
-  doc.text('Documento confidencial', pageW / 2, pageH - 25, { align: 'center' });
-
-  // Watermark
-  drawWatermark(doc, pageW, pageH);
+  doc.setFontSize(8)
+  doc.setTextColor(COLORS.textMuted)
+  doc.text('A&K · Confidencial', pageW - margin, pageH - 14, { align: 'right' })
 }

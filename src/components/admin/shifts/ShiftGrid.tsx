@@ -169,15 +169,15 @@ export default function ShiftGrid({
     const stats = employeeStats[empId];
     if (stats) {
       const hasOvertime = stats.alerts.some((a) => a.type === 'overtime_daily' && a.day_index === dayIndex);
-      if (hasOvertime) return 'bg-red-500/20';
-      if (stats.totalHours > LEGAL_PARAMS.MAX_WEEKLY_HOURS) return 'bg-red-500/10';
-      if (!stats.hasRest) return 'bg-amber-500/10';
+      if (hasOvertime) return 'bg-[var(--color-danger)]/20';
+      if (stats.totalHours > LEGAL_PARAMS.MAX_WEEKLY_HOURS) return 'bg-[var(--color-danger)]/10';
+      if (!stats.hasRest) return 'bg-[var(--color-warning)]/10';
     }
     const st = shiftTypes.find((t) => t.code === code);
-    if (!st) return 'bg-amber-500/15';
+    if (!st) return 'bg-[var(--color-warning)]/15';
     if (st.area === 'barra') return 'bg-blue-500/15';
-    if (st.area === 'servicio') return 'bg-emerald-500/15';
-    return 'bg-amber-500/15';
+    if (st.area === 'servicio') return 'bg-[var(--color-success)]/15';
+    return 'bg-[var(--color-warning)]/15';
   };
 
   // Nombre corto del turno para mobile
@@ -187,7 +187,7 @@ export default function ShiftGrid({
     const st = shiftTypes.find((t) => t.code === code);
     const hours = st ? st.ordinarias + st.nocturnas : 0;
     const isSunday = dayIndex === 0;
-    const hoursClass = hours > 8 ? 'text-red-400' : isSunday ? 'text-red-300' : 'text-[var(--text-secondary)]';
+    const hoursClass = hours > 8 ? 'text-[var(--color-danger)]' : isSunday ? 'text-[var(--color-danger)]' : 'text-[var(--text-secondary)]';
     return { code, st, hours, hoursClass, isSunday };
   };
 
@@ -195,14 +195,14 @@ export default function ShiftGrid({
     <div className="space-y-4">
       {/* Alertas globales */}
       {staff.some((emp) => (employeeStats[emp.id]?.alerts.length || 0) > 0) && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 space-y-1">
-          <div className="flex items-center gap-2 text-red-400 font-medium text-sm">
+        <div className="bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 rounded-lg p-3 space-y-1">
+          <div className="flex items-center gap-2 text-[var(--color-danger)] font-medium text-sm">
             <Warning size={16} />
             Alertas legales
           </div>
           {staff.map((emp) =>
             (employeeStats[emp.id]?.alerts || []).map((alert, i) => (
-              <div key={`${emp.id}-${i}`} className="text-xs text-red-300 pl-6">
+              <div key={`${emp.id}-${i}`} className="text-xs text-[var(--color-danger)] pl-6">
                 {emp.alias}: {alert.message}
               </div>
             ))
@@ -226,7 +226,7 @@ export default function ShiftGrid({
                   <div className="text-xs text-[var(--text-secondary)]">{emp.cargo}</div>
                 </div>
                 <div className="text-right">
-                  <div className={`font-mono text-sm font-medium ${hasWeeklyOvertime ? 'text-red-400' : 'text-[var(--text-primary)]'}`}>
+                  <div className={`font-mono text-sm font-medium ${hasWeeklyOvertime ? 'text-[var(--color-danger)]' : 'text-[var(--text-primary)]'}`}>
                     {stats?.totalHours || 0}h
                   </div>
                   <div className="font-mono text-xs text-[var(--text-primary)]">
@@ -237,7 +237,7 @@ export default function ShiftGrid({
 
               {/* Alertas del empleado */}
               {hasNoRest && (
-                <div className="flex items-center gap-1 text-xs text-amber-400">
+                <div className="flex items-center gap-1 text-xs text-[var(--color-warning)]">
                   <ClockAfternoon size={12} /> Sin descanso semanal
                 </div>
               )}
@@ -253,7 +253,7 @@ export default function ShiftGrid({
 
                   return (
                     <div key={dayIndex} className={`rounded-md p-1 text-center ${getCellBg(code, emp.id, dayIndex)}`}>
-                      <div className={`text-[10px] font-medium ${isSunday ? 'text-red-400' : 'text-[var(--text-secondary)]'}`}>
+                      <div className={`text-[10px] font-medium ${isSunday ? 'text-[var(--color-danger)]' : 'text-[var(--text-secondary)]'}`}>
                         {label}
                       </div>
                       {date && (
@@ -265,7 +265,7 @@ export default function ShiftGrid({
                         <div className="min-h-[28px] flex items-center justify-center">
                           {code && code !== 'OFF' ? (
                             <div>
-                              <div className={`text-xs font-bold ${isSunday ? 'text-red-300' : ''}`}>{code}</div>
+                              <div className={`text-xs font-bold ${isSunday ? 'text-[var(--color-danger)]' : ''}`}>{code}</div>
                               {st && <div className="text-[9px] text-[var(--text-secondary)]">{st.entrada?.slice(0,5)}</div>}
                             </div>
                           ) : code === 'OFF' ? (
@@ -278,7 +278,7 @@ export default function ShiftGrid({
                           onChange={(e) => handleCellChange(emp.id, dayIndex, e.target.value)}
                           className={`w-full min-h-[28px] px-0.5 py-0.5 text-[11px] rounded border-none bg-transparent
                             focus:ring-1 focus:ring-[var(--color-ak-borgona)]/50
-                            ${hours > 8 ? 'text-red-400 font-bold' : 'text-[var(--text-primary)]'}
+                            ${hours > 8 ? 'text-[var(--color-danger)] font-bold' : 'text-[var(--text-primary)]'}
                             ${isSunday ? 'font-semibold' : ''}`}
                         >
                           <option value="">--</option>
@@ -290,7 +290,7 @@ export default function ShiftGrid({
                         </select>
                       )}
                       {code && code !== 'OFF' && hours > 0 && (
-                        <div className={`text-[9px] ${hours > 8 ? 'text-red-400 font-bold' : 'text-[var(--text-secondary)]'}`}>
+                        <div className={`text-[9px] ${hours > 8 ? 'text-[var(--color-danger)] font-bold' : 'text-[var(--text-secondary)]'}`}>
                           {hours}h
                         </div>
                       )}
@@ -303,8 +303,8 @@ export default function ShiftGrid({
               {stats && stats.cost > 0 && (
                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-[var(--text-secondary)]">
                   {stats.desglose.base > 0 && <span>B:{formatCOP(stats.desglose.base)}</span>}
-                  {stats.desglose.recargoNocturno > 0 && <span className="text-amber-400">RN:{formatCOP(stats.desglose.recargoNocturno)}</span>}
-                  {stats.desglose.recargoDominical > 0 && <span className="text-red-400">RD:{formatCOP(stats.desglose.recargoDominical)}</span>}
+                  {stats.desglose.recargoNocturno > 0 && <span className="text-[var(--color-warning)]">RN:{formatCOP(stats.desglose.recargoNocturno)}</span>}
+                  {stats.desglose.recargoDominical > 0 && <span className="text-[var(--color-danger)]">RD:{formatCOP(stats.desglose.recargoDominical)}</span>}
                   {stats.desglose.horasExtra > 0 && <span className="text-blue-400">HE:{formatCOP(stats.desglose.horasExtra)}</span>}
                 </div>
               )}
@@ -335,10 +335,10 @@ export default function ShiftGrid({
                 const isSunday = dayIndex === 0;
                 return (
                   <th key={dayIndex} className={`text-center p-2 font-medium min-w-[110px]
-                    ${isSunday ? 'text-red-400' : 'text-[var(--text-secondary)]'}`}>
+                    ${isSunday ? 'text-[var(--color-danger)]' : 'text-[var(--text-secondary)]'}`}>
                     <div>{label}</div>
                     {date && (
-                      <div className={`text-xs ${isSunday ? 'text-red-300' : 'opacity-60'}`}>
+                      <div className={`text-xs ${isSunday ? 'text-[var(--color-danger)]' : 'opacity-60'}`}>
                         {date.getDate()}/{date.getMonth() + 1}
                       </div>
                     )}
@@ -381,7 +381,7 @@ export default function ShiftGrid({
                           <div className="py-1 text-xs">
                             {code && code !== 'OFF' ? (
                               <>
-                                <div className={`font-bold ${isSunday ? 'text-red-300' : ''}`}>
+                                <div className={`font-bold ${isSunday ? 'text-[var(--color-danger)]' : ''}`}>
                                   {code}
                                 </div>
                                 {st && (
@@ -401,7 +401,7 @@ export default function ShiftGrid({
                             onChange={(e) => handleCellChange(emp.id, dayIndex, e.target.value)}
                             className={`w-full px-1 py-1.5 text-xs rounded border-none bg-transparent min-h-[36px]
                               focus:ring-1 focus:ring-[var(--color-ak-borgona)]/50
-                              ${hours > 8 ? 'text-red-400 font-bold' : 'text-[var(--text-primary)]'}
+                              ${hours > 8 ? 'text-[var(--color-danger)] font-bold' : 'text-[var(--text-primary)]'}
                               ${isSunday ? 'font-semibold' : ''}`}
                           >
                             <option value="">--</option>
@@ -421,11 +421,11 @@ export default function ShiftGrid({
                   {/* Total horas */}
                   <td className="p-2 text-center">
                     <span className={`font-mono text-sm font-medium
-                      ${hasWeeklyOvertime ? 'text-red-400' : 'text-[var(--text-primary)]'}`}>
+                      ${hasWeeklyOvertime ? 'text-[var(--color-danger)]' : 'text-[var(--text-primary)]'}`}>
                       {stats?.totalHours || 0}h
                     </span>
                     {hasNoRest && (
-                      <ClockAfternoon size={12} className="inline ml-1 text-amber-400" />
+                      <ClockAfternoon size={12} className="inline ml-1 text-[var(--color-warning)]" />
                     )}
                   </td>
 

@@ -43,7 +43,7 @@ function DiffIndicator({ value, avg }: { value: number; avg?: number }) {
   )
   const isUp = pct > 0
   return (
-    <span className={`flex items-center gap-0.5 text-[9px] font-medium ${isUp ? 'text-green-500' : 'text-red-400'}`}>
+    <span className={`flex items-center gap-0.5 text-[9px] font-medium ${isUp ? 'text-green-500' : 'text-[var(--color-danger)]'}`}>
       {isUp ? <TrendUp size={9} /> : <TrendDown size={9} />}
       {isUp ? '+' : ''}{pct.toFixed(0)}%
     </span>

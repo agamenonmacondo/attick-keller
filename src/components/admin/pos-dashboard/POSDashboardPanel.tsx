@@ -502,7 +502,7 @@ export function POSDashboardPanel() {
         if (isError && !displayData) {
           return (
             <div className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl p-6">
-              <p className="text-sm text-red-400 text-center">{isError}</p>
+              <p className="text-sm text-[var(--color-danger)] text-center">{isError}</p>
               <button onClick={() => setSelectedDayOfWeek(null)} className="mt-3 text-xs text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] hover:underline block mx-auto">
                 {showBackButton ? 'Volver a Resultados' : 'Reintentar'}
               </button>

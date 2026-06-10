@@ -137,8 +137,8 @@ export default function CostEstimationBar({
           <div className="text-xs text-[var(--text-secondary)]">Desglose</div>
           <div className="text-xs space-y-0.5">
             <div className="text-[var(--text-primary)]">Base: {formatCOP(kpis.totalBase)}</div>
-            {kpis.totalRN > 0 && <div className="text-amber-400">R.Noc: {formatCOP(kpis.totalRN)}</div>}
-            {kpis.totalRD > 0 && <div className="text-red-400">R.Dom: {formatCOP(kpis.totalRD)}</div>}
+            {kpis.totalRN > 0 && <div className="text-[var(--color-warning)]">R.Noc: {formatCOP(kpis.totalRN)}</div>}
+            {kpis.totalRD > 0 && <div className="text-[var(--color-danger)]">R.Dom: {formatCOP(kpis.totalRD)}</div>}
             {kpis.totalHECost > 0 && <div className="text-blue-400">HE: {formatCOP(kpis.totalHECost)}</div>}
           </div>
         </div>
@@ -166,13 +166,13 @@ export default function CostEstimationBar({
                 {group.totalRN > 0 && (
                   <div className="flex justify-between text-xs">
                     <span className="text-[var(--text-secondary)]">R.Noc</span>
-                    <span className="font-mono text-amber-400">{formatCOP(group.totalRN)}</span>
+                    <span className="font-mono text-[var(--color-warning)]">{formatCOP(group.totalRN)}</span>
                   </div>
                 )}
                 {group.totalRD > 0 && (
                   <div className="flex justify-between text-xs">
                     <span className="text-[var(--text-secondary)]">R.Dom</span>
-                    <span className="font-mono text-red-400">{formatCOP(group.totalRD)}</span>
+                    <span className="font-mono text-[var(--color-danger)]">{formatCOP(group.totalRD)}</span>
                   </div>
                 )}
                 {group.totalHE > 0 && (
@@ -242,8 +242,8 @@ export default function CostEstimationBar({
             </div>
             <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--text-secondary)]">
               <span>Base: {formatCOP(e.base)}</span>
-              {e.recargoNocturno > 0 && <span className="text-amber-400">RN: {formatCOP(e.recargoNocturno)}</span>}
-              {e.recargoDominical > 0 && <span className="text-red-400">RD: {formatCOP(e.recargoDominical)}</span>}
+              {e.recargoNocturno > 0 && <span className="text-[var(--color-warning)]">RN: {formatCOP(e.recargoNocturno)}</span>}
+              {e.recargoDominical > 0 && <span className="text-[var(--color-danger)]">RD: {formatCOP(e.recargoDominical)}</span>}
               {e.horasExtra > 0 && <span className="text-blue-400">HE: {formatCOP(e.horasExtra)}</span>}
             </div>
           </div>
@@ -286,8 +286,8 @@ export default function CostEstimationBar({
                 <td className="p-2 text-right font-mono text-[var(--text-primary)]">{e.he.toFixed(1)}</td>
                 <td className="p-2 text-right font-mono text-[var(--text-primary)]">{e.totalHours}h</td>
                 <td className="p-2 text-right font-mono">{formatCOP(e.base)}</td>
-                <td className="p-2 text-right font-mono text-amber-400">{e.recargoNocturno > 0 ? formatCOP(e.recargoNocturno) : '-'}</td>
-                <td className="p-2 text-right font-mono text-red-400">{e.recargoDominical > 0 ? formatCOP(e.recargoDominical) : '-'}</td>
+                <td className="p-2 text-right font-mono text-[var(--color-warning)]">{e.recargoNocturno > 0 ? formatCOP(e.recargoNocturno) : '-'}</td>
+                <td className="p-2 text-right font-mono text-[var(--color-danger)]">{e.recargoDominical > 0 ? formatCOP(e.recargoDominical) : '-'}</td>
                 <td className="p-2 text-right font-mono text-blue-400">{e.horasExtra > 0 ? formatCOP(e.horasExtra) : '-'}</td>
                 <td className="p-2 text-right font-mono font-semibold text-[var(--text-primary)]">{formatCOP(e.total)}</td>
               </tr>
@@ -301,8 +301,8 @@ export default function CostEstimationBar({
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">{kpis.totalHE.toFixed(1)}</td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">{kpis.totalHours}h</td>
               <td className="p-2 text-right font-mono">{formatCOP(kpis.totalBase)}</td>
-              <td className="p-2 text-right font-mono text-amber-400">{formatCOP(kpis.totalRN)}</td>
-              <td className="p-2 text-right font-mono text-red-400">{formatCOP(kpis.totalRD)}</td>
+              <td className="p-2 text-right font-mono text-[var(--color-warning)]">{formatCOP(kpis.totalRN)}</td>
+              <td className="p-2 text-right font-mono text-[var(--color-danger)]">{formatCOP(kpis.totalRD)}</td>
               <td className="p-2 text-right font-mono text-blue-400">{formatCOP(kpis.totalHECost)}</td>
               <td className="p-2 text-right font-mono font-bold text-[var(--text-primary)]">{formatCOP(kpis.totalCost)}</td>
             </tr>

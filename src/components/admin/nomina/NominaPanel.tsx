@@ -17,8 +17,8 @@ function HoursBarChart({ resumen }: { resumen: NominaResumen }) {
     { label: 'Ordinarias', mins: resumen.hoMins, barClass: 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]' },
     { label: 'Extra Diurna', mins: resumen.hedMins, barClass: 'bg-[var(--color-ak-crema)]' },
     { label: 'Extra Nocturna', mins: resumen.henMins, barClass: 'bg-purple-600 dark:bg-purple-400' },
-    { label: 'Dom. Diurna', mins: resumen.hddMins, barClass: 'bg-amber-500 dark:bg-amber-400' },
-    { label: 'Dom. Nocturna', mins: resumen.hdnMins, barClass: 'bg-red-500 dark:bg-red-400' },
+    { label: 'Dom. Diurna', mins: resumen.hddMins, barClass: 'bg-[var(--color-warning)] dark:bg-amber-400' },
+    { label: 'Dom. Nocturna', mins: resumen.hdnMins, barClass: 'bg-[var(--color-danger)] dark:bg-[var(--color-danger)]/30' },
     { label: 'Rec. Nocturno', mins: resumen.rnMins, barClass: 'bg-cyan-500 dark:bg-cyan-400' },
   ]
   const total = items.reduce((s, i) => s + i.mins, 0) || 1
@@ -125,8 +125,8 @@ function StaffDetailPanel({
             { label: 'HO', val: totals.ho, hrs: totals.hoHours, colorClass: 'text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]' },
             { label: 'HED', val: totals.hed, hrs: totals.hedHours, colorClass: 'text-[var(--color-ak-crema)]' },
             { label: 'HEN', val: totals.hen, hrs: totals.henHours, colorClass: 'text-purple-600 dark:text-purple-400' },
-            { label: 'HDD', val: totals.hdd, colorClass: 'text-amber-500 dark:text-amber-400' },
-            { label: 'HDN', val: totals.hdn, colorClass: 'text-red-500 dark:text-red-400' },
+            { label: 'HDD', val: totals.hdd, colorClass: 'text-[var(--color-warning)] dark:text-[var(--color-warning)]' },
+            { label: 'HDN', val: totals.hdn, colorClass: 'text-[var(--color-danger)] dark:text-[var(--color-danger)]' },
             { label: 'RN', val: totals.rn, colorClass: 'text-cyan-500 dark:text-cyan-400' },
           ].map(item => (
             <div key={item.label} className="text-center">
@@ -380,15 +380,15 @@ export function NominaPanel() {
                 const minPersons = Math.min(...(data.dailyBreakdown?.map((x: DailyBreakdown) => x.personas) || [1]))
                 const isMinDay = d.personas === minPersons && minPersons !== maxPersons
                 return (
-                  <tr key={d.fecha} className={`border-b border-[var(--border-default)]/50 ${isWeekend ? 'bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/5' : ''} ${isMinDay ? 'bg-red-500/10' : ''}`}>
+                  <tr key={d.fecha} className={`border-b border-[var(--border-default)]/50 ${isWeekend ? 'bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/5' : ''} ${isMinDay ? 'bg-[var(--color-danger)]/10' : ''}`}>
                     <td className="py-1.5 px-1 text-[var(--text-primary)]">{d.fecha.slice(5)}</td>
                     <td className="py-1.5 px-1 text-[var(--text-secondary)]">{d.diaSemana}</td>
                     <td className="py-1.5 px-1">
                       <div className="flex items-center gap-1.5">
                         <div className="w-16 h-3 bg-[var(--bg-secondary)] rounded overflow-hidden">
-                          <div className={`h-full rounded ${isMinDay ? 'bg-red-500 dark:bg-red-400' : 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]'}`} style={{ width: `${barWidth}%`, transition: 'width 0.3s' }} />
+                          <div className={`h-full rounded ${isMinDay ? 'bg-[var(--color-danger)] dark:bg-[var(--color-danger)]/30' : 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]'}`} style={{ width: `${barWidth}%`, transition: 'width 0.3s' }} />
                         </div>
-                        <span className={`font-medium ${isMinDay ? 'text-red-400' : 'text-[var(--text-primary)]'}`}>{d.personas}</span>
+                        <span className={`font-medium ${isMinDay ? 'text-[var(--color-danger)]' : 'text-[var(--text-primary)]'}`}>{d.personas}</span>
                       </div>
                     </td>
                     <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{d.horasTotal}h</td>
@@ -402,7 +402,7 @@ export function NominaPanel() {
         {data.dailyBreakdown && data.dailyBreakdown.length > 0 && (
           <div className="mt-2 flex items-center gap-3 text-[10px] text-[var(--text-secondary)]">
             <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]"></span> Normal</span>
-            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-red-500 dark:bg-red-400"></span> Menos personal</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-danger)] dark:bg-[var(--color-danger)]/30"></span> Menos personal</span>
             <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)]/20 dark:bg-[var(--color-ak-borgona-light)]/20"></span> Fin de semana</span>
           </div>
         )}
@@ -422,7 +422,7 @@ export function NominaPanel() {
                 <span className="text-xs text-[var(--text-secondary)] w-8 shrink-0">{w.dia}</span>
                 <div className="flex-1 h-5 bg-[var(--bg-secondary)] rounded overflow-hidden">
                   <div
-                    className={`h-full rounded flex items-center pl-1.5 text-[10px] font-medium text-white ${isMin ? 'bg-red-500 dark:bg-red-400' : 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]'}`}
+                    className={`h-full rounded flex items-center pl-1.5 text-[10px] font-medium text-white ${isMin ? 'bg-[var(--color-danger)] dark:bg-[var(--color-danger)]/30' : 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]'}`}
                     style={{ width: `${Math.max(barP, 12)}%`, transition: 'width 0.5s' }}
                   >
                     {w.avgPersonas}

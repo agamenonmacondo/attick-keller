@@ -100,16 +100,16 @@ export default function ProductCostTable({ data, loading, error, onProductClick,
 
   const marginColor = (pct: number | null) => {
     if (pct === null) return 'text-[var(--text-secondary)]'
-    if (pct < 30) return 'text-red-400'
+    if (pct < 30) return 'text-[var(--color-danger)]'
     if (pct < 50) return 'text-yellow-400'
-    return 'text-green-400'
+    return 'text-[var(--color-success)]'
   }
 
   const avgMarginBadge = (pct: number) => {
     if (pct < 0) return null
-    if (pct < 30) return 'bg-red-500/20 text-red-400'
+    if (pct < 30) return 'bg-[var(--color-danger)]/20 text-[var(--color-danger)]'
     if (pct < 50) return 'bg-yellow-500/20 text-yellow-400'
-    return 'bg-green-500/20 text-green-400'
+    return 'bg-green-500/20 text-[var(--color-success)]'
   }
 
   if (error) {
@@ -179,7 +179,7 @@ export default function ProductCostTable({ data, loading, error, onProductClick,
         </div>
         <div className="rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)] p-3">
           <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)]">Con Receta</p>
-          <p className="text-lg font-bold tabular-nums text-green-400">{data.summary.productsWithRecipe}</p>
+          <p className="text-lg font-bold tabular-nums text-[var(--color-success)]">{data.summary.productsWithRecipe}</p>
         </div>
         <div className="rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)] p-3">
           <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)]">Sin Receta</p>

@@ -454,7 +454,7 @@ function OperativoTab() {
                 const minPersons = Math.min(...(data.dailyBreakdown?.map((x: DailyBreakdown) => x.personas) || [1]))
                 const isMinDay = d.personas === minPersons && minPersons !== maxPersons
                 return (
-                  <tr key={d.fecha} className={`border-b border-[var(--border-default)]/50 ${isWeekend ? 'bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/5' : ''} ${isMinDay ? 'bg-red-500/10' : ''}`}>
+                  <tr key={d.fecha} className={`border-b border-[var(--border-default)]/50 ${isWeekend ? 'bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/5' : ''} ${isMinDay ? 'bg-[var(--color-danger)]/10' : ''}`}>
                     <td className="py-1.5 px-1 text-[var(--text-primary)]">{d.fecha.slice(5)}</td>
                     <td className="py-1.5 px-1 text-[var(--text-secondary)]">{d.diaSemana}</td>
                     <td className="py-1.5 px-1">
@@ -462,7 +462,7 @@ function OperativoTab() {
                         <div className="w-16 h-3 bg-[var(--bg-secondary)] rounded overflow-hidden">
                           <div className={`h-full rounded bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]`} style={{ width: `${barWidth}%`, transition: 'width 0.3s' }} />
                         </div>
-                        <span className={`font-medium ${isMinDay ? 'text-red-400' : 'text-[var(--text-primary)]'}`}>{d.personas}</span>
+                        <span className={`font-medium ${isMinDay ? 'text-[var(--color-danger)]' : 'text-[var(--text-primary)]'}`}>{d.personas}</span>
                       </div>
                     </td>
                     <td className="py-1.5 px-1 text-right text-[var(--text-secondary)]">{d.horasTotal}h</td>
@@ -476,7 +476,7 @@ function OperativoTab() {
         {data.dailyBreakdown && data.dailyBreakdown.length > 0 && (
           <div className="mt-2 flex items-center gap-3 text-[10px] text-[var(--text-secondary)]">
             <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]"></span> Normal</span>
-            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-red-500"></span> Menos personal</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-danger)]"></span> Menos personal</span>
             <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)]/20 dark:bg-[var(--color-ak-borgona-light)]/20"></span> Fin de semana</span>
           </div>
         )}
@@ -760,12 +760,12 @@ function CostosTab() {
             </div>
             <div>
               <p className="text-[10px] text-[var(--text-secondary)] uppercase">Costo Nomina Real</p>
-              <p className="text-sm font-bold text-orange-500">{formatFull(resumen.costoReal)}</p>
+              <p className="text-sm font-bold text-[var(--color-warning)]">{formatFull(resumen.costoReal)}</p>
               <p className="text-[10px] text-[var(--text-secondary)]">devengado + provisiones</p>
             </div>
             <div>
               <p className="text-[10px] text-[var(--text-secondary)] uppercase">Margen</p>
-              <p className={`text-sm font-bold ${ratios.margenBruto && ratios.margenBruto < 0 ? 'text-[var(--color-danger)]' : 'text-emerald-500'}`}>
+              <p className={`text-sm font-bold ${ratios.margenBruto && ratios.margenBruto < 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-success)]'}`}>
                 {ratios.margenBruto !== null ? `${formatFull(ventas.revenue - resumen.costoReal)}` : '—'}
               </p>
               <p className="text-[10px] text-[var(--text-secondary)]">{ratios.margenBruto !== null ? `${ratios.margenBruto.toFixed(1)}% margen` : ''}</p>
@@ -781,17 +781,17 @@ function CostosTab() {
                 </div>
               )}
               {ratios.propinasVsRevenue !== null && (
-                <div className="bg-amber-500 flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.propinasVsRevenue}%` }}>
+                <div className="bg-[var(--color-warning)] flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.propinasVsRevenue}%` }}>
                   Prop {ratios.propinasVsRevenue.toFixed(0)}
                 </div>
               )}
               {ratios.provisionesVsRevenue !== null && ratios.provisionesVsRevenue > 1 && (
-                <div className="bg-orange-500 flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.provisionesVsRevenue}%` }}>
+                <div className="bg-[var(--color-warning)] flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.provisionesVsRevenue}%` }}>
                   Prov {ratios.provisionesVsRevenue.toFixed(0)}
                 </div>
               )}
               {ratios.margenBruto !== null && ratios.margenBruto > 0 && (
-                <div className="bg-emerald-500 flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.margenBruto}%` }}>
+                <div className="bg-[var(--color-success)] flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.margenBruto}%` }}>
                   Margen {ratios.margenBruto.toFixed(0)}
                 </div>
               )}
@@ -813,13 +813,13 @@ function CostosTab() {
           label="Costo Real"
           value={formatCOP(resumen.costoReal)}
           sub={`+${((resumen.totalProvisiones / resumen.totalDevengado) * 100).toFixed(0)}% provisiones`}
-          color="bg-orange-500/5"
+          color="bg-[var(--color-warning)]/5"
         />
         <KPIBox
           label="Neto a Pagar"
           value={formatCOP(resumen.totalNeto)}
           sub={formatFull(resumen.totalNeto)}
-          color="bg-emerald-500/5"
+          color="bg-[var(--color-success)]/5"
         />
         <KPIBox
           label="Costo/Empleado"
@@ -835,9 +835,9 @@ function CostosTab() {
         <div className="space-y-2.5">
           {[
             { label: 'Salario', value: composicion.salarioDevengado, color: 'bg-[var(--color-ak-borgona)]' },
-            { label: 'Propinas', value: composicion.propinas, color: 'bg-amber-500' },
+            { label: 'Propinas', value: composicion.propinas, color: 'bg-[var(--color-warning)]' },
             { label: 'Recargos HE/RN/RD', value: composicion.recargosHERN, color: 'bg-blue-500' },
-            { label: 'Aux. Transporte', value: composicion.auxilioTransporte, color: 'bg-emerald-500' },
+            { label: 'Aux. Transporte', value: composicion.auxilioTransporte, color: 'bg-[var(--color-success)]' },
             { label: 'Aux. No Salarial', value: composicion.auxilioNoSalarial, color: 'bg-purple-500' },
           ].map(item => {
             const pct = resumen.totalDevengado > 0 ? (item.value / resumen.totalDevengado) * 100 : 0
@@ -886,7 +886,7 @@ function CostosTab() {
             })}
             <div className="pt-2 mt-1 border-t border-[var(--border-default)] flex items-center justify-between">
               <span className="text-xs font-semibold text-[var(--text-primary)]">Total Provisiones</span>
-              <span className="text-sm font-bold text-orange-500">{formatFull(provisiones.total)}</span>
+              <span className="text-sm font-bold text-[var(--color-warning)]">{formatFull(provisiones.total)}</span>
             </div>
           </div>
         </AnimatedCard>
@@ -907,7 +907,7 @@ function CostosTab() {
             ))}
             <div className="pt-2 mt-1 border-t border-[var(--border-default)] flex items-center justify-between">
               <span className="text-xs font-semibold text-[var(--text-primary)]">Total Deducciones</span>
-              <span className="text-sm font-bold text-red-400">{formatFull(resumen.totalDeducciones)}</span>
+              <span className="text-sm font-bold text-[var(--color-danger)]">{formatFull(resumen.totalDeducciones)}</span>
             </div>
           </div>
 
@@ -988,13 +988,13 @@ function CostosTab() {
             <p className="text-[10px] text-[var(--text-secondary)] uppercase">Devengado</p>
             <p className="text-lg font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatCOP(resumen.totalDevengado)}</p>
           </div>
-          <div className="rounded-lg bg-orange-500/5 p-3">
+          <div className="rounded-lg bg-[var(--color-warning)]/5 p-3">
             <p className="text-[10px] text-[var(--text-secondary)] uppercase">+ Provisiones</p>
-            <p className="text-lg font-bold text-orange-500">{formatCOP(resumen.totalProvisiones)}</p>
+            <p className="text-lg font-bold text-[var(--color-warning)]">{formatCOP(resumen.totalProvisiones)}</p>
           </div>
-          <div className="rounded-lg bg-emerald-500/5 p-3">
+          <div className="rounded-lg bg-[var(--color-success)]/5 p-3">
             <p className="text-[10px] text-[var(--text-secondary)] uppercase">= Costo Real</p>
-            <p className="text-lg font-bold text-emerald-500">{formatCOP(resumen.costoReal)}</p>
+            <p className="text-lg font-bold text-[var(--color-success)]">{formatCOP(resumen.costoReal)}</p>
           </div>
         </div>
         <p className="text-[11px] text-[var(--text-secondary)] text-center mt-2">

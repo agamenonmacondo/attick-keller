@@ -23,7 +23,7 @@ export function ServiceFilter({ active, onChange, counts }: ServiceFilterProps) 
   return (
     <div className="min-w-0">
       <div
-        className="flex gap-1 overflow-x-auto border-b border-[var(--color-ak-madera)]/20 dark:border-white/10"
+        className="flex gap-1 overflow-x-auto border-b border-[var(--color-ak-madera)]/20 dark:border-[var(--border-light)]/10"
         style={{ scrollbarWidth: 'none' }}
       >
         {SERVICE_FILTERS.map((filter) => {

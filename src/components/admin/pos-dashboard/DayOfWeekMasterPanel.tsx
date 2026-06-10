@@ -84,7 +84,7 @@ export function DayOfWeekMasterPanel({
   if (error) {
     return (
       <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
-        <p className="text-xs text-red-400 text-center">{error}</p>
+        <p className="text-xs text-[var(--color-danger)] text-center">{error}</p>
       </div>
     )
   }

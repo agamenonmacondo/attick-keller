@@ -132,8 +132,8 @@ export default function CheckInOut({
             onClick={handleCheckin}
             disabled={loading}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg
-              bg-emerald-500/20 text-emerald-400 border border-emerald-500/30
-              hover:bg-emerald-500/30 disabled:opacity-50 transition-colors font-medium"
+              bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/30
+              hover:bg-[var(--color-success)]/30 disabled:opacity-50 transition-colors font-medium"
           >
             <MapPin size={18} />
             {loading ? 'Verificando...' : 'Check-in'}
@@ -153,7 +153,7 @@ export default function CheckInOut({
           <div className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg
             bg-[var(--bg-card)] text-[var(--text-secondary)]"
           >
-            <CheckCircle size={18} className="text-emerald-400" />
+            <CheckCircle size={18} className="text-[var(--color-success)]" />
             Turno registrado
           </div>
         )}
@@ -161,7 +161,7 @@ export default function CheckInOut({
 
       {/* Location status */}
       {locationStatus === 'far' && (
-        <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 rounded p-2">
+        <div className="flex items-center gap-2 text-xs text-[var(--color-warning)] bg-[var(--color-warning)]/10 rounded p-2">
           <XCircle size={14} />
           No estas en el restaurante. El registro se guardara sin verificacion de ubicacion.
         </div>
@@ -175,7 +175,7 @@ export default function CheckInOut({
 
       {/* Error */}
       {error && (
-        <div className="text-xs text-red-400">{error}</div>
+        <div className="text-xs text-[var(--color-danger)]">{error}</div>
       )}
     </div>
   );

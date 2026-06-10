@@ -156,12 +156,12 @@ export function NominaCostSection() {
             </div>
             <div>
               <p className="text-[10px] text-[var(--text-secondary)] uppercase">Costo Nomina Real</p>
-              <p className="text-sm font-bold text-orange-500">{formatFull(resumen.costoReal)}</p>
+              <p className="text-sm font-bold text-[var(--color-warning)]">{formatFull(resumen.costoReal)}</p>
               <p className="text-[10px] text-[var(--text-secondary)]">devengado + provisiones</p>
             </div>
             <div>
               <p className="text-[10px] text-[var(--text-secondary)] uppercase">Margen</p>
-              <p className={`text-sm font-bold ${ratios.margenBruto && ratios.margenBruto < 0 ? 'text-[var(--color-danger)]' : 'text-emerald-500'}`}>
+              <p className={`text-sm font-bold ${ratios.margenBruto && ratios.margenBruto < 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-success)]'}`}>
                 {ratios.margenBruto !== null ? `${formatFull(ventas.revenue - resumen.costoReal)}` : '—'}
               </p>
               <p className="text-[10px] text-[var(--text-secondary)]">{ratios.margenBruto !== null ? `${ratios.margenBruto.toFixed(1)}% margen` : ''}</p>
@@ -178,17 +178,17 @@ export function NominaCostSection() {
                 </div>
               )}
               {ratios.propinasVsRevenue !== null && (
-                <div className="bg-amber-500 flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.propinasVsRevenue}%` }}>
+                <div className="bg-[var(--color-warning)] flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.propinasVsRevenue}%` }}>
                   Prop {ratios.propinasVsRevenue.toFixed(0)}
                 </div>
               )}
               {ratios.provisionesVsRevenue !== null && ratios.provisionesVsRevenue > 1 && (
-                <div className="bg-orange-500 flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.provisionesVsRevenue}%` }}>
+                <div className="bg-[var(--color-warning)] flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.provisionesVsRevenue}%` }}>
                   Prov {ratios.provisionesVsRevenue.toFixed(0)}
                 </div>
               )}
               {ratios.margenBruto !== null && ratios.margenBruto > 0 && (
-                <div className="bg-emerald-500 flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.margenBruto}%` }}>
+                <div className="bg-[var(--color-success)] flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.margenBruto}%` }}>
                   Margen {ratios.margenBruto.toFixed(0)}
                 </div>
               )}
@@ -210,13 +210,13 @@ export function NominaCostSection() {
           label="Costo Real"
           value={formatCOP(resumen.costoReal)}
           sub={`+${((resumen.totalProvisiones / resumen.totalDevengado) * 100).toFixed(0)}% provisiones`}
-          color="bg-orange-500/5"
+          color="bg-[var(--color-warning)]/5"
         />
         <KPIBox
           label="Neto a Pagar"
           value={formatCOP(resumen.totalNeto)}
           sub={formatFull(resumen.totalNeto)}
-          color="bg-emerald-500/5"
+          color="bg-[var(--color-success)]/5"
         />
         <KPIBox
           label="Costo/Empleado"
@@ -232,9 +232,9 @@ export function NominaCostSection() {
         <div className="space-y-2.5">
           {[
             { label: 'Salario', value: composicion.salarioDevengado, color: 'bg-[var(--color-ak-borgona)]' },
-            { label: 'Propinas', value: composicion.propinas, color: 'bg-amber-500' },
+            { label: 'Propinas', value: composicion.propinas, color: 'bg-[var(--color-warning)]' },
             { label: 'Recargos HE/RN/RD', value: composicion.recargosHERN, color: 'bg-blue-500' },
-            { label: 'Aux. Transporte', value: composicion.auxilioTransporte, color: 'bg-emerald-500' },
+            { label: 'Aux. Transporte', value: composicion.auxilioTransporte, color: 'bg-[var(--color-success)]' },
             { label: 'Aux. No Salarial', value: composicion.auxilioNoSalarial, color: 'bg-purple-500' },
           ].map(item => {
             const pct = resumen.totalDevengado > 0 ? (item.value / resumen.totalDevengado) * 100 : 0
@@ -304,7 +304,7 @@ export function NominaCostSection() {
             ))}
             <div className="pt-2 mt-1 border-t border-[var(--border-default)] flex items-center justify-between">
               <span className="text-xs font-semibold text-[var(--text-primary)]">Total Deducciones</span>
-              <span className="text-sm font-bold text-red-400">{formatFull(resumen.totalDeducciones)}</span>
+              <span className="text-sm font-bold text-[var(--color-danger)]">{formatFull(resumen.totalDeducciones)}</span>
             </div>
           </div>
 
@@ -389,7 +389,7 @@ export function NominaCostSection() {
             <p className="text-[10px] text-[var(--text-secondary)] uppercase">+ Provisiones</p>
             <p className="text-lg font-bold text-orange-500">{formatCOP(resumen.totalProvisiones)}</p>
           </div>
-          <div className="rounded-lg bg-emerald-500/5 p-3">
+          <div className="rounded-lg bg-[var(--color-success)]/5 p-3">
             <p className="text-[10px] text-[var(--text-secondary)] uppercase">= Costo Real</p>
             <p className="text-lg font-bold text-emerald-500">{formatCOP(resumen.costoReal)}</p>
           </div>

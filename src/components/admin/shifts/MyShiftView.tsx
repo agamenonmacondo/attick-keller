@@ -145,7 +145,7 @@ export default function MyShiftView({ userId, weekStr }: MyShiftViewProps) {
               {assignment && (
                 <div className="text-xs text-[var(--text-secondary)]">
                   {assignment.checkin_at ? (
-                    <span className="text-emerald-400">
+                    <span className="text-[var(--color-success)]">
                       IN {new Date(assignment.checkin_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   ) : null}

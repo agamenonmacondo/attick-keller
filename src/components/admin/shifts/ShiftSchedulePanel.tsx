@@ -330,7 +330,7 @@ export default function ShiftSchedulePanel() {
 
         {/* Status badge */}
         <span className={`text-xs px-2 py-1 rounded-full
-          ${scheduleStatus === 'published' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}
+          ${scheduleStatus === 'published' ? 'bg-[var(--color-success)]/20 text-[var(--color-success)]' : 'bg-[var(--color-warning)]/20 text-[var(--color-warning)]'}`}
         >
           {scheduleStatus === 'published' ? 'Publicado' : 'Borrador'}
         </span>
@@ -457,14 +457,14 @@ export default function ShiftSchedulePanel() {
             <div className="flex items-center gap-3 justify-end flex-wrap">
               {/* Indicador de estado */}
               {scheduleId && scheduleStatus === 'published' && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--color-success)]/15 text-[var(--color-success)] border border-[var(--color-success)]/30">
+                  <span className="w-2 h-2 rounded-full bg-[var(--color-success)]" />
                   Publicado
                 </span>
               )}
               {scheduleId && scheduleStatus === 'draft' && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--color-warning)]/15 text-[var(--color-warning)] border border-[var(--color-warning)]/30">
+                  <span className="w-2 h-2 rounded-full bg-[var(--color-warning)]" />
                   Borrador
                 </span>
               )}
@@ -479,7 +479,7 @@ export default function ShiftSchedulePanel() {
                 onClick={handleSave}
                 disabled={saving}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
-                  bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50"
+                  bg-[var(--color-warning)] text-white hover:bg-[var(--color-warning)]/80 disabled:opacity-50"
               >
                 <FloppyDisk size={16} />
                 {saving ? 'Guardando...' : 'Guardar'}
@@ -491,7 +491,7 @@ export default function ShiftSchedulePanel() {
                   onClick={handlePublish}
                   disabled={saving}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px]
-                    bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                    bg-[var(--color-success)] text-white hover:bg-[var(--color-success)]/80 disabled:opacity-50"
                 >
                   <PaperPlaneTilt size={16} />
                   Publicar
@@ -851,7 +851,7 @@ function ShiftTypeEditor({
                     <span className="font-mono font-bold text-[var(--text-primary)] w-8">{st.code}</span>
                     <span className="text-sm text-[var(--text-primary)]">{st.name}</span>
                     {st.is_split && st.segments && st.segments.length > 1 && (
-                      <div className="text-[10px] text-amber-400 flex flex-col">
+                      <div className="text-[10px] text-[var(--color-warning)] flex flex-col">
                         {st.segments.map((seg, i) => (
                           <span key={i}>{seg.entrada}-{seg.salida}</span>
                         ))}
@@ -864,10 +864,10 @@ function ShiftTypeEditor({
                       <span className="font-semibold" style={{ color: stHoras.total > 8 ? 'var(--color-danger)' : 'var(--text-primary)' }}>
                         {stHoras.total}h
                       </span>
-                      <span className="text-emerald-400">HO:{st.ordinarias}</span>
-                      <span className={st.nocturnas > 0 ? 'text-amber-400' : ''}>HN:{st.nocturnas}</span>
+                      <span className="text-[var(--color-success)]">HO:{st.ordinarias}</span>
+                      <span className={st.nocturnas > 0 ? 'text-[var(--color-warning)]' : ''}>HN:{st.nocturnas}</span>
                       {st.is_split && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400">PARTIDO</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[var(--color-warning)]/20 text-[var(--color-warning)]">PARTIDO</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1">
@@ -883,7 +883,7 @@ function ShiftTypeEditor({
                           <button
                             onClick={() => handleDelete(st.id)}
                             disabled={saving}
-                            className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                            className="text-xs px-2 py-1 rounded bg-[var(--color-danger)]/20 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/30"
                           >
                             Confirmar
                           </button>
@@ -897,7 +897,7 @@ function ShiftTypeEditor({
                       ) : (
                         <button
                           onClick={() => setConfirmDelete(st.id)}
-                          className="p-1.5 rounded hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-400"
+                          className="p-1.5 rounded hover:bg-[var(--color-danger)]/10 text-[var(--text-secondary)] hover:text-[var(--color-danger)]"
                           title="Eliminar"
                         >
                           <Trash size={14} />

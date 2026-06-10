@@ -33,10 +33,10 @@ export default function ProductRecipeDetail({ product, onClose }: ProductRecipeD
   const marginColor = marginPct === null
     ? 'text-[var(--text-secondary)]'
     : marginPct < 30
-      ? 'text-red-400'
+      ? 'text-[var(--color-danger)]'
       : marginPct < 50
         ? 'text-yellow-400'
-        : 'text-green-400'
+        : 'text-[var(--color-success)]'
 
   return (
     <div

@@ -15,7 +15,7 @@ export function TableCard({ table, onToggle, onEdit }: TableCardProps) {
     : `${table.capacity} personas`
 
   return (
-    <div className={`rounded-lg border p-3 ${table.is_active ? 'border-[var(--border-default)] bg-[var(--bg-card)]' : 'border-red-100 bg-[var(--color-danger)]/10/30'}`}>
+    <div className={`rounded-lg border p-3 ${table.is_active ? 'border-[var(--border-default)] bg-[var(--bg-card)]' : 'border-[var(--color-danger)]/15 bg-[var(--color-danger)]/10/30'}`}>
       {/* Header row */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">

@@ -225,7 +225,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {error && (
-            <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-2 text-sm text-red-400">{error}</div>
+            <div className="rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 px-3 py-2 text-sm text-[var(--color-danger)]">{error}</div>
           )}
 
           {/* Basic fields */}
@@ -298,7 +298,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
                     <span className="text-[10px] text-[var(--text-secondary)] w-6">{a.unit}</span>
                     <span className="text-xs font-mono text-[var(--color-ak-borgona)] w-[72px] text-right">{formatCOP(a.avg_cost * a.quantity)}</span>
                     <button type="button" onClick={() => removeIng(a.pos_ingredient_id)}
-                      className="flex h-5 w-5 items-center justify-center rounded text-red-400 hover:bg-red-500/10 hover:text-red-400">
+                      className="flex h-5 w-5 items-center justify-center rounded text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]">
                       <Trash size={11} />
                     </button>
                   </div>
@@ -317,7 +317,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
                       </div>
                       <div className="flex justify-between border-t border-[var(--border-default)] pt-1">
                         <span className="text-[var(--text-secondary)]">Margen</span>
-                        <span className={`font-mono font-bold ${margin >= 0 ? 'text-[var(--color-ak-oliva)]' : 'text-red-400'}`}>
+                        <span className={`font-mono font-bold ${margin >= 0 ? 'text-[var(--color-ak-oliva)]' : 'text-[var(--color-danger)]'}`}>
                           {formatCOP(margin)} ({marginPct.toFixed(1)}%)
                         </span>
                       </div>
@@ -352,7 +352,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
                         }`}>
                         {catName}
                         {count > 0 && (
-                          <span className={`rounded-full px-1 py-px text-[8px] font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)]'}`}>{count}</span>
+                          <span className={`rounded-full px-1 py-px text-[8px] font-bold ${isActive ? 'bg-[var(--bg-card)]/20 text-white' : 'bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)]'}`}>{count}</span>
                         )}
                       </button>
                     )

@@ -72,7 +72,7 @@ export function ShiftReconciliation({ data }: ShiftReconciliationProps) {
                       <LockSimple size={9} /> Cerrado
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-red-400">
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-[var(--color-danger)]">
                       <LockOpen size={9} /> Abierto
                     </span>
                   )}

@@ -243,7 +243,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
 
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-5">
           {error && (
-            <div className="rounded-lg bg-[var(--color-danger)]/10 border border-red-200 px-3 py-2 text-sm text-[var(--color-danger)]">
+            <div className="rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 px-3 py-2 text-sm text-[var(--color-danger)]">
               {error}
             </div>
           )}
@@ -318,7 +318,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
                       <div className="flex items-center gap-1 mb-1">
                         <label className="text-xs font-medium text-[var(--text-secondary)]">Telefono *</label>
                         {phoneMatchMessage && (
-                          <span className={`text-xs ${phoneMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-secondary)]'}`}>
+                          <span className={`text-xs ${phoneMatch ? 'text-[var(--color-success)]' : 'text-[var(--text-secondary)]'}`}>
                             — {phoneMatchMessage}
                           </span>
                         )}
@@ -331,7 +331,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
                           placeholder="Escribe el telefono..."
                           className={`w-full rounded-lg border bg-[var(--bg-input)] px-3 py-2 pr-9 text-sm text-[var(--text-primary)] focus:outline-none ${
                             phoneMatch
-                              ? 'border-emerald-500 focus:border-emerald-500'
+                              ? 'border-[var(--color-success)] focus:border-[var(--color-success)]'
                               : 'border-[var(--border-default)] focus:border-[var(--color-ak-borgona)]'
                           }`}
                         />
@@ -357,13 +357,13 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
 
                     {/* Phone match feedback */}
                     {phoneMatch && (
-                      <div className="flex items-start gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
-                        <User size={16} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" weight="bold" />
+                      <div className="flex items-start gap-2 rounded-lg bg-[var(--color-success)]/10 border border-emerald-500/20 px-3 py-2">
+                        <User size={16} className="mt-0.5 shrink-0 text-[var(--color-success)] dark:text-[var(--color-success)]" weight="bold" />
                         <div className="text-xs">
                           <p className="font-medium text-emerald-700 dark:text-emerald-300">
                             Cliente existente: {phoneMatch.full_name || 'Sin nombre'}
                           </p>
-                          <p className="text-emerald-600 dark:text-emerald-400 mt-0.5">
+                          <p className="text-[var(--color-success)] dark:text-[var(--color-success)] mt-0.5">
                             Se usara este cliente. Si modificas nombre o email, se actualizaran.
                           </p>
                           <button

@@ -62,9 +62,9 @@ export default function ContingencyReport({ employeeId, scheduleId, onSubmitted 
 
   if (success) {
     return (
-      <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 text-center">
-        <PaperPlaneTilt size={24} className="mx-auto mb-2 text-emerald-400" />
-        <p className="text-emerald-400 font-medium">Reporte enviado</p>
+      <div className="bg-[var(--color-success)]/10 border border-[var(--color-success)]/30 rounded-lg p-4 text-center">
+        <PaperPlaneTilt size={24} className="mx-auto mb-2 text-[var(--color-success)]" />
+        <p className="text-[var(--color-success)] font-medium">Reporte enviado</p>
         <button
           onClick={() => setSuccess(false)}
           className="mt-2 text-xs text-[var(--text-secondary)] underline"
@@ -127,7 +127,7 @@ export default function ContingencyReport({ employeeId, scheduleId, onSubmitted 
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 text-xs text-red-400">
+        <div className="flex items-center gap-2 text-xs text-[var(--color-danger)]">
           <WarningCircle size={14} /> {error}
         </div>
       )}

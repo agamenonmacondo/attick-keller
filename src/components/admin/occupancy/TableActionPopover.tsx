@@ -249,7 +249,7 @@ export function TableActionPopover({
             type="button"
             onClick={handleUnassign}
             disabled={assigning}
-            className="w-full rounded-lg border border-red-200 bg-[var(--color-danger)]/10 px-3 py-1.5 text-xs font-medium text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 disabled:opacity-50"
+            className="w-full rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 px-3 py-1.5 text-xs font-medium text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 disabled:opacity-50"
           >
             {assigning ? 'Liberando...' : 'Liberar mesa'}
           </button>

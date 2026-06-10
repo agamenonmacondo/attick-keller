@@ -118,7 +118,7 @@ export function AuditTimeline({ reservationId, reservationCreatedAt, className }
                 )}>
                   <CalendarPlus size={18} weight="fill" />
                 </div>
-                <div className="w-px flex-1 bg-[var(--color-ak-madera)]/15 dark:bg-white/10" />
+                <div className="w-px flex-1 bg-[var(--color-ak-madera)]/15 dark:bg-[var(--bg-card)]/10" />
               </div>
 
               {/* Content */}
@@ -154,7 +154,7 @@ export function AuditTimeline({ reservationId, reservationCreatedAt, className }
                     <IconComp size={14} />
                   </div>
                   {!isLast && (
-                    <div className="w-px flex-1 bg-[var(--color-ak-madera)]/15 dark:bg-white/10" />
+                    <div className="w-px flex-1 bg-[var(--color-ak-madera)]/15 dark:bg-[var(--bg-card)]/10" />
                   )}
                 </div>
 

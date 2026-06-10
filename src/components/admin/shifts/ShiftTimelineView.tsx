@@ -8,9 +8,9 @@ interface ShiftTimelineViewProps {
 }
 
 const AREA_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  cocina: { bg: 'bg-amber-500/15', border: 'border-amber-500/40', text: 'text-amber-300' },
+  cocina: { bg: 'bg-[var(--color-warning)]/15', border: 'border-[var(--color-warning)]/40', text: 'text-[var(--color-warning)]' },
   barra: { bg: 'bg-blue-500/15', border: 'border-blue-500/40', text: 'text-blue-300' },
-  servicio: { bg: 'bg-emerald-500/15', border: 'border-emerald-500/40', text: 'text-emerald-300' },
+  servicio: { bg: 'bg-[var(--color-success)]/15', border: 'border-[var(--color-success)]/40', text: 'text-[var(--color-success)]' },
 };
 
 function timeToHours(t: string): number {
@@ -50,15 +50,15 @@ export default function ShiftTimelineView({ shiftTypes, area }: ShiftTimelineVie
       {/* Legend */}
       <div className="flex flex-wrap gap-4 text-xs text-[var(--text-secondary)]">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-emerald-500/50" />
+          <div className="w-3 h-3 rounded bg-[var(--color-success)]/50" />
           <span>HO (Ordinarias)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-amber-500/50" />
+          <div className="w-3 h-3 rounded bg-[var(--color-warning)]/50" />
           <span>HN (Nocturnas)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-red-500/50" />
+          <div className="w-3 h-3 rounded bg-[var(--color-danger)]/50" />
           <span>+8h (HE)</span>
         </div>
       </div>
@@ -78,23 +78,23 @@ export default function ShiftTimelineView({ shiftTypes, area }: ShiftTimelineVie
                   <span className="font-mono text-[var(--text-secondary)]">
                     {st.entrada.slice(0, 5)}-{st.salida.slice(0, 5)}
                   </span>
-                  <span className={`font-mono font-medium ${totalHours > 8 ? 'text-red-400' : 'text-[var(--text-primary)]'}`}>
+                  <span className={`font-mono font-medium ${totalHours > 8 ? 'text-[var(--color-danger)]' : 'text-[var(--text-primary)]'}`}>
                     {totalHours}h
                   </span>
-                  {totalHours > 8 && <span className="text-red-400 font-bold text-[10px]">+HE</span>}
+                  {totalHours > 8 && <span className="text-[var(--color-danger)] font-bold text-[10px]">+HE</span>}
                 </div>
               </div>
               {/* Barra visual */}
               <div className="relative h-6 rounded bg-[var(--bg-primary)] overflow-hidden">
                 {st.ordinarias > 0 && (
                   <div
-                    className="absolute top-0 left-0 h-full bg-emerald-500/30"
+                    className="absolute top-0 left-0 h-full bg-[var(--color-success)]/30 rounded-l-md"
                     style={{ width: `${(st.ordinarias / totalHours) * 100}%` }}
                   />
                 )}
                 {st.nocturnas > 0 && (
                   <div
-                    className="absolute top-0 h-full bg-amber-500/30"
+                    className="absolute top-0 h-full bg-[var(--color-warning)]/30 rounded-r-md"
                     style={{ left: `${(st.ordinarias / totalHours) * 100}%`, width: `${(st.nocturnas / totalHours) * 100}%` }}
                   />
                 )}
@@ -177,15 +177,15 @@ export default function ShiftTimelineView({ shiftTypes, area }: ShiftTimelineVie
               const totalHours = st.ordinarias + st.nocturnas;
 
               const barBg = totalHours > 8
-                ? 'bg-red-500/20'
+                ? 'bg-[var(--color-danger)]/20'
                 : st.nocturnas > 0 && st.ordinarias === 0
-                  ? 'bg-amber-500/20'
+                  ? 'bg-[var(--color-warning)]/20'
                   : st.ordinarias > 0 && st.nocturnas === 0
-                    ? 'bg-emerald-500/20'
+                    ? 'bg-[var(--color-success)]/20'
                     : 'bg-blue-500/20';
 
               const barBorder = totalHours > 8
-                ? 'border-red-500/50'
+                ? 'border-[var(--color-danger)]/50'
                 : 'border-[var(--border-default)]';
 
               return (
@@ -202,13 +202,13 @@ export default function ShiftTimelineView({ shiftTypes, area }: ShiftTimelineVie
                   <div className={`relative h-full rounded-md ${barBg} border ${barBorder} overflow-hidden group cursor-default`}>
                     {st.ordinarias > 0 && (
                       <div
-                        className="absolute top-0 left-0 h-full bg-emerald-500/30 rounded-l-md"
+                        className="absolute top-0 left-0 h-full bg-[var(--color-success)]/30 rounded-l-md"
                         style={{ width: `${(st.ordinarias / totalHours) * 100}%` }}
                       />
                     )}
                     {st.nocturnas > 0 && (
                       <div
-                        className="absolute top-0 right-0 h-full bg-amber-500/30 rounded-r-md"
+                        className="absolute top-0 right-0 h-full bg-[var(--color-warning)]/30 rounded-r-md"
                         style={{ width: `${(st.nocturnas / totalHours) * 100}%`, left: `${(st.ordinarias / totalHours) * 100}%` }}
                       />
                     )}
@@ -218,7 +218,7 @@ export default function ShiftTimelineView({ shiftTypes, area }: ShiftTimelineVie
                       </span>
                       <span className="font-mono text-[var(--text-secondary)] ml-1 whitespace-nowrap">
                         {st.entrada.slice(0, 5)}-{st.salida.slice(0, 5)}
-                        {totalHours > 8 && <span className="text-red-400 ml-1">+HE</span>}
+                        {totalHours > 8 && <span className="text-[var(--color-danger)] ml-1">+HE</span>}
                       </span>
                     </div>
                   </div>
@@ -266,13 +266,13 @@ export default function ShiftTimelineView({ shiftTypes, area }: ShiftTimelineVie
             </div>
             <div className="bg-[var(--bg-card)] rounded-lg p-2">
               <div className="text-xs text-[var(--text-secondary)]">Cruzan medianoche</div>
-              <div className="text-lg font-mono font-semibold text-amber-400">
+              <div className="text-lg font-mono font-semibold text-[var(--color-warning)]">
                 {filtered.filter(t => timeToHours(t.salida) <= timeToHours(t.entrada)).length}
               </div>
             </div>
             <div className="bg-[var(--bg-card)] rounded-lg p-2">
               <div className="text-xs text-[var(--text-secondary)]">Con HE (+8h)</div>
-              <div className="text-lg font-mono font-semibold text-red-400">
+              <div className="text-lg font-mono font-semibold text-[var(--color-danger)]">
                 {filtered.filter(t => (t.ordinarias + t.nocturnas) > 8).length}
               </div>
             </div>

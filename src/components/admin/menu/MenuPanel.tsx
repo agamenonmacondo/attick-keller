@@ -520,7 +520,7 @@ export function MenuPanel() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: ii * 0.04, duration: 0.2 }}
                                 className={`rounded-lg border p-3 relative group cursor-pointer ${
-                                  item.is_available ? 'border-[var(--border-default)] bg-[var(--bg-card)]' : 'border-red-100 bg-[var(--color-danger)]/10/30'
+                                  item.is_available ? 'border-[var(--border-default)] bg-[var(--bg-card)]' : 'border-[var(--color-danger)]/30 bg-[var(--color-danger)]/10'
                                 }`}
                                 onClick={() => fetchRecipe(item.id)}
                               >
@@ -543,7 +543,7 @@ export function MenuPanel() {
                                     <button
                                       type="button"
                                       onClick={e => { e.stopPropagation(); deleteItem(item.id) }}
-                                      className="flex h-6 w-6 items-center justify-center rounded text-red-400 hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]"
+                                      className="flex h-6 w-6 items-center justify-center rounded text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]"
                                       title="Ocultar"
                                     >
                                       <Trash size={12} />
@@ -563,7 +563,7 @@ export function MenuPanel() {
                                     className={`rounded-full px-2 py-0.5 text-[9px] font-medium ${
                                       item.is_available
                                         ? 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)]'
-                                        : 'bg-[var(--color-danger)]/10 text-red-500'
+                                        : 'bg-[var(--color-danger)]/10 text-[#EF5350]'
                                     }`}
                                   >
                                     {item.is_available ? 'Disponible' : 'Oculto'}
@@ -901,7 +901,7 @@ export function MenuPanel() {
             </p>
 
             {addError && (
-              <div className="mb-3 rounded-lg bg-[var(--color-danger)]/10 border border-red-200 px-3 py-2 text-sm text-[var(--color-danger)]">
+              <div className="mb-3 rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 px-3 py-2 text-sm text-[var(--color-danger)]">
                 {addError}
               </div>
             )}

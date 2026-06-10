@@ -16,9 +16,9 @@ interface SalesReferenceTabProps {
 // Ratio color helper — now based on COSTO NÓMINA / VENTAS (lower = better)
 // < 20% → green (efficient), 20-35% → amber (moderate), > 35% → red (heavy cost)
 function ratioColor(pct: number): string {
-  if (pct <= 20) return 'text-emerald-400';
-  if (pct <= 35) return 'text-amber-400';
-  return 'text-red-400';
+  if (pct <= 20) return 'text-[var(--color-success)]';
+  if (pct <= 35) return 'text-[var(--color-warning)]';
+  return 'text-[var(--color-danger)]';
 }
 
 function ratioLabel(pct: number): string {
@@ -201,7 +201,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
             </div>
             <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
               <div className="text-[11px] text-[var(--text-secondary)]">Provisiones</div>
-              <div className="text-sm font-mono font-semibold text-amber-400">
+              <div className="text-sm font-mono font-semibold text-[var(--color-warning)]">
                 {formatCOP(provisionesMensuales)}
               </div>
               <div className="text-[10px] text-[var(--text-secondary)]">Prestaciones + aportes</div>

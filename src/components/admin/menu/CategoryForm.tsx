@@ -67,7 +67,7 @@ export function CategoryForm({ category, onClose, onSaved }: CategoryFormProps) 
           </button>
         </div>
 
-        {error && <div className="mb-3 rounded-lg bg-[var(--color-danger)]/10 border border-red-200 px-3 py-2 text-sm text-[var(--color-danger)]">{error}</div>}
+        {error && <div className="mb-3 rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 px-3 py-2 text-sm text-[var(--color-danger)]">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>

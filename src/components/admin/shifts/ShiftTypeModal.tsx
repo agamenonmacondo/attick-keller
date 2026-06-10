@@ -271,8 +271,8 @@ export default function ShiftTypeModal({ isOpen, onClose, area, shiftType, onSav
                   onClick={() => applyPartidoPreset(p)}
                   className={`text-[11px] px-2.5 py-1.5 rounded-md transition-all flex items-center gap-1 ${
                     code === p.code && isSplit
-                      ? 'bg-amber-600 text-white font-semibold'
-                      : 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/30'
+                      ? 'bg-[var(--color-warning)] text-white font-semibold'
+                      : 'bg-[var(--color-warning)]/10 text-[var(--color-warning)] hover:bg-[var(--color-warning)]/20 border border-[var(--color-warning)]/30'
                   }`}
                 >
                   <Clock size={12} />
@@ -325,7 +325,7 @@ export default function ShiftTypeModal({ isOpen, onClose, area, shiftType, onSav
               <label className="text-sm font-medium text-[var(--text-primary)]">
                 Horarios
                 {isSplit && (
-                  <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400">
+                  <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-[var(--color-warning)]/20 text-[var(--color-warning)]">
                     PARTIDO
                   </span>
                 )}
@@ -333,7 +333,7 @@ export default function ShiftTypeModal({ isOpen, onClose, area, shiftType, onSav
               {segments.length < 2 && (
                 <button
                   onClick={addSegment}
-                  className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20"
+                  className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-[var(--color-warning)]/10 text-[var(--color-warning)] border border-[var(--color-warning)]/30 hover:bg-[var(--color-warning)]/20"
                 >
                   <Plus size={12} />
                   Agregar segmento
@@ -354,7 +354,7 @@ export default function ShiftTypeModal({ isOpen, onClose, area, shiftType, onSav
                   {i > 0 && (
                     <button
                       onClick={() => removeSegment(i)}
-                      className="p-1 rounded hover:bg-red-500/10 text-red-400"
+                      className="p-1 rounded hover:bg-[var(--color-danger)]/10 text-[var(--color-danger)]"
                       title="Eliminar segmento"
                     >
                       <X size={14} />
@@ -368,8 +368,8 @@ export default function ShiftTypeModal({ isOpen, onClose, area, shiftType, onSav
                 {seg.entrada && seg.salida && segmentHours[i]?.total > 0 && (
                   <div className="flex items-center gap-2 text-xs">
                     <span className="text-[var(--text-primary)] font-medium">{segmentHours[i].total}h</span>
-                    <span className="text-emerald-400">HO: {segmentHours[i].ordinarias}h</span>
-                    <span className={segmentHours[i].nocturnas > 0 ? 'text-amber-400' : 'text-[var(--text-secondary)]'}>
+                    <span className="text-[var(--color-success)]">HO: {segmentHours[i].ordinarias}h</span>
+                    <span className={segmentHours[i].nocturnas > 0 ? 'text-[var(--color-warning)]' : 'text-[var(--text-secondary)]'}>
                       HN: {segmentHours[i].nocturnas}h
                     </span>
                   </div>

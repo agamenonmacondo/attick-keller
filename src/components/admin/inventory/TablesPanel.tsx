@@ -229,7 +229,7 @@ export function TablesPanel() {
                 <button
                   type="button"
                   onClick={() => setConfirmDelete({ type: 'zone', id: zone.id, label: zone.name })}
-                  className="flex h-7 w-7 items-center justify-center rounded text-red-400 hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]"
+                  className="flex h-7 w-7 items-center justify-center rounded text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]"
                   title="Eliminar zona"
                 >
                   <Trash size={14} />
@@ -339,7 +339,7 @@ export function TablesPanel() {
                     <div
                       key={combo.id}
                       className={`flex items-center justify-between rounded-lg border p-3 ${
-                        combo.is_active ? 'border-[var(--border-default)]' : 'border-red-100 bg-[var(--color-danger)]/10/30'
+                        combo.is_active ? 'border-[var(--border-default)]' : 'border-[var(--color-danger)]/15 bg-[var(--color-danger)]/10/30'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -363,7 +363,7 @@ export function TablesPanel() {
                         <button
                           type="button"
                           onClick={() => setConfirmDelete({ type: 'combination', id: combo.id, label: combo.name || 'Combinacion' })}
-                          className="flex h-7 w-7 items-center justify-center rounded text-red-400 hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]"
+                          className="flex h-7 w-7 items-center justify-center rounded text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]"
                           title="Eliminar combinacion"
                         >
                           <Trash size={14} />

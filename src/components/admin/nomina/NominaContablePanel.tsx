@@ -64,8 +64,8 @@ function DetalleTable({ detalle, resumen }: { detalle: NominaContableDetalle[]; 
       {/* KPIs */}
       {resumen && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KPICard label="Devengado" value={formatCOP(resumen.total_devengado)} icon={ArrowUp} color="text-green-400" />
-          <KPICard label="Deducciones" value={formatCOP(resumen.total_deducciones)} icon={ArrowDown} color="text-red-400" />
+          <KPICard label="Devengado" value={formatCOP(resumen.total_devengado)} icon={ArrowUp} color="text-[var(--color-success)]" />
+          <KPICard label="Deducciones" value={formatCOP(resumen.total_deducciones)} icon={ArrowDown} color="text-[var(--color-danger)]" />
           <KPICard label="Neto a pagar" value={formatCOP(resumen.total_neto)} icon={Money} />
           <KPICard label="Empleados" value={String(resumen.empleados)} icon={Users} />
         </div>
@@ -124,7 +124,7 @@ function HERecargosTable({ data, totals }: { data: NominaContableHERecargo[]; to
     <div className="space-y-4">
       {totals && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KPICard label="HED Total" value={formatCOP(totals.hed_total)} icon={Lightning} color="text-yellow-400" />
+          <KPICard label="HED Total" value={formatCOP(totals.hed_total)} icon={Lightning} color="text-[var(--color-warning)]" />
           <KPICard label="HEN Total" value={formatCOP(totals.hen_total)} icon={Clock} color="text-purple-400" />
           <KPICard label="Rec. Nocturno" value={formatCOP(totals.rn_total)} icon={Clock} color="text-cyan-400" />
           <KPICard label="Total Recargos" value={formatCOP(totals.total_recargos)} icon={Money} />
@@ -180,9 +180,9 @@ function ProvisionesTable({ data, totals }: { data: NominaContableProvision[]; t
     <div className="space-y-4">
       {totals && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KPICard label="Salud Emp." value={formatCOP(totals.salud_empleado || 0)} icon={FirstAidKit} color="text-red-400" />
+          <KPICard label="Salud Emp." value={formatCOP(totals.salud_empleado || 0)} icon={FirstAidKit} color="text-[var(--color-danger)]" />
           <KPICard label="Pension Emp." value={formatCOP(totals.pension_empleador || 0)} icon={Money} color="text-blue-400" />
-          <KPICard label="Cesantias" value={formatCOP(totals.cesantias_empleador || 0)} icon={Money} color="text-yellow-400" />
+          <KPICard label="Cesantias" value={formatCOP(totals.cesantias_empleador || 0)} icon={Money} color="text-[var(--color-warning)]" />
           <KPICard label="Total Prov." value={formatCOP(totals.total_provision_empleador || 0)} icon={ArrowUp} />
         </div>
       )}
@@ -233,14 +233,14 @@ function ProvisionesTable({ data, totals }: { data: NominaContableProvision[]; t
 
 function NovedadesTable({ data }: { data: NominaContableNovedad[] }) {
   const tipoColors: Record<string, string> = {
-    'VACACIONES': 'text-green-400',
-    'INCAPACIDAD': 'text-red-400',
+    'VACACIONES': 'text-[var(--color-success)]',
+    'INCAPACIDAD': 'text-[var(--color-danger)]',
     'PER. REMUNERADO': 'text-blue-400',
-    'PER. NO REMUNERADO': 'text-yellow-400',
+    'PER. NO REMUNERADO': 'text-[var(--color-warning)]',
     'AUSENCIA': 'text-orange-400',
     'CAMBIO BANCO': 'text-cyan-400',
     'INGRESO': 'text-purple-400',
-    'RETIRO': 'text-red-400',
+    'RETIRO': 'text-[var(--color-danger)]',
   }
 
   return (
@@ -277,8 +277,8 @@ function NovedadesTable({ data }: { data: NominaContableNovedad[] }) {
                   </td>
                   <td className="py-1.5 px-1 text-center">
                     {d.aplicada
-                      ? <span className="text-green-400">Si</span>
-                      : <span className="text-red-400">No</span>}
+                      ? <span className="text-[var(--color-success)]">Si</span>
+                      : <span className="text-[var(--color-danger)]">No</span>}
                   </td>
                 </tr>
               )

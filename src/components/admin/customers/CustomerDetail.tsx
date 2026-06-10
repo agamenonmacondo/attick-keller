@@ -379,7 +379,7 @@ function StatCard({
 }) {
   return (
     <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-input)]/50 p-3">
-      <div className={`mb-1 ${variant === 'warning' ? 'text-red-500' : 'text-[var(--text-secondary)]'}`}>{icon}</div>
+      <div className={`mb-1 ${variant === 'warning' ? 'text-[#EF5350]' : 'text-[var(--text-secondary)]'}`}>{icon}</div>
       <p className="text-xs text-[var(--text-secondary)]">{label}</p>
       <p className={`text-sm font-medium ${variant === 'warning' ? 'text-[var(--color-danger)]' : 'text-[var(--text-primary)]'}`}>{value}</p>
     </div>

@@ -31,7 +31,7 @@ const ROLE_LABELS: Record<string, string> = {
 const ROLE_COLORS: Record<string, string> = {
   super_admin: 'bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]/10 dark:text-[var(--color-ak-borgona-light)]',
   store_admin: 'bg-[var(--color-ak-ambar)]/15 text-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)]/15 dark:text-[var(--color-ak-ambar-light)]',
-  lider_area: 'bg-emerald-500/10 text-emerald-400 dark:bg-emerald-400/10 dark:text-emerald-300',
+  lider_area: 'bg-[var(--color-success)]/10 text-[var(--color-success)] dark:bg-emerald-400/10 dark:text-emerald-300',
   colaborador: 'bg-sky-500/10 text-sky-400 dark:bg-sky-400/10 dark:text-sky-300',
   host: 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)] dark:bg-[var(--color-ak-oliva-light)]/10 dark:text-[var(--color-ak-oliva-light)]',
 }

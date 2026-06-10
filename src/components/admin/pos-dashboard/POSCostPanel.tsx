@@ -204,7 +204,7 @@ export function POSCostPanel({
 
         <AnimatedCard delay={0.10} className="p-4">
           <div className="flex items-center gap-1.5 mb-1">
-            <TrendUp size={16} className="text-green-400" />
+            <TrendUp size={16} className="text-[var(--color-success)]" />
             <span className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium">Margen Promedio</span>
           </div>
           <div className="text-xl font-bold text-[var(--text-primary)] tabular-nums">
@@ -338,7 +338,7 @@ export function POSCostPanel({
         {/* Low Margin Products */}
         <AnimatedCard delay={0.26} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
           <div className="flex items-center gap-1.5 mb-3">
-            <Warning size={16} className="text-red-400" />
+            <Warning size={16} className="text-[var(--color-danger)]" />
             <SectionHeading className="mb-0">Menor Margen</SectionHeading>
           </div>
           {topLowMarginProducts.length > 0 ? (
@@ -364,7 +364,7 @@ export function POSCostPanel({
                       <td className="py-1.5 px-2 text-right text-[var(--text-secondary)] tabular-nums">
                         {formatCOPFull(Math.round(p.recipeCost))}
                       </td>
-                      <td className={`py-1.5 pl-2 text-right font-medium tabular-nums min-w-[55px] ${p.marginPct < 30 ? 'text-red-400' : p.marginPct < 50 ? 'text-yellow-400' : 'text-[var(--text-primary)]'}`}>
+                      <td className={`py-1.5 pl-2 text-right font-medium tabular-nums min-w-[55px] ${p.marginPct < 30 ? 'text-[var(--color-danger)]' : p.marginPct < 50 ? 'text-yellow-400' : 'text-[var(--text-primary)]'}`}>
                         {p.marginPct.toFixed(1)}%
                       </td>
                     </tr>
@@ -380,7 +380,7 @@ export function POSCostPanel({
         {/* High Margin Products */}
         <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
           <div className="flex items-center gap-1.5 mb-3">
-            <Trophy size={16} className="text-green-400" />
+            <Trophy size={16} className="text-[var(--color-success)]" />
             <SectionHeading className="mb-0">Mayor Margen</SectionHeading>
           </div>
           {topHighMarginProducts.length > 0 ? (
@@ -406,7 +406,7 @@ export function POSCostPanel({
                       <td className="py-1.5 px-2 text-right text-[var(--text-secondary)] tabular-nums">
                         {formatCOPFull(Math.round(p.recipeCost))}
                       </td>
-                      <td className={`py-1.5 pl-2 text-right font-medium tabular-nums min-w-[55px] ${p.marginPct >= 70 ? 'text-green-400' : 'text-[var(--text-primary)]'}`}>
+                      <td className={`py-1.5 pl-2 text-right font-medium tabular-nums min-w-[55px] ${p.marginPct >= 70 ? 'text-[var(--color-success)]' : 'text-[var(--text-primary)]'}`}>
                         {p.marginPct.toFixed(1)}%
                       </td>
                     </tr>

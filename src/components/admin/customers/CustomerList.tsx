@@ -102,7 +102,7 @@ export function CustomerList({
       )}
 
       {error && (
-        <div className="rounded-lg bg-[var(--color-danger)]/10 border border-red-200 px-4 py-3 text-sm text-[var(--color-danger)]">
+        <div className="rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 px-4 py-3 text-sm text-[var(--color-danger)]">
           Error al cargar clientes: {error}
         </div>
       )}

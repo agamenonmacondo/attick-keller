@@ -120,7 +120,7 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
     <div className={cn('space-y-3', className)}>
       {/* Error message */}
       {error && (
-        <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-xs text-red-700 dark:text-red-300">
+        <div className="rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 px-3 py-2 text-xs text-[var(--color-danger)]">
           {error}
           <button
             type="button"
@@ -146,7 +146,7 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
             className={cn(
               'flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded transition-colors',
               saved
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                ? 'bg-[var(--color-success)]/10 text-[var(--color-success)]'
                 : 'text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-dorado)] hover:bg-[var(--color-ak-borgona)]/10 dark:hover:bg-[var(--color-ak-dorado)]/10',
               saving && 'opacity-50 cursor-wait',
             )}
@@ -164,7 +164,7 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
           onChange={e => { onNotesUpdate(e.target.value); setSaved(false) }}
           placeholder="Notas visibles solo para el equipo host..."
           rows={2}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-ak-madera)]/15 dark:border-white/10 bg-white/70 dark:bg-white/5 text-[var(--color-ak-madera)] dark:text-white placeholder:text-[var(--color-ak-madera)]/30 dark:placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-[var(--color-ak-borgona)] dark:focus:ring-[var(--color-ak-dorado)]"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-ak-madera)]/15 dark:border-[var(--border-light)]/10 bg-[var(--bg-card)]/70 dark:bg-[var(--bg-card)]/5 text-[var(--color-ak-madera)] dark:text-white placeholder:text-[var(--color-ak-madera)]/30 dark:placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-[var(--color-ak-borgona)] dark:focus:ring-[var(--color-ak-dorado)]"
         />
       </div>
 
@@ -210,7 +210,7 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
                   <button
                     type="button"
                     onClick={() => handleDeleteNote(note.id)}
-                    className="text-[var(--color-ak-madera)]/30 dark:text-white/20 hover:text-red-500 dark:hover:text-red-400 flex-shrink-0"
+                    className="text-[var(--color-ak-madera)]/30 dark:text-white/20 hover:text-[var(--color-danger)] flex-shrink-0"
                     title="Eliminar nota"
                   >
                     <Trash size={12} />
@@ -227,7 +227,7 @@ export function InternalNotesSection({ reservationId, internalNotes, onNotesUpda
                 onChange={e => { setNewNote(e.target.value); setError(null) }}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAddNote() } }}
                 placeholder="Agregar nota para el equipo..."
-                className="flex-1 px-2 py-1 text-xs rounded border border-[var(--color-ak-madera)]/15 dark:border-white/10 bg-white dark:bg-white/5 text-[var(--color-ak-madera)] dark:text-white"
+                className="flex-1 px-2 py-1 text-xs rounded border border-[var(--color-ak-madera)]/15 dark:border-[var(--border-light)]/10 bg-[var(--bg-card)] dark:bg-[var(--bg-card)]/5 text-[var(--color-ak-madera)] dark:text-white"
               />
               <button
                 type="button"

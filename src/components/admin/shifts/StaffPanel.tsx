@@ -14,8 +14,8 @@ const AREAS: { value: string; label: string; color: string }[] = [
 ];
 
 const CONTRACT_LABELS: Record<string, { label: string; className: string }> = {
-  fijo: { label: 'Fijo', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
-  turnante: { label: 'Turnante', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+  fijo: { label: 'Fijo', className: 'bg-[var(--color-success)]/15 text-[var(--color-success)] border-emerald-500/30' },
+  turnante: { label: 'Turnante', className: 'bg-[var(--color-warning)]/15 text-[var(--color-warning)] border-amber-500/30' },
 };
 
 // Costo para empresa segun ley colombiana (prestaciones + aportes patronales)

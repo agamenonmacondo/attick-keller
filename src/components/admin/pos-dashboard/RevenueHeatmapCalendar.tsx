@@ -60,7 +60,7 @@ function getHeatLevel(metric: HeatmapMetric, value: number, thresholds: { q25: n
 
 const HEAT_COLORS = {
   dark: [
-    'bg-white/[0.08]',
+    'bg-[var(--bg-card)]/[0.08]',
     'bg-[var(--color-ak-borgona)]/30',
     'bg-[var(--color-ak-borgona)]/50',
     'bg-[var(--color-ak-borgona)]/70',

@@ -20,13 +20,37 @@ import ShiftSchedulePanel from './shifts/ShiftSchedulePanel'
 import { InformesRayoPanel } from './informes/InformesRayoPanel'
 import { Spinner } from '@phosphor-icons/react'
 
+// Tabs que CADA ROL desbloquea (se unen si el usuario tiene varios roles)
+const ROLE_TABS: Record<string, AdminTab[]> = {
+  super_admin: ['reservas', 'ocupacion', 'mesas', 'plano', 'metricas', 'operacion', 'clientes', 'menu', 'equipo', 'nomina', 'turnos', 'app-rodri', 'informes'],
+  store_admin: ['reservas', 'ocupacion', 'metricas'],
+  host: ['reservas', 'ocupacion', 'metricas'],
+  lider_area: ['turnos'],
+}
+
+function computeAllowedTabs(roles: string[]): AdminTab[] {
+  const set = new Set<AdminTab>()
+  for (const role of roles) {
+    const tabs = ROLE_TABS[role]
+    if (tabs) for (const t of tabs) set.add(t)
+  }
+  return [...set]
+}
+
+function hasAnyAdminAccess(roles: string[]): boolean {
+  return roles.some(r => r in ROLE_TABS)
+}
+
 export function AdminShell() {
-  const { user, loading: authLoading, isAdmin, roleLoading } = useAuth()
+  const { user, loading: authLoading, roles, area, roleLoading } = useAuth()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<AdminTab>('reservas')
+  const allowedTabs = computeAllowedTabs(roles)
+  const [activeTab, setActiveTab] = useState<AdminTab>(
+    () => allowedTabs[0] || 'reservas'
+  )
   const [selectedDate, setSelectedDate] = useState(() => {
     const d = new Date()
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
   })
 
   if (authLoading || roleLoading) {
@@ -42,15 +66,19 @@ export function AdminShell() {
     return null
   }
 
-  if (!isAdmin) {
+  if (!hasAnyAdminAccess(roles)) {
     router.replace('/perfil')
     return null
+  }
+
+  if (!allowedTabs.includes(activeTab)) {
+    setActiveTab(allowedTabs[0])
   }
 
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-primary)] dark:bg-[var(--color-ak-madera-light)]/5">
       <AdminHeader />
-      <AdminTabBar active={activeTab} onChange={setActiveTab} />
+      <AdminTabBar active={activeTab} onChange={setActiveTab} allowedTabs={allowedTabs} />
       <main className="max-w-[1400px] mx-auto px-4 md:px-6 py-6">
         {activeTab === 'reservas' && (
           <ReservationsPanel selectedDate={selectedDate} onDateChange={setSelectedDate} />
@@ -66,7 +94,7 @@ export function AdminShell() {
         {activeTab === 'menu' && <MenuPanel />}
         {activeTab === 'equipo' && <TeamPanel />}
         {activeTab === 'nomina' && <NominaUnifiedPanel />}
-        {activeTab === 'turnos' && <ShiftSchedulePanel />}
+        {activeTab === 'turnos' && <ShiftSchedulePanel areaFilter={area ?? undefined} />}
         {activeTab === 'app-rodri' && <RodriPanel />}
         {activeTab === 'informes' && <InformesRayoPanel />}
       </main>

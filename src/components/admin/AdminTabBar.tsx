@@ -24,14 +24,17 @@ const TABS: { key: AdminTab; label: string; icon: React.ReactNode }[] = [
 interface AdminTabBarProps {
   active: AdminTab
   onChange: (tab: AdminTab) => void
+  allowedTabs: AdminTab[]
 }
 
-export function AdminTabBar({ active, onChange }: AdminTabBarProps) {
+export function AdminTabBar({ active, onChange, allowedTabs }: AdminTabBarProps) {
+  const visibleTabs = TABS.filter(tab => allowedTabs.includes(tab.key))
+
   return (
     <div className="border-b border-[var(--border-default)] bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6">
         <nav className="flex gap-1 overflow-x-auto -mb-px">
-          {TABS.map(tab => (
+          {visibleTabs.map(tab => (
             <button
               key={tab.key}
               onClick={() => onChange(tab.key)}

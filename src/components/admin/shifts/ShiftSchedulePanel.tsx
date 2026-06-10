@@ -46,8 +46,9 @@ function getHeatClasses(count: number, isDark: boolean): { bg: string; text: str
   return { bg: 'bg-[var(--color-ak-borgona)]/60', text: 'text-white' };
 }
 
-export default function ShiftSchedulePanel() {
-  const [area, setArea] = useState<Area>('cocina');
+export default function ShiftSchedulePanel({ areaFilter }: { areaFilter?: string }) {
+  const [area, setArea] = useState<Area>((areaFilter as Area) || 'cocina');
+  const isAreaLocked = !!areaFilter;
   const [tab, setTab] = useState<Tab>('cronograma');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingShiftType, setEditingShiftType] = useState<ShiftType | null>(null);
@@ -317,16 +318,22 @@ export default function ShiftSchedulePanel() {
 
       {/* Controles superiores */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Selector de area */}
-        <select
-          value={area}
-          onChange={(e) => setArea(e.target.value as Area)}
-          className="min-h-[44px] px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] text-sm"
-        >
-          {AREAS.map((a) => (
-            <option key={a.value} value={a.value}>{a.label}</option>
-          ))}
-        </select>
+        {/* Selector de area: solo visible para admins, bloqueado para lideres */}
+        {isAreaLocked ? (
+          <span className="text-sm font-semibold text-[var(--text-primary)] px-3 py-2 rounded-lg bg-[var(--bg-input)]">
+            {AREAS.find(a => a.value === area)?.label || area}
+          </span>
+        ) : (
+          <select
+            value={area}
+            onChange={(e) => setArea(e.target.value as Area)}
+            className="min-h-[44px] px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] text-sm"
+          >
+            {AREAS.map((a) => (
+              <option key={a.value} value={a.value}>{a.label}</option>
+            ))}
+          </select>
+        )}
 
         {/* Status badge */}
         <span className={`text-xs px-2 py-1 rounded-full

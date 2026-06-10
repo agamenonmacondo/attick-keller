@@ -6,17 +6,20 @@ export async function GET() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) return NextResponse.json({ role: null })
+  if (!user) return NextResponse.json({ roles: [], area: null })
 
   const sb = getServiceClient()
-  const { data: roleData } = await sb
+  const { data: rolesData } = await sb
     .from('user_roles')
-    .select('role')
+    .select('role, area')
     .eq('auth_user_id', user.id)
     .eq('restaurant_id', RESTAURANT_ID)
     .eq('is_active', true)
     .in('role', ['store_admin', 'super_admin', 'host', 'lider_area', 'colaborador', 'reservante'])
-    .single()
 
-  return NextResponse.json({ role: roleData?.role ?? null })
+  const roles = (rolesData || []).map(r => r.role)
+  // Tomar la primera area no-null (lider_area la necesita)
+  const area = (rolesData || []).find(r => r.area)?.area ?? null
+
+  return NextResponse.json({ roles, area })
 }

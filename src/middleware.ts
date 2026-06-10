@@ -27,48 +27,42 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect /admin routes — admin only
+  // Helper: check if user has ANY of the given roles
+  async function hasAnyRole(roles: string[]): Promise<boolean> {
+    if (!user) return false
+    const sb = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    const { data: roleData } = await sb
+      .from('user_roles')
+      .select('role')
+      .eq('auth_user_id', user.id)
+      .eq('restaurant_id', RESTAURANT_ID)
+      .eq('is_active', true)
+      .in('role', roles)
+
+    return (roleData && roleData.length > 0) ? true : false
+  }
+
+  // Protect /admin — store_admin, super_admin, host, or lider_area
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-    const { data: roleData } = await sb
-      .from('user_roles')
-      .select('role')
-      .eq('auth_user_id', user.id)
-      .eq('restaurant_id', RESTAURANT_ID)
-      .eq('is_active', true)
-      .in('role', ['store_admin', 'super_admin'])
-      .single()
-
-    if (!roleData) {
+    const allowed = await hasAnyRole(['store_admin', 'super_admin', 'host', 'lider_area'])
+    if (!allowed) {
       return NextResponse.redirect(new URL('/host', request.url))
     }
   }
 
-  // Protect /host routes — host, store_admin, or super_admin
+  // Protect /host — host, store_admin, or super_admin
   if (request.nextUrl.pathname.startsWith('/host')) {
     if (!user) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-    const { data: roleData } = await sb
-      .from('user_roles')
-      .select('role')
-      .eq('auth_user_id', user.id)
-      .eq('restaurant_id', RESTAURANT_ID)
-      .eq('is_active', true)
-      .in('role', ['store_admin', 'super_admin', 'host'])
-      .single()
-
-    if (!roleData) {
+    const allowed = await hasAnyRole(['store_admin', 'super_admin', 'host'])
+    if (!allowed) {
       return NextResponse.redirect(new URL('/perfil', request.url))
     }
   }
@@ -81,25 +75,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  // Protect /mi-turno — employee only (lider_area, colaborador, reservante)
+  // Protect /mi-turno — employee only
   if (request.nextUrl.pathname.startsWith('/mi-turno')) {
     if (!user) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-    const { data: roleData } = await sb
-      .from('user_roles')
-      .select('role')
-      .eq('auth_user_id', user.id)
-      .eq('restaurant_id', RESTAURANT_ID)
-      .eq('is_active', true)
-      .in('role', ['lider_area', 'colaborador', 'reservante', 'store_admin', 'super_admin'])
-      .single()
-
-    if (!roleData) {
+    const allowed = await hasAnyRole(['lider_area', 'colaborador', 'reservante', 'store_admin', 'super_admin'])
+    if (!allowed) {
       return NextResponse.redirect(new URL('/perfil', request.url))
     }
   }

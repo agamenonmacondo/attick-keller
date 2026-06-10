@@ -21,38 +21,37 @@ export function PDFExportButton({ data, from, to }: PDFExportButtonProps) {
     setError(null)
 
     try {
-      // 1. Fetch margins data
-      const marginsRes = await fetch('/api/admin/informes-rayo/margins?from=' + from + '&to=' + to)
-      const marginsData = marginsRes.ok ? await marginsRes.json() : null
-
-      // 2. Call analyze-v2 to get SlideAnalysisV2 JSON
-      let analysis: SlideAnalysisV2 | null = null
-      try {
-        const analyzeRes = await fetch('/api/admin/informes-rayo/analyze-v2', {
+      // 1. Fetch margins + analysis in PARALLEL (not sequential)
+      const [marginsRes, analyzeRes] = await Promise.all([
+        fetch('/api/admin/informes-rayo/margins?from=' + from + '&to=' + to),
+        fetch('/api/admin/informes-rayo/analyze-v2', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             reportData: {
               ...data,
-              margins: marginsData,
+              margins: null,
               period: { from, to, zone: 'all', compareFrom: '', compareTo: '' },
             }
           }),
-        })
-        if (analyzeRes.ok) {
+        }).catch(() => null), // don't block on analysis failure
+      ])
+
+      const marginsData = marginsRes?.ok ? await marginsRes.json() : null
+      let analysis: SlideAnalysisV2 | null = null
+      if (analyzeRes?.ok) {
+        try {
           const analyzeJson = await analyzeRes.json()
           if (analyzeJson.analysis) {
             analysis = analyzeJson.analysis as SlideAnalysisV2
           }
-        }
-      } catch (analyzeErr) {
-        console.log('[PDF] Analyze-v2 failed, continuing without analysis:', analyzeErr)
+        } catch { /* analysis failed, continue without it */ }
       }
 
-      // 3. Generate PDF with jsPDF vectorial (NO html2canvas)
+      // 2. Generate PDF with jsPDF (instant)
       const blob = await generatePDF({ data, from, to, margins: marginsData, analysis })
 
-      // 4. Download
+      // 3. Download
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url

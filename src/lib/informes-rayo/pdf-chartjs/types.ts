@@ -76,8 +76,9 @@ export interface SlideAnalysisV2 {
   slide_5_composicion?: string
   slide_6_estrellas_lastre?: string
   slide_7_bullets?: { icon: string; title: string; body: string }[]
-  slide_7_insights?: { icon: string; title: string; body: string }[]
+  slide_7_insights?: string[]
   slide_8_cards?: { emoji: string; title: string; action: string; metric: string }[]
+  slide_8_junta?: string[]
   slide_junta_mensaje?: string
 }
 

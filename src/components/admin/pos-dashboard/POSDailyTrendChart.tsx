@@ -157,17 +157,6 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
         <BarChart
           data={chartData}
           margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-          onClick={(e: any) => {
-            if (onDayClick && e?.activePayload?.[0]?.payload?.dayOfWeek) {
-              const day = e.activePayload[0].payload as AggregatedDay
-              // Find a matching date in source data for this day of week
-              const matchingDate = data.find(d => {
-                const dObj = new Date(d.date + 'T12:00:00')
-                return jsDayToIso(dObj.getDay()) === day.dayOfWeek
-              })?.date
-              onDayClick(day, matchingDate)
-            }
-          }}
           style={{ cursor: onDayClick ? 'pointer' : 'default' }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" vertical={false} />
@@ -191,6 +180,17 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
             name="Ventas total"
             radius={[4, 4, 0, 0]}
             style={{ transition: 'all 300ms ease-out', cursor: 'pointer' }}
+            onClick={(e: any) => {
+              if (onDayClick && e?.payload?.dayOfWeek) {
+                const day = e.payload as AggregatedDay
+                // Find a matching date in source data for this day of week
+                const matchingDate = data.find(d => {
+                  const dObj = new Date(d.date + 'T12:00:00')
+                  return jsDayToIso(dObj.getDay()) === day.dayOfWeek
+                })?.date
+                onDayClick(day, matchingDate)
+              }
+            }}
           >
             {chartData.map((entry, index) => (
               <Cell key={index} fill={BAR_COLORS[entry.dayOfWeek] || 'var(--color-ak-borgona)'} />
@@ -203,6 +203,16 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
             fill="var(--color-ak-oliva)"
             radius={[4, 4, 0, 0]}
             style={{ transition: 'all 300ms ease-out', cursor: 'pointer' }}
+            onClick={(e: any) => {
+              if (onDayClick && e?.payload?.dayOfWeek) {
+                const day = e.payload as AggregatedDay
+                const matchingDate = data.find(d => {
+                  const dObj = new Date(d.date + 'T12:00:00')
+                  return jsDayToIso(dObj.getDay()) === day.dayOfWeek
+                })?.date
+                onDayClick(day, matchingDate)
+              }
+            }}
           />
         </BarChart>
       </ResponsiveContainer>

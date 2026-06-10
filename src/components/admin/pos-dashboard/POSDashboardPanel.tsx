@@ -185,20 +185,18 @@ export function POSDashboardPanel() {
   }, [])
 
   // When clicking a day-of-week bar in the trend chart,
-  // if a specific date is provided, filter results to that day;
-  // otherwise show day-of-week aggregated detail panel
+  // show day-of-week aggregated averages (all Mondays, all Tuesdays, etc.)
   const handleDayOfWeekClick = useCallback((dayData: AggregatedDay, date?: string) => {
-    console.log('[POSDashboard] DayOfWeek click:', dayData.label, 'dayOfWeek:', dayData.dayOfWeek, 'date:', date)
-    if (date) {
-      // Specific date clicked → filter results to that day
-      handleDateSelect(date)
-    } else {
-      // Day-of-week aggregation (no specific date match) → show detail panel
-      setSelectedDayOfWeek(dayData)
-      setDayDetailZone('all')
-      setDayDetailCategory('all')
-    }
-  }, [handleDateSelect])
+    console.log('[POSDashboard] DayOfWeek click:', dayData.label, 'dayOfWeek:', dayData.dayOfWeek)
+    // Always use day-of-week aggregation (averages across all occurrences)
+    setSelectedDayOfWeek(dayData)
+    setDayDetailZone('all')
+    setDayDetailCategory('all')
+    // Clear any specific date filter
+    setSelectedDate(null)
+    setResultsZone('all')
+    setResultsCategory('all')
+  }, [])
 
   const handleCalendarMonthChange = useCallback((month: string) => {
     // Navigating months in the calendar always switches to consolidated view
@@ -396,9 +394,11 @@ export function POSDashboardPanel() {
             <h2 className="text-lg font-bold text-[var(--text-primary)]">{activeTab === 'costs' ? 'Costos POS' : activeTab === 'catalog' ? 'Catalogo de Costos' : activeTab === 'results' ? 'Resultados Consolidados' : 'Operacion POS'}</h2>
             <p className="text-xs text-[var(--text-secondary)]">
               {activeTab === 'results'
-                ? selectedDate
-                  ? <>Filtrado por dia: <span className="font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{selectedDate}</span></>
-                  : <>Datos historicos: <span className="font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">Ene – Jun 2026</span></>
+                ? selectedDayOfWeek
+                  ? <>Promedio: <span className="font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{selectedDayOfWeek.fullLabel}</span> <span className="text-[var(--text-muted)]">(Ene – Jun 2026)</span></>
+                  : selectedDate
+                    ? <>Filtrado por dia: <span className="font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{selectedDate}</span></>
+                    : <>Datos historicos: <span className="font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">Ene – Jun 2026</span></>
                 : viewMode === 'month'
                 ? <>Vista consolidada: <span className="font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">Mes completo</span></>
                 : isSingleDay
@@ -468,94 +468,84 @@ export function POSDashboardPanel() {
       {activeTab === 'catalog' && <POSCatalogTabContent />}
 
       {/* ── Results panel — all-time consolidated data with drill-down ── */}
-      {activeTab === 'results' && allData && (
-        <>
-          {selectedDayOfWeek ? (
-            /* ── Day-of-week detail selected: show detail panel ── */
-            <>
-              {/* Loading skeleton while day detail is fetching */}
-              {dayDetailLoading && !dayDetail && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => setSelectedDayOfWeek(null)} className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--color-ak-borgona)] dark:hover:text-[var(--color-ak-borgona-light)] transition-colors">
-                      ← Volver a Resultados
-                    </button>
-                    <span className="text-sm text-[var(--text-muted)]">Cargando {selectedDayOfWeek.fullLabel}...</span>
-                  </div>
-                  <div className="h-16 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="h-24 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
-                    <div className="h-24 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
-                    <div className="h-24 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
-                  </div>
-                  <div className="h-64 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
-                </div>
-              )}
-              {/* Error state */}
-              {dayDetailError && !dayDetail && (
-                <div className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl p-6">
-                  <p className="text-sm text-red-400 text-center">{dayDetailError}</p>
-                  <button onClick={() => setSelectedDayOfWeek(null)} className="mt-3 text-xs text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] hover:underline block mx-auto">Volver a Resultados</button>
-                </div>
-              )}
-              {/* Day-of-week detail data loaded */}
-              {dayDetail && (
-                <DayOfWeekMasterPanel
-                  dayData={selectedDayOfWeek}
-                  data={dayDetail}
-                  loading={dayDetailLoading}
-                  error={dayDetailError}
-                  onBack={() => setSelectedDayOfWeek(null)}
-                  selectedZone={dayDetailZone}
-                  selectedCategory={dayDetailCategory}
-                  onZoneClick={handleDayDetailZoneClick}
-                  onCategoryClick={handleDayDetailCategoryClick}
-                  onClearFilters={handleDayDetailClearFilter}
-                  onProductDrillDown={handleResultsProductDrillDown}
-                  onCategoryDrillDown={handleResultsCategoryDrillDown}
-                  onStaffDrillDown={handleResultsStaffDrillDown}
-                  onZoneDrillDown={handleResultsZoneDrillDown}
-                  onHourDrillDown={handleResultsHourDrillDown}
-                  drillDown={resultsDrillDown}
-                  drillDownData={resultsDrillDownData}
-                  drillDownLoading={resultsDrillDownLoading}
-                  drillDownError={resultsDrillDownError}
-                  onCloseDrillDown={closeResultsDrillDown}
-                />
-              )}
-            </>
-          ) : (
-          <>
-            {/* Active filter pill — clear to see what's filtered */}
-            {(resultsZone !== 'all' || resultsCategory !== 'all' || selectedDate) && (
-              <div className="flex items-center gap-2 flex-wrap">
-                {selectedDate && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] text-white text-sm font-medium">
-                    Filtrado: {selectedDate}
-                    <button onClick={() => { setSelectedDate(null); setResultsZone('all'); setResultsCategory('all'); }} className="hover:underline ml-1">&times;</button>
-                  </span>
+      {activeTab === 'results' && allData && (() => {
+        // Determine which data to show: day-of-week averages or consolidated historical
+        const displayData = selectedDayOfWeek ? dayDetail : allData
+        const isLoading = selectedDayOfWeek ? dayDetailLoading : allLoading
+        const isError = selectedDayOfWeek ? dayDetailError : error
+        const showBackButton = selectedDayOfWeek
+
+        if (isLoading && !displayData) {
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                {showBackButton && (
+                  <button onClick={() => setSelectedDayOfWeek(null)} className="flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--color-ak-borgona)] dark:hover:text-[var(--color-ak-borgona-light)] transition-colors">
+                    ← Volver a Resultados
+                  </button>
                 )}
-                {resultsZone !== 'all' && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 dark:bg-[var(--color-ak-borgona-light)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25 dark:border-[var(--color-ak-borgona-light)]/25">
-                    Zona: {resultsZone}
-                    <button onClick={() => setResultsZone('all')} className="hover:text-white ml-1">&times;</button>
-                  </span>
-                )}
-                {resultsCategory !== 'all' && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 dark:bg-[var(--color-ak-borgona-light)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25 dark:border-[var(--color-ak-borgona-light)]/25">
-                    {allData.topCategories?.find(c => c.categoryId === resultsCategory)?.categoryName || resultsCategory}
-                    <button onClick={() => setResultsCategory('all')} className="hover:text-white ml-1">&times;</button>
-                  </span>
-                )}
-                <button onClick={handleResultsClearFilter} className="text-sm text-[var(--text-secondary)] hover:text-[var(--color-ak-dorado)] underline underline-offset-2">
-                  Limpiar filtros
-                </button>
+                <span className="text-sm text-[var(--text-muted)]">
+                  {showBackButton ? `Cargando ${selectedDayOfWeek?.fullLabel}...` : 'Cargando datos...'}
+                </span>
               </div>
+              <div className="h-16 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
+              <div className="grid grid-cols-3 gap-3">
+                <div className="h-24 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
+                <div className="h-24 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
+                <div className="h-24 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
+              </div>
+              <div className="h-64 bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl animate-pulse" />
+            </div>
+          )
+        }
+
+        if (isError && !displayData) {
+          return (
+            <div className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 rounded-xl p-6">
+              <p className="text-sm text-red-400 text-center">{isError}</p>
+              <button onClick={() => setSelectedDayOfWeek(null)} className="mt-3 text-xs text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] hover:underline block mx-auto">
+                {showBackButton ? 'Volver a Resultados' : 'Reintentar'}
+              </button>
+            </div>
+          )
+        }
+
+        if (!displayData) return null
+
+        // Active filter pills
+        const filterPills = (
+          <div className="flex items-center gap-2 flex-wrap">
+            {selectedDayOfWeek && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] text-white text-sm font-medium">
+                Promedio: {selectedDayOfWeek.fullLabel}
+                <button onClick={() => setSelectedDayOfWeek(null)} className="hover:underline ml-1">&times;</button>
+              </span>
             )}
+            {resultsZone !== 'all' && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 dark:bg-[var(--color-ak-borgona-light)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25 dark:border-[var(--color-ak-borgona-light)]/25">
+                Zona: {resultsZone}
+                <button onClick={() => setResultsZone('all')} className="hover:text-white ml-1">&times;</button>
+              </span>
+            )}
+            {resultsCategory !== 'all' && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-ak-borgona)]/15 dark:bg-[var(--color-ak-borgona-light)]/15 text-[var(--color-ak-dorado)] text-sm font-medium border border-[var(--color-ak-borgona)]/25 dark:border-[var(--color-ak-borgona-light)]/25">
+                {displayData.topCategories?.find(c => c.categoryId === resultsCategory)?.categoryName || resultsCategory}
+                <button onClick={() => setResultsCategory('all')} className="hover:text-white ml-1">&times;</button>
+              </span>
+            )}
+            <button onClick={handleResultsClearFilter} className="text-sm text-[var(--text-secondary)] hover:text-[var(--color-ak-dorado)] underline underline-offset-2">
+              Limpiar filtros
+            </button>
+          </div>
+        )
+
+        return (
+          <>
+            {filterPills}
 
             <AnimatedCard delay={0} className="p-0 overflow-visible">
               <div className="p-4">
-                <DayKPIBar kpis={allData.kpis} averages={undefined} isSingleDay={false} />
+                <DayKPIBar kpis={displayData.kpis} averages={undefined} isSingleDay={false} />
               </div>
             </AnimatedCard>
 
@@ -568,7 +558,7 @@ export function POSDashboardPanel() {
                   loading={resultsDrillDownLoading}
                   error={resultsDrillDownError}
                   onClose={closeResultsDrillDown}
-                  contextLabel="Resultados"
+                  contextLabel={selectedDayOfWeek ? selectedDayOfWeek.fullLabel : 'Resultados'}
                 />
               </div>
             )}
@@ -582,26 +572,26 @@ export function POSDashboardPanel() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
               <AnimatedCard delay={0.06} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
                 <ZoneRevenueChart
-                  data={allData.byZone}
+                  data={displayData.byZone}
                   selectedZone={resultsZone}
                   onZoneClick={handleResultsZoneClick}
                   onZoneDrillDown={handleResultsZoneDrillDown}
-                  unknownZone={allData.unknownZone}
+                  unknownZone={displayData.unknownZone}
                 />
               </AnimatedCard>
               <AnimatedCard delay={0.12} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
                 <HourlyRevenueChart
-                  data={allData.hourlyRevenue}
+                  data={displayData.hourlyRevenue}
                   onHourDrillDown={handleResultsHourDrillDown}
                 />
               </AnimatedCard>
               <AnimatedCard delay={0.18} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
                 <TopProductsTable
-                  data={allData.topProducts}
+                  data={displayData.topProducts}
                   onProductDrillDown={handleResultsProductDrillDown}
                   selectedCategory={resultsCategory}
-                  productsByCategory={allData.productsByCategory}
-                  selectedCategoryName={allData.topCategories?.find(c => c.categoryId === resultsCategory)?.categoryName}
+                  productsByCategory={displayData.productsByCategory}
+                  selectedCategoryName={displayData.topCategories?.find(c => c.categoryId === resultsCategory)?.categoryName}
                 />
               </AnimatedCard>
             </div>
@@ -610,24 +600,24 @@ export function POSDashboardPanel() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
               <AnimatedCard delay={0.24} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-3 sm:p-4">
                 <CategoryBreakdown
-                  data={allData.topCategories}
+                  data={displayData.topCategories}
                   selectedCategory={resultsCategory}
                   onCategoryClick={handleResultsCategoryClick}
                   onCategoryDrillDown={handleResultsCategoryDrillDown}
                   onProductDrillDown={handleResultsProductDrillDown}
-                  productsByCategory={allData.productsByCategory}
-                  totalKpiRevenue={allData.kpis.revenue}
+                  productsByCategory={displayData.productsByCategory}
+                  totalKpiRevenue={displayData.kpis.revenue}
                 />
               </AnimatedCard>
               <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
                 <TopProductByCategoryChart
-                  data={allData.topProductByCategory || []}
+                  data={displayData.topProductByCategory || []}
                   onProductDrillDown={handleResultsProductDrillDown}
                   selectedCategory={resultsCategory}
                   onCategoryDrillDown={handleResultsCategoryDrillDown}
-                  topPerformersByCategory={allData.topPerformersByCategory}
-                  bottomPerformersByCategory={allData.bottomPerformersByCategory}
-                  totalKpiRevenue={allData.kpis.revenue}
+                  topPerformersByCategory={displayData.topPerformersByCategory}
+                  bottomPerformersByCategory={displayData.bottomPerformersByCategory}
+                  totalKpiRevenue={displayData.kpis.revenue}
                 />
               </AnimatedCard>
             </div>
@@ -636,23 +626,22 @@ export function POSDashboardPanel() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
               <AnimatedCard delay={0.36} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
                 <StaffPerformanceTable
-                  data={allData.staffPerformance}
+                  data={displayData.staffPerformance}
                   onStaffDrillDown={handleResultsStaffDrillDown}
                 />
               </AnimatedCard>
               <AnimatedCard delay={0.42} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
-                <PaymentMethodsChart data={allData.paymentMethods} />
+                <PaymentMethodsChart data={displayData.paymentMethods} />
               </AnimatedCard>
             </div>
 
             {/* Category Companions */}
             <AnimatedCard delay={0.48} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
-              <CategoryCompanionsCard data={allData.categoryCompanions || []} />
+              <CategoryCompanionsCard data={displayData.categoryCompanions || []} />
             </AnimatedCard>
           </>
-          )}
-        </>
-      )}
+        )
+      })()}
 
       {/* ── Operation panel ── */}
       {data && activeTab === 'operation' && (

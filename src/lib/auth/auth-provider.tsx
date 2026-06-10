@@ -11,8 +11,6 @@ interface AuthContextType {
   isAdmin: boolean
   isHost: boolean
   isEmployee: boolean
-  roles: string[]
-  area: string | null
   adminRole: string | null
   roleLoading: boolean
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>
@@ -23,20 +21,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
 
-const ROLE_HIERARCHY = ['super_admin', 'store_admin', 'host', 'lider_area', 'colaborador', 'reservante']
-
-function primaryRole(roles: string[]): string | null {
-  for (const r of ROLE_HIERARCHY) {
-    if (roles.includes(r)) return r
-  }
-  return null
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [roles, setRoles] = useState<string[]>([])
-  const [area, setArea] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [isHost, setIsHost] = useState(false)
+  const [isEmployee, setIsEmployee] = useState(false)
+  const [adminRole, setAdminRole] = useState<string | null>(null)
   const [roleLoading, setRoleLoading] = useState(true)
 
   const supabase = createBrowserClient(
@@ -50,23 +41,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/auth/role')
       if (res.ok) {
         const data = await res.json()
-        setRoles(data.roles || [])
-        setArea(data.area || null)
+        const admin = data.role === 'store_admin' || data.role === 'super_admin'
+        const host = data.role === 'host'
+        const employee = data.role === 'lider_area' || data.role === 'colaborador' || data.role === 'reservante'
+        setIsAdmin(admin)
+        setIsHost(host)
+        setIsEmployee(employee)
+        setAdminRole(data.role)
       } else {
-        setRoles([])
-        setArea(null)
+        setIsAdmin(false)
+        setIsHost(false)
+        setIsEmployee(false)
+        setAdminRole(null)
       }
     } catch {
-      setRoles([])
-      setArea(null)
+      setIsAdmin(false)
+      setIsHost(false)
+      setIsEmployee(false)
+      setAdminRole(null)
     } finally {
       setRoleLoading(false)
     }
   }, [])
 
   const clearRole = useCallback(() => {
-    setRoles([])
-    setArea(null)
+    setIsAdmin(false)
+    setIsHost(false)
+    setIsEmployee(false)
+    setAdminRole(null)
     setRoleLoading(false)
   }, [])
 
@@ -113,8 +115,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (error) return { error: error.message }
 
+    // If session exists already, user is auto-confirmed and logged in
     if (data.session) return { error: null }
 
+    // No session = email confirmation required. Auto-confirm via API.
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
@@ -122,9 +126,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, name: fullName }),
       })
       if (res.ok) {
+        // Auto-confirm succeeded, try login
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
         if (!signInError) return { error: null }
       }
+      // Retry after short delay (user might not be in listUsers yet)
       await new Promise(r => setTimeout(r, 2000))
       const res2 = await fetch('/api/auth', {
         method: 'POST',
@@ -157,13 +163,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = '/'
   }
 
-  // Derived booleans (backward compatible)
-  const isAdmin = roles.includes('super_admin') || roles.includes('store_admin')
-  const isHost = roles.includes('host')
-  const isEmployee = roles.includes('lider_area') || roles.includes('colaborador') || roles.includes('reservante')
-
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, isHost, isEmployee, roles, area, adminRole: primaryRole(roles), roleLoading, signInWithEmail, signUpWithEmail, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, isHost, isEmployee, adminRole, roleLoading, signInWithEmail, signUpWithEmail, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   )

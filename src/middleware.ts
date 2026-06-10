@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect /admin routes — store_admin, super_admin, host, or lider_area
+  // Protect /admin routes — admin only
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
@@ -42,9 +42,10 @@ export async function middleware(request: NextRequest) {
       .eq('auth_user_id', user.id)
       .eq('restaurant_id', RESTAURANT_ID)
       .eq('is_active', true)
-      .in('role', ['store_admin', 'super_admin', 'host', 'lider_area'])
+      .in('role', ['store_admin', 'super_admin'])
+      .single()
 
-    if (!roleData || roleData.length === 0) {
+    if (!roleData) {
       return NextResponse.redirect(new URL('/host', request.url))
     }
   }
@@ -65,8 +66,9 @@ export async function middleware(request: NextRequest) {
       .eq('restaurant_id', RESTAURANT_ID)
       .eq('is_active', true)
       .in('role', ['store_admin', 'super_admin', 'host'])
+      .single()
 
-    if (!roleData || roleData.length === 0) {
+    if (!roleData) {
       return NextResponse.redirect(new URL('/perfil', request.url))
     }
   }
@@ -95,8 +97,9 @@ export async function middleware(request: NextRequest) {
       .eq('restaurant_id', RESTAURANT_ID)
       .eq('is_active', true)
       .in('role', ['lider_area', 'colaborador', 'reservante', 'store_admin', 'super_admin'])
+      .single()
 
-    if (!roleData || roleData.length === 0) {
+    if (!roleData) {
       return NextResponse.redirect(new URL('/perfil', request.url))
     }
   }

@@ -147,8 +147,32 @@ function emptySlide(title: string): string {
 
 // ═══════════════════════════════════════════════════════════════
 // CSS — Claude Design (Source Serif 4 + Inter + Caveat)
+// NIVEL 1 FIXES APPLIED:
+// 1. @import Google Fonts INSIDE <style> so renderer extracts it
+// 2. Explicit @font-face fallbacks with font-display: swap
+// 3. All font-family references match exactly what @font-face registers
 // ═══════════════════════════════════════════════════════════════
 const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@300;400;500;600;700&family=Caveat:wght@400;500;600&display=swap');
+
+/* ── @font-face FALLBACKS (Nivel 1 Fix 1.4) ──
+   Solo para Inter y Caveat. Source Serif 4 se carga via Google Fonts @import
+   con display=swap + stack CSS fallback (Georgia, serif).
+   NOTA: No definir @font-face para Source Serif 4 para evitar conflicto de nombres
+   entre Google Fonts (sin comillas) y fallback (con comillas). */
+@font-face {
+  font-family: Inter;
+  src: local('Arial'), local('Helvetica'), local('system-ui');
+  font-weight: 300 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: Caveat;
+  src: local('Comic Sans MS'), local('cursive');
+  font-weight: 400 600;
+  font-display: swap;
+}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Inter",system-ui,sans-serif;background:#0D0D0C;color:#F0EDE8;line-height:1.4;-webkit-font-smoothing:antialiased;width:450px}
 
@@ -551,5 +575,5 @@ export function generatePDFHtmlV6(input: PDFGeneratorInput): string {
       .replace('class="slide slide-cover"', 'class="slide slide-cover" data-index="' + i + '"')
   }).join('\n')
 
-  return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@300;400;500;600;700&family=Caveat:wght@400;500;600&display=swap"><style>' + CSS + '</style></head><body>' + slidesHtml + '</body></html>'
+  return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>' + CSS + '</style></head><body>' + slidesHtml + '</body></html>'
 }

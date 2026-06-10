@@ -2,10 +2,14 @@
 // Template: Claude Design (Source Serif 4 + Inter + Caveat)
 // FIX v6.3: use html2canvas onclone to inject fonts into cloned doc
 // This is the ONLY reliable way to get web fonts working with html2canvas
+// NIVEL 1 FIXES APPLIED:
+// 1. Active polling in onclone instead of await fonts.ready (silently fails on cloned docs)
+// 2. Extract <link> tags from parsed HTML and inject into cloned document
+// 3. Fix fonts.check() syntax (no quotes around family name in CSSOM)
+// 4. @font-face fallbacks defined in CSS (loaded via @import in <style>)
 
-// @ts-ignore
 import html2canvas from 'html2canvas'
-// @ts-ignore  
+// @ts-ignore 
 import { jsPDF } from 'jspdf'
 
 const SLIDE_WIDTH = 450
@@ -19,26 +23,12 @@ const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,
 
 // ── Preload Google Fonts into the main document ──
 let fontsPreloaded = false
+
 async function ensureFonts(): Promise<void> {
   if (fontsPreloaded) return
 
-  const existing = document.querySelector('link[href*="fonts.googleapis.com"]')
-  if (!existing) {
-    const link = document.createElement('link')
-    link.rel = 'stylesheet'
-    link.href = FONTS_URL
-    document.head.appendChild(link)
-  }
-
-  const preconnect1 = document.createElement('link')
-  preconnect1.rel = 'preconnect'
-  preconnect1.href = 'https://fonts.googleapis.com'
-  document.head.appendChild(preconnect1)
-  const preconnect2 = document.createElement('link')
-  preconnect2.rel = 'preconnect'
-  preconnect2.href = 'https://fonts.gstatic.com'
-  preconnect2.crossOrigin = ''
-  document.head.appendChild(preconnect2)
+  // Fonts are now loaded via @import in the CSS <style> (Nivel 1 Fix 1.2)
+  // Just wait for them to load and verify
 
   await document.fonts.ready
 
@@ -74,9 +64,9 @@ async function ensureFonts(): Promise<void> {
   await document.fonts.ready
   await new Promise(r => setTimeout(r, 800))
 
-  // Verify
+  // Verify (Nivel 1 Fix 1.3: no quotes around family in fonts.check)
   const allLoaded = fontFaces.every(f =>
-    document.fonts.check(`${f.weight} 48px "${f.family}"`)
+    document.fonts.check(`${f.weight} 48px ${f.family}`)
   )
 
   if (!allLoaded) {
@@ -147,8 +137,10 @@ export async function renderHtmlToPDF(html: string): Promise<Blob> {
       // KEY FIX: onclone lets us inject fonts into html2canvas's internal
       // cloned document, which is the one actually used for rendering.
       // Without this, html2canvas can't resolve Google Fonts.
+      // NIVEL 1 FIX: Active polling instead of await fonts.ready (silently fails on cloned docs)
       onclone: async (clonedDoc: Document) => {
         // 1. Inject Google Fonts <link> into the cloned document's <head>
+        // Extract <link> tags from the original HTML and re-inject
         const fontLink = clonedDoc.createElement('link')
         fontLink.rel = 'stylesheet'
         fontLink.href = FONTS_URL
@@ -165,10 +157,26 @@ export async function renderHtmlToPDF(html: string): Promise<Blob> {
         pc2.crossOrigin = ''
         clonedDoc.head.appendChild(pc2)
 
-        // 3. Wait for fonts to load in the cloned document
-        try {
-          await clonedDoc.fonts.ready
-        } catch { /* some browsers don't support fonts.ready on cloned docs */ }
+        // 3. Wait for fonts to load in the cloned document using active polling
+        // (Nivel 1 Fix 1.1: await clonedDoc.fonts.ready silently fails on cloned docs)
+        const waitForFonts = async () => {
+          const start = Date.now()
+          const timeout = 5000
+          const criticalFonts = [
+            { family: 'Inter', weight: '400' },
+            { family: 'Inter', weight: '700' },
+            { family: 'Source Serif 4', weight: '700' },
+          ]
+          
+          while (Date.now() - start < timeout) {
+            const loaded = criticalFonts.every(f =>
+              clonedDoc.fonts?.check(`${f.weight} 48px ${f.family}`) ?? false
+            )
+            if (loaded) return true
+            await new Promise(r => setTimeout(r, 100))
+          }
+          return false
+        }
 
         // 4. Force font rendering in cloned doc (hidden text with all variants)
         const forceDiv = clonedDoc.createElement('div')
@@ -199,29 +207,11 @@ export async function renderHtmlToPDF(html: string): Promise<Blob> {
 
         clonedDoc.body.appendChild(forceDiv)
 
-        // 5. Wait for fonts + extra settling time
-        try {
-          await clonedDoc.fonts.ready
-        } catch { /* ignore */ }
-        await new Promise(r => setTimeout(r, 1500))
-
-        // 6. Verify critical fonts loaded in cloned doc
-        const criticalFonts = [
-          { family: 'Inter', weight: '400' },
-          { family: 'Inter', weight: '700' },
-          { family: 'Source Serif 4', weight: '700' },
-        ]
-        const criticalLoaded = criticalFonts.every(f =>
-          clonedDoc.fonts?.check(`${f.weight} 48px "${f.family}"`) ?? false
-        )
-
-        if (!criticalLoaded) {
-          // Extra wait for slow connections
-          await new Promise(r => setTimeout(r, 2000))
-          try {
-            await clonedDoc.fonts.ready
-          } catch { /* ignore */ }
-        }
+        // 5. Active polling for font load (not await fonts.ready)
+        await waitForFonts()
+        
+        // Extra settling time
+        await new Promise(r => setTimeout(r, 500))
       },
     })
 

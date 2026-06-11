@@ -544,7 +544,7 @@ function HostTableCard({
         )}
 
         {/* Seated timer — shows elapsed time when customer is seated */}
-        {table.current_reservation?.status === 'seated' && table.current_reservation.seated_at && (
+        {table.current_reservation?.status === 'seated' && (
           <SeatedTimer reservation={table.current_reservation} compact />
         )}
 

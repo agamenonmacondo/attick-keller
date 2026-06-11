@@ -9,8 +9,9 @@ import { whatsappLink, emailLink } from '@/lib/utils/whatsapp'
 import { SERVICE_HOURS } from '@/lib/utils/serviceHours'
 import { StatusBadge } from '../shared/StatusBadge'
 import { SectionHeading } from '../shared/SectionHeading'
-import { AuditTimeline } from './AuditTimeline'
-import { InternalNotesSection } from './InternalNotesSection'
+import { AuditTimeline } from '@/components/shared/reservations/AuditTimeline'
+import { NotesPanel } from '@/components/shared/reservations/NotesPanel'
+import { SeatedTimer } from '@/components/shared/reservations/SeatedTimer'
 
 interface Zone {
   id: string
@@ -28,6 +29,7 @@ interface ReservationDetailItem {
   special_requests: string | null
   internal_notes?: string | null
   created_at?: string
+  seated_at?: string | null
   customers: {
     id: string
     full_name: string | null
@@ -361,6 +363,11 @@ export function ReservationDetail({
                     {reservation.party_size} personas
                   </dd>
                 </div>
+                {reservation.status === 'seated' && reservation.seated_at && (
+                  <div className="pt-1">
+                    <SeatedTimer reservation={reservation as any} />
+                  </div>
+                )}
                 {reservation.special_requests && (
                   <div className="pt-1">
                     <dt className="text-[var(--text-secondary)]">Notas</dt>
@@ -402,7 +409,8 @@ export function ReservationDetail({
           {!editing && (
             <>
               <div className="border-t border-[var(--border-default)] pt-4">
-                <InternalNotesSection
+                <NotesPanel
+                  variant="admin"
                   reservationId={reservation.id}
                   internalNotes={internalNotes}
                   onNotesUpdate={setInternalNotes}
@@ -410,7 +418,7 @@ export function ReservationDetail({
               </div>
 
               <div className="border-t border-[var(--border-default)] pt-4">
-                <AuditTimeline reservationId={reservation.id} reservationCreatedAt={reservation.created_at as string | undefined} />
+                <AuditTimeline variant="admin" reservationId={reservation.id} reservationCreatedAt={reservation.created_at as string | undefined} />
               </div>
             </>
           )}

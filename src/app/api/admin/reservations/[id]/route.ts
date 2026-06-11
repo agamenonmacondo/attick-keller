@@ -46,6 +46,10 @@ export async function PATCH(
     if (status === 'seated') {
       updateData.seated_at = new Date().toISOString()
     } else if (status === 'completed') {
+      // Keep seated_at for reporting — don't null it
+    }
+    // Clear seated_at when reverting from seated to a pre-seated state
+    if (['pending', 'confirmed', 'cancelled', 'no_show'].includes(status) && reservation.status === 'seated') {
       updateData.seated_at = null
     }
   }

@@ -13,7 +13,7 @@ import { getUrgencyBadge } from '@/lib/utils/urgency'
 import type { ReservationTimeline } from '@/lib/hooks/useHostOccupancy'
 import type { AssignmentResult } from '@/lib/algorithms/table-assignment'
 import { ReservationDetail } from './ReservationDetail'
-import { SeatedTimer } from './SeatedTimer'
+import { SeatedTimer } from '@/components/shared/reservations/SeatedTimer'
 import {
   Table,
   Users,

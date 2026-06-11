@@ -12,9 +12,9 @@ import { Check, X, Armchair, CalendarX, Warning, Clock, WhatsappLogo, EnvelopeSi
 import { formatTime12 } from '@/lib/utils/format-time'
 import { ServiceFilter } from '../admin/reservations/ServiceFilter'
 import { getServiceType, SERVICE_FILTERS, type ServiceType } from '@/lib/utils/serviceHours'
-import { HostAuditTimeline } from './HostAuditTimeline'
-import { HostNotesPanel } from './HostNotesPanel'
-import { SeatedTimer } from './SeatedTimer'
+import { AuditTimeline } from '@/components/shared/reservations/AuditTimeline'
+import { NotesPanel } from '@/components/shared/reservations/NotesPanel'
+import { SeatedTimer } from '@/components/shared/reservations/SeatedTimer'
 
 const SPRING = { stiffness: 100, damping: 20, mass: 1 }
 
@@ -348,10 +348,11 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                     )}
 
                                     {/* Bitacora */}
-                                    <HostAuditTimeline reservationId={id} />
+                                    <AuditTimeline variant="host" reservationId={id} reservationCreatedAt={r.created_at as string | undefined} />
 
                                     {/* Notas del equipo */}
-                                    <HostNotesPanel
+                                    <NotesPanel
+                                      variant="host"
                                       reservationId={id}
                                       internalNotes={notesMap[id] ?? (r.internal_notes as string) ?? ''}
                                       onNotesUpdate={(val) => setNotesMap(prev => ({ ...prev, [id]: val }))}

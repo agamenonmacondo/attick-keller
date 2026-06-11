@@ -117,7 +117,7 @@ export function NotesPanel({ variant, reservationId, internalNotes, onNotesUpdat
       const res = await fetch(`/api/admin/reservations/${reservationId}/internal-notes`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ internal_notes: internalNotes }),
+        body: JSON.stringify({ internal_notes: internalNotes, author_name: config.authorName }),
       })
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}))

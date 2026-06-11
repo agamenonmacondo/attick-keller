@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { logReservationChange } from '@/lib/utils/reservation-logger'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -11,6 +12,9 @@ const RESTAURANT_ID = 'a0000000-0000-0000-0000-000000000001'
  * POST /api/admin/reservation-notes
  * Add a note to a reservation.
  * Body: { reservation_id, note, author_name, author_id? }
+ * 
+ * DELETE /api/admin/reservation-notes?id=xxx
+ * Delete a specific note. Logs the deletion to the audit trail.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -80,22 +84,13 @@ export async function POST(request: NextRequest) {
   const savedNote = await response.json()
 
   // Also log this in the audit trail
-  await fetch(`${SUPABASE_URL}/rest/v1/reservation_logs`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
-      Prefer: 'return=minimal',
-    },
-    body: JSON.stringify({
-      reservation_id,
-      action: 'internal_note_added',
-      field_name: 'internal_notes',
-      new_value: note,
-      performed_by: author_id || null,
-      performed_by_name: author_name,
-    }),
+  await logReservationChange({
+    reservation_id,
+    action: 'internal_note_added',
+    field_name: 'internal_notes',
+    new_value: note,
+    performed_by: author_id || null,
+    performed_by_name: author_name,
   })
 
   return NextResponse.json(savedNote[0] || savedNote, { status: 201 })
@@ -112,6 +107,25 @@ export async function DELETE(request: NextRequest) {
     )
   }
 
+  // First, fetch the note to get its details for the audit log
+  const noteRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/reservation_notes?id=eq.${id}&select=reservation_id,note,author_name`,
+    {
+      headers: {
+        apikey: SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      },
+    }
+  )
+
+  let noteInfo: { reservation_id?: string; note?: string; author_name?: string } | null = null
+  if (noteRes.ok) {
+    const notes = await noteRes.json()
+    if (Array.isArray(notes) && notes.length > 0) {
+      noteInfo = notes[0]
+    }
+  }
+
   const response = await fetch(
     `${SUPABASE_URL}/rest/v1/reservation_notes?id=eq.${id}`,
     {
@@ -126,6 +140,17 @@ export async function DELETE(request: NextRequest) {
   if (!response.ok) {
     const error = await response.text()
     return NextResponse.json({ error }, { status: response.status })
+  }
+
+  // Log the deletion to the audit trail
+  if (noteInfo?.reservation_id) {
+    await logReservationChange({
+      reservation_id: noteInfo.reservation_id,
+      action: 'internal_note_deleted',
+      field_name: 'internal_notes',
+      old_value: noteInfo.note || null,
+      performed_by_name: noteInfo.author_name || 'Sistema',
+    })
   }
 
   return NextResponse.json({ success: true })

@@ -14,6 +14,8 @@ export type ReservationAction =
   | 'zone_changed'
   | 'note_added'
   | 'internal_note_added'
+  | 'internal_note_edited'
+  | 'internal_note_deleted'
   | 'cancelled'
   | 'no_show'
   | 'seated'
@@ -131,6 +133,8 @@ export const ACTION_LABELS: Record<string, string> = {
   zone_changed: 'Zona cambiada',
   note_added: 'Nota agregada',
   internal_note_added: 'Nota interna agregada',
+  internal_note_edited: 'Notas internas editadas',
+  internal_note_deleted: 'Nota interna eliminada',
   cancelled: 'Reserva cancelada',
   no_show: 'No se presentó',
   seated: 'Cliente sentado',
@@ -152,6 +156,8 @@ export const ACTION_ICONS: Record<string, string> = {
   zone_changed: 'MapPin',
   note_added: 'NotePencil',
   internal_note_added: 'LockKey',
+  internal_note_edited: 'NotePencil',
+  internal_note_deleted: 'Trash',
   cancelled: 'XCircle',
   no_show: 'UserMinus',
   seated: 'Chair',

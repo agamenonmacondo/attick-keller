@@ -18,6 +18,7 @@ import {
   MapPin,
   LockSimple,
   LockSimpleOpen,
+  Trash,
   CaretDown,
   CaretUp,
 } from '@phosphor-icons/react/dist/ssr'
@@ -27,7 +28,7 @@ type PhosphorIcon = typeof Clock
 const ICON_MAP: Record<string, PhosphorIcon> = {
   CalendarPlus, ArrowsClockwise, Chair, Clock, Users, NotePencil,
   LockKey, XCircle, UserMinus, CheckCircle, PersonSimpleWalk,
-  MapPin, LockSimple, LockSimpleOpen,
+  MapPin, LockSimple, LockSimpleOpen, Trash,
 }
 
 function formatTime(iso: string): string {

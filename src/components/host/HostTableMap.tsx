@@ -13,6 +13,7 @@ import { getUrgencyBadge } from '@/lib/utils/urgency'
 import type { ReservationTimeline } from '@/lib/hooks/useHostOccupancy'
 import type { AssignmentResult } from '@/lib/algorithms/table-assignment'
 import { ReservationDetail } from './ReservationDetail'
+import { SeatedTimer } from './SeatedTimer'
 import {
   Table,
   Users,
@@ -695,6 +696,7 @@ function TimelinePopover({
           </h4>
           <div className="bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/10 rounded-lg border border-[var(--color-ak-borgona)]/20 dark:border-[var(--color-ak-borgona-light)]/20 p-3 space-y-2">
             <ReservationDetail reservation={currentRes} />
+            <SeatedTimer reservation={currentRes} compact />
             <div className="flex gap-1.5 pt-1">
               {currentRes.status === 'seated' && onStatusChange && (
                 <button

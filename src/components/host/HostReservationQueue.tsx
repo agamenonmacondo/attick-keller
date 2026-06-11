@@ -14,6 +14,7 @@ import { ServiceFilter } from '../admin/reservations/ServiceFilter'
 import { getServiceType, SERVICE_FILTERS, type ServiceType } from '@/lib/utils/serviceHours'
 import { HostAuditTimeline } from './HostAuditTimeline'
 import { HostNotesPanel } from './HostNotesPanel'
+import { SeatedTimer } from './SeatedTimer'
 
 const SPRING = { stiffness: 100, damping: 20, mass: 1 }
 
@@ -273,6 +274,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                             >
                               <span className="text-xs text-[var(--text-secondary)]">{timeDisplay}</span>
                               <StatusBadge status={status} />
+                              {status === 'seated' && <SeatedTimer reservation={r as any} compact />}
                               {isUrgent && (
                                 <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)] bg-[var(--color-ak-ambar)]/10 dark:bg-[var(--color-ak-ambar-light)]/10 px-2 py-0.5 rounded-full"
                                 >
@@ -360,6 +362,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                         <span>Creada: {formatCreatedAt(r.created_at as string | null)}</span>
                                       </div>
                                     )}
+                                    {status === 'seated' && <SeatedTimer reservation={r as any} />}
                                   </div>
                                 </motion.div>
                               )}

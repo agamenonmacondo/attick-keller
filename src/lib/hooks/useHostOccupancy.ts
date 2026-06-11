@@ -18,6 +18,7 @@ interface ReservationTimeline {
   time_start: string
   time_end: string
   created_at: string | null
+  seated_at: string | null
   is_current: boolean
   is_past: boolean
   is_upcoming: boolean

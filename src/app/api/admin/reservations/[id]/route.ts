@@ -42,6 +42,12 @@ export async function PATCH(
       return NextResponse.json({ error: `Transicion no permitida: ${reservation.status} → ${status}` }, { status: 400 })
     }
     updateData.status = status
+    // Track seated_at timestamp
+    if (status === 'seated') {
+      updateData.seated_at = new Date().toISOString()
+    } else if (status === 'completed') {
+      updateData.seated_at = null
+    }
   }
 
   // Host role restrictions: can only update status and table_id

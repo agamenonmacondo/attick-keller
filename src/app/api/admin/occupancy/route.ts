@@ -81,6 +81,7 @@ export async function GET(request: NextRequest) {
         special_requests: (r as any).special_requests || null,
         time_start: r.time_start,
         time_end: r.time_end,
+        created_at: r.created_at,
         is_current,
         is_past,
         is_upcoming,

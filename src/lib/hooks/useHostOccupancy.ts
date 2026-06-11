@@ -17,10 +17,10 @@ interface ReservationTimeline {
   special_requests: string | null
   time_start: string
   time_end: string
+  created_at: string | null
   is_current: boolean
   is_past: boolean
   is_upcoming: boolean
-  created_at?: string
   internal_notes?: string | null
 }
 

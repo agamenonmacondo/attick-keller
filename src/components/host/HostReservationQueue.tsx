@@ -8,7 +8,7 @@ import { EmptyState } from '../admin/shared/EmptyState'
 import { ConfirmDialog } from '../admin/shared/ConfirmDialog'
 import { SectionHeading } from '../admin/shared/SectionHeading'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
-import { Check, X, Armchair, CalendarX, Warning, Clock, WhatsappLogo, EnvelopeSimple, Note, CaretDown, CaretUp } from '@phosphor-icons/react'
+import { Check, X, Armchair, CalendarX, Warning, Clock, WhatsappLogo, EnvelopeSimple, Note, CaretDown, CaretUp, CalendarPlus } from '@phosphor-icons/react'
 import { formatTime12 } from '@/lib/utils/format-time'
 import { ServiceFilter } from '../admin/reservations/ServiceFilter'
 import { getServiceType, SERVICE_FILTERS, type ServiceType } from '@/lib/utils/serviceHours'
@@ -47,6 +47,24 @@ const HOST_ACTION_MAP: Record<string, Array<{ status: string; label: string; var
 }
 
 const DESTRUCTIVE_STATUSES = ['cancelled', 'no_show']
+
+/** Format an ISO timestamp into Colombia-localized short date+time */
+function formatCreatedAt(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  try {
+    const d = new Date(iso + (iso.endsWith('Z') || iso.includes('+') ? '' : 'Z'))
+    return d.toLocaleString('es-CO', {
+      timeZone: 'America/Bogota',
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    })
+  } catch {
+    return null
+  }
+}
 
 interface HostReservationQueueProps {
   reservations: Array<Record<string, unknown>>
@@ -336,6 +354,12 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                       internalNotes={notesMap[id] ?? (r.internal_notes as string) ?? ''}
                                       onNotesUpdate={(val) => setNotesMap(prev => ({ ...prev, [id]: val }))}
                                     />
+                                    {formatCreatedAt(r.created_at as string | null) && (
+                                      <div className="flex items-center gap-1.5 text-xs text-[#8D6E63]">
+                                        <CalendarPlus size={12} className="shrink-0" />
+                                        <span>Creada: {formatCreatedAt(r.created_at as string | null)}</span>
+                                      </div>
+                                    )}
                                   </div>
                                 </motion.div>
                               )}

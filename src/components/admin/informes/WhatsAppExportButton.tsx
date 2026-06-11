@@ -339,14 +339,16 @@ function generateWhatsAppText(
     }
   }
 
-  // ── Desglose por producto ──
+  // ── Desglose por producto (top 20 para WhatsApp) ──
   if (margins) {
     const allP = margins.todos || []
     if (allP.length > 0) {
       const byRevenue = [...allP].sort((a: any, b: any) => (b.revenue || 0) - (a.revenue || 0))
-      lines.push(`📋 DESGLOSE POR PRODUCTO (${allP.length} productos)`)
+      const MAX_PRODUCTS = 20
+      const showing = Math.min(byRevenue.length, MAX_PRODUCTS)
+      lines.push(`📋 TOP ${showing} DE ${allP.length} PRODUCTOS`)
       lines.push('')
-      for (const p of byRevenue) {
+      for (const p of byRevenue.slice(0, MAX_PRODUCTS)) {
         const name = p.product_name || '?'
         const rev = p.revenue || 0
         const qty = p.quantity_sold || 0
@@ -356,6 +358,10 @@ function generateWhatsAppText(
         const flag = mPct >= 75 ? ' 🟢' : mPct >= 50 ? ' 🟡' : mPct < 30 ? ' 🔴' : ''
         const ticket = qty > 0 ? fmtMoney(rev / qty) : '-'
         lines.push(`  • ${name}${catTag}: ${fmtMoney(rev)} | ${qty}u | ticket ${ticket} | margen ${fmtPct(mPct)}${flag}`)
+      }
+      if (byRevenue.length > MAX_PRODUCTS) {
+        lines.push('')
+        lines.push(`  ── y ${byRevenue.length - MAX_PRODUCTS} productos más (ver PDF para detalle) ──`)
       }
       lines.push('')
     }

@@ -1,34 +1,29 @@
 /**
  * Entry point: generatePDF(data) → Promise<Blob>
  * PDF vectorial puro con jsPDF — Dark Claude Design
- * 8 slides, 520×800px equivalent, Helvetica nativa
+ * 4 slides ejecutivas: Portada → Quién puso la plata → Bajo la meta → Para la junta
+ * Diseñado para Felipe: 90 segundos de lectura, decisiones claras.
  */
-
 import { jsPDF } from 'jspdf'
 import { AllData, SlideAnalysisV2 } from './types'
-import { renderPortada } from './slides/01-portada'
-import { renderMetricas } from './slides/02-metricas'
-import { renderDrena } from './slides/03-drena'
-import { renderImportan } from './slides/04-importan'
-import { renderComposicion } from './slides/05-composicion'
-import { renderEstrellasLastre } from './slides/06-estrellas-lastre'
-import { renderInsights } from './slides/07-insights'
-import { renderJunta } from './slides/08-junta'
+import { renderPortada } from './slides/s1-portada'
+import { renderQuienPuso } from './slides/s2-quien-puso'
+import { renderBajoMeta } from './slides/s3-bajo-meta'
+import { renderJunta } from './slides/s4-junta'
 
 export type { AllData } from './types'
 
 interface GeneratorInput {
-  data: any        // raw API data (same as v6)
+  data: any
   from: string
   to: string
-  margins: any     // margins data
+  margins: any
   analysis: SlideAnalysisV2 | null
 }
 
 export async function generatePDF(input: GeneratorInput): Promise<Blob> {
   const { data, from, to, margins, analysis } = input
 
-  // Build AllData from v6-compatible inputs
   const allData: AllData = {
     from,
     to,
@@ -52,6 +47,7 @@ export async function generatePDF(input: GeneratorInput): Promise<Blob> {
     categories: margins?.resumen_ejecutivo?.categorias ?? [],
     importan: margins?.importan ?? [],
     drenan: margins?.drenan ?? [],
+    todos: margins?.todos ?? [],
     analysis,
     zones: data?.zones ?? [],
     payments: data?.payments ?? [],
@@ -64,34 +60,18 @@ export async function generatePDF(input: GeneratorInput): Promise<Blob> {
   const pageW = 210
   const pageH = 297
 
-  // Slide 1: Portada (borgona)
+  // Slide 1: Portada Ejecutiva — Número grande + KPIs + headline
   renderPortada(doc, allData, pageW, pageH)
 
-  // Slide 2: Métricas clave
+  // Slide 2: ¿Quién puso la plata? — Top 7 por margen bruto
   doc.addPage()
-  renderMetricas(doc, allData, pageW, pageH)
+  renderQuienPuso(doc, allData, pageW, pageH)
 
-  // Slide 3: Lo que drena
+  // Slide 3: ¿Qué está bajo la meta? — Productos con margen < 30% y ventas reales
   doc.addPage()
-  renderDrena(doc, allData, pageW, pageH)
+  renderBajoMeta(doc, allData, pageW, pageH)
 
-  // Slide 4: Lo que importa (Top 7)
-  doc.addPage()
-  renderImportan(doc, allData, pageW, pageH)
-
-  // Slide 5: Composición del margen
-  doc.addPage()
-  renderComposicion(doc, allData, pageW, pageH)
-
-  // Slide 6: Estrellas vs Lastre
-  doc.addPage()
-  renderEstrellasLastre(doc, allData, pageW, pageH)
-
-  // Slide 7: Datos que importan (insights)
-  doc.addPage()
-  renderInsights(doc, allData, pageW, pageH)
-
-  // Slide 8: Para la junta + mensaje al equipo
+  // Slide 4: Para la junta — 3 jugadas accionables
   doc.addPage()
   renderJunta(doc, allData, pageW, pageH)
 

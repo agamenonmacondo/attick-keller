@@ -98,6 +98,7 @@ export interface AllData {
   categories: CategorySummary[]
   importan: ProductMargin[]
   drenan: ProductMargin[]
+  todos: ProductMargin[]
   analysis: SlideAnalysisV2 | null
   daily: DailyData[]
   comparison?: { kpis: KPIData } | null

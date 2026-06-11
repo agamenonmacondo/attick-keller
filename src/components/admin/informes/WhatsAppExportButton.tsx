@@ -339,6 +339,28 @@ function generateWhatsAppText(
     }
   }
 
+  // ── Desglose por producto ──
+  if (margins) {
+    const allP = margins.todos || []
+    if (allP.length > 0) {
+      const byRevenue = [...allP].sort((a: any, b: any) => (b.revenue || 0) - (a.revenue || 0))
+      lines.push(`📋 DESGLOSE POR PRODUCTO (${allP.length} productos)`)
+      lines.push('')
+      for (const p of byRevenue) {
+        const name = p.product_name || '?'
+        const rev = p.revenue || 0
+        const qty = p.quantity_sold || 0
+        const mPct = p.margin_pct || 0
+        const cat = p.macro_category || p.category_name || ''
+        const catTag = cat ? ` [${cat}]` : ''
+        const flag = mPct >= 75 ? ' 🟢' : mPct >= 50 ? ' 🟡' : mPct < 30 ? ' 🔴' : ''
+        const ticket = qty > 0 ? fmtMoney(rev / qty) : '-'
+        lines.push(`  • ${name}${catTag}: ${fmtMoney(rev)} | ${qty}u | ticket ${ticket} | margen ${fmtPct(mPct)}${flag}`)
+      }
+      lines.push('')
+    }
+  }
+
   // ── Staff (meseros) ──
   if (staffData.length > 0) {
     const top5 = [...staffData]

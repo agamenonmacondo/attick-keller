@@ -178,7 +178,7 @@ export function InformesRayoPanel() {
           </div>
         </div>
         {data && !loading && (
-          <WhatsAppExportButton data={data} from={from} to={to} kpis={data?.kpis} zones={data?.zones} payments={data?.payments} />
+          <WhatsAppExportButton data={data} from={from} to={to} kpis={data?.kpis} zones={data?.zones} payments={data?.payments} comparison={data?.comparison as { kpis: any } | null} marginsData={marginsData} />
         )}
       </div>
 

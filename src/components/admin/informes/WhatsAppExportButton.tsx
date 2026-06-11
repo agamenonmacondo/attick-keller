@@ -12,6 +12,10 @@ interface WhatsAppExportButtonProps {
   payments?: any[]
   comparison?: { kpis: any } | null
   marginsData?: any
+  staff?: any[]
+  daily?: any[]
+  clientSplit?: any[]
+  productoData?: any[]
 }
 
 function fmtMoney(n: number): string {
@@ -30,7 +34,13 @@ function fmtDate(dateStr: string): string {
   return `${parseInt(d)} ${months[parseInt(m)]} ${y}`
 }
 
-export function WhatsAppExportButton({ data, from, to, kpis, zones, payments, comparison, marginsData }: WhatsAppExportButtonProps) {
+function fmtDateShort(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-')
+  const months = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+  return `${parseInt(d)} ${months[parseInt(m)]}`
+}
+
+export function WhatsAppExportButton({ data, from, to, kpis, zones, payments, comparison, marginsData, staff, daily, clientSplit, productoData }: WhatsAppExportButtonProps) {
   const [copied, setCopied] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -40,15 +50,13 @@ export function WhatsAppExportButton({ data, from, to, kpis, zones, payments, co
     setAnalyzing(true)
 
     try {
-      // Call the LLM analysis endpoint
-      const analysisText = await fetchAnalysisAndFormat(data, from, to, kpis, zones, payments, comparison, marginsData)
+      const analysisText = await fetchAnalysisAndFormat(data, from, to, kpis, zones, payments, comparison, marginsData, staff, daily, clientSplit, productoData)
 
       try {
         await navigator.clipboard.writeText(analysisText)
         setCopied(true)
         setTimeout(() => setCopied(false), 2500)
       } catch {
-        // Fallback for older browsers
         const ta = document.createElement('textarea')
         ta.value = analysisText
         ta.style.position = 'fixed'
@@ -65,7 +73,7 @@ export function WhatsAppExportButton({ data, from, to, kpis, zones, payments, co
     } finally {
       setAnalyzing(false)
     }
-  }, [data, from, to, kpis, zones, payments, comparison, marginsData])
+  }, [data, from, to, kpis, zones, payments, comparison, marginsData, staff, daily, clientSplit, productoData])
 
   return (
     <div className="flex items-center gap-2">
@@ -80,7 +88,7 @@ export function WhatsAppExportButton({ data, from, to, kpis, zones, payments, co
         {analyzing ? (
           <>
             <Spinner size={16} className="animate-spin" />
-            Analizando...
+            Rayo analizando...
           </>
         ) : copied ? (
           <>
@@ -101,7 +109,7 @@ export function WhatsAppExportButton({ data, from, to, kpis, zones, payments, co
   )
 }
 
-// ═══ Fetch LLM analysis + format WhatsApp text ═══
+// ═══ Fetch LLM analysis + format full text ═══
 async function fetchAnalysisAndFormat(
   data: any,
   from: string,
@@ -111,18 +119,21 @@ async function fetchAnalysisAndFormat(
   payments?: any[],
   comparison?: { kpis: any } | null,
   marginsData?: any,
+  staff?: any[],
+  daily?: any[],
+  clientSplit?: any[],
+  productoData?: any[],
 ): Promise<string> {
   let analysis: any = null
 
-  // Try to get LLM analysis
   try {
     const reportData = {
       kpis: kpis || data?.kpis || {},
-      daily: data?.daily || [],
+      daily: daily || data?.daily || [],
       zones: zones || data?.zones || [],
-      staff: data?.staff || [],
+      staff: staff || data?.staff || [],
       payments: payments || data?.payments || [],
-      clientSplit: data?.clientSplit || [],
+      clientSplit: clientSplit || data?.clientSplit || [],
       topProducts: data?.topProducts || [],
       comparison: comparison || data?.comparison || null,
       period: { from, to, zone: 'all', compareFrom: '', compareTo: '' },
@@ -142,13 +153,13 @@ async function fetchAnalysisAndFormat(
       }
     }
   } catch {
-    // LLM failed — continue with rule-based generation
+    // LLM failed — continue with rule-based
   }
 
-  return generateWhatsAppText(data, from, to, kpis, zones, payments, comparison, marginsData, analysis)
+  return generateWhatsAppText(data, from, to, kpis, zones, payments, comparison, marginsData, staff, daily, clientSplit, productoData, analysis)
 }
 
-// ═══ Generate WhatsApp-formatted text ═══
+// ═══ Generate full WhatsApp text ═══
 function generateWhatsAppText(
   data: any,
   from: string,
@@ -158,6 +169,10 @@ function generateWhatsAppText(
   payments?: any[],
   comparison?: { kpis: any } | null,
   marginsData?: any,
+  staff?: any[],
+  daily?: any[],
+  clientSplit?: any[],
+  productoData?: any[],
   analysis?: any,
 ): string {
   const lines: string[] = []
@@ -167,6 +182,10 @@ function generateWhatsAppText(
   const topProducts = data?.topProducts || []
   const zoneData = zones || data?.zones || []
   const paymentData = payments || data?.payments || []
+  const staffData = staff || data?.staff || []
+  const dailyData = daily || data?.daily || []
+  const clientData = clientSplit || data?.clientSplit || []
+  const prodData = productoData || []
   const compKpi = comparison?.kpis || data?.comparison?.kpis || null
 
   // ── Header ──
@@ -181,8 +200,8 @@ function generateWhatsAppText(
   const propina = Number(kpi.propina_total ?? kpi.tip_total ?? 0)
   const personas = Number(kpi.personas ?? kpi.party_size_total ?? 0)
   const propinaPer = personas > 0 ? propina / personas : 0
+  const serviceTime = Number(kpi.avg_service_time ?? 0)
 
-  // Comparison deltas
   const cRevenue = Number(compKpi?.total_ventas ?? compKpi?.revenue ?? 0)
   const cCheques = Number(compKpi?.total_cheques ?? compKpi?.cheques ?? 0)
   const cPersonas = Number(compKpi?.personas ?? compKpi?.party_size_total ?? 0)
@@ -197,23 +216,39 @@ function generateWhatsAppText(
 
   lines.push(`💰 Ventas: ${fmtMoney(revenue)}${delta(revenue, cRevenue)}`)
   lines.push(`👥 Cheques: ${cheques.toLocaleString('es-CO')}${delta(cheques, cCheques)}`)
-  lines.push(`🎫 Ticket prom: ${fmtMoney(ticket)}${delta(ticket, cTicket)}`)
+  lines.push(`🎫 Ticket: ${fmtMoney(ticket)}${delta(ticket, cTicket)}`)
   lines.push(`🤝 Personas: ${personas.toLocaleString('es-CO')}${delta(personas, cPersonas)}`)
-  if (propina > 0) {
-    lines.push(`💸 Propina: ${fmtMoney(propina)}`)
-  }
+  if (propina > 0) lines.push(`💸 Propina: ${fmtMoney(propina)}`)
+  if (serviceTime > 0) lines.push(`⏱ Servicio: ${serviceTime.toFixed(0)} min`)
 
-  // ── Margen general ──
+  // ── Margen ──
   if (margins) {
     const allProducts = margins.todos || margins.importan || []
     if (allProducts.length > 0) {
       const totalRev = allProducts.reduce((s: number, p: any) => s + (p.revenue || 0), 0)
       const totalMB = allProducts.reduce((s: number, p: any) => s + (p.margin_bruto || 0), 0)
       const margenPct = totalRev > 0 ? (totalMB / totalRev) * 100 : 0
-      lines.push(`📊 Margen: ${fmtPct(margenPct)}`)
+      lines.push(`📊 Margen: ${fmtPct(margenPct)} (${allProducts.length} productos)`)
     }
   }
   lines.push('')
+
+  // ── Clientes nuevos vs recurrentes ──
+  if (clientData.length > 0) {
+    const newClients = clientData.find((c: any) => c.type === 'new' || c.client_type === 'new')
+    const retClients = clientData.find((c: any) => c.type === 'returning' || c.client_type === 'returning')
+    if (newClients || retClients) {
+      const newCount = Number(newClients?.count ?? newClients?.total ?? 0)
+      const retCount = Number(retClients?.count ?? retClients?.total ?? 0)
+      const total = newCount + retCount
+      if (total > 0) {
+        const newPct = ((newCount / total) * 100).toFixed(0)
+        const retPct = ((retCount / total) * 100).toFixed(0)
+        lines.push(`👤 Clientes: ${newCount} nuevos (${newPct}%) / ${retCount} recurrentes (${retPct}%)`)
+        lines.push('')
+      }
+    }
+  }
 
   // ── Zonas ──
   if (zoneData.length > 0) {
@@ -222,7 +257,8 @@ function generateWhatsAppText(
       const name = z.zone || z.derived_zone_name || '?'
       const rev = z.revenue || z.total_ventas || 0
       const chq = z.cheques || z.total_cheques || 0
-      lines.push(`  • ${name}: ${fmtMoney(rev)} (${chq} chq)`)
+      const ztkt = chq > 0 ? Math.round(rev / chq) : 0
+      lines.push(`  • ${name}: ${fmtMoney(rev)} (${chq} chq, ticket ${fmtMoney(ztkt)})`)
     }
     lines.push('')
   }
@@ -233,13 +269,13 @@ function generateWhatsAppText(
     for (const p of paymentData.slice(0, 5)) {
       const method = p.payment_method || p.metodo || p.method || '?'
       const total = p.total ?? p.amount ?? 0
-      const pct = p.pct || 0
+      const pct = p.pct ?? p.percentage ?? 0
       lines.push(`  • ${method}: ${fmtMoney(total)} (${fmtPct(pct)})`)
     }
     lines.push('')
   }
 
-  // ── Quién puso la plata ──
+  // ── Quién puso la plata (top productos con margen) ──
   if (margins) {
     const allP = margins.todos || []
     if (allP.length > 0) {
@@ -281,7 +317,7 @@ function generateWhatsAppText(
     lines.push('')
   }
 
-  // ── Categorías ──
+  // ── Categorías con margen ──
   if (margins) {
     const allP = margins.todos || []
     if (allP.length > 0) {
@@ -297,15 +333,80 @@ function generateWhatsAppText(
       lines.push('📊 CATEGORIAS')
       for (const [cat, d] of sorted) {
         const pct = d.revenue > 0 ? (d.margin_bruto / d.revenue) * 100 : 0
-        lines.push(`  • ${cat} → ${fmtMoney(d.revenue)} (${fmtPct(pct)} margen)`)
+        lines.push(`  • ${cat} → ${fmtMoney(d.revenue)} (${fmtPct(pct)} margen, ${d.count} prod)`)
       }
       lines.push('')
     }
   }
 
-  // ── LLM Analysis: Mensaje al equipo ──
+  // ── Staff (meseros) ──
+  if (staffData.length > 0) {
+    const top5 = [...staffData]
+      .sort((a: any, b: any) => (b.total_ventas ?? b.revenue ?? 0) - (a.total_ventas ?? a.revenue ?? 0))
+      .slice(0, 5)
+    if (top5.length > 0) {
+      lines.push('🧑‍🍳 STAFF')
+      for (const s of top5) {
+        const name = s.staff_name || s.name || '?'
+        const sRev = s.total_ventas ?? s.revenue ?? 0
+        const sChq = s.total_cheques ?? s.cheques ?? 0
+        lines.push(`  • ${name}: ${fmtMoney(sRev)} (${sChq} chq)`)
+      }
+      lines.push('')
+    }
+  }
+
+  // ── Tendencia diaria ──
+  if (dailyData.length > 2) {
+    const sorted = [...dailyData].sort((a: any, b: any) => {
+      const da = a.date || a.dia || ''
+      const db = b.date || b.dia || ''
+      return da.localeCompare(db)
+    })
+    const first = sorted[0]
+    const last = sorted[sorted.length - 1]
+    const firstRev = Number(first?.revenue ?? first?.total_ventas ?? 0)
+    const lastRev = Number(last?.revenue ?? last?.total_ventas ?? 0)
+
+    // Best day
+    const bestDay = sorted.reduce((best: any, d: any) => {
+      const rev = Number(d.revenue ?? d.total_ventas ?? 0)
+      return rev > (Number(best.revenue ?? best.total_ventas ?? 0)) ? d : best
+    }, sorted[0])
+    const bestRev = Number(bestDay.revenue ?? bestDay.total_ventas ?? 0)
+    const bestDate = bestDay.date ?? bestDay.dia ?? ''
+
+    lines.push('📈 TENDENCIA')
+    lines.push(`  Inicio: ${fmtMoney(firstRev)} → Fin: ${fmtMoney(lastRev)}${delta(lastRev, firstRev)}`)
+    if (bestDate) {
+      lines.push(`  Mejor día: ${fmtDateShort(bestDate)} (${fmtMoney(bestRev)})`)
+    }
+    lines.push('')
+  }
+
+  // ── Horas pico ──
+  if (prodData.length > 0) {
+    // Aggregate by hour
+    const hourly: Record<number, number> = {}
+    for (const p of prodData) {
+      const hour = Number(p.hour ?? 0)
+      const rev = Number(p.revenue ?? p.total_revenue ?? 0)
+      hourly[hour] = (hourly[hour] || 0) + rev
+    }
+    const peakHours = Object.entries(hourly)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+    if (peakHours.length > 0) {
+      lines.push('🕐 HORAS PICO')
+      for (const [h, rev] of peakHours) {
+        lines.push(`  • ${h}:00 → ${fmtMoney(rev)}`)
+      }
+      lines.push('')
+    }
+  }
+
+  // ═══ LLM Analysis ═══
   if (analysis) {
-    // slide_junta_mensaje is the key field — WhatsApp-style message from Rayo
     if (analysis.slide_junta_mensaje) {
       lines.push('━━━━━━━━━━━━━━━━━━')
       lines.push('💬 MENSAJE DE RAYO')
@@ -315,7 +416,6 @@ function generateWhatsAppText(
       lines.push('')
     }
 
-    // Insights from LLM
     if (analysis.slide_7_insights && analysis.slide_7_insights.length > 0) {
       lines.push('🔍 INSIGHTS')
       for (const ins of analysis.slide_7_insights) {
@@ -324,7 +424,6 @@ function generateWhatsAppText(
       lines.push('')
     }
 
-    // Junta recommendations
     if (analysis.slide_8_junta && analysis.slide_8_junta.length > 0) {
       lines.push('📋 PARA LA JUNTA')
       for (const j of analysis.slide_8_junta) {
@@ -333,7 +432,7 @@ function generateWhatsAppText(
       lines.push('')
     }
   } else {
-    // Fallback: generate from data without LLM
+    // ── Fallback: rule-based ──
     lines.push('━━━━━━━━━━━━━━━━━━')
     lines.push('📋 PARA LA JUNTA')
     lines.push('━━━━━━━━━━━━━━━━━━')

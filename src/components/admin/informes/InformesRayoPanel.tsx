@@ -6,7 +6,7 @@ import { useProductoHourly } from '@/lib/hooks/useProductoHourly'
 import { useProductMargins } from '@/lib/hooks/useProductMargins'
 import { MetricasClave } from './MetricasClave'
 import { RentabilidadPanel } from './RentabilidadPanel'
-import { PDFExportButton } from './PDFExportButton'
+import { WhatsAppExportButton } from './WhatsAppExportButton'
 import { InformesDashboard } from './InformesDashboard'
 import { ProductoDesgloseTable } from './ProductoDesgloseTable'
 import {
@@ -178,7 +178,7 @@ export function InformesRayoPanel() {
           </div>
         </div>
         {data && !loading && (
-          <PDFExportButton data={data} from={from} to={to} />
+          <WhatsAppExportButton data={data} from={from} to={to} kpis={data?.kpis} zones={data?.zones} payments={data?.payments} />
         )}
       </div>
 

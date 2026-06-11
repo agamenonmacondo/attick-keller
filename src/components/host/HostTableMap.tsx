@@ -543,6 +543,11 @@ function HostTableCard({
           </p>
         )}
 
+        {/* Seated timer — shows elapsed time when customer is seated */}
+        {table.current_reservation?.status === 'seated' && table.current_reservation.seated_at && (
+          <SeatedTimer reservation={table.current_reservation} compact />
+        )}
+
         {/* Next reservation preview — show when no current/upcoming customer name displayed and there's an upcoming reservation */}
         {!table.current_customer_name && nextRes && (
           <div className="flex items-center gap-1 mt-1.5 text-[10px] text-[var(--text-secondary)]">

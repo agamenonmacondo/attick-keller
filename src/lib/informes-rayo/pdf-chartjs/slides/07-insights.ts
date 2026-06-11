@@ -50,8 +50,8 @@ export function renderInsights(
     doc.setTextColor(COLORS.textSecondary)
     // Draw bullet
     doc.text('•', margin, y + 3)
-    // Draw text with word wrap
-    const cleanB = b.replace(/<[^>]+>/g, '') // strip HTML
+    // Draw text with word wrap — defensive: ensure string
+    const cleanB = (b || '').replace(/<[^>]+>/g, '') // strip HTML
     const lines = doc.splitTextToSize(cleanB, maxW - 12)
     doc.text(lines, margin + 10, y + 3)
     y += lines.length * 7 + 12

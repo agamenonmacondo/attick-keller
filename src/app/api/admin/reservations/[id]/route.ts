@@ -27,7 +27,7 @@ export async function PATCH(
 
   const { data: reservation } = await sb
     .from('reservations')
-    .select('id, status, date, time_start, time_end, party_size, special_requests, table_id')
+    .select('id, status, date, time_start, time_end, party_size, special_requests, table_id, table_combination_id')
     .eq('id', id)
     .single()
 
@@ -157,9 +157,36 @@ export async function PATCH(
 
       if (result.suggested_table_id) {
         updateData.table_id = result.suggested_table_id
+        updateData.table_combination_id = null
+      } else if (result.event_multi_zone && result.event_multi_zone.fits && result.event_multi_zone.zones.length > 1) {
+        // ─── Multi-mesa para eventos: crear table_combination dinámico ───
+        const allTableIds = result.event_multi_zone.zones.flatMap(z => z.available_table_ids)
+        const totalCap = result.event_multi_zone.combined_available
+        const zoneNames = result.event_multi_zone.zones.map(z => `${z.zone_name}(${z.zone_letter})`).join('+')
+
+        const { data: combo, error: comboErr } = await sb
+          .from('table_combinations')
+          .insert({
+            restaurant_id: RESTAURANT_ID,
+            table_ids: allTableIds,
+            combined_capacity: totalCap,
+            is_active: true,
+            name: `Evento ${effectiveParty}p — ${zoneNames}`,
+          })
+          .select('id')
+          .single()
+
+        if (!comboErr && combo) {
+          updateData.table_combination_id = combo.id
+          updateData.table_id = null
+        } else {
+          updateData.table_id = null
+          updateData.table_combination_id = null
+        }
       } else {
         // No suitable table found; clear table assignment
         updateData.table_id = null
+        updateData.table_combination_id = null
       }
     }
   }

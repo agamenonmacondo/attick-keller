@@ -139,6 +139,31 @@ export async function POST(request: NextRequest) {
     if (result.suggested_table_id) {
       tableId = result.suggested_table_id
     }
+
+    // ─── Multi-mesa para eventos: crear table_combination dinámico ───
+    let combinationId: string | null = null
+    if (result.event_multi_zone && result.event_multi_zone.fits && result.event_multi_zone.zones.length > 1) {
+      const allTableIds = result.event_multi_zone.zones.flatMap(z => z.available_table_ids)
+      const totalCap = result.event_multi_zone.combined_available
+      const zoneNames = result.event_multi_zone.zones.map(z => `${z.zone_name}(${z.zone_letter})`).join('+')
+
+      const { data: combo, error: comboErr } = await sb
+        .from('table_combinations')
+        .insert({
+          restaurant_id: RESTAURANT_ID,
+          table_ids: allTableIds,
+          combined_capacity: totalCap,
+          is_active: true,
+          name: `Evento ${party_size}p — ${zoneNames}`,
+        })
+        .select('id')
+        .single()
+
+      if (!comboErr && combo) {
+        combinationId = combo.id
+        tableId = null  // usar combination_id en vez de table_id
+      }
+    }
   }
 
   const serviceType = getServiceType(time_start)
@@ -153,12 +178,13 @@ export async function POST(request: NextRequest) {
       time_end,
       party_size,
       table_id: tableId,
+      table_combination_id: combinationId,
       status: 'confirmed',
       source: source || 'phone',
       special_requests: special_requests || null,
       service_type: serviceType,
     })
-    .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, service_type, created_at, customers(id, email, full_name, phone)')
+    .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, table_combination_id, service_type, created_at, customers(id, email, full_name, phone)')
     .single()
 
   if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
@@ -231,7 +257,7 @@ export async function GET(request: NextRequest) {
 
   let query = sb
     .from('reservations')
-    .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, created_at, seated_at, internal_notes, customers(id, email, full_name, phone), tables(id, zone_id, table_zones(id, name))', { count: 'exact' })
+    .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, table_combination_id, created_at, seated_at, internal_notes, customers(id, email, full_name, phone), tables(id, zone_id, table_zones(id, name))', { count: 'exact' })
     .eq('restaurant_id', RESTAURANT_ID)
     .order('date', { ascending: false })
     .range(from, to)

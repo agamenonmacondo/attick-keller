@@ -46,6 +46,23 @@ export async function GET(request: NextRequest) {
     if (r.table_combination_id) comboReservationMap.set(r.table_combination_id, r)
   }
 
+  // ─── Expand combo reservations to individual tables ──────────
+  // When a reservation uses a table_combination, mark ALL tables in the combo
+  // as occupied by that reservation so the map shows them correctly.
+  for (const [comboId, reservation] of comboReservationMap) {
+    const combo = combinations.find(c => c.id === comboId)
+    if (combo && Array.isArray(combo.table_ids)) {
+      for (const tableId of combo.table_ids) {
+        const arr = tableReservationsMap.get(tableId) || []
+        // Avoid duplicates if the same table is already mapped
+        if (!arr.some(r => r.id === reservation.id)) {
+          arr.push(reservation)
+          tableReservationsMap.set(tableId, arr)
+        }
+      }
+    }
+  }
+
   // ─── Helper: classify a reservation's time status ─────────────
   function classifyTime(timeStart: string, timeEnd: string) {
     const nowMins = timeToMinutes(currentTime)

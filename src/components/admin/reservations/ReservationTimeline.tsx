@@ -35,6 +35,8 @@ interface ReservationTimelineProps {
   loading: boolean
   detailId: string | null
   onSelect: (id: string | null) => void
+  onConfirm?: (id: string) => void
+  onCancel?: (id: string) => void
 }
 
 export function ReservationTimeline({
@@ -42,6 +44,8 @@ export function ReservationTimeline({
   loading,
   detailId,
   onSelect,
+  onConfirm,
+  onCancel,
 }: ReservationTimelineProps) {
   const prefersReduced = usePrefersReducedMotion()
 
@@ -172,7 +176,7 @@ export function ReservationTimeline({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation()
-                              onSelect(r.id)
+                              onConfirm ? onConfirm(r.id) : onSelect(r.id)
                             }}
                             className="flex h-6 w-6 items-center justify-center rounded bg-[var(--color-success)] text-white hover:bg-[var(--color-success)]/80 active:scale-[0.97]"
                             style={{
@@ -187,7 +191,7 @@ export function ReservationTimeline({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation()
-                              onSelect(r.id)
+                              onCancel ? onCancel(r.id) : onSelect(r.id)
                             }}
                             className="flex h-6 w-6 items-center justify-center rounded bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger)]/80 active:scale-[0.97]"
                             style={{

@@ -64,6 +64,7 @@ const ACTION_MAP: Record<
   confirmed: [
     { status: 'seated', label: 'Sentar', variant: 'primary' },
     { status: 'no_show', label: 'No asistio', variant: 'warning' },
+    { status: 'cancelled', label: 'Cancelar', variant: 'danger' },
   ],
   seated: [
     { status: 'completed', label: 'Completar', variant: 'primary' },

@@ -10,6 +10,8 @@ import { SectionHeading } from '../admin/shared/SectionHeading'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import { Check, X, Armchair, CalendarX, Warning, Clock, WhatsappLogo, EnvelopeSimple, Note, CaretDown, CaretUp, CalendarPlus } from '@phosphor-icons/react'
 import { formatTime12 } from '@/lib/utils/format-time'
+import { getColombiaTime } from '@/lib/utils/date'
+import { timeToMinutes } from '@/lib/utils/time'
 import { ServiceFilter } from '../admin/reservations/ServiceFilter'
 import { getServiceType, SERVICE_FILTERS, type ServiceType } from '@/lib/utils/serviceHours'
 import { AuditTimeline } from '@/components/shared/reservations/AuditTimeline'
@@ -38,6 +40,13 @@ const itemVariants = {
 }
 
 const HOST_ACTION_MAP: Record<string, Array<{ status: string; label: string; variant: 'primary' | 'danger' | 'warning' }>> = {
+  pending: [
+    { status: 'confirmed', label: 'Confirmar', variant: 'primary' },
+    { status: 'cancelled', label: 'Cancelar', variant: 'danger' },
+  ],
+  pre_paid: [
+    { status: 'confirmed', label: 'Confirmar', variant: 'primary' },
+  ],
   confirmed: [
     { status: 'seated', label: 'Sentar', variant: 'primary' },
     { status: 'no_show', label: 'No asistio', variant: 'warning' },
@@ -127,10 +136,10 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
     }
   }
 
-  // Filter: host only sees confirmed and seated reservations
+  // Filter: host sees pending, pre_paid, confirmed, and seated reservations
   const hostReservations = reservations.filter(r => {
     const status = r.status as string
-    return status === 'confirmed' || status === 'seated'
+    return ['pending', 'pre_paid', 'confirmed', 'seated'].includes(status)
   })
 
   // Service filter
@@ -158,9 +167,9 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
     return acc
   }, {})
 
-  const now = new Date()
-  const fifteenMin = 15 * 60 * 1000
-  const todayStr = now.toISOString().split('T')[0]
+  const colombiaNow = getColombiaTime()
+  const colombiaNowMinutes = timeToMinutes(colombiaNow)
+  const fifteenMin = 15 // minutes, not milliseconds
 
   return (
     <div className="space-y-3"
@@ -199,15 +208,15 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
               const startStr = r.time_start as string
               const endStr = r.time_end as string
               if (!startStr || !endStr) return false
-              const start = new Date(`${todayStr}T${startStr}`)
-              const end = new Date(`${todayStr}T${endStr}`)
-              return now >= start && now <= end
+              const startMin = timeToMinutes(startStr)
+              const endMin = timeToMinutes(endStr)
+              return colombiaNowMinutes >= startMin && colombiaNowMinutes <= endMin
             })
             const isUpcoming = !isNow && reservations.some(r => {
               const startStr = r.time_start as string
               if (!startStr) return false
-              const start = new Date(`${todayStr}T${startStr}`)
-              return start > now
+              const startMin = timeToMinutes(startStr)
+              return startMin > colombiaNowMinutes
             })
             
             return (
@@ -248,10 +257,10 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                     const svcLabel = SERVICE_FILTERS.find(f => f.id === svc)?.label ?? ''
 
                     // Highlight reservations starting within 15 minutes
-                    const startDateTime = new Date(`${todayStr}T${r.time_start as string}`)
+                    const startMin = timeToMinutes(r.time_start as string)
+                    const diffMin = startMin - colombiaNowMinutes
                     const isUrgent = status === 'confirmed' &&
-                      startDateTime.getTime() - now.getTime() < fifteenMin &&
-                      startDateTime.getTime() > now.getTime() - fifteenMin
+                      diffMin > 0 && diffMin <= fifteenMin
 
                     // Compact time display in group: only show end time
                     const timeDisplay = `— ${timeEnd}`

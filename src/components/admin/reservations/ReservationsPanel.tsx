@@ -173,6 +173,12 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
             loading={resLoading}
             detailId={detailId}
             onSelect={setDetailId}
+            onConfirm={(id) => handleStatusChange(id, 'confirmed')}
+            onCancel={(id) => {
+              if (window.confirm('¿Cancelar esta reserva? Esta acción no se puede deshacer.')) {
+                handleStatusChange(id, 'cancelled')
+              }
+            }}
           />
         </div>
         <motion.div

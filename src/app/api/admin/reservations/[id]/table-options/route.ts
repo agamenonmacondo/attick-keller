@@ -2,17 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStaffUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 import { getZoneLetter } from '@/lib/utils/zone-letter'
 import { getBlockedTableIds } from '@/lib/utils/table-blocks'
+import { assignTable } from '@/lib/algorithms/table-assignment'
+import type { TableWithZone, EventZoneSuggestion, EventMultiZoneSuggestion, Alternative } from '@/lib/algorithms/table-assignment'
 
 /**
  * GET /api/admin/reservations/[id]/table-options
  *
  * Returns available table options for a reservation that needs assignment.
- * Three tiers:
- *   1. Zonas completas — if a zone has enough free capacity for the whole party
- *   2. Combinaciones existentes — table_combinations that fit
- *   3. Mesas individuales — single tables that fit
+ * Uses the canonical assignTable() algorithm — same scoring, zone priorities,
+ * time routing, event logic, and multi-zone evaluation used by the reservation API.
  *
- * Used by the "Asignar Mesa" popup in the Host panel.
+ * Four tiers:
+ *   1. Zonas completas — zones where available capacity covers the party
+ *   2. Combinaciones — table_combinations that fit (scored)
+ *   3. Mesas individuales — single tables that fit (scored)
+ *   4. Multi-zona — combined zones for events too large for one zone
  */
 export async function GET(
   request: NextRequest,
@@ -37,15 +41,13 @@ export async function GET(
 
   // Fetch blocked tables
   const blockedTableIds = await getBlockedTableIds(date, time_start, time_end)
-  const blockedSet: Set<string> = new Set(blockedTableIds)
 
   // Fetch all active tables with zone info
   const [tablesRes, reservationsRes, combosRes] = await Promise.all([
     sb.from('tables')
-      .select('id, number, name_attick, capacity, zone_id, can_combine, combine_group, table_zones(id, name, letter)')
+      .select('id, number, name_attick, capacity, capacity_min, zone_id, can_combine, combine_group, table_zones(id, name, letter)')
       .eq('restaurant_id', RESTAURANT_ID)
-      .eq('is_active', true)
-      .order('capacity', { ascending: false }),
+      .eq('is_active', true),
     sb.from('reservations')
       .select('table_id, time_start, time_end')
       .eq('date', date)
@@ -53,8 +55,7 @@ export async function GET(
       .not('table_id', 'is', null),
     sb.from('table_combinations')
       .select('id, table_ids, combined_capacity, is_active, name')
-      .eq('is_active', true)
-      .order('combined_capacity', { ascending: false }),
+      .eq('is_active', true),
   ])
 
   const tables = (tablesRes.data || []) as any[]
@@ -69,168 +70,162 @@ export async function GET(
     return tz
   }
 
-  // Helper: check if a table is free during the reservation window
-  function timeToMinutes(t: string): number {
-    const [h, m] = t.split(':').map(Number)
-    return h * 60 + m
-  }
-
-  const resStart = timeToMinutes(time_start)
-  const resEnd = timeToMinutes(time_end)
-
-  function isTableFree(tableId: string): boolean {
-    if (blockedSet.has(tableId)) return false
-    return !existingReservations.some((r: any) => {
-      if (r.table_id !== tableId) return false
-      const rStart = timeToMinutes(r.time_start)
-      const rEnd = timeToMinutes(r.time_end)
-      return rStart < resEnd && rEnd > resStart
-    })
-  }
-
-  // Build free tables list
-  const freeTables = tables.filter((t: any) => isTableFree(t.id))
-
-  // ─── Tier 1: Zonas completas ──────────────────────────────────
-  const zoneMap = new Map<string, {
-    zone_id: string; zone_name: string; zone_letter: string | null;
-    tables: Array<{ id: string; number: string; name_attick: string | null; capacity: number }>;
-    total_capacity: number
-  }>()
-
-  for (const t of freeTables) {
+  // Build TableWithZone[] for the algorithm
+  const availableTables: TableWithZone[] = tables.map((t: any) => {
     const tz = getZone(t)
-    const zId = tz?.id || 'unassigned'
-    const zName = tz?.name || 'Sin zona'
-    const zLetter = tz?.letter || getZoneLetter(zName)
-
-    if (!zoneMap.has(zId)) {
-      zoneMap.set(zId, { zone_id: zId, zone_name: zName, zone_letter: zLetter, tables: [], total_capacity: 0 })
+    return {
+      id: t.id,
+      number: t.number,
+      zone_letter: tz?.letter ?? getZoneLetter(tz?.name),
+      zone_name: tz?.name ?? 'Sin zona',
+      capacity: t.capacity,
+      capacity_min: t.capacity_min ?? t.capacity,
+      can_combine: t.can_combine ?? false,
+      combine_group: t.combine_group ?? null,
+      floor_num: 1,
     }
-    const z = zoneMap.get(zId)!
-    z.tables.push({ id: t.id, number: t.number, name_attick: t.name_attick, capacity: t.capacity })
-    z.total_capacity += t.capacity
-  }
+  })
 
-  const fullZones = Array.from(zoneMap.values())
-    .filter(z => z.total_capacity >= party_size)
-    .sort((a, b) => a.total_capacity - b.total_capacity)
+  // Build combinations for the algorithm
+  const algoCombinations = combinations.map((c: any) => ({
+    id: c.id,
+    table_ids: c.table_ids,
+    combined_capacity: c.combined_capacity,
+    is_active: c.is_active,
+    name: c.name,
+  }))
+
+  // Build existing reservations for the algorithm
+  const algoExisting = existingReservations.map((r: any) => ({
+    table_id: r.table_id,
+    time_start: r.time_start,
+    time_end: r.time_end,
+  }))
+
+  // ─── Call the canonical algorithm ──────────────────────────────
+  const result = assignTable({
+    reservation: {
+      id: reservation.id,
+      party_size,
+      date,
+      time_start,
+      time_end,
+    },
+    available_tables: availableTables,
+    existing_reservations: algoExisting,
+    combinations: algoCombinations,
+    blocked_table_ids: blockedTableIds,
+  })
+
+  // ─── Map algorithm output to frontend format ───────────────────
+
+  // Tier 1: Full Zones (from event_zone_suggestions)
+  const fullZones = (result.event_zone_suggestions || [])
+    .filter(z => z.fits_zone && z.available_capacity >= party_size)
     .map(z => ({
       type: 'full_zone' as const,
-      zone_id: z.zone_id,
+      zone_id: '', // zone_id not available in algorithm, frontend uses zone_name
       zone_name: z.zone_name,
       zone_letter: z.zone_letter,
-      total_capacity: z.total_capacity,
-      table_count: z.tables.length,
-      table_ids: z.tables.map(t => t.id),
-      tables: z.tables,
-      label: `Zona ${z.zone_name} completa (${z.total_capacity}p en ${z.tables.length} mesas)`,
+      total_capacity: z.available_capacity,
+      table_count: z.available_tables,
+      table_ids: z.available_table_ids,
+      tables: z.available_table_details.map(t => ({
+        id: t.id,
+        number: t.number,
+        name_attick: null as string | null,
+        capacity: t.capacity,
+      })),
+      label: `Zona ${z.zone_name} completa (${z.available_capacity}p en ${z.available_tables} mesas)`,
+      // Extra event info
+      displaced_count: z.displaced_count,
+      rehousing_possible: z.rehousing_possible,
     }))
 
-  // ─── Tier 2: Combinaciones existentes ─────────────────────────
-  const validCombos = combinations
-    .filter((c: any) => {
-      if (!c.table_ids.every((tid: string) => isTableFree(tid))) return false
-      if (c.combined_capacity < party_size) return false
-      return true
-    })
-    .sort((a: any, b: any) => a.combined_capacity - b.combined_capacity)
-    .map((c: any) => {
-      const comboTables = c.table_ids.map((tid: string) => {
-        const t = tables.find((tbl: any) => tbl.id === tid)
-        return {
-          id: tid,
-          number: t?.number || '?',
-          name_attick: t?.name_attick || null,
-          capacity: t?.capacity || 0,
-        }
-      })
-      const firstTable = tables.find((tbl: any) => tbl.id === c.table_ids[0])
-      const zoneName = getZone(firstTable)?.name || 'Mixta'
-      return {
-        type: 'combination' as const,
-        combination_id: c.id,
-        combination_name: c.name,
-        combined_capacity: c.combined_capacity,
-        table_count: c.table_ids.length,
-        table_ids: c.table_ids,
-        tables: comboTables,
-        zone_name: zoneName,
-        label: `Combinación ${c.name || 'sin nombre'} (${c.combined_capacity}p en ${c.table_ids.length} mesas) · ${zoneName}`,
-      }
-    })
+  // Tier 2: Combinations (from alternatives)
+  const combinationOptions = result.alternatives
+    .filter(a => a.combination_id)
+    .map(a => ({
+      type: 'combination' as const,
+      combination_id: a.combination_id,
+      combination_name: null as string | null,
+      combined_capacity: 0, // derived from tables
+      table_count: a.table_numbers.length,
+      table_ids: [] as string[], // not available in Alternative
+      tables: a.table_numbers.map(n => ({
+        id: '',
+        number: n,
+        name_attick: null as string | null,
+        capacity: 0,
+      })),
+      zone_name: a.zone_name,
+      label: `Combinación ${a.table_numbers.join('+')} (${a.zone_name}) · Score:${a.score.toFixed(1)}`,
+      score: a.score,
+    }))
 
-  // ─── Tier 3: Mesas individuales ───────────────────────────────
-  const singleTables = freeTables
-    .filter((t: any) => t.capacity >= party_size)
-    .sort((a: any, b: any) => a.capacity - b.capacity)
-    .map((t: any) => {
-      const tz = getZone(t)
-      return {
-        type: 'single_table' as const,
-        table_id: t.id,
-        table_number: t.number,
-        table_name: t.name_attick,
-        capacity: t.capacity,
-        zone_name: tz?.name || 'Sin zona',
-        label: `Mesa ${t.number} (${t.capacity}p) · ${tz?.name || 'Sin zona'}`,
-      }
-    })
+  // Tier 3: Single Tables (from alternatives, non-combination)
+  const singleTables = result.alternatives
+    .filter(a => !a.combination_id)
+    .map(a => ({
+      type: 'single_table' as const,
+      table_id: a.table_id,
+      table_number: a.table_numbers[0] || '?',
+      table_name: null as string | null,
+      capacity: 0, // not in Alternative
+      zone_name: a.zone_name,
+      label: `Mesa ${a.table_numbers[0]} · ${a.zone_name} · Score:${a.score.toFixed(1)}`,
+      score: a.score,
+    }))
 
-  // ─── Tier 4: Multi-zona sugerida (greedy) ──────────────────────
-  // When no single zone covers the party, combine zones greedily
-  const multiZoneSuggestion = (() => {
-    if (fullZones.length > 0) return null  // Single zone works, no need
-
-    const allZones = Array.from(zoneMap.values())
-      .sort((a, b) => b.total_capacity - a.total_capacity) // biggest first
-
-    let remaining = party_size
-    const selected: Array<{
-      zone_id: string; zone_name: string; zone_letter: string | null;
-      capacity_used: number; total_capacity: number;
-      table_ids: string[]; tables: Array<{ id: string; number: string; name_attick: string | null; capacity: number }>
-    }> = []
-
-    for (const z of allZones) {
-      if (remaining <= 0) break
-      const take = Math.min(z.total_capacity, remaining)
-      // Take the largest tables first to minimize table count
-      const sortedTables = [...z.tables].sort((a, b) => b.capacity - a.capacity)
-      const takenTables: typeof z.tables = []
-      let takenCap = 0
-      for (const t of sortedTables) {
-        if (takenCap >= take) break
-        takenTables.push(t)
-        takenCap += t.capacity
-      }
-      selected.push({
-        zone_id: z.zone_id,
-        zone_name: z.zone_name,
-        zone_letter: z.zone_letter,
-        capacity_used: takenCap,
-        total_capacity: z.total_capacity,
-        table_ids: takenTables.map(t => t.id),
-        tables: takenTables,
-      })
-      remaining -= takenCap
-    }
-
-    const totalSelected = selected.reduce((s, z) => s + z.capacity_used, 0)
-    if (totalSelected < party_size) return null // Not enough even with all zones
+  // Tier 4: Multi-Zone (from event_multi_zone)
+  const multiZone = (() => {
+    const mz = result.event_multi_zone
+    if (!mz || mz.zones.length <= 1) return null
 
     return {
       type: 'multi_zone' as const,
-      zones: selected,
-      total_capacity: totalSelected,
-      zone_count: selected.length,
-      table_count: selected.reduce((s, z) => s + z.tables.length, 0),
-      table_ids: selected.flatMap(z => z.table_ids),
-      label: selected.map(z => `${z.zone_name} (${z.capacity_used}p)`).join(' + '),
-      covers: totalSelected >= party_size,
-      deficit: Math.max(0, party_size - totalSelected),
+      zones: mz.zones.map(z => ({
+        zone_id: '',
+        zone_name: z.zone_name,
+        zone_letter: z.zone_letter,
+        capacity_used: z.available_capacity,
+        total_capacity: z.total_capacity,
+        table_ids: z.available_table_ids,
+        tables: z.available_table_details.map(t => ({
+          id: t.id,
+          number: t.number,
+          name_attick: null as string | null,
+          capacity: t.capacity,
+        })),
+      })),
+      total_capacity: mz.combined_available,
+      zone_count: mz.zones.length,
+      table_count: mz.zones.reduce((s, z) => s + z.available_tables, 0),
+      table_ids: mz.zones.flatMap(z => z.available_table_ids),
+      label: mz.zones.map(z => `${z.zone_name} (${z.available_capacity}p)`).join(' + '),
+      covers: mz.fits,
+      deficit: mz.fits ? 0 : Math.max(0, party_size - mz.combined_available),
     }
   })()
+
+  // Compute summary
+  const totalFreeCapacity = availableTables.reduce((s: number, t: TableWithZone) => {
+    // Check if table is free in the time window
+    const isFree = !algoExisting.some(r =>
+      r.table_id === t.id &&
+      r.time_start < time_end &&
+      r.time_end > time_start
+    ) && !blockedTableIds.includes(t.id)
+    return s + (isFree ? t.capacity : 0)
+  }, 0)
+
+  const totalFreeTables = availableTables.filter(t => {
+    return !algoExisting.some(r =>
+      r.table_id === t.id &&
+      r.time_start < time_end &&
+      r.time_end > time_start
+    ) && !blockedTableIds.includes(t.id)
+  }).length
 
   return NextResponse.json({
     reservation: {
@@ -242,17 +237,23 @@ export async function GET(
     },
     options: {
       full_zones: fullZones,
-      combinations: validCombos,
+      combinations: combinationOptions,
       single_tables: singleTables,
-      multi_zone: multiZoneSuggestion,
+      multi_zone: multiZone,
     },
     summary: {
-      total_free_capacity: freeTables.reduce((s: number, t: any) => s + t.capacity, 0),
-      total_free_tables: freeTables.length,
+      total_free_capacity: totalFreeCapacity,
+      total_free_tables: totalFreeTables,
       has_full_zone: fullZones.length > 0,
-      has_combination: validCombos.length > 0,
+      has_combination: combinationOptions.length > 0,
       has_single_table: singleTables.length > 0,
-      has_multi_zone: !!multiZoneSuggestion,
+      has_multi_zone: !!multiZone,
+    },
+    // Raw algorithm result for debugging / future use
+    _algorithm: {
+      is_event: result.is_event,
+      reason: result.reason,
+      score: result.score,
     },
   })
 }

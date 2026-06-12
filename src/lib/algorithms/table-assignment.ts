@@ -96,6 +96,11 @@ export interface EventZoneSuggestion {
   displaced_count: number;      // reservas desplazadas de esa zona
   rehousing_possible: boolean;  // ¿se pueden reubicar en otras zonas?
   score: number;                // prioridad evento (D=100, A=80, B=60)
+  /** Mesas disponibles en esta zona durante el horario */
+  available_table_ids: string[];
+  available_table_details: Array<{ id: string; number: string; capacity: number }>;
+  /** Mesas ocupadas que serían desplazadas */
+  displaced_table_ids: string[];
 }
 
 export interface EventMultiZoneSuggestion {
@@ -535,6 +540,13 @@ export function evaluateEventZones(
       displaced_count: displacedCount,
       rehousing_possible: rehousingPossible,
       score: EVENT_ZONE_PRIORITY[zoneLetter] ?? 0,
+      available_table_ids: availableTables.map(t => t.id),
+      available_table_details: availableTables.map(t => ({
+        id: t.id,
+        number: t.number,
+        capacity: t.capacity,
+      })),
+      displaced_table_ids: occupiedTables.map(t => t.id),
     });
   }
 

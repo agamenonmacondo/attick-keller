@@ -95,12 +95,14 @@ export async function GET(
     name: c.name,
   }))
 
-  // Build existing reservations for the algorithm
-  const algoExisting = existingReservations.map((r: any) => ({
-    table_id: r.table_id,
-    time_start: r.time_start,
-    time_end: r.time_end,
-  }))
+  // Build existing reservations for the algorithm (exclude this reservation's own table)
+  const algoExisting = existingReservations
+    .filter((r: any) => r.table_id !== reservation.table_id)
+    .map((r: any) => ({
+      table_id: r.table_id,
+      time_start: r.time_start,
+      time_end: r.time_end,
+    }))
 
   // ─── Call the canonical algorithm ──────────────────────────────
   const result = assignTable({

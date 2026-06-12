@@ -702,7 +702,9 @@ export function assignTable(input: AssignmentInput): AssignmentResult {
     }
 
     return {
-      suggested_table_id: bestZone ? zoneSuggestions[0].zone_letter : null,
+      suggested_table_id: bestZone
+        ? (bestZone.available_table_details[0]?.id ?? null)  // largest available table in best zone
+        : null,
       suggested_combination_id: null,
       alternatives: [],
       score: bestZone?.score ?? multiZone?.zones[0]?.score ?? 0,

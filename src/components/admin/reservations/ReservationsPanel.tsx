@@ -226,54 +226,45 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
         )
       })()}
 
-      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <ReservationTimeline
-            reservations={filteredReservations}
-            loading={resLoading}
-            detailId={detailId}
-            onSelect={setDetailId}
-            onConfirm={(id) => handleStatusChange(id, 'confirmed')}
-            onCancel={(id) => {
-              if (window.confirm('¿Cancelar esta reserva? Esta acción no se puede deshacer.')) {
-                handleStatusChange(id, 'cancelled')
-              }
-            }}
-          />
-        </div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="lg:col-span-1"
-        >
-          {detailId && (
-            <button
-              type="button"
-              onClick={() => setDetailId(null)}
-              className="md:hidden fixed top-4 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-ak-borgona)] text-white shadow-lg active:scale-95 dark:bg-[var(--color-ak-dorado)] dark:text-[var(--color-ak-madera)]"
-              style={{ transition: 'transform 160ms ease-out' }}
-              aria-label="Cerrar detalle"
-            >
-              <X size={20} weight="bold" />
-            </button>
-          )}
-          <ReservationDetail
-            reservation={detailReservation}
-            onStatusChange={(id, status) => {
-              if (status === 'cancelled') {
-                setConfirmAction({ id, status, label: 'Cancelar Reserva' })
-              } else if (status === 'no_show') {
-                setConfirmAction({ id, status, label: 'Marcar como No Asistio' })
-              } else {
-                handleStatusChange(id, status)
-              }
-            }}
-            onEdit={handleEdit}
-            onClose={() => setDetailId(null)}
-          />
-        </motion.div>
+      <div className="mt-4">
+        <ReservationTimeline
+          reservations={filteredReservations}
+          loading={resLoading}
+          detailId={detailId}
+          onSelect={setDetailId}
+          onConfirm={(id) => handleStatusChange(id, 'confirmed')}
+          onCancel={(id) => {
+            if (window.confirm('¿Cancelar esta reserva? Esta acción no se puede deshacer.')) {
+              handleStatusChange(id, 'cancelled')
+            }
+          }}
+        />
       </div>
+
+      {/* Reservation Detail Popup */}
+      {detailId && detailReservation && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-4 pt-16 sm:pt-4" onClick={() => setDetailId(null)}>
+          <div
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <ReservationDetail
+              reservation={detailReservation}
+              onStatusChange={(id, status) => {
+                if (status === 'cancelled') {
+                  setConfirmAction({ id, status, label: 'Cancelar Reserva' })
+                } else if (status === 'no_show') {
+                  setConfirmAction({ id, status, label: 'Marcar como No Asistio' })
+                } else {
+                  handleStatusChange(id, status)
+                }
+              }}
+              onEdit={handleEdit}
+              onClose={() => setDetailId(null)}
+            />
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         open={!!confirmAction}

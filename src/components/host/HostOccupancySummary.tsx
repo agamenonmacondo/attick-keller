@@ -69,7 +69,33 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
   const available = quickStats?.available ?? (occupancy.totalCapacity - occupancy.occupiedCapacity)
   const total = quickStats?.totalCapacity ?? occupancy.totalCapacity
 
-  const cards = [
+  // ─── Reservas + PAX cards (new, top priority) ───
+  const summaryCards = [
+    {
+      label: 'Reservas Hoy',
+      value: stats.total,
+      suffix: 'reservas',
+      color: 'text-[var(--text-primary)]',
+      bg: 'bg-[var(--bg-card)]',
+      borderColor: 'border-[var(--border-default)]',
+      dotColor: 'bg-[var(--text-secondary)]',
+      chipLabel: 'Tot',
+      subtitle: `${stats.confirmed} conf · ${stats.seated} sent · ${stats.pending} pend`,
+    },
+    {
+      label: 'PAX Hoy',
+      value: stats.totalGuests,
+      suffix: 'personas',
+      color: 'text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]',
+      bg: 'bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/10',
+      borderColor: 'border-[var(--color-ak-borgona)]/20 dark:border-[var(--color-ak-borgona-light)]/20',
+      dotColor: 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]',
+      chipLabel: 'PAX',
+      subtitle: `${stats.seatedGuests} sentados`,
+    },
+  ]
+
+  const capacityCards = [
     {
       label: 'Capacidad Total',
       value: total,
@@ -77,7 +103,6 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
       color: 'text-[var(--text-primary)]',
       bg: 'bg-[var(--bg-card)]',
       borderColor: 'border-[var(--border-default)]',
-      // chip props
       dotColor: 'bg-[var(--text-secondary)]',
       chipLabel: 'Tot',
     },
@@ -115,9 +140,17 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
 
   return (
     <div className="space-y-4">
-      {/* Mobile: compact chips */}
-      <div className="flex lg:hidden items-center gap-3 text-sm font-medium">
-        {cards.map(card => (
+      {/* Mobile: compact chips — Reservas + PAX first, then capacity */}
+      <div className="flex lg:hidden items-center gap-3 text-sm font-medium flex-wrap">
+        {summaryCards.map(card => (
+          <span key={card.label} className="inline-flex items-center gap-1">
+            <span className={`w-2 h-2 rounded-full ${card.dotColor}`} />
+            <span className={`font-bold ${card.color}`}><AnimatedCounter value={card.value} /></span>
+            <span className="text-[var(--text-secondary)] text-xs">{card.chipLabel}</span>
+          </span>
+        ))}
+        <span className="w-full" role="separator" />
+        {capacityCards.map(card => (
           <span key={card.label} className="inline-flex items-center gap-1">
             <span className={`w-2 h-2 rounded-full ${card.dotColor}`} />
             <span className={`font-bold ${card.color}`}><AnimatedCounter value={card.value} /></span>
@@ -126,14 +159,52 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
         ))}
       </div>
 
-      {/* Desktop: full card layout */}
+      {/* Desktop: Reservas + PAX row */}
+      <motion.div
+        className="hidden lg:grid grid-cols-2 gap-3"
+        variants={prefersReduced ? undefined : containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {summaryCards.map((card, index) => (
+          <motion.div
+            key={card.label}
+            variants={prefersReduced ? undefined : itemVariants}
+          >
+            <AnimatedCard
+              delay={index * 0.05}
+              hover
+              className={`${card.bg} rounded-xl border ${card.borderColor} p-3 md:p-4 text-center h-full`}
+            >
+              <p className="text-xs md:text-sm text-[var(--text-secondary)] font-medium uppercase tracking-wide">
+                {card.label}
+              </p>
+              <p className={`text-xl md:text-2xl font-bold ${card.color} font-['Playfair_Display'] mt-1`}>
+                <AnimatedCounter value={card.value} />
+                {card.suffix && (
+                  <span className="text-[var(--text-secondary)] font-normal text-xs md:text-sm ml-1">
+                    {card.suffix}
+                  </span>
+                )}
+              </p>
+              {'subtitle' in card && (
+                <p className="text-[10px] md:text-xs text-[var(--text-secondary)] mt-0.5">
+                  {card.subtitle}
+                </p>
+              )}
+            </AnimatedCard>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* Desktop: Capacity row */}
       <motion.div
         className="hidden lg:grid grid-cols-2 sm:grid-cols-4 gap-3"
         variants={prefersReduced ? undefined : containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {cards.map((card, index) => (
+        {capacityCards.map((card, index) => (
           <motion.div
             key={card.label}
             variants={prefersReduced ? undefined : itemVariants}

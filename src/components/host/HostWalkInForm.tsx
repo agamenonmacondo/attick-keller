@@ -77,8 +77,10 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
   const timeStart = useMemo(() => getColombiaTime(), [])
   const timeEnd = useMemo(() => {
     const [h, m] = timeStart.split(':').map(Number)
-    const endH = h + 2
-    return `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+    const totalMinutes = (h * 60 + m + 120) % (24 * 60)  // +2 horas, wrap a medianoche
+    const endH = Math.floor(totalMinutes / 60)
+    const endM = totalMinutes % 60
+    return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
   }, [timeStart])
 
   // Compute available tables for this party size & time

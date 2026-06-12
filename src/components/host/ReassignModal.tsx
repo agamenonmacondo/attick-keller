@@ -9,6 +9,7 @@ import { X, Spinner, Check, ArrowsLeftRight } from '@phosphor-icons/react'
 
 interface ReassignModalProps {
   reservation: ReservationTimeline
+  currentTableId: string
   currentTableName: string
   currentZoneName: string
   zones: Zone[]
@@ -75,6 +76,7 @@ function getZonePriority(name: string | null): number {
 
 export function ReassignModal({
   reservation,
+  currentTableId,
   currentTableName,
   currentZoneName,
   zones,
@@ -91,7 +93,7 @@ export function ReassignModal({
     for (const zone of zones) {
       for (const table of zone.tables) {
         // Skip current table
-        if (table.id === reservation.id) continue
+        if (table.id === currentTableId) continue
 
         // Filter by capacity
         if (table.capacity < reservation.party_size) continue

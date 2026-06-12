@@ -291,6 +291,7 @@ export function HostShell() {
       {reassignTarget && (
         <ReassignModal
           reservation={reassignTarget.reservation}
+          currentTableId={reassignTarget.tableInfo.id}
           currentTableName={reassignTarget.tableInfo.name}
           currentZoneName={reassignTarget.tableInfo.zoneName}
           zones={zones}

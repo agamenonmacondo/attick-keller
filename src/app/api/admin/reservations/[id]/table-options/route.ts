@@ -177,6 +177,61 @@ export async function GET(
       }
     })
 
+  // ─── Tier 4: Multi-zona sugerida (greedy) ──────────────────────
+  // When no single zone covers the party, combine zones greedily
+  const multiZoneSuggestion = (() => {
+    if (fullZones.length > 0) return null  // Single zone works, no need
+
+    const allZones = Array.from(zoneMap.values())
+      .sort((a, b) => b.total_capacity - a.total_capacity) // biggest first
+
+    let remaining = party_size
+    const selected: Array<{
+      zone_id: string; zone_name: string; zone_letter: string | null;
+      capacity_used: number; total_capacity: number;
+      table_ids: string[]; tables: Array<{ id: string; number: string; name_attick: string | null; capacity: number }>
+    }> = []
+
+    for (const z of allZones) {
+      if (remaining <= 0) break
+      const take = Math.min(z.total_capacity, remaining)
+      // Take the largest tables first to minimize table count
+      const sortedTables = [...z.tables].sort((a, b) => b.capacity - a.capacity)
+      const takenTables: typeof z.tables = []
+      let takenCap = 0
+      for (const t of sortedTables) {
+        if (takenCap >= take) break
+        takenTables.push(t)
+        takenCap += t.capacity
+      }
+      selected.push({
+        zone_id: z.zone_id,
+        zone_name: z.zone_name,
+        zone_letter: z.zone_letter,
+        capacity_used: takenCap,
+        total_capacity: z.total_capacity,
+        table_ids: takenTables.map(t => t.id),
+        tables: takenTables,
+      })
+      remaining -= takenCap
+    }
+
+    const totalSelected = selected.reduce((s, z) => s + z.capacity_used, 0)
+    if (totalSelected < party_size) return null // Not enough even with all zones
+
+    return {
+      type: 'multi_zone' as const,
+      zones: selected,
+      total_capacity: totalSelected,
+      zone_count: selected.length,
+      table_count: selected.reduce((s, z) => s + z.tables.length, 0),
+      table_ids: selected.flatMap(z => z.table_ids),
+      label: selected.map(z => `${z.zone_name} (${z.capacity_used}p)`).join(' + '),
+      covers: totalSelected >= party_size,
+      deficit: Math.max(0, party_size - totalSelected),
+    }
+  })()
+
   return NextResponse.json({
     reservation: {
       id: reservation.id,
@@ -189,6 +244,7 @@ export async function GET(
       full_zones: fullZones,
       combinations: validCombos,
       single_tables: singleTables,
+      multi_zone: multiZoneSuggestion,
     },
     summary: {
       total_free_capacity: freeTables.reduce((s: number, t: any) => s + t.capacity, 0),
@@ -196,6 +252,7 @@ export async function GET(
       has_full_zone: fullZones.length > 0,
       has_combination: validCombos.length > 0,
       has_single_table: singleTables.length > 0,
+      has_multi_zone: !!multiZoneSuggestion,
     },
   })
 }

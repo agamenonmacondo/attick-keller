@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { X, Spinner, Check, Buildings, GridFour, Table, Warning } from '@phosphor-icons/react'
 
 interface TableOption {
-  type: 'full_zone' | 'combination' | 'single_table'
+  type: 'full_zone' | 'combination' | 'single_table' | 'multi_zone'
   label: string
   // full_zone
   zone_id?: string
@@ -23,6 +23,15 @@ interface TableOption {
   table_number?: string
   table_name?: string | null
   capacity?: number
+  // multi_zone
+  zones?: Array<{
+    zone_id: string; zone_name: string; zone_letter: string | null
+    capacity_used: number; total_capacity: number
+    table_ids: string[]; tables: Array<{ id: string; number: string; name_attick: string | null; capacity: number }>
+  }>
+  zone_count?: number
+  covers?: boolean
+  deficit?: number
 }
 
 interface TableOptionsData {
@@ -37,6 +46,7 @@ interface TableOptionsData {
     full_zones: TableOption[]
     combinations: TableOption[]
     single_tables: TableOption[]
+    multi_zone: TableOption | null
   }
   summary: {
     total_free_capacity: number
@@ -44,6 +54,7 @@ interface TableOptionsData {
     has_full_zone: boolean
     has_combination: boolean
     has_single_table: boolean
+    has_multi_zone: boolean
   }
 }
 
@@ -96,9 +107,13 @@ export function AssignTablePopup({
         tableId = selected.table_ids?.[0] || null
       } else if (selected.type === 'full_zone') {
         // For full zone, assign the largest table as primary
-        // The host will manually manage the rest
         const largest = selected.tables?.reduce((a, b) => a.capacity > b.capacity ? a : b)
         tableId = largest?.id || selected.table_ids?.[0] || null
+      } else if (selected.type === 'multi_zone') {
+        // For multi-zone, assign the largest table from the first zone as primary
+        const firstZone = selected.zones?.[0]
+        const largest = firstZone?.tables?.reduce((a, b) => a.capacity > b.capacity ? a : b)
+        tableId = largest?.id || firstZone?.table_ids?.[0] || null
       }
 
       const res = await fetch(`/api/admin/reservations/${reservationId}`, {
@@ -124,6 +139,7 @@ export function AssignTablePopup({
   const getCapacity = (opt: TableOption): number => {
     if (opt.type === 'full_zone') return opt.total_capacity || 0
     if (opt.type === 'combination') return opt.combined_capacity || 0
+    if (opt.type === 'multi_zone') return opt.total_capacity || 0
     return opt.capacity || 0
   }
 
@@ -317,8 +333,63 @@ export function AssignTablePopup({
               </div>
             )}
 
+            {/* Tier 4: Multi-Zona (when no single zone covers) */}
+            {data.options.multi_zone && (
+              <div className="mb-4">
+                <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <Buildings size={14} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
+                  Combinación Multi-Zona Sugerida
+                </h3>
+                <button
+                  onClick={() => setSelected(data.options.multi_zone!)}
+                  className={`w-full text-left p-3 rounded-xl border transition-all ${
+                    selected?.type === 'multi_zone'
+                      ? 'border-[var(--color-ak-borgona)] dark:border-[var(--color-ak-borgona-light)] bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/10 ring-1 ring-[var(--color-ak-borgona)] dark:ring-[var(--color-ak-borgona-light)]'
+                      : 'border-[var(--border-default)] bg-[var(--bg-card)] hover:border-[var(--text-secondary)]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">
+                      {data.options.multi_zone.label}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        data.options.multi_zone.covers
+                          ? 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)] dark:bg-[var(--color-ak-oliva-light)]/10 dark:text-[var(--color-ak-oliva-light)]'
+                          : 'bg-[var(--color-ak-ambar)]/10 text-[var(--color-ak-ambar)] dark:bg-[var(--color-ak-ambar-light)]/10 dark:text-[var(--color-ak-ambar-light)]'
+                      }`}>
+                        {data.options.multi_zone.covers ? 'Cubre' : `Faltan ${data.options.multi_zone.deficit}p`}
+                      </span>
+                      {selected?.type === 'multi_zone' && (
+                        <Check size={16} weight="bold" className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
+                      )}
+                    </div>
+                  </div>
+                  {/* Per-zone breakdown */}
+                  <div className="space-y-1">
+                    {data.options.multi_zone.zones?.map(z => (
+                      <div key={z.zone_id} className="flex items-center gap-2 text-xs">
+                        <span className="font-medium text-[var(--text-primary)] min-w-[4rem]">{z.zone_name}</span>
+                        <span className="text-[var(--text-secondary)]">{z.capacity_used}p de {z.total_capacity}p</span>
+                        <div className="flex flex-wrap gap-0.5">
+                          {z.tables?.map(t => (
+                            <span key={t.id} className="text-[10px] bg-[var(--bg-primary)] px-1 py-0.5 rounded text-[var(--text-secondary)]">
+                              {t.number}({t.capacity}p)
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-[var(--text-secondary)] mt-2">
+                    {data.options.multi_zone.table_count} mesas en {data.options.multi_zone.zone_count} zonas · {data.options.multi_zone.total_capacity}p total
+                  </p>
+                </button>
+              </div>
+            )}
+
             {/* No options fallback */}
-            {data.options.full_zones.length === 0 && data.options.combinations.length === 0 && data.options.single_tables.length === 0 && (
+            {data.options.full_zones.length === 0 && data.options.combinations.length === 0 && data.options.single_tables.length === 0 && !data.options.multi_zone && (
               <div className="bg-[var(--color-ak-ambar)]/10 border border-[var(--color-ak-ambar)]/20 rounded-xl p-4 text-center mb-4">
                 <Warning size={24} className="text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)] mx-auto mb-2" />
                 <p className="text-sm text-[var(--text-primary)] font-medium">Sin opciones disponibles</p>
@@ -344,7 +415,12 @@ export function AssignTablePopup({
                   Asignando...
                 </span>
               ) : selected ? (
-                `Asignar ${selected.type === 'full_zone' ? `Zona ${selected.zone_name}` : selected.type === 'combination' ? 'Combinación' : `Mesa ${selected.table_number}`} (${getCapacity(selected)}p)`
+                `Asignar ${
+                  selected.type === 'full_zone' ? `Zona ${selected.zone_name}`
+                  : selected.type === 'combination' ? 'Combinación'
+                  : selected.type === 'multi_zone' ? `Multi-zona (${selected.label})`
+                  : `Mesa ${selected.table_number}`
+                } (${getCapacity(selected)}p)`
               ) : (
                 'Selecciona una opción'
               )}

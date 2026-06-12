@@ -124,7 +124,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim() || partySize < 1) return
+    if (partySize < 1) return
 
     setSubmitting(true)
     setError(null)
@@ -137,10 +137,10 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
         time_start: timeStart,
         time_end: timeEnd,
         party_size: partySize,
-        customer_name: name.trim(),
+        customer_name: name.trim() || 'Walk-in',
         customer_phone: phone.trim() || undefined,
         zone_id: zoneId || undefined,
-        source: 'presencial',
+        source: 'walk-in',
       }
 
       if (selectedTableId) {

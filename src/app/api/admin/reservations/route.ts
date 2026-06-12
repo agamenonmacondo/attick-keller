@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   const sb = getServiceClient()
   const body = await request.json()
-  const { date, time_start, time_end, party_size, special_requests, customer_id, customer_name, customer_phone, zone_id, source } = body
+  const { date, time_start, time_end, party_size, special_requests, customer_id, customer_name, customer_phone, zone_id, source, table_id } = body
 
   if (!date || !time_start || !time_end || !party_size) {
     return NextResponse.json({ error: 'Campos requeridos: fecha, hora inicio, hora fin, numero de invitados' }, { status: 400 })
@@ -56,9 +56,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Assign table using the algorithm (same as customer reservation flow)
-  let tableId: string | null = null
-  {
+  // Assign table: respect host's choice if provided, otherwise use algorithm
+  let tableId: string | null = table_id || null
+  if (!tableId) {
     // Fetch blocked tables for this date/time
     const blockedTableIds = await getBlockedTableIds(date, time_start, time_end)
 

@@ -8,7 +8,7 @@ import { EmptyState } from '../admin/shared/EmptyState'
 import { ConfirmDialog } from '../admin/shared/ConfirmDialog'
 import { SectionHeading } from '../admin/shared/SectionHeading'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
-import { Check, X, Armchair, CalendarX, Warning, Clock, WhatsappLogo, EnvelopeSimple, Note, CaretDown, CaretUp, CalendarPlus } from '@phosphor-icons/react'
+import { Check, X, Armchair, CalendarX, Warning, Clock, WhatsappLogo, EnvelopeSimple, Note, CaretDown, CaretUp, CalendarPlus, WarningCircle } from '@phosphor-icons/react'
 import { formatTime12 } from '@/lib/utils/format-time'
 import { getColombiaTime } from '@/lib/utils/date'
 import { timeToMinutes } from '@/lib/utils/time'
@@ -17,6 +17,7 @@ import { getServiceType, SERVICE_FILTERS, type ServiceType } from '@/lib/utils/s
 import { AuditTimeline } from '@/components/shared/reservations/AuditTimeline'
 import { NotesPanel } from '@/components/shared/reservations/NotesPanel'
 import { SeatedTimer } from '@/components/shared/reservations/SeatedTimer'
+import { AssignTablePopup } from './AssignTablePopup'
 
 const SPRING = { stiffness: 100, damping: 20, mass: 1 }
 
@@ -93,6 +94,13 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
     label: string
   }>({ open: false, reservationId: '', status: '', label: '' })
   const [serviceFilter, setServiceFilter] = useState<ServiceType | 'all'>('all')
+  const [assignTarget, setAssignTarget] = useState<{
+    id: string
+    partySize: number
+    customerName: string
+    timeStart: string
+    timeEnd: string
+  } | null>(null)
   const prefersReduced = usePrefersReducedMotion()
 
   const toggleExpand = (id: string) => {
@@ -177,6 +185,58 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
       <SectionHeading>Reservas de Hoy</SectionHeading>
 
       <ServiceFilter active={serviceFilter} onChange={setServiceFilter} counts={serviceCounts} />
+
+      {/* Alert: unassigned reservations */}
+      {(() => {
+        const unassigned = hostReservations.filter(r => {
+          const status = r.status as string
+          return ['confirmed', 'pending', 'pre_paid'].includes(status) && !r.table_id
+        })
+        if (unassigned.length === 0) return null
+        const totalUnassignedPax = unassigned.reduce((s, r) => s + (r.party_size as number), 0)
+        const hasBigEvent = unassigned.some(r => (r.party_size as number) >= 20)
+        return (
+          <motion.div
+            initial={prefersReduced ? false : { opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={cn(
+              'rounded-xl border p-3 cursor-pointer transition-all hover:ring-2',
+              hasBigEvent
+                ? 'border-[var(--color-ak-ambar)]/50 dark:border-[var(--color-ak-ambar-light)]/50 bg-[var(--color-ak-ambar)]/5 dark:bg-[var(--color-ak-ambar-light)]/10 hover:ring-[var(--color-ak-ambar)]/30 dark:hover:ring-[var(--color-ak-ambar-light)]/30'
+                : 'border-[var(--border-default)] bg-[var(--bg-card)] hover:ring-[var(--text-secondary)]/20'
+            )}
+            onClick={() => {
+              // Open popup for the largest unassigned reservation
+              const largest = unassigned.reduce((a, b) =>
+                (a.party_size as number) > (b.party_size as number) ? a : b
+              )
+              const custData = largest.customers as { full_name: string } | null
+              setAssignTarget({
+                id: largest.id as string,
+                partySize: largest.party_size as number,
+                customerName: custData?.full_name || 'Sin nombre',
+                timeStart: (largest.time_start as string) || '',
+                timeEnd: (largest.time_end as string) || '',
+              })
+            }}
+          >
+            <div className="flex items-start gap-2">
+              <WarningCircle size={18} weight="fill" className={cn(
+                'shrink-0 mt-0.5',
+                hasBigEvent ? 'text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)]' : 'text-[var(--text-secondary)]'
+              )} />
+              <div>
+                <p className="text-sm font-medium text-[var(--text-primary)]">
+                  {unassigned.length} reserva{unassigned.length > 1 ? 's' : ''} sin mesa asignada
+                </p>
+                <p className="text-xs text-[var(--text-secondary)]">
+                  {totalUnassignedPax} PAX · {hasBigEvent ? 'Incluye evento grande — click para asignar' : 'Click para asignar'}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )
+      })()}
 
       {error && (
         <motion.div
@@ -420,6 +480,18 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
         }}
         onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
       />
+
+      {assignTarget && (
+        <AssignTablePopup
+          reservationId={assignTarget.id}
+          partySize={assignTarget.partySize}
+          customerName={assignTarget.customerName}
+          timeStart={assignTarget.timeStart}
+          timeEnd={assignTarget.timeEnd}
+          onClose={() => setAssignTarget(null)}
+          onAssigned={onAction}
+        />
+      )}
     </div>
   )
 }

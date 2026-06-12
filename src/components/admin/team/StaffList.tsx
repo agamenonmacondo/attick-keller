@@ -26,6 +26,7 @@ const ROLE_LABELS: Record<string, string> = {
   super_admin: 'Super Admin',
   lider_area: 'Lider de Area',
   colaborador: 'Colaborador',
+  reservante: 'Reservante',
 }
 
 const ROLE_COLORS: Record<string, string> = {
@@ -34,6 +35,7 @@ const ROLE_COLORS: Record<string, string> = {
   lider_area: 'bg-[var(--color-success)]/10 text-[var(--color-success)] dark:bg-emerald-400/10 dark:text-emerald-300',
   colaborador: 'bg-sky-500/10 text-sky-400 dark:bg-sky-400/10 dark:text-sky-300',
   host: 'bg-[var(--color-ak-oliva)]/10 text-[var(--color-ak-oliva)] dark:bg-[var(--color-ak-oliva-light)]/10 dark:text-[var(--color-ak-oliva-light)]',
+  reservante: 'bg-violet-500/10 text-violet-400 dark:bg-violet-400/10 dark:text-violet-300',
 }
 
 export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {

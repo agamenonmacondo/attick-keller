@@ -60,10 +60,18 @@ export async function POST(request: NextRequest) {
 
   // Look up user by email via Supabase admin API
   const { data: { users } } = await sb.auth.admin.listUsers()
-  const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
+  let user = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
 
+  // Auto-create user if not found — they can sign in with Google later
   if (!user) {
-    return NextResponse.json({ error: 'Usuario no encontrado. El usuario debe registrarse primero.' }, { status: 404 })
+    const { data: newUser, error: createError } = await sb.auth.admin.createUser({
+      email,
+      email_confirm: true,
+    })
+    if (createError || !newUser) {
+      return NextResponse.json({ error: 'Error al crear usuario: ' + (createError?.message || 'intente de nuevo') }, { status: 500 })
+    }
+    user = newUser.user
   }
 
   // Check if role already exists for this user

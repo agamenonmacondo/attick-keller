@@ -364,7 +364,7 @@ export function ReservationDetail({
                     {reservation.party_size} personas
                   </dd>
                 </div>
-                {reservation.status === 'seated' && reservation.seated_at && (
+                {reservation.status === 'seated' && (
                   <div className="pt-1">
                     <SeatedTimer reservation={reservation as any} />
                   </div>

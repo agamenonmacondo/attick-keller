@@ -231,7 +231,7 @@ export async function GET(request: NextRequest) {
 
   let query = sb
     .from('reservations')
-    .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, created_at, customers(id, email, full_name, phone), tables(id, zone_id, table_zones(id, name))', { count: 'exact' })
+    .select('id, date, time_start, time_end, party_size, status, source, special_requests, customer_id, table_id, created_at, seated_at, internal_notes, customers(id, email, full_name, phone), tables(id, zone_id, table_zones(id, name))', { count: 'exact' })
     .eq('restaurant_id', RESTAURANT_ID)
     .order('date', { ascending: false })
     .range(from, to)

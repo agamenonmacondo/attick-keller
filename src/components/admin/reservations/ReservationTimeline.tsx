@@ -143,67 +143,70 @@ export function ReservationTimeline({
                           'transform 160ms ease-out, background-color 200ms ease-out',
                       }}
                     >
-                      <StatusBadge status={r.status} />
+                      <div className="flex items-center gap-2 w-full">
+                        <StatusBadge status={r.status} />
 
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-[var(--text-primary)]">
-                          {r.customers?.full_name || r.customers?.email || 'Cliente'}
-                        </p>
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-xs text-[var(--text-secondary)]">
-                            {formatTime(r.time_start)} - {formatTime(r.time_end)}
-                            {r.zone_name && ` \u00B7 ${r.zone_name}`}
-                          </p>
-                          <span className={cn(
-                            'rounded px-1.5 py-0.5 text-[10px] font-medium',
-                            svc === 'lunch' && 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-                            svc === 'dinner' && 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
-                            svc === 'breakfast' && 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
-                          )}>
-                            {svcLabel}
-                          </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+                              {r.customers?.full_name || r.customers?.email || 'Cliente'}
+                            </p>
+                            <span className="shrink-0 rounded bg-[var(--bg-card)] px-1.5 py-0.5 font-mono text-xs font-medium text-[var(--text-primary)]">
+                              {r.party_size}p
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <span className="text-xs text-[var(--text-secondary)]">
+                              {formatTime(r.time_start)} - {formatTime(r.time_end)}
+                              {r.zone_name && ` · ${r.zone_name}`}
+                            </span>
+                            <span className={cn(
+                              'rounded px-1.5 py-0.5 text-[10px] font-medium shrink-0',
+                              svc === 'lunch' && 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+                              svc === 'dinner' && 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+                              svc === 'breakfast' && 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+                            )}>
+                              {svcLabel}
+                            </span>
+                          </div>
                         </div>
+
+                        {/* Quick action buttons for pending */}
+                        {r.status === 'pending' && (
+                          <div className="flex gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onConfirm ? onConfirm(r.id) : onSelect(r.id)
+                              }}
+                              className="flex h-6 w-6 items-center justify-center rounded bg-[var(--color-success)] text-white hover:bg-[var(--color-success)]/80 active:scale-[0.97]"
+                              style={{
+                                transition:
+                                  'transform 160ms ease-out, background-color 200ms ease-out',
+                              }}
+                              title="Confirmar"
+                            >
+                              <Check size={12} weight="bold" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onCancel ? onCancel(r.id) : onSelect(r.id)
+                              }}
+                              className="flex h-6 w-6 items-center justify-center rounded bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger)]/80 active:scale-[0.97]"
+                              style={{
+                                transition:
+                                  'transform 160ms ease-out, background-color 200ms ease-out',
+                              }}
+                              title="Cancelar"
+                            >
+                              <X size={12} weight="bold" />
+                            </button>
+                          </div>
+                        )}
                       </div>
-
-                      <span className="rounded bg-[var(--bg-card)] px-1.5 py-0.5 font-mono text-xs font-medium text-[var(--text-primary)]">
-                        {r.party_size}p
-                      </span>
-
-                      {/* Quick action buttons for pending */}
-                      {r.status === 'pending' && (
-                        <div className="ml-1 flex gap-1">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onConfirm ? onConfirm(r.id) : onSelect(r.id)
-                            }}
-                            className="flex h-6 w-6 items-center justify-center rounded bg-[var(--color-success)] text-white hover:bg-[var(--color-success)]/80 active:scale-[0.97]"
-                            style={{
-                              transition:
-                                'transform 160ms ease-out, background-color 200ms ease-out',
-                            }}
-                            title="Confirmar"
-                          >
-                            <Check size={12} weight="bold" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onCancel ? onCancel(r.id) : onSelect(r.id)
-                            }}
-                            className="flex h-6 w-6 items-center justify-center rounded bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger)]/80 active:scale-[0.97]"
-                            style={{
-                              transition:
-                                'transform 160ms ease-out, background-color 200ms ease-out',
-                            }}
-                            title="Cancelar"
-                          >
-                            <X size={12} weight="bold" />
-                          </button>
-                        </div>
-                      )}
                     </motion.div>
                   )
                 })}

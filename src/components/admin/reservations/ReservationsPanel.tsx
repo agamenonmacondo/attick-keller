@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Plus, X } from '@phosphor-icons/react'
+import { Plus, X, WarningCircle } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils/cn'
 import { useAdminDashboard } from '@/lib/hooks/useAdminDashboard'
 import { useAdminReservations } from '@/lib/hooks/useAdminReservations'
 import { useDatesWithReservations } from '@/lib/hooks/useDatesWithReservations'
@@ -15,6 +16,7 @@ import { ReservationDetail } from './ReservationDetail'
 import { ReservationForm } from './ReservationForm'
 import { TableBlockForm } from './TableBlockForm'
 import { ConfirmDialog } from '../shared/ConfirmDialog'
+import { AssignTablePopup } from '../host/AssignTablePopup'
 import { Spinner } from '@phosphor-icons/react'
 import type { ServiceType } from '@/lib/utils/serviceHours'
 import { getServiceType } from '@/lib/utils/serviceHours'
@@ -34,6 +36,13 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
     id: string
     status: string
     label: string
+  } | null>(null)
+  const [assignTarget, setAssignTarget] = useState<{
+    id: string
+    partySize: number
+    customerName: string
+    timeStart: string
+    timeEnd: string
   } | null>(null)
 
   const {
@@ -166,6 +175,57 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
         counts={serviceCounts}
       />
 
+      {/* Alert: unassigned reservations */}
+      {(() => {
+        const unassigned = dayReservations.filter(r => {
+          const status = r.status as string
+          return ['confirmed', 'pending', 'pre_paid'].includes(status) && !r.table_id
+        })
+        if (unassigned.length === 0) return null
+        const totalUnassignedPax = unassigned.reduce((s, r) => s + (r.party_size as number), 0)
+        const hasBigEvent = unassigned.some(r => (r.party_size as number) >= 20)
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={cn(
+              'mt-3 rounded-xl border p-3 cursor-pointer transition-all hover:ring-2',
+              hasBigEvent
+                ? 'border-[var(--color-ak-ambar)]/50 dark:border-[var(--color-ak-ambar-light)]/50 bg-[var(--color-ak-ambar)]/5 dark:bg-[var(--color-ak-ambar-light)]/10 hover:ring-[var(--color-ak-ambar)]/30 dark:hover:ring-[var(--color-ak-ambar-light)]/30'
+                : 'border-[var(--border-default)] bg-[var(--bg-card)] hover:ring-[var(--text-secondary)]/20'
+            )}
+            onClick={() => {
+              const largest = unassigned.reduce((a, b) =>
+                (a.party_size as number) > (b.party_size as number) ? a : b
+              )
+              const custData = largest.customers as { full_name: string } | null
+              setAssignTarget({
+                id: largest.id as string,
+                partySize: largest.party_size as number,
+                customerName: custData?.full_name || 'Sin nombre',
+                timeStart: (largest.time_start as string) || '',
+                timeEnd: (largest.time_end as string) || '',
+              })
+            }}
+          >
+            <div className="flex items-start gap-2">
+              <WarningCircle size={18} weight="fill" className={cn(
+                'shrink-0 mt-0.5',
+                hasBigEvent ? 'text-[var(--color-ak-ambar)] dark:text-[var(--color-ak-ambar-light)]' : 'text-[var(--text-secondary)]'
+              )} />
+              <div>
+                <p className="text-sm font-medium text-[var(--text-primary)]">
+                  {unassigned.length} reserva{unassigned.length > 1 ? 's' : ''} sin mesa asignada
+                </p>
+                <p className="text-xs text-[var(--text-secondary)]">
+                  {totalUnassignedPax} PAX · {hasBigEvent ? 'Incluye evento grande — click para asignar' : 'Click para asignar'}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )
+      })()}
+
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <ReservationTimeline
@@ -234,6 +294,21 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
           selectedDate={selectedDate}
           onClose={() => setShowNewForm(false)}
           onCreated={handleCreated}
+        />
+      )}
+
+      {assignTarget && (
+        <AssignTablePopup
+          reservationId={assignTarget.id}
+          partySize={assignTarget.partySize}
+          customerName={assignTarget.customerName}
+          timeStart={assignTarget.timeStart}
+          timeEnd={assignTarget.timeEnd}
+          onClose={() => setAssignTarget(null)}
+          onAssigned={() => {
+            dashRefetch()
+            resRefetch()
+          }}
         />
       )}
     </>

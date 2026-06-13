@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/auth/auth-provider'
 import { useTheme } from '@/lib/ThemeProvider'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { SignOut, Sun, Moon } from '@phosphor-icons/react'
+import { SignOut, Sun, Moon, House } from '@phosphor-icons/react'
 
 export function AdminHeader() {
   const { user, signOut } = useAuth()
@@ -24,9 +24,10 @@ export function AdminHeader() {
           <span className="text-[10px] text-[var(--text-primary)] bg-[var(--color-ak-madera)]/60 dark:bg-[var(--color-ak-madera-light)]/20 px-2 py-0.5 rounded font-medium uppercase tracking-wider">Admin</span>
           <Link
             href="/host"
-            className="hidden sm:inline text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"
+            className="inline-flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"
           >
-            Piso
+            <House size={16} className="sm:hidden" />
+            <span className="hidden sm:inline">Piso</span>
           </Link>
         </div>
         <div className="flex items-center gap-3">

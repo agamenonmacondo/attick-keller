@@ -3,7 +3,7 @@
 import { useAuth } from '@/lib/auth/auth-provider'
 import { useTheme } from '@/lib/ThemeProvider'
 import Link from 'next/link'
-import { SignOut, Clock, Sun, Moon } from '@phosphor-icons/react'
+import { SignOut, Clock, Sun, Moon, Gear } from '@phosphor-icons/react'
 import { useState, useEffect } from 'react'
 
 export function HostHeader() {
@@ -29,9 +29,10 @@ export function HostHeader() {
           {isAdmin && (
             <Link
               href="/admin"
-              className="hidden sm:inline text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"
+              className="inline-flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-200"
             >
-              Panel
+              <Gear size={16} className="sm:hidden" />
+              <span className="hidden sm:inline">Panel</span>
             </Link>
           )}
         </div>

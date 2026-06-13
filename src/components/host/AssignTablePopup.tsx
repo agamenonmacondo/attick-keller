@@ -110,10 +110,32 @@ export function AssignTablePopup({
         const largest = selected.tables?.reduce((a, b) => a.capacity > b.capacity ? a : b)
         tableId = largest?.id || selected.table_ids?.[0] || null
       } else if (selected.type === 'multi_zone') {
-        // For multi-zone, assign the largest table from the first zone as primary
-        const firstZone = selected.zones?.[0]
-        const largest = firstZone?.tables?.reduce((a, b) => a.capacity > b.capacity ? a : b)
-        tableId = largest?.id || firstZone?.table_ids?.[0] || null
+        // For multi-zone, send ALL table IDs from ALL zones
+        // The PATCH route will create a table_combination and assign it
+        const allTableIds = selected.zones?.flatMap(z => z.table_ids) || []
+        const allTables = selected.zones?.flatMap(z => z.tables || []) || []
+        const totalCap = allTables.reduce((s, t) => s + t.capacity, 0)
+        const zoneNames = selected.zones?.map(z => z.zone_name).join('+') || 'Multi-zona'
+
+        const res = await fetch(`/api/admin/reservations/${reservationId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            table_ids: allTableIds,
+            combined_capacity: totalCap,
+            zone_names: zoneNames,
+            party_size: partySize,
+          }),
+        })
+        if (res.ok) {
+          onAssigned()
+          onClose()
+        } else {
+          const d = await res.json().catch(() => ({}))
+          setError(d.error || 'Error al asignar')
+        }
+        setSubmitting(false)
+        return  // early return — don't fall through to the generic PATCH below
       }
 
       const res = await fetch(`/api/admin/reservations/${reservationId}`, {

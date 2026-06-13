@@ -23,7 +23,7 @@ export async function PATCH(
   const { id } = await params
   const sb = getServiceClient()
   const body = await request.json()
-  const { status, date, time_start, time_end, party_size, special_requests, zone_id, table_id } = body
+  const { status, date, time_start, time_end, party_size, special_requests, zone_id, table_id, table_ids, combined_capacity, zone_names } = body
 
   const { data: reservation } = await sb
     .from('reservations')
@@ -34,6 +34,50 @@ export async function PATCH(
   if (!reservation) return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
 
   const updateData: Record<string, unknown> = {}
+
+  // ─── Multi-zona: crear table_combination desde el popup ───
+  if (table_ids && Array.isArray(table_ids) && table_ids.length > 1) {
+    const effectiveParty = party_size || reservation.party_size
+    const cap = combined_capacity || table_ids.length * 2  // fallback
+    const name = zone_names
+      ? `Evento ${effectiveParty}p — ${zone_names}`
+      : `Evento ${effectiveParty}p — Multi-zona`
+
+    const { data: combo, error: comboErr } = await sb
+      .from('table_combinations')
+      .insert({
+        restaurant_id: RESTAURANT_ID,
+        table_ids,
+        combined_capacity: cap,
+        is_active: true,
+        name,
+      })
+      .select('id')
+      .single()
+
+    if (comboErr || !combo) {
+      return NextResponse.json({ error: 'Error creando combinación de mesas' }, { status: 500 })
+    }
+
+    updateData.table_combination_id = combo.id
+    updateData.table_id = null
+
+    // Skip the rest of the update logic — apply directly
+    const { data, error } = await sb.from('reservations').update(updateData).eq('id', id).select('*, customers(email, full_name, phone)').single()
+    if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+
+    // Audit log
+    await logReservationChanges([{
+      reservation_id: id,
+      action: 'table_changed',
+      field_name: 'table_combination_id',
+      old_value: reservation.table_combination_id as string | null,
+      new_value: combo.id,
+      performed_by_name: staff.email || 'Admin',
+    }]).catch(e => console.error('[audit-log] Error:', e))
+
+    return NextResponse.json({ reservation: data })
+  }
 
   // Status transition with validation
   if (status && status !== reservation.status) {

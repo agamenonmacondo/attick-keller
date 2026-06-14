@@ -112,13 +112,17 @@ function computeServiceTime(sales: any[]): { avgServiceTime: number; serviceTime
   }
 }
 
-/** Helper: filter sales by ISO day of week (1=Mon...7=Sun). Returns array unchanged if dayOfWeek is null. */
+/** Helper: filter sales by ISO day of week (1=Mon...7=Sun) using operational day.
+ *  Timestamps are Colombia local with +00 — use getUTC*() to avoid timezone shift. */
 function filterByDayOfWeek(sales: any[], dayOfWeek: number | null): any[] {
   if (dayOfWeek === null) return sales
   return sales.filter((s: any) => {
     if (!s.opened_at) return false
-    const jsDay = new Date(s.opened_at).getDay()
-    const isoDay = jsDay === 0 ? 7 : jsDay
+    const d = new Date(s.opened_at)
+    const hour = d.getUTCHours()
+    // Operational day: hour < 4 → previous calendar day
+    const opDay = hour < 4 ? (d.getUTCDay() + 6) % 7 : d.getUTCDay()
+    const isoDay = opDay === 0 ? 7 : opDay
     return isoDay === dayOfWeek
   })
 }

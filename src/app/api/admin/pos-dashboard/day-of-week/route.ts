@@ -155,11 +155,16 @@ export async function GET(request: NextRequest) {
     if (salesBatch.length < SALES_PAGE) break
   }
 
-  // Filter by day of week (ISODOW)
+  // Filter by day of week — use operational day (hour < 4 → previous calendar day)
+  // Get UTCDay since timestamps are Colombia local with +00
   const filteredSales = allSales.filter((s: any) => {
     if (!s.opened_at) return false
-    const jsDay = new Date(s.opened_at).getDay()
-    const isoDay = jsDayToIsoDow(jsDay)
+    const d = new Date(s.opened_at)
+    const hour = d.getUTCHours()
+    // Operational day: if before 4 AM, it's the previous calendar day
+    const opDay = hour < 4 ? (d.getUTCDay() + 6) % 7 : d.getUTCDay()
+    // Convert to ISO DOW (1=Monday … 7=Sunday, matching our API param)
+    const isoDay = opDay === 0 ? 7 : opDay
     return isoDay === dayOfWeek
   })
 
@@ -430,7 +435,7 @@ export async function GET(request: NextRequest) {
   const hourAgg = new Map<number, { revenue: number; cheques: number; tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }>()
   for (const s of sales) {
     if (!s.opened_at) continue
-    const hour = new Date(s.opened_at).getHours()
+    const hour = new Date(s.opened_at).getUTCHours()
     if (!hourAgg.has(hour)) {
       hourAgg.set(hour, { revenue: 0, cheques: 0, tipTotal: 0, cardPaidTotal: 0, cashPaidTotal: 0 })
     }

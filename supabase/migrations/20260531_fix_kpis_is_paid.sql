@@ -28,9 +28,7 @@ LANGUAGE sql STABLE AS $$
     COALESCE(SUM(s.party_size), 0)::bigint,
     COALESCE(SUM(s.card_paid), 0)::bigint,
     COALESCE(SUM(s.cash_paid), 0)::bigint,
-    COALESCE(ROUND(AVG(
-      EXTRACT(EPOCH FROM (s.closed_at - s.opened_at)) / 60
-    )::numeric), 0)::integer,
+    COALESCE(ROUND(AVG(s.service_time_minutes)::numeric), 0)::integer,
     COALESCE(ROUND(AVG(s.total)), 0)::bigint,
     COALESCE(ROUND(AVG(s.tip_amount)), 0)::bigint,
     ROUND(COALESCE(AVG(s.party_size), 0), 1)

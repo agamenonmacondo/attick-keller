@@ -18,7 +18,6 @@ export function getColombiaDate(): string {
  * toISOString() / getHours() etc. reflect Colombia local time.
  */
 export function getColombiaNow(): Date {
-  // Get the current date parts in Colombia timezone
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Bogota',
     year: 'numeric',
@@ -33,8 +32,6 @@ export function getColombiaNow(): Date {
 
   const get = (type: string) => parts.find(p => p.type === type)?.value ?? '0'
 
-  // Construct a Date from Colombia-local date parts
-  // This Date, when you call getHours/getMinutes/etc, gives Colombia local time
   return new Date(
     Date.UTC(
       parseInt(get('year')),
@@ -45,6 +42,33 @@ export function getColombiaNow(): Date {
       parseInt(get('second')),
     )
   )
+}
+
+/**
+ * Extract Colombia local hour from a DB timestamp.
+ * DB stores Colombia local time with +00 offset (e.g. "2026-06-13T19:00:00+00").
+ * Use getUTCHours() to get the raw hour without system timezone interference.
+ * Usage: colombiaHour("2026-06-13T19:00:00+00") → 19 (7 PM Colombia)
+ */
+export function colombiaHour(isoString: string | null | undefined): number | null {
+  if (!isoString) return null
+  return new Date(isoString).getUTCHours()
+}
+
+/**
+ * Extract Colombia local date (YYYY-MM-DD) from a DB timestamp.
+ * DB stores Colombia local time with +00 offset.
+ * Use getUTC*() to avoid system timezone double-shifting.
+ * IMPORTANT: This returns the CALENDAR date, NOT the operational day.
+ * For operational day grouping, use operationalDayOffset() instead.
+ */
+export function colombiaDate(isoString: string | null | undefined): string | null {
+  if (!isoString) return null
+  const d = new Date(isoString)
+  const yyyy = d.getUTCFullYear()
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(d.getUTCDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
 }
 
 /**

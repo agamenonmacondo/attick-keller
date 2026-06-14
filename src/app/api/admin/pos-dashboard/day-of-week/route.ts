@@ -445,16 +445,18 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const hourlyRevenue = [...hourAgg.entries()]
-    .map(([hour, d]) => ({
-      hour: String(hour),
-      revenue: Math.round(d.revenue),
-      cheques: d.cheques,
-      tipTotal: Math.round(d.tipTotal),
-      cardPaidTotal: Math.round(d.cardPaidTotal),
-      cashPaidTotal: Math.round(d.cashPaidTotal),
-    }))
-    .sort((a, b) => parseInt(a.hour) - parseInt(b.hour))
+  const hourlyRevenue: Array<{ hour: string; revenue: number; cheques: number; tipTotal: number; cardPaidTotal: number; cashPaidTotal: number }> = []
+  for (let h = 0; h < 24; h++) {
+    const d = hourAgg.get(h)
+    hourlyRevenue.push({
+      hour: String(h),
+      revenue: d ? Math.round(d.revenue) : 0,
+      cheques: d ? d.cheques : 0,
+      tipTotal: d ? Math.round(d.tipTotal) : 0,
+      cardPaidTotal: d ? Math.round(d.cardPaidTotal) : 0,
+      cashPaidTotal: d ? Math.round(d.cashPaidTotal) : 0,
+    })
+  }
 
   // ════════════════════════════════════════════════════════════
   // 7. Daily Trend

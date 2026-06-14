@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { colombiaHour } from '@/lib/utils/date'
 
 // ── Helpers ──────────────────────────────────────────────
 function qparam(request: NextRequest, key: string): string | null {
@@ -305,17 +306,14 @@ async function handleProduct(sb: any, productId: string, from: string, to: strin
   for (const item of validItems) {
     const sale = saleMap.get(item.pos_sale_id)
     if (!sale?.opened_at) continue
-    const hour = new Date(sale.opened_at).getHours()
+    const hour = colombiaHour(sale.opened_at) ?? 0
     if (!hourMap.has(hour)) hourMap.set(hour, { qty: 0, revenue: 0, serviceTimeSum: 0, serviceTimeCount: 0 })
     const d = hourMap.get(hour)!
-    d.qty += Number(item.quantity) || 0
+    d.qty += (Number(item.quantity) || 0)
     d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
-    if (sale.opened_at && sale.closed_at) {
-      const diff = (new Date(sale.closed_at).getTime() - new Date(sale.opened_at).getTime()) / 60000
-      if (diff > 0) {
-        d.serviceTimeSum += diff
-        d.serviceTimeCount += 1
-      }
+    if (sale.serviceTimeMin > 0) {
+      d.serviceTimeSum += sale.serviceTimeMin
+      d.serviceTimeCount += 1
     }
   }
   const byHour = [...hourMap.entries()].map(([hour, d]) => ({
@@ -501,7 +499,7 @@ async function handleStaff(sb: any, staffId: string, from: string, to: string, z
   const hourMap = new Map<number, { cheques: number; revenue: number; propina: number; serviceTimeSum: number; serviceTimeCount: number }>()
   for (const s of allSales) {
     if (!s.opened_at) continue
-    const hour = new Date(s.opened_at).getHours()
+    const hour = colombiaHour(s.opened_at) ?? 0
     if (!hourMap.has(hour)) hourMap.set(hour, { cheques: 0, revenue: 0, propina: 0, serviceTimeSum: 0, serviceTimeCount: 0 })
     const d = hourMap.get(hour)!
     d.cheques += 1
@@ -806,7 +804,7 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
   for (const item of validItems) {
     const sale = saleMap.get(item.pos_sale_id)
     if (!sale?.opened_at) continue
-    const hour = new Date(sale.opened_at).getHours()
+    const hour = colombiaHour(sale.opened_at) ?? 0
     if (!hourMap.has(hour)) hourMap.set(hour, { revenue: 0, cheques: new Set(), propina: 0, serviceTimeSum: 0, serviceTimeCount: 0 })
     const d = hourMap.get(hour)!
     d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
@@ -993,7 +991,7 @@ async function handleHour(sb: any, hourStr: string, from: string, to: string, zo
   // Filter by hour
   let hourSales = allSales.filter((s: any) => {
     if (!s.opened_at) return false
-    return new Date(s.opened_at).getHours() === hour
+    return colombiaHour(s.opened_at) === hour
   })
 
   // ── Apply zone filter ──
@@ -1226,7 +1224,7 @@ async function handleZone(sb: any, zoneName: string, from: string, to: string, c
   const hourMap = new Map<number, { revenue: number; cheques: number; propina: number; serviceTimeSum: number; serviceTimeCount: number }>()
   for (const s of allSales) {
     if (!s.opened_at) continue
-    const hr = new Date(s.opened_at).getHours()
+    const hr = colombiaHour(s.opened_at) ?? 0
     if (!hourMap.has(hr)) hourMap.set(hr, { revenue: 0, cheques: 0, propina: 0, serviceTimeSum: 0, serviceTimeCount: 0 })
     const d = hourMap.get(hr)!
     d.revenue += Number(s.total) || 0

@@ -186,8 +186,14 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const fromDate = `${from}T00:00:00`
-  const toDate = `${to}T23:59:59`
+  // Expand range to capture operational day edge cases.
+  // Operational day runs 12PM→4AM Colombia. Sales between 00:00-04:00
+  // of the next calendar date belong to the previous operational day.
+  // Without expansion, those sales are excluded by the date filter.
+  const fromDate = new Date(new Date(`${from}T00:00:00`).getTime() - 24 * 3600_000)
+    .toISOString().slice(0, 19).replace('T', ' ')
+  const toDate = new Date(new Date(`${to}T23:59:59`).getTime() + 24 * 3600_000)
+    .toISOString().slice(0, 19).replace('T', ' ')
 
   // ── Route by type ──
   switch (type) {

@@ -713,66 +713,82 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
     productNameMap.set(cleanId, p.name)
   }
 
-  // ── Get all items for these products ──
-  let allItems: any[] = []
-  for (let i = 0; i < productIdsInCat.length; i += BATCH) {
-    const pidBatch = productIdsInCat.slice(i, i + BATCH)
-    const { data: items } = await sb
-      .from('pos_sale_items')
-      .select('pos_sale_id, pos_product_id, quantity, unit_price')
-      .in('pos_product_id', pidBatch)
-    if (items) allItems.push(...normalizeItems(items))
-  }
-
-  // Get sale IDs and filter by date (include cancelled for counting)
-  const saleIdsFromItems = [...new Set(allItems.map((i: any) => i.pos_sale_id))]
+  // ── Fetch sales in the date range first, then filter by category ──
+  // BUG-FIX: Previous approach used .in('pos_product_id', pidBatch) on pos_sale_items,
+  // which fails silently when pos_sale_items has IDs with trailing spaces (POS artifact).
+  // New approach: fetch sales first (with date/zone/cancelled filters), then fetch ALL
+  // items for those sales, and filter by category in memory — same pattern as the
+  // dashboard route.ts, guaranteeing consistent results.
   let allSales: any[] = []
-  for (let i = 0; i < saleIdsFromItems.length; i += BATCH) {
-    const batch = saleIdsFromItems.slice(i, i + BATCH)
-    const { data: sales } = await sb
+  let salesOffset = 0
+  let salesHasMore = true
+  while (salesHasMore) {
+    const { data: salesBatch, error } = await sb
       .from('pos_sales')
       .select('id, total, tip_amount, opened_at, closed_at, party_size, derived_zone_name, is_cancelled')
-      .in('id', batch)
       .gte('opened_at', from)
       .lte('opened_at', to)
-    if (sales) allSales.push(...sales)
+      .range(salesOffset, salesOffset + BATCH - 1)
+      .order('opened_at', { ascending: true })
+    if (error || !salesBatch || salesBatch.length === 0) { salesHasMore = false; break }
+    allSales.push(...salesBatch)
+    salesOffset += BATCH
+    salesHasMore = salesBatch.length === BATCH
   }
 
+  // Filter cancelled, zone, and day-of-week
   const activeSales = allSales.filter((s: any) => !s.is_cancelled)
   const cancelledCount = allSales.filter((s: any) => s.is_cancelled).length
 
-  // ── Apply zone filter ──
   let filteredActiveSales = activeSales
   if (zoneParam && zoneParam !== 'all') {
     filteredActiveSales = activeSales.filter((s: any) => (s.derived_zone_name || 'Desconocido') === zoneParam)
   }
-
-  // ── Apply day-of-week filter ──
   filteredActiveSales = filterByDayOfWeek(filteredActiveSales, dayOfWeek)
 
   const validSaleIds = new Set(filteredActiveSales.map((s: any) => s.id))
-  const validItems = allItems.filter((i: any) => validSaleIds.has(i.pos_sale_id))
   const saleMap = new Map<string, any>()
   for (const s of filteredActiveSales) saleMap.set(s.id, s)
+
+  // Fetch ALL items for the valid sales
+  const validSaleIdsList = [...validSaleIds]
+  let allItems: any[] = []
+  for (let i = 0; i < validSaleIdsList.length; i += BATCH) {
+    const batch = validSaleIdsList.slice(i, i + BATCH)
+    const { data: items } = await sb
+      .from('pos_sale_items')
+      .select('pos_sale_id, pos_product_id, quantity, unit_price')
+      .in('pos_sale_id', batch)
+    if (items) allItems.push(...normalizeItems(items))
+  }
+
+  // Filter items to only those in this category
+  const validItems = allItems.filter((i: any) => {
+    const trimmedId = (i.pos_product_id || '').trim()
+    return productNameMap.has(trimmedId)
+  })
 
   // ── BUG-02 FIX: topProducts as LEFT-JOIN (ALL category products, even with 0 sales) ──
   const topProductMap = new Map<string, { productId: string; name: string; qty: number; revenue: number; cheques: Set<string> }>()
   for (const item of validItems) {
-    const name = productNameMap.get(item.pos_product_id) || 'Desconocido'
-    if (!topProductMap.has(item.pos_product_id)) {
-      topProductMap.set(item.pos_product_id, { productId: item.pos_product_id, name, qty: 0, revenue: 0, cheques: new Set() })
+    const trimmedPid = (item.pos_product_id || '').trim()
+    const name = productNameMap.get(trimmedPid) || 'Desconocido'
+    if (!topProductMap.has(trimmedPid)) {
+      topProductMap.set(trimmedPid, { productId: trimmedPid, name, qty: 0, revenue: 0, cheques: new Set() })
     }
-    const d = topProductMap.get(item.pos_product_id)!
+    const d = topProductMap.get(trimmedPid)!
     d.qty += Number(item.quantity) || 0
     d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
     d.cheques.add(item.pos_sale_id)
   }
   // Left-join: include products with no sales in the period
+  // BUG-FIX: use trimmed ID for lookup to match normalized keys
   const topProducts = catProducts.map((p: any) => {
-    const d = topProductMap.get(p.pos_product_id)
+    const cleanId = (p.pos_product_id || '').trim()
+    const d = topProductMap.get(cleanId)
     const name = p.name || 'Desconocido'
     return {
-      productId: String(p.pos_product_id),
+      productId: String(cleanId),
       name,
       qty: d?.qty || 0,
       revenue: d ? Math.round(d.revenue) : 0,

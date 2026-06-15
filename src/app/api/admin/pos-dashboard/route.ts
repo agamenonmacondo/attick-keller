@@ -68,26 +68,41 @@ async function fetchDashboardData(
   const shiftsData = (shiftsResult.data || []) as any[]
   const allGroups = (groupsResult.data || []) as any[]
 
-  // ── 1b. Fetch all sale IDs for the period (lightweight) ──
-  let allSaleIds: string[] = []
+  // ── 1b. Fetch all sales for the period (with zone info for item filtering) ──
+  let allSales: any[] = []
   let saleOffset = 0
   while (true) {
-    const { data: saleIdsBatch } = await sb
+    const { data: salesBatch } = await sb
       .from('pos_sales')
-      .select('id')
+      .select('id, derived_zone_name')
       .gte('opened_at', `${from}T00:00:00`)
       .lte('opened_at', `${to}T23:59:59`)
       .eq('is_cancelled', false)
       .range(saleOffset, saleOffset + PAGE_SIZE - 1)
       .order('opened_at', { ascending: true })
-    if (saleIdsBatch && saleIdsBatch.length > 0) {
-      allSaleIds.push(...saleIdsBatch.map((s: any) => s.id))
+    if (salesBatch && salesBatch.length > 0) {
+      allSales.push(...salesBatch)
       saleOffset += PAGE_SIZE
-      if (saleIdsBatch.length < PAGE_SIZE) break
+      if (salesBatch.length < PAGE_SIZE) break
     } else break
   }
 
+  // Build sale zone map and filtered sale IDs
+  const saleZoneMap = new Map<string, string>() // sale_id -> derived_zone_name
+  const allSaleIds: string[] = []
+  for (const s of allSales) {
+    saleZoneMap.set(s.id, s.derived_zone_name || 'Desconocido')
+    allSaleIds.push(s.id)
+  }
+
+  // ── 1c. Filter sale IDs by zone if specified ──
+  const zoneFilteredSaleIds = zoneParam && zoneParam !== 'all'
+    ? allSales.filter((s: any) => (s.derived_zone_name || 'Desconocido') === zoneParam).map((s: any) => s.id)
+    : allSaleIds
+
   // ── 2. Fetch all items for categories (parallelized by sale batches) ──
+  // Fetch items for ALL sales (not just zone-filtered) so we have complete data.
+  // Zone filtering is applied in-memory when building category/product data.
   let allItems: any[] = []
   if (allSaleIds.length > 0) {
     // Split sales into batches of IN_BATCH for the .in() clause
@@ -174,11 +189,16 @@ async function fetchDashboardData(
   }
 
   // ── 4. Build category data from items ──
+  // BUG-FIX: Filter items by zone when zone is selected, so category/product
+  // breakdowns match the drilldown which also filters by zone.
+  const zoneFilteredSaleIdSet = new Set(zoneFilteredSaleIds)
+  const categoryItems = allItems.filter((item: any) => zoneFilteredSaleIdSet.has(item.pos_sale_id))
+
   const itemsRevenueTotal = Math.round(
-    allItems.reduce((s, item) => s + (Number(item.quantity) || 0) * (Number(item.unit_price) || 0), 0)
+    categoryItems.reduce((s, item) => s + (Number(item.quantity) || 0) * (Number(item.unit_price) || 0), 0)
   )
 
-  // Sale -> categories map (for companions)
+  // Sale -> categories map (for companions) — uses ALL items, not zone-filtered
   const saleToCategories = new Map<string, Set<string>>()
   for (const item of allItems) {
     const info = productInfo.get(item.pos_product_id)
@@ -187,11 +207,11 @@ async function fetchDashboardData(
     saleToCategories.get(item.pos_sale_id)!.add(info.groupId)
   }
 
-  // Per-category aggregation
+  // Per-category aggregation — uses zone-filtered items
   const categoryRevenueMap = new Map<string, {
     categoryName: string; quantity: number; revenue: number; cheques: Set<string>
   }>()
-  for (const item of allItems) {
+  for (const item of categoryItems) {
     const info = productInfo.get(item.pos_product_id)
     if (!info) continue
     const catName = groupNames.get(info.groupId) || 'Sin categoria'
@@ -272,9 +292,9 @@ async function fetchDashboardData(
     })
     .sort((a, b) => b.revenue - a.revenue)
 
-  // Per-category product ranking
+  // Per-category product ranking — uses zone-filtered items
   const perCatProduct = new Map<string, Map<string, { quantity: number; revenue: number }>>()
-  for (const item of allItems) {
+  for (const item of categoryItems) {
     const info = productInfo.get(item.pos_product_id)
     if (!info || !info.groupId) continue
     if (!perCatProduct.has(info.groupId)) perCatProduct.set(info.groupId, new Map())
@@ -285,9 +305,9 @@ async function fetchDashboardData(
     d.revenue += (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)
   }
 
-  // Product-level cheques
+  // Product-level cheques — uses zone-filtered items
   const productSaleIds = new Map<string, Set<string>>()
-  for (const item of allItems) {
+  for (const item of categoryItems) {
     const pid = item.pos_product_id
     if (!productSaleIds.has(pid)) productSaleIds.set(pid, new Set())
     productSaleIds.get(pid)!.add(item.pos_sale_id)
@@ -378,14 +398,15 @@ async function fetchDashboardData(
     .slice(0, 20)
 
   // ── 5. Apply category filter to items (for filtered topProducts) ──
-  let filteredItems = allItems
+  // Start with zone-filtered items for consistency
+  let filteredItems = categoryItems
   if (categoryParam && categoryParam !== 'all') {
     const categoryProductIds = new Set(
       [...productInfo.entries()]
         .filter(([, info]) => info.groupId === categoryParam)
         .map(([pid]) => pid)
     )
-    filteredItems = allItems.filter((item: any) => categoryProductIds.has(String(item.pos_product_id)))
+    filteredItems = categoryItems.filter((item: any) => categoryProductIds.has(String(item.pos_product_id)))
   }
 
   // Filtered Top Products

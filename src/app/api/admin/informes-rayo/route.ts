@@ -62,6 +62,8 @@ export async function GET(request: NextRequest) {
       card_paid: raw.card_paid_total ?? 0,
       cash_paid: raw.cash_paid_total ?? 0,
       avg_service_time: raw.avg_service_time_min ?? 0,
+      subtotal: raw.subtotal ?? 0,
+      tax_total: raw.tax_total ?? 0,
     }
   }
 

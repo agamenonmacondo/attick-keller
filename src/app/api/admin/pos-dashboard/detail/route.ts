@@ -688,14 +688,15 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
 
   const categoryName = groupData?.name || 'Desconocido'
 
-  // ── Get product IDs in this category (BUG-02 FIX: include price for left-join) ──
+  // ── Get product IDs in this category ──
+  // NOTE: pos_products has NO 'price' column — using unit_price from pos_sale_items instead.
   let catProducts: any[] = []
   let prodOffset = 0
   let prodHasMore = true
   while (prodHasMore) {
     const { data, error } = await sb
       .from('pos_products')
-      .select('pos_product_id, name, price')
+      .select('pos_product_id, name')
       .eq('pos_group_id', groupId)
       .range(prodOffset, prodOffset + BATCH - 1)
     if (error || !data || data.length === 0) { prodHasMore = false; break }
@@ -706,12 +707,10 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
 
   const productIdsInCat = catProducts.map((p: any) => p.pos_product_id)
   const productNameMap = new Map<string, string>()
-  const productPriceMap = new Map<string, number>()
   for (const p of catProducts) {
     // Trim keys so lookups with normalized item IDs match
     const cleanId = (p.pos_product_id || '').trim()
     productNameMap.set(cleanId, p.name)
-    productPriceMap.set(cleanId, Number(p.price) || 0)
   }
 
   // ── Get all items for these products ──
@@ -772,13 +771,12 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
   const topProducts = catProducts.map((p: any) => {
     const d = topProductMap.get(p.pos_product_id)
     const name = p.name || 'Desconocido'
-    const price = productPriceMap.get(p.pos_product_id) || 0
     return {
       productId: String(p.pos_product_id),
       name,
       qty: d?.qty || 0,
       revenue: d ? Math.round(d.revenue) : 0,
-      avgPrice: d && d.qty > 0 ? Math.round(d.revenue / d.qty) : Math.round(price),
+      avgPrice: d && d.qty > 0 ? Math.round(d.revenue / d.qty) : 0,
       cheques: d?.cheques.size || 0,
     }
   }).sort((a: any, b: any) => b.revenue - a.revenue)

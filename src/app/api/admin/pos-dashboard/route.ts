@@ -23,6 +23,8 @@ async function fetchDashboardData(
   const rpcParams = { p_from: from, p_to: to }
   const rpcParamsZone = { ...rpcParams, p_zone: zoneParam }
   const rpcParamsCat = { ...rpcParamsZone, p_category: categoryParam }
+  // pos_dashboard_daily has overloaded params (p_is_paid_only boolean) — must include it to avoid HTTP 300
+  const rpcParamsDaily = { ...rpcParamsCat, p_is_paid_only: false }
 
   const [
     kpiResult,
@@ -39,7 +41,7 @@ async function fetchDashboardData(
     sb.rpc('pos_dashboard_kpis', rpcParamsCat),
     sb.rpc('pos_dashboard_by_zone', rpcParamsCat),
     sb.rpc('pos_dashboard_hourly', rpcParamsCat),
-    sb.rpc('pos_dashboard_daily', rpcParamsCat),
+    sb.rpc('pos_dashboard_daily', rpcParamsDaily),
     sb.rpc('pos_dashboard_staff', rpcParamsCat),
     sb.rpc('pos_dashboard_payments', rpcParamsCat),
     sb.rpc('pos_dashboard_client_split', rpcParamsCat),

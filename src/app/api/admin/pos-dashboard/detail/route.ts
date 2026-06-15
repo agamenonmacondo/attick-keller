@@ -705,6 +705,19 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
     prodHasMore = data.length === BATCH
   }
 
+  // BUG-FIX: pos_products has duplicate rows (same pos_product_id appearing multiple times).
+  // Deduplicate by trimmed product ID to prevent double-counting in topProducts.
+  const seenProductIds = new Set<string>()
+  const uniqueCatProducts: any[] = []
+  for (const p of catProducts) {
+    const cleanId = (p.pos_product_id || '').trim()
+    if (!seenProductIds.has(cleanId)) {
+      seenProductIds.add(cleanId)
+      uniqueCatProducts.push(p)
+    }
+  }
+  catProducts = uniqueCatProducts
+
   const productIdsInCat = catProducts.map((p: any) => p.pos_product_id)
   const productNameMap = new Map<string, string>()
   for (const p of catProducts) {
@@ -948,14 +961,20 @@ async function handleCategory(sb: any, groupId: string, from: string, to: string
     (s: number, i: any) => s + (Number(i.quantity) || 0) * (Number(i.unit_price) || 0), 0
   )
   const totalQty = validItems.reduce((s: number, i: any) => s + (Number(i.quantity) || 0), 0)
-  const totalCheques = validSaleIds.size
+  // BUG-FIX: totalCheques should be sales that have items in THIS category, not ALL filtered sales
+  const categorySaleIds = new Set(validItems.map((i: any) => i.pos_sale_id))
+  const totalCheques = categorySaleIds.size
   const ticketPromedio = totalCheques > 0 ? totalRevenue / totalCheques : 0
 
-  const tipTotal = filteredActiveSales.reduce((s: number, r: any) => s + (Number(r.tip_amount) || 0), 0)
+  const tipTotal = filteredActiveSales
+    .filter((s: any) => categorySaleIds.has(s.id))
+    .reduce((s: number, r: any) => s + (Number(r.tip_amount) || 0), 0)
   const tipAvg = totalCheques > 0 ? tipTotal / totalCheques : 0
-  const partySizeTotal = filteredActiveSales.reduce((s: number, r: any) => s + (Number(r.party_size) || 0), 0)
+  const partySizeTotal = filteredActiveSales
+    .filter((s: any) => categorySaleIds.has(s.id))
+    .reduce((s: number, r: any) => s + (Number(r.party_size) || 0), 0)
   const partySizeAvg = totalCheques > 0 ? partySizeTotal / totalCheques : 0
-  const { avgServiceTime } = computeServiceTime(filteredActiveSales)
+  const { avgServiceTime } = computeServiceTime(filteredActiveSales.filter((s: any) => categorySaleIds.has(s.id)))
   const totalSalesCount = allSales.length
   const cancelledRatio = totalSalesCount > 0 ? cancelledCount / totalSalesCount : 0
 

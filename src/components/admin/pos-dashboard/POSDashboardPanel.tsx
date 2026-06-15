@@ -133,8 +133,10 @@ export function POSDashboardPanel() {
   const periodAverages = useMemo(() => {
     if (!data || data.dailyTrend.length === 0) return undefined
     const days = data.dailyTrend.length
-    const totals = data.dailyTrend.reduce((acc: { revenue: number; cheques: number; propinaTotal: number; personas: number; ticketPromedio: number; propinaPromedio: number; partySizePromedio: number; cardPaidTotal: number; cashPaidTotal: number; avgServiceTime: number }, d: { revenue: number; cheques: number; propina: number; personas: number }) => ({
+    const totals = data.dailyTrend.reduce((acc: { revenue: number; subtotal: number; taxTotal: number; cheques: number; propinaTotal: number; personas: number; ticketPromedio: number; propinaPromedio: number; partySizePromedio: number; cardPaidTotal: number; cashPaidTotal: number; avgServiceTime: number }, d: { revenue: number; cheques: number; propina: number; personas: number }) => ({
       revenue: acc.revenue + d.revenue,
+      subtotal: 0,
+      taxTotal: 0,
       cheques: acc.cheques + d.cheques,
       propinaTotal: acc.propinaTotal + d.propina,
       personas: acc.personas + d.personas,
@@ -144,15 +146,19 @@ export function POSDashboardPanel() {
       cardPaidTotal: 0,
       cashPaidTotal: 0,
       avgServiceTime: 0,
-    }), { revenue: 0, cheques: 0, propinaTotal: 0, personas: 0, ticketPromedio: 0, propinaPromedio: 0, partySizePromedio: 0, cardPaidTotal: 0, cashPaidTotal: 0, avgServiceTime: 0 })
+    }), { revenue: 0, subtotal: 0, taxTotal: 0, cheques: 0, propinaTotal: 0, personas: 0, ticketPromedio: 0, propinaPromedio: 0, partySizePromedio: 0, cardPaidTotal: 0, cashPaidTotal: 0, avgServiceTime: 0 })
     totals.ticketPromedio = totals.cheques > 0 ? totals.revenue / totals.cheques : 0
     totals.propinaPromedio = totals.cheques > 0 ? totals.propinaTotal / totals.cheques : 0
     totals.partySizePromedio = totals.cheques > 0 ? totals.personas / totals.cheques : 0
     totals.cardPaidTotal = data.kpis.cardPaidTotal / days
     totals.cashPaidTotal = data.kpis.cashPaidTotal / days
     totals.avgServiceTime = data.kpis.avgServiceTime
+    totals.subtotal = data.kpis.subtotal / days
+    totals.taxTotal = data.kpis.taxTotal / days
     return {
       revenue: totals.revenue / days,
+      subtotal: totals.subtotal,
+      taxTotal: totals.taxTotal,
       cheques: totals.cheques / days,
       ticketPromedio: totals.ticketPromedio,
       propinaTotal: totals.propinaTotal / days,
@@ -683,6 +689,7 @@ export function POSDashboardPanel() {
                 topProducts={data.topProducts}
                 hourlyRevenue={data.hourlyRevenue}
                 staffPerformance={data.staffPerformance}
+                periodAverages={periodAverages}
                 onProductDrillDown={handleProductDrillDown}
                 onStaffDrillDown={handleStaffDrillDown}
                 onZoneDrillDown={handleZoneDrillDown}

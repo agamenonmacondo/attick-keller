@@ -408,6 +408,8 @@ async function fetchDashboardData(
   // ── 6. Assemble KPIs from RPC ──
   const kpi = kpiData && kpiData.length > 0 ? kpiData[0] : null
   const totalRevenue = Number(kpi?.revenue) || 0
+  const subtotal = Number(kpi?.subtotal) || 0
+  const taxTotal = Number(kpi?.tax_total) || 0
   const cheques = Number(kpi?.cheques) || 0
   const totalTip = Number(kpi?.tip_total) || 0
   const totalParty = Number(kpi?.party_size_total) || 0
@@ -591,6 +593,8 @@ async function fetchDashboardData(
   return {
     kpis: {
       revenue: Math.round(totalRevenue),
+      subtotal: Math.round(subtotal),
+      taxTotal: Math.round(taxTotal),
       cheques,
       ticketPromedio: Math.round(ticketPromedio),
       propinaTotal: Math.round(totalTip),

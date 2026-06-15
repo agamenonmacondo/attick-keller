@@ -5,6 +5,8 @@ import { AnimatedCounter } from '../shared/AnimatedCounter'
 
 interface KPIs {
   revenue: number
+  subtotal: number
+  taxTotal: number
   cheques: number
   ticketPromedio: number
   propinaTotal: number
@@ -53,6 +55,8 @@ function DiffIndicator({ value, avg }: { value: number; avg?: number }) {
 export function DayKPIBar({ kpis, averages, isSingleDay }: DayKPIBarProps) {
   const items = [
     { key: 'revenue', label: 'Revenue', value: kpis.revenue },
+    { key: 'subtotal', label: 'Sin IVA', value: kpis.subtotal },
+    { key: 'taxTotal', label: 'IVA (8%)', value: kpis.taxTotal },
     { key: 'cheques', label: 'Cheques', value: kpis.cheques },
     { key: 'ticketPromedio', label: 'Ticket prom.', value: kpis.ticketPromedio },
     { key: 'propinaTotal', label: 'Propinas', value: kpis.propinaTotal },
@@ -65,7 +69,7 @@ export function DayKPIBar({ kpis, averages, isSingleDay }: DayKPIBarProps) {
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 gap-2">
       {items.map(item => (
         <div
           key={item.key}

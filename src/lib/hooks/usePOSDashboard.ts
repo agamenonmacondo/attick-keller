@@ -43,6 +43,8 @@ export interface DrillDownData {
 export interface POSDashboardData {
   kpis: {
     revenue: number
+    subtotal: number
+    taxTotal: number
     cheques: number
     ticketPromedio: number
     propinaTotal: number

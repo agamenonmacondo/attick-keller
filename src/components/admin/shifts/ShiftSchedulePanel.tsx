@@ -112,7 +112,7 @@ export default function ShiftSchedulePanel() {
 
     for (const emp of staff) {
       const empGrid = grid[emp.id] || {};
-      let empOrd = 0, empNoc = 0, empHE = 0, empBase = 0, empRN = 0, empRD = 0, empHE$ = 0, empCosto = 0;
+      let empOrd = 0, empNoc = 0, empOvertime = 0, empBase = 0, empRN = 0, empRD = 0, empHE$ = 0, empCosto = 0;
       let diasTrabajados = 0;
       const alerts: string[] = [];
 
@@ -155,11 +155,11 @@ export default function ShiftSchedulePanel() {
         alerts.push('Sin dia de descanso');
       }
 
-      const empHE = Math.max(0, empOrd + empNoc - LEGAL_PARAMS.MAX_WEEKLY_HOURS);
+      const empWeeklyOvertime = Math.max(0, empOrd + empNoc - LEGAL_PARAMS.MAX_WEEKLY_HOURS);
 
       totalOrd += empOrd;
       totalNoc += empNoc;
-      totalHE += empHE;
+      totalHE += empWeeklyOvertime;
       totalHoras += empOrd + empNoc;
       totalBase += empBase;
       totalRN += empRN;
@@ -175,7 +175,7 @@ export default function ShiftSchedulePanel() {
         ...dayHorarios.map(escapeCSV),
         empOrd.toFixed(1),
         empNoc.toFixed(1),
-        empHE.toFixed(1),
+        empWeeklyOvertime.toFixed(1),
         (empOrd + empNoc).toFixed(1),
         String(Math.round(empBase)),
         String(Math.round(empRN)),

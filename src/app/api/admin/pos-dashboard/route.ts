@@ -240,17 +240,13 @@ async function fetchDashboardData(
     const enrichPromises = enrichBatches.map(async (batch) => {
       const { data: sales } = await sb
         .from('pos_sales')
-        .select('id, tip_amount, party_size, opened_at, closed_at')
+        .select('id, tip_amount, party_size, service_time_minutes')
         .in('id', batch)
       return sales || []
     })
     const enrichArrays = await Promise.all(enrichPromises)
     for (const s of enrichArrays.flat()) {
-      let serviceMin = 0
-      if (s.opened_at && s.closed_at) {
-        const diff = (new Date(s.closed_at).getTime() - new Date(s.opened_at).getTime()) / 60000
-        if (diff > 0) serviceMin = diff
-      }
+      const serviceMin = Number(s.service_time_minutes) || 0
       saleEnrichment.set(s.id, {
         tip: Number(s.tip_amount) || 0,
         partySize: Number(s.party_size) || 0,

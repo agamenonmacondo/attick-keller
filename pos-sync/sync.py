@@ -12,6 +12,7 @@ Ejecutar:
 import os, sys, time, re, requests, pyodbc
 from datetime import datetime, timedelta
 from decimal import Decimal
+from collections import defaultdict
 
 try: sys.stdout.reconfigure(line_buffering=True)
 except: pass
@@ -186,8 +187,13 @@ def batch_delete(table, sale_ids, batch_size=50):
         time.sleep(0.05)
     return deleted
 
-# ── Flag global: --full = sync completo (catálogos + costos) ──
+# ── Flags ──
 DO_FULL = "--full" in sys.argv
+# --since=YYYY-MM-DD fuerza fecha de inicio (re-sync desde esa fecha)
+SINCE_OVERRIDE = None
+for arg in sys.argv:
+    if arg.startswith("--since="):
+        SINCE_OVERRIDE = arg.split("=", 1)[1].strip()
 
 # ═════════════════════════════════════════════════
 # MAIN
@@ -195,23 +201,32 @@ DO_FULL = "--full" in sys.argv
 def main():
     if DO_FULL:
         log("MODO: sync completo (--full)")
+    elif SINCE_OVERRIDE:
+        log("MODO: re-sync desde %s (--since)" % SINCE_OVERRIDE)
     else:
         log("MODO: sync rapido (ventas+items+pagos+catalogos+costos)")
     log("=" * 60)
     log("SYNC INCREMENTAL - " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     log("=" * 60)
 
-    # Determinar fecha de inicio con solape de 2 dias
-    # (solo ventas recientes que puedan haber cambiado)
-    last_date = get_max_date()
-    if last_date:
-        dt = datetime.strptime(last_date, "%Y-%m-%d %H:%M:%S") - timedelta(days=2)
-        since = dt.strftime("%Y-%m-%d %H:%M:%S")
-        log("Ultima venta en Supabase: %s" % last_date)
+    # Determinar fecha de inicio
+    if SINCE_OVERRIDE:
+        # Re-sync forzado desde fecha específica
+        since = SINCE_OVERRIDE
+        if len(since) == 10:  # YYYY-MM-DD -> agregar hora
+            since = since + " 00:00:00"
+        log("RE-SYNC forzado desde: %s" % since)
     else:
-        # Nunca se ha sincronizado: arrancar desde May 1 con solape generoso
-        since = "2026-05-01 00:00:00"
-        log("Sin datos previos. Sync completo desde Mayo 1.")
+        # Incremental normal: 2 días de solape
+        last_date = get_max_date()
+        if last_date:
+            dt = datetime.strptime(last_date, "%Y-%m-%d %H:%M:%S") - timedelta(days=2)
+            since = dt.strftime("%Y-%m-%d %H:%M:%S")
+            log("Ultima venta en Supabase: %s" % last_date)
+        else:
+            # Nunca se ha sincronizado: arrancar desde May 1 con solape generoso
+            since = "2026-05-01 00:00:00"
+            log("Sin datos previos. Sync completo desde Mayo 1.")
     log("Sincronizando desde: %s" % since)
 
     # ── 1. VENTAS ──
@@ -220,7 +235,7 @@ def main():
 
     cur.execute("""
         SELECT folio, idarearestaurant, mesa, idmesero, nopersonas,
-               fecha, total, cancelado, tipodeservicio, idturno, subtotal,
+               fecha, cierre, total, cancelado, tipodeservicio, idturno, subtotal,
                totalimpuesto1, propina, idcliente
         FROM cheques WHERE fecha > CONVERT(datetime, ?) ORDER BY fecha, folio
     """, since)
@@ -253,10 +268,25 @@ def main():
     sales = []
     for c in cheques:
         tc = str(c[2]).strip() if c[2] is not None else "SIN MESA"
-        tot = to_float(c[6]) if c[6] else 0
-        tip = to_float(c[12]) if c[12] else 0
+        tot = to_float(c[7]) if c[7] else 0
+        tip = to_float(c[13]) if c[13] else 0
         fecha = parse_colombian_date(c[5])
-        sales.append({
+        cierre = parse_colombian_date(c[6])
+        
+        # Calcular service_time_minutes si hay ambas fechas
+        service_time_minutes = None
+        if fecha and cierre:
+            try:
+                dt_open = datetime.fromisoformat(fecha.replace("T", " "))
+                dt_close = datetime.fromisoformat(cierre.replace("T", " "))
+                diff = dt_close - dt_open
+                service_time_minutes = int(diff.total_seconds() / 60)
+                if service_time_minutes < 0:
+                    service_time_minutes = None
+            except:
+                service_time_minutes = None
+        
+        sale_record = {
             "restaurant_id": REST_ID,
             "pos_folio": str(to_int(c[0])),
             "pos_series": "POS",
@@ -264,19 +294,27 @@ def main():
             "party_size": to_int(c[4]) if c[4] is not None else 1,
             "pos_staff_id": str(c[3]).strip().zfill(2) if c[3] else "00",
             "pos_area_id": str(c[1]).strip().zfill(2) if c[1] else "01",
-            "pos_customer_id": str(c[13]).strip() if c[13] else "000001",
-            "pos_shift_id": str(to_int(c[9])) if c[9] is not None else None,
-            "subtotal": to_float(c[10]) if c[10] else 0,
-            "tax_amount": to_float(c[11]) if c[11] else 0,
+            "pos_customer_id": str(c[14]).strip() if c[14] else "000001",
+            "pos_shift_id": str(to_int(c[10])) if c[10] is not None else None,
+            "subtotal": to_float(c[11]) if c[11] else 0,
+            "tax_amount": to_float(c[12]) if c[12] else 0,
             "tip_amount": tip,
             "total": tot,
             "total_with_tip": tot + tip,
-            "is_cancelled": to_bool(c[7]),
+            "is_cancelled": to_bool(c[8]),
             "is_paid": True,
             "station": "POS",
             "opened_at": fecha or "2026-01-01T00:00:00",
             "derived_zone_name": derive_zone(tc),
-        })
+        }
+        # Solo incluir closed_at y service_time cuando el POS tiene cierre real.
+        # Si cierre es None (cheque abierto/nunca cerrado), NO mandar estos campos
+        # para no sobrescribir valores estimados que ya existan en Supabase.
+        if cierre:
+            sale_record["closed_at"] = cierre
+            sale_record["service_time_minutes"] = service_time_minutes
+        
+        sales.append(sale_record)
 
     # Upsert ventas y obtener UUIDs directamente
     log("Upserteando %d ventas..." % len(sales))
@@ -419,6 +457,106 @@ def main():
     log("Insertando %d pagos (solo ventas nuevas)..." % len(pagos_new))
     ins_p, err_p = batch_post("pos_sale_payments", pagos_new, 200)
     log("  %d OK | %d errors" % (ins_p, err_p))
+
+    # ── RECALCULAR item_count para ventas con items ──
+    # El upsert no actualiza item_count, asi que lo recalcamos despues de insertar items
+    if all_folios:
+        log("Recalculando item_count...")
+        item_count_map = defaultdict(int)
+        for it in items_to_insert:
+            item_count_map[it.get("pos_folio", "")] += int(it.get("quantity", 1) + 0.5)
+        # Tambien consultar items existentes en Supabase para los folios que ya tienen items
+        for chunk_start in range(0, len(all_folios), 200):
+            chunk = all_folios[chunk_start:chunk_start+200]
+            folio_str = ",".join(chunk)
+            try:
+                r = requests.get(
+                    f"{URL}/rest/v1/pos_sale_items?select=pos_folio,quantity&pos_folio=in.({folio_str})&limit=100000",
+                    headers=HDR_GET, timeout=30)
+                if r.status_code == 200:
+                    for row in r.json():
+                        item_count_map[row["pos_folio"]] += int(row["quantity"] + 0.5)
+            except Exception as e:
+                log("  WARN consultando items para item_count: %s" % str(e))
+        # PATCH solo los que tienen items
+        updated_ic = 0
+        for folio, count in item_count_map.items():
+            if count > 0 and folio in folio_to_uuid:
+                try:
+                    requests.patch(
+                        f"{URL}/rest/v1/pos_sales?id=eq.{folio_to_uuid[folio]}",
+                        headers=HDR_POST,
+                        json={"item_count": count},
+                        timeout=10
+                    )
+                    updated_ic += 1
+                except Exception:
+                    pass
+        log("  item_count actualizado: %d ventas" % updated_ic)
+
+    # ── RECALCULAR card_paid / cash_paid ──
+    # Clasificar pagos por tipo: efectivo (type=1) vs tarjeta/otros
+    if all_folios:
+        log("Calculando card_paid / cash_paid...")
+        # Obtener tipos de pago de pos_payment_methods
+        r = requests.get(
+            f"{URL}/rest/v1/pos_payment_methods?select=pos_payment_method_id,type&limit=100",
+            headers=HDR_GET, timeout=30)
+        method_types = {}  # pos_payment_method_id -> type (1=efectivo, 2=tarjeta, etc)
+        if r.status_code == 200:
+            for m in r.json():
+                method_types[m.get("pos_payment_method_id", "")] = m.get("type", 2)
+        
+        # Leer pagos de las ventas del rango desde pos_sale_payments
+        card = defaultdict(float)
+        cash = defaultdict(float)
+        for chunk_start in range(0, len(all_folios), 200):
+            chunk = all_folios[chunk_start:chunk_start+200]
+            folio_str = ",".join(chunk)
+            try:
+                r = requests.get(
+                    f"{URL}/rest/v1/pos_sale_payments?select=pos_folio,pos_payment_method_id,amount&pos_folio=in.({folio_str})&limit=100000",
+                    headers=HDR_GET, timeout=30)
+                if r.status_code == 200:
+                    for p in r.json():
+                        folio = str(p.get("pos_folio", ""))
+                        amt = float(p.get("amount") or 0)
+                        mid = str(p.get("pos_payment_method_id") or "")
+                        mtype = method_types.get(mid, 2)  # default: tarjeta
+                        if mtype == 1:  # EFECTIVO
+                            cash[folio] += amt
+                        else:  # TARJETA + otros
+                            card[folio] += amt
+            except Exception as e:
+                log("  WARN consultando pagos: %s" % str(e))
+        
+        # PATCH pos_sales con card_paid y cash_paid (batch de 200)
+        folio_cc = set(card.keys()) | set(cash.keys())
+        updated_cc = 0
+        for chunk_start in range(0, len(all_folios), 200):
+            chunk = all_folios[chunk_start:chunk_start+200]
+            patch_batch = []
+            for folio in chunk:
+                if folio in folio_to_uuid and folio in folio_cc:
+                    patch_batch.append({
+                        "id": folio_to_uuid[folio],
+                        "card_paid": round(card.get(folio, 0), 2),
+                        "cash_paid": round(cash.get(folio, 0), 2)
+                    })
+            if not patch_batch:
+                continue
+            # PostgREST no soporta PATCH batch directo, usamos upsert con merge-duplicates
+            for sale in patch_batch:
+                try:
+                    requests.patch(
+                        f"{URL}/rest/v1/pos_sales?id=eq.{sale['id']}",
+                        headers=HDR_POST,
+                        json={"card_paid": sale["card_paid"], "cash_paid": sale["cash_paid"]},
+                        timeout=10)
+                    updated_cc += 1
+                except Exception:
+                    pass
+        log("  card/cash_paid: %d ventas" % updated_cc)
 
     # ── CATALOGOS (siempre, son ligeros) ──
     conn2 = getconn()

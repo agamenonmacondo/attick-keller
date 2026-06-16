@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, ChartBar, ChartLineUp, PencilSimple, IdentificationBadge, Trash } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, ChartBar, ChartLineUp, PencilSimple, IdentificationBadge, Trash, DownloadSimple } from '@phosphor-icons/react';
 import { SectionHeading } from '../shared/SectionHeading';
 
 import type { ShiftType, StaffMemberForShift, ShiftAssignment } from '@/lib/types/shifts';
-import { getWeekStr, getWeekDates, dayIndexToDateIndex, calcularCostoTurnoEmpresa } from '@/lib/utils/costCalculator';
+import { getWeekStr, getWeekDates, dayIndexToDateIndex, calcularCostoTurnoEmpresa, calcularHorasTurno, formatCOP } from '@/lib/utils/costCalculator';
+import { DAY_NAMES, LEGAL_PARAMS } from '@/lib/types/shifts';
 import { getLocalDate } from '@/lib/utils/formatDate';
 import { cn } from '@/lib/utils/cn';
 import { useTheme } from '@/lib/ThemeProvider';
@@ -69,6 +70,153 @@ export default function ShiftSchedulePanel() {
 
   // Track whether grid has unsaved local changes
   const gridDirtyRef = useRef(false);
+
+  // Exportar CSV de turnos
+  const handleExportCSV = useCallback(() => {
+    if (staff.length === 0) return;
+
+    // day_index order for CSV columns: Lun(1) Mar(2) ... Sab(6) Dom(0)
+    const dayOrder = [1, 2, 3, 4, 5, 6, 0];
+    const weekDatesLocal = getWeekDates(weekStr);
+
+    const escapeCSV = (val: string) => {
+      if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+        return `"${val.replace(/"/g, '""')}"`;
+      }
+      return val;
+    };
+
+    const formatHorario = (code: string, st: ShiftType | undefined): string => {
+      if (!code || code === 'OFF') return '';
+      if (!st) return code;
+      if (st.is_split && st.segments && st.segments.length > 0) {
+        return st.segments.map(s => `${s.entrada}-${s.salida}`).join(' / ');
+      }
+      return `${st.entrada}-${st.salida}`;
+    };
+
+    // Header row
+    const headers = [
+      'Colaborador', 'Cargo', 'Salario Mensual',
+      ...dayOrder.map(di => DAY_NAMES[di]),
+      ...dayOrder.map(di => `${DAY_NAMES[di]} Horario`),
+      'Horas Ordinarias', 'Horas Nocturnas', 'Horas Extra', 'Total Horas',
+      'Costo Base', 'Recargo Nocturno', 'Recargo Dominical', 'Horas Extra $', 'Costo Total',
+      'Dia Descanso', 'Alertas',
+    ];
+
+    const rows: string[][] = [];
+
+    let totalOrd = 0, totalNoc = 0, totalHE = 0, totalHoras = 0;
+    let totalBase = 0, totalRN = 0, totalRD = 0, totalHE$ = 0, totalCosto = 0;
+
+    for (const emp of staff) {
+      const empGrid = grid[emp.id] || {};
+      let empOrd = 0, empNoc = 0, empHE = 0, empBase = 0, empRN = 0, empRD = 0, empHE$ = 0, empCosto = 0;
+      let diasTrabajados = 0;
+      const alerts: string[] = [];
+
+      const dayCodes: string[] = [];
+      const dayHorarios: string[] = [];
+
+      for (const di of dayOrder) {
+        const code = empGrid[di] || '';
+        dayCodes.push(code || '');
+
+        const st = code && code !== 'OFF' ? shiftTypes.find(t => t.code === code) : undefined;
+        dayHorarios.push(formatHorario(code, st));
+
+        if (!code || code === 'OFF') continue;
+        if (!st) continue;
+
+        const isSunday = di === 0;
+        const horas = calcularHorasTurno(st);
+        empOrd += horas.ordinarias;
+        empNoc += horas.nocturnas;
+        diasTrabajados++;
+
+        const costo = calcularCostoTurnoEmpresa(st, emp.salario_mensual, isSunday);
+        empBase += costo.base_pay;
+        empRN += costo.night_surcharge;
+        empRD += costo.sunday_surcharge;
+        empHE$ += costo.overtime_surcharge;
+        empCosto += costo.total;
+
+        // Extra diario si > 8h
+        if (horas.total > LEGAL_PARAMS.MAX_DAILY_HOURS) {
+          alerts.push(`${DAY_NAMES[di]}: ${horas.total}h supera ${LEGAL_PARAMS.MAX_DAILY_HOURS}h`);
+        }
+      }
+
+      if (empOrd + empNoc > LEGAL_PARAMS.MAX_WEEKLY_HOURS) {
+        alerts.push(`${empOrd + empNoc}h semanales supera ${LEGAL_PARAMS.MAX_WEEKLY_HOURS}h`);
+      }
+      if (diasTrabajados >= 7) {
+        alerts.push('Sin dia de descanso');
+      }
+
+      const empHE = Math.max(0, empOrd + empNoc - LEGAL_PARAMS.MAX_WEEKLY_HOURS);
+
+      totalOrd += empOrd;
+      totalNoc += empNoc;
+      totalHE += empHE;
+      totalHoras += empOrd + empNoc;
+      totalBase += empBase;
+      totalRN += empRN;
+      totalRD += empRD;
+      totalHE$ += empHE$;
+      totalCosto += empCosto;
+
+      rows.push([
+        escapeCSV(emp.alias),
+        escapeCSV(emp.cargo),
+        String(emp.salario_mensual),
+        ...dayCodes.map(escapeCSV),
+        ...dayHorarios.map(escapeCSV),
+        empOrd.toFixed(1),
+        empNoc.toFixed(1),
+        empHE.toFixed(1),
+        (empOrd + empNoc).toFixed(1),
+        String(Math.round(empBase)),
+        String(Math.round(empRN)),
+        String(Math.round(empRD)),
+        String(Math.round(empHE$)),
+        String(Math.round(empCosto)),
+        diasTrabajados < 7 ? 'Si' : 'No',
+        escapeCSV(alerts.join('; ')),
+      ]);
+    }
+
+    // Total row
+    rows.push([
+      `TOTAL ${area.toUpperCase()}`,
+      `${staff.length} empleados`,
+      '',
+      ...dayOrder.map(() => ''),
+      ...dayOrder.map(() => ''),
+      totalOrd.toFixed(1),
+      totalNoc.toFixed(1),
+      totalHE.toFixed(1),
+      totalHoras.toFixed(1),
+      String(Math.round(totalBase)),
+      String(Math.round(totalRN)),
+      String(Math.round(totalRD)),
+      String(Math.round(totalHE$)),
+      String(Math.round(totalCosto)),
+      '',
+      '',
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.map(escapeCSV).join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const areaLabel = area === 'todos' ? 'consolidado' : area;
+    link.href = url;
+    link.download = `turnos_${areaLabel}_${weekStr}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [staff, shiftTypes, grid, weekStr, area]);
 
   // Compute heatmap days from assignments
   const days = useMemo(() => {
@@ -374,6 +522,19 @@ export default function ShiftSchedulePanel() {
               {t.label}
             </button>
           ))}
+          {/* Exportar CSV */}
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            disabled={staff.length === 0}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px]
+              bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--color-ak-borgona)]/10 hover:text-[var(--color-ak-borgona)]
+              disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Exportar CSV"
+          >
+            <DownloadSimple size={16} />
+            <span className="hidden sm:inline">CSV</span>
+          </button>
         </div>
       </div>
 

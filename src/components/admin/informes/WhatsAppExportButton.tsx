@@ -195,12 +195,16 @@ function generateWhatsAppText(
 
   // ── KPIs con comparación ──
   const revenue = Number(kpi.total_ventas ?? kpi.revenue ?? 0)
+  const subtotal = Number(kpi.subtotal ?? 0)
+  const taxTotal = Number(kpi.tax_total ?? 0)
+  const discountTotal = Number(kpi.discount_total ?? 0)
   const cheques = Number(kpi.total_cheques ?? kpi.cheques ?? 0)
   const ticket = cheques > 0 ? revenue / cheques : 0
   const propina = Number(kpi.propina_total ?? kpi.tip_total ?? 0)
   const personas = Number(kpi.personas ?? kpi.party_size_total ?? 0)
   const propinaPer = personas > 0 ? propina / personas : 0
   const serviceTime = Number(kpi.avg_service_time ?? 0)
+  const revenueNeto = subtotal - discountTotal
 
   const cRevenue = Number(compKpi?.total_ventas ?? compKpi?.revenue ?? 0)
   const cCheques = Number(compKpi?.total_cheques ?? compKpi?.cheques ?? 0)
@@ -215,6 +219,12 @@ function generateWhatsAppText(
   }
 
   lines.push(`💰 Ventas: ${fmtMoney(revenue)}${delta(revenue, cRevenue)}`)
+  lines.push(`  Sin IVA: ${fmtMoney(subtotal)} | IVA 8%: ${fmtMoney(taxTotal)}`)
+  if (discountTotal > 0) {
+    lines.push(`  Descuentos: ${fmtMoney(discountTotal)} | Neto sin IVA: ${fmtMoney(revenueNeto)}`)
+  } else {
+    lines.push(`  Descuentos: $0 | Neto sin IVA: ${fmtMoney(revenueNeto)}`)
+  }
   lines.push(`👥 Cheques: ${cheques.toLocaleString('es-CO')}${delta(cheques, cCheques)}`)
   lines.push(`🎫 Ticket: ${fmtMoney(ticket)}${delta(ticket, cTicket)}`)
   lines.push(`🤝 Personas: ${personas.toLocaleString('es-CO')}${delta(personas, cPersonas)}`)

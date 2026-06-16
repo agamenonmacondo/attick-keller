@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
       avg_service_time: raw.avg_service_time_min ?? 0,
       subtotal: raw.subtotal ?? 0,
       tax_total: raw.tax_total ?? 0,
+      discount_total: raw.discount_total ?? 0,
     }
   }
 

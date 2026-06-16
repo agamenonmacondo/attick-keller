@@ -429,6 +429,7 @@ async function fetchDashboardData(
   const totalRevenue = Number(kpi?.revenue) || 0
   const subtotal = Number(kpi?.subtotal) || 0
   const taxTotal = Number(kpi?.tax_total) || 0
+  const discountTotal = Number(kpi?.discount_total) || 0
   const cheques = Number(kpi?.cheques) || 0
   const totalTip = Number(kpi?.tip_total) || 0
   const totalParty = Number(kpi?.party_size_total) || 0
@@ -614,6 +615,7 @@ async function fetchDashboardData(
       revenue: Math.round(totalRevenue),
       subtotal: Math.round(subtotal),
       taxTotal: Math.round(taxTotal),
+      discountTotal: Math.round(discountTotal),
       cheques,
       ticketPromedio: Math.round(ticketPromedio),
       propinaTotal: Math.round(totalTip),

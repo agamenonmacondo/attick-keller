@@ -45,6 +45,7 @@ export interface POSDashboardData {
     revenue: number
     subtotal: number
     taxTotal: number
+    discountTotal: number
     cheques: number
     ticketPromedio: number
     propinaTotal: number

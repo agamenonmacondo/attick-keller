@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Wallet, ForkKnife, Receipt, Users, HandCoins, Coins, Calculator } from '@phosphor-icons/react'
+import { Wallet, ForkKnife, Receipt, Users, HandCoins, Coins, Calculator, ArrowDown } from '@phosphor-icons/react'
 
 interface KPICardProps {
   label: string
@@ -32,6 +32,8 @@ export function MetricasClave({ data, comparison }: { data: any; comparison: { k
     const revenue = Number(kpi?.total_ventas ?? kpi?.revenue ?? kpi?.total_revenue ?? 0)
     const subtotal = Number(kpi?.subtotal ?? 0)
     const taxTotal = Number(kpi?.tax_total ?? 0)
+    const discountTotal = Number(kpi?.discount_total ?? 0)
+    const revenueNeto = subtotal - discountTotal
     const cheques = Number(kpi?.total_cheques ?? 0)
     const avgTicket = cheques > 0 ? revenue / cheques : 0
     const personas = Number(kpi?.personas ?? 0)
@@ -62,6 +64,17 @@ export function MetricasClave({ data, comparison }: { data: any; comparison: { k
         label: 'IVA (8%)',
         value: formatCOP(taxTotal),
         icon: <Calculator size={16} className="text-[var(--color-ak-dorado)]" />,
+      },
+      {
+        label: 'Descuentos',
+        value: formatCOP(discountTotal),
+        icon: <ArrowDown size={16} className="text-[var(--color-ak-dorado)]" />,
+      },
+      {
+        label: 'Neto sin IVA',
+        value: formatCOP(revenueNeto),
+        subtitle: discountTotal > 0 ? `desc: ${formatCOP(discountTotal)}` : undefined,
+        icon: <Receipt size={16} className="text-[var(--color-ak-dorado)]" weight="fill" />,
       },
       {
         label: 'Cheques',
@@ -100,7 +113,7 @@ export function MetricasClave({ data, comparison }: { data: any; comparison: { k
   if (!data) return null
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-3">
       {cards.map((card) => (
         <div
           key={card.label}

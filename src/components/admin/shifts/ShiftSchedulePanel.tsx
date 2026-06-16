@@ -419,8 +419,7 @@ export default function ShiftSchedulePanel() {
           <button
             type="button"
             onClick={handlePrevWeek}
-            disabled={weekStr <= currentWeekStr}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] transition-all duration-200"
             aria-label="Semana anterior"
           >
             <CaretLeft size={16} weight="bold" />
@@ -447,6 +446,7 @@ export default function ShiftSchedulePanel() {
             weekStr={weekStr}
             grid={grid}
             onGridChange={handleGridChange}
+            readOnly={!isWeekEditable(weekStr)}
           />
 
           {/* Botones de accion — solo para semana actual o futura, y no en modo consolidado */}
@@ -498,7 +498,7 @@ export default function ShiftSchedulePanel() {
           )}
           {!isWeekEditable(weekStr) && (
             <p className="text-xs text-[var(--text-secondary)] text-right">
-              No se pueden editar semanas pasadas
+              Modo solo lectura — las semanas pasadas no se pueden editar
             </p>
           )}
         </div>

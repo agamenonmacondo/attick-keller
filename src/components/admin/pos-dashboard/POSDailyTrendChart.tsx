@@ -179,7 +179,7 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
             dataKey="totalRevenue"
             name="Ventas total"
             radius={[4, 4, 0, 0]}
-            style={{ transition: 'all 300ms ease-out', cursor: 'pointer' }}
+            className="transition-all duration-300 cursor-pointer"
             onClick={(e: any) => {
               if (onDayClick && e?.payload?.dayOfWeek) {
                 const day = e.payload as AggregatedDay
@@ -202,7 +202,7 @@ export function POSDailyTrendChart({ data, onDayClick }: DailyTrendChartProps) {
             name="Propina total"
             fill="var(--color-ak-oliva)"
             radius={[4, 4, 0, 0]}
-            style={{ transition: 'all 300ms ease-out', cursor: 'pointer' }}
+            className="transition-all duration-300 cursor-pointer"
             onClick={(e: any) => {
               if (onDayClick && e?.payload?.dayOfWeek) {
                 const day = e.payload as AggregatedDay

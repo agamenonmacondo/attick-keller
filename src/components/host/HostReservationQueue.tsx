@@ -283,7 +283,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
               <div key={timeLabel}>
                 {/* Time group header */}
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-bold font-['Playfair_Display'] text-[var(--text-primary)]">{timeLabel}</span>
+                  <span className="text-sm font-bold font-[family-name:var(--font-display)] text-[var(--text-primary)]">{timeLabel}</span>
                   {isNow && (
                     <span className="text-[10px] font-semibold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] bg-[var(--color-ak-borgona)]/10 dark:bg-[var(--color-ak-borgona-light)]/10 px-2 py-0.5 rounded-full">AHORA</span>
                   )}
@@ -427,7 +427,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                       onNotesUpdate={(val) => setNotesMap(prev => ({ ...prev, [id]: val }))}
                                     />
                                     {formatCreatedAt(r.created_at as string | null) && (
-                                      <div className="flex items-center gap-1.5 text-xs text-[#8D6E63]">
+                                      <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
                                         <CalendarPlus size={12} className="shrink-0" />
                                         <span>Creada: {formatCreatedAt(r.created_at as string | null)}</span>
                                       </div>
@@ -450,8 +450,7 @@ export function HostReservationQueue({ reservations, onAction }: HostReservation
                                   action.variant === 'primary' && 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] dark:hover:bg-[var(--color-ak-borgona-light)]/80',
                                   action.variant === 'warning' && 'bg-[var(--color-ak-ambar)] hover:bg-[var(--color-ak-ambar)]/90 dark:bg-[var(--color-ak-ambar-light)] dark:hover:bg-[var(--color-ak-ambar-light)]/80',
                                   action.variant === 'danger' && 'bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/80',
-                                )}
-                                style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                                )} transition-all duration-200
                               >
                                 {isConfirming ? '...' : action.label}
                               </button>

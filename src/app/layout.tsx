@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="font-['DM_Sans'] bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      <body className="font-[family-name:var(--font-body)] bg-[var(--bg-primary)] text-[var(--text-primary)]">
         <AuthProvider>
           <ThemeProvider>
             {children}

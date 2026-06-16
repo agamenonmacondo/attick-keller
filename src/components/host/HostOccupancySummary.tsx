@@ -179,7 +179,7 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
               <p className="text-xs md:text-sm text-[var(--text-secondary)] font-medium uppercase tracking-wide">
                 {card.label}
               </p>
-              <p className={`text-xl md:text-2xl font-bold ${card.color} font-['Playfair_Display'] mt-1`}>
+              <p className={`text-xl md:text-2xl font-bold ${card.color} font-[family-name:var(--font-display)] mt-1`}>
                 <AnimatedCounter value={card.value} />
                 {card.suffix && (
                   <span className="text-[var(--text-secondary)] font-normal text-xs md:text-sm ml-1">
@@ -217,7 +217,7 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
               <p className="text-xs md:text-sm text-[var(--text-secondary)] font-medium uppercase tracking-wide">
                 {card.label}
               </p>
-              <p className={`text-xl md:text-2xl font-bold ${card.color} font-['Playfair_Display'] mt-1`}>
+              <p className={`text-xl md:text-2xl font-bold ${card.color} font-[family-name:var(--font-display)] mt-1`}>
                 <AnimatedCounter value={card.value} />
                 {card.suffix && (
                   <span className="text-[var(--text-secondary)] font-normal text-xs md:text-sm ml-1">
@@ -254,7 +254,7 @@ export function HostOccupancySummary({ stats, occupancy, quickStats, zoneSummari
           transition={{ type: 'spring', ...SPRING, delay: 0.15 }}
           className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4"
         >
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] font-['Playfair_Display'] mb-3">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] font-[family-name:var(--font-display)] mb-3">
             Resumen por Zona
           </h3>
           <div className="space-y-3">

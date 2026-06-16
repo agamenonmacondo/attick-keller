@@ -64,7 +64,7 @@ export function AddStaffForm({ onAdd }: AddStaffFormProps) {
 
   return (
     <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-6">
-      <h2 className="font-['Playfair_Display'] text-xl font-bold text-[var(--text-primary)] mb-4">
+      <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--text-primary)] mb-4">
         Agregar Personal
       </h2>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">

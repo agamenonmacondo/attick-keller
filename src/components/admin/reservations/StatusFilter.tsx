@@ -18,19 +18,18 @@ const FILTERS = [
 
 export function StatusFilter({ active, onChange, counts }: StatusFilterProps) {
   return (
-    <div className="mb-4 flex items-center gap-1 overflow-x-auto border-b border-[var(--border-default)]">
+    <div className="mb-4 flex items-center gap-1 overflow-x-auto border-b border-[var(--border-default)] scrollbar-hide" aria-label="Filtro de estado">
       {FILTERS.map((f) => (
         <button
           key={f.key}
           type="button"
           onClick={() => onChange(f.key)}
           className={cn(
-            '-mb-px whitespace-nowrap border-b-2 px-4 py-2 text-sm font-medium',
+            '-mb-px whitespace-nowrap border-b-2 px-4 py-2 text-sm font-medium transition-colors duration-200',
             active === f.key
               ? 'border-[var(--color-ak-borgona)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
           )}
-          style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
         >
           {f.label}
           {counts[f.key] !== undefined && (

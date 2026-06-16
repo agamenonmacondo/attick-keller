@@ -39,7 +39,7 @@ export function OccupancyGauge({ percent, capacityPercent, occupied, total, gues
             <circle ref={circleRef} cx="70" cy="70" r={RADIUS} fill="none" stroke={color} strokeWidth={STROKE} strokeLinecap="round" strokeDasharray={`${ARC_LENGTH} ${CIRCUMFERENCE}`} strokeDashoffset={String(ARC_LENGTH)} transform="rotate(135, 70, 70)" style={{ transition: 'stroke-dashoffset 800ms ease-out, stroke 400ms ease-out' }} />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-end pb-1">
-            <span className="text-3xl font-['Playfair_Display'] font-bold" style={{ color }}>{percent}%</span>
+            <span className="text-3xl font-[family-name:var(--font-display)] font-bold" style={{ color }}>{percent}%</span>
           </div>
         </div>
         <p className="text-xs text-[var(--text-secondary)] mt-2">{occupied} de {total} mesas ocupadas</p>

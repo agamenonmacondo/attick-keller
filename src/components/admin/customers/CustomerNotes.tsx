@@ -47,8 +47,7 @@ export function CustomerNotes({ customerId, initialNotes }: CustomerNotesProps) 
           type="button"
           onClick={saveNotes}
           disabled={saving}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] disabled:opacity-50"
-          style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] disabled:opacity-50 transition-all duration-200"
         >
           <FloppyDisk size={14} />
           {saving ? 'Guardando...' : 'Guardar'}

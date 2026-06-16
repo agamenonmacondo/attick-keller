@@ -23,8 +23,7 @@ export function DailyTrendChart({ trend }: DailyTrendChartProps) {
 
           return (
             <div key={date} className="flex-1 flex flex-col items-center gap-0.5 group relative">
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[var(--color-ak-madera)] text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10"
-                style={{ transition: 'opacity 150ms ease-out' }}>
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[var(--color-ak-madera)] text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10 transition-opacity duration-150">
                 {total} reservas ({confirmed} conf.)
               </div>
               <div className="w-full flex flex-col justify-end" style={{ height: 100 }}>

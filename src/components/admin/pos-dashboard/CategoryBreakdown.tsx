@@ -73,21 +73,19 @@ export function CategoryBreakdown({ data, selectedCategory, onCategoryClick, onC
                     <CaretRight size={10} className="text-[var(--text-secondary)] shrink-0 opacity-0 group-hover:opacity-60" weight="bold" />
                   )}
                   <span
-                    className={`text-[10px] sm:text-[11px] truncate ${isSelected ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}
-                    style={{ transition: 'color 150ms ease-out' }}
+                    className={`text-[10px] sm:text-[11px] truncate transition-colors duration-150 ${isSelected ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}
                   >
                     {d.categoryName}
                   </span>
                 </button>
                 {/* Revenue */}
                 <span
-                  className="ml-auto text-[10px] sm:text-[11px] font-mono tabular-nums text-[var(--text-primary)]"
-                  style={{ transition: 'color 150ms ease-out' }}
+                  className="ml-auto text-[10px] sm:text-[11px] font-mono tabular-nums text-[var(--text-primary)] transition-colors duration-150"
                 >
                   {formatCOPDisplay(d.revenue)}
                 </span>
                 {onCategoryDrillDown && (
-                  <span className="text-[9px] text-[var(--text-secondary)] opacity-0 group-hover:opacity-100 shrink-0" style={{ transition: 'opacity 150ms ease-out' }}>
+                  <span className="text-[9px] text-[var(--text-secondary)] opacity-0 group-hover:opacity-100 shrink-0 transition-opacity duration-150">
                     detalle
                   </span>
                 )}

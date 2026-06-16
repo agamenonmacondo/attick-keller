@@ -125,8 +125,7 @@ export function DayPerformanceCard({ date, kpis, byZone, topProducts, hourlyReve
               return (
                 <div
                   key={z.zone}
-                  className={`flex items-center gap-2 ${onZoneDrillDown ? 'cursor-pointer hover:opacity-80' : ''}`}
-                  style={{ transition: 'opacity 150ms ease-out' }}
+                  className={`flex items-center gap-2 transition-opacity duration-150 ${onZoneDrillDown ? 'cursor-pointer hover:opacity-80' : ''}`}
                   onClick={onZoneDrillDown ? () => onZoneDrillDown(z.zone) : undefined}
                   title={onZoneDrillDown ? 'Ver detalle de zona' : undefined}
                 >
@@ -154,8 +153,7 @@ export function DayPerformanceCard({ date, kpis, byZone, topProducts, hourlyReve
             {top5.map((p, i) => (
               <div
                 key={i}
-                className={`flex items-center gap-2 text-[11px] ${onProductDrillDown && p.productId ? 'cursor-pointer hover:opacity-80' : ''}`}
-                style={{ transition: 'opacity 150ms ease-out' }}
+                className={`flex items-center gap-2 text-[11px] transition-opacity duration-150 ${onProductDrillDown && p.productId ? 'cursor-pointer hover:opacity-80' : ''}`}
                 onClick={onProductDrillDown && p.productId ? () => onProductDrillDown(p.productId!, p.productName) : undefined}
                 title={onProductDrillDown && p.productId ? 'Ver detalle del producto' : undefined}
               >
@@ -175,8 +173,7 @@ export function DayPerformanceCard({ date, kpis, byZone, topProducts, hourlyReve
             {top5Staff.map((s, i) => (
               <div
                 key={i}
-                className={`flex items-center gap-2 text-[11px] ${onStaffDrillDown && s.staffId ? 'cursor-pointer hover:opacity-80' : ''}`}
-                style={{ transition: 'opacity 150ms ease-out' }}
+                className={`flex items-center gap-2 text-[11px] transition-opacity duration-150 ${onStaffDrillDown && s.staffId ? 'cursor-pointer hover:opacity-80' : ''}`}
                 onClick={onStaffDrillDown && s.staffId ? () => onStaffDrillDown(s.staffId!, s.staffName) : undefined}
                 title={onStaffDrillDown && s.staffId ? 'Ver detalle del mesero' : undefined}
               >

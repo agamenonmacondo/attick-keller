@@ -38,16 +38,16 @@ const STATUS_LABELS: Record<TableStatus, string> = {
 }
 
 const ZONE_COLORS: Record<string, string> = {
-  'Taller': '#A0745A',
+  'Taller': 'var(--color-ak-madera)',
   'Salón Central': 'var(--color-ak-borgona)',
-  'Barra': '#6B9E78',
-  'Tipi': '#9B8AF5',
+  'Barra': 'var(--color-ak-oliva)',
+  'Tipi': 'var(--color-ak-dorado)',
   'Semi-Privado': 'var(--color-ak-ambar)',
-  'Jardín': '#4AAF75',
-  'Chispas': '#E07070',
-  'Ático': '#6AA0D0',
-  'Attic': '#6AA0D0',
-  'Lounge': '#6AA0D0',
+  'Jardín': 'var(--color-ak-oliva)',
+  'Chispas': 'var(--color-ak-ladrillo)',
+  'Ático': 'var(--text-secondary)',
+  'Attic': 'var(--text-secondary)',
+  'Lounge': 'var(--text-secondary)',
 }
 
 const DEFAULT_ZONE_COLOR = 'var(--text-secondary)'
@@ -341,7 +341,7 @@ function TableDetailContent({
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: zoneColor }} />
           <div>
-            <h3 className="font-['Playfair_Display'] text-lg font-bold text-[var(--text-primary)]">
+            <h3 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--text-primary)]">
               {tableLabel(table)}
             </h3>
             <p className="text-xs text-[var(--text-secondary)]">Zona · Capacidad: {table.capacity} personas</p>

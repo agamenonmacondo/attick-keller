@@ -101,11 +101,10 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                         type="button"
                         onClick={() => setActiveTableId(isActive ? null : tableId)}
                         className={cn(
-                          'w-full rounded-lg border-2 p-3 text-center cursor-pointer hover:shadow-md active:scale-[0.97]',
+                          'w-full rounded-lg border-2 p-3 text-center cursor-pointer hover:shadow-md active:scale-[0.97] transition-all duration-200',
                           showReservationInfo ? 'bg-[var(--bg-card)] border-[var(--border-default)]' : 'bg-[var(--bg-card)] border-[var(--border-default)]',
                           isActive && 'ring-2 ring-[var(--color-ak-borgona)]/40',
                         )}
-                        style={{ transition: 'transform 160ms ease-out, box-shadow 200ms ease-out' }}
                       >
                         <div className="flex items-center justify-center gap-1 mb-1">
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: statusColor }} />
@@ -213,11 +212,10 @@ export function TableMap({ zones, unassignedTables, unassignedReservations, onAs
                       type="button"
                       onClick={() => setActiveTableId(isActive ? null : tableId)}
                       className={cn(
-                        'w-full rounded-lg border-2 border-dashed p-3 text-center cursor-pointer hover:shadow-md active:scale-[0.97]',
+                        'w-full rounded-lg border-2 border-dashed p-3 text-center cursor-pointer hover:shadow-md active:scale-[0.97] transition-all duration-200',
                         isOccupied ? 'bg-[var(--bg-card)] border-[var(--border-default)]' : 'bg-[var(--bg-input)] border-[var(--border-default)]',
                         isActive && 'ring-2 ring-[var(--color-ak-borgona)]/40',
                       )}
-                      style={{ transition: 'transform 160ms ease-out, box-shadow 200ms ease-out' }}
                     >
                       <div className="flex items-center justify-center gap-1 mb-1">
                         {showReservationInfo && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: statusColor }} />}

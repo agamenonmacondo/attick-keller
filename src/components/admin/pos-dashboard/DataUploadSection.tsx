@@ -76,8 +76,7 @@ export function DataUploadSection({ onUploadComplete }: DataUploadSectionProps) 
         ) : (
           <button
             onClick={() => fileRef.current?.click()}
-            className="flex items-center justify-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] mx-auto"
-            style={{ transition: 'color 150ms ease-out' }}
+            className="flex items-center justify-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] mx-auto transition-colors duration-150"
           >
             <Upload size={20} weight="regular" />
             <span>Subir archivo JSON con datos POS</span>

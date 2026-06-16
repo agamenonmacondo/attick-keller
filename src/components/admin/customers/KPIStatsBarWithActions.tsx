@@ -86,7 +86,7 @@ export function KPIStatsBarWithActions({ overview, loading }: KPIStatsBarProps) 
             <div className="p-4 text-center">
               <Icon size={20} weight="duotone" color={kpi.iconColor} className="mx-auto mb-1" />
               <div className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider">{kpi.label}</div>
-              <div className="text-2xl font-bold text-[var(--text-primary)] mt-1 font-['Playfair_Display']">{kpi.value}</div>
+              <div className="text-2xl font-bold text-[var(--text-primary)] mt-1 font-[family-name:var(--font-display)]">{kpi.value}</div>
               {kpi.subtext && (
                 <div className="text-[10px] text-[var(--text-muted)] mt-0.5">{kpi.subtext}</div>
               )}

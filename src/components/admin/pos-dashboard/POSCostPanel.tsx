@@ -275,7 +275,7 @@ export function POSCostPanel({
                   dataKey="total"
                   fill="var(--color-ak-borgona)"
                   radius={[4, 4, 0, 0]}
-                  style={{ transition: 'all 300ms ease-out' }}
+                  className="transition-all duration-300"
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -495,7 +495,7 @@ export function POSCostPanel({
                 dataKey="total"
                 fill="var(--color-ak-borgona)"
                 radius={[3, 3, 0, 0]}
-                style={{ transition: 'all 300ms ease-out' }}
+                className="transition-all duration-300"
               />
             </BarChart>
           </ResponsiveContainer>

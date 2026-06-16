@@ -102,8 +102,7 @@ export function TopProductsTable({ data, initialLimit = 10, expandedLimit = 15, 
             {visibleData.map((p, i) => (
               <tr
                 key={p.productId}
-                className={`border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-input)] ${onProductDrillDown ? 'cursor-pointer' : ''}`}
-                style={{ transition: 'background 150ms ease-out' }}
+                className={`border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-input)] transition-colors duration-150 ${onProductDrillDown ? 'cursor-pointer' : ''}`}
                 onClick={onProductDrillDown ? () => onProductDrillDown(p.productId, p.productName) : undefined}
                 title={onProductDrillDown ? 'Ver detalle del producto' : undefined}
               >

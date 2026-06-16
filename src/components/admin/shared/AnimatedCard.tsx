@@ -21,7 +21,7 @@ export function AnimatedCard({ children, delay = 0, className = '', hover }: Ani
   return (
     <div
       ref={ref}
-      className={`bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl shadow-[var(--shadow-sm)] border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 transition-all duration-500 ${
+      className={`bg-[var(--bg-card)] rounded-xl shadow-[var(--shadow-sm)] border border-[var(--border-default)] transition-all duration-500 ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
       } ${hover ? 'hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5' : ''} ${className}`}
     >

@@ -23,9 +23,9 @@
   --color-ak-ambar-light: #E8A840;
 
   /* Fonts */
-  --font-display: 'Playfair Display', serif;
-  --font-body: 'DM Sans', sans-serif;
-  --font-accent: 'Caveat', cursive;
+  --font-display: var(--font-playfair), 'Playfair Display', serif;
+  --font-body: var(--font-dm), 'DM Sans', sans-serif;
+  --font-accent: var(--font-caveat), 'Caveat', cursive;
 }
 
 /* Light theme (default) */
@@ -47,6 +47,7 @@
   --color-success: #5C7A4D;
   --color-warning: #D4922A;
   --color-danger: #C62828;
+  --color-info: #1565C0;
   --badge-bg: rgba(107, 39, 55, 0.08);
   --chart-grid: #E8DDD0;
   --chart-text: #8D6E63;
@@ -73,6 +74,7 @@
   --color-success: #7BA86A;
   --color-warning: #E8A840;
   --color-danger: #EF5350;
+  --color-info: #60A5FA;
   --badge-bg: rgba(196, 77, 99, 0.15);
   --chart-grid: #5A4A3E;
   --chart-text: #BCA898;
@@ -241,6 +243,15 @@ body {
 /* Dark mode specific overrides for elements that can't use CSS vars */
 .dark img { opacity: 0.9; }
 .dark img:hover { opacity: 1; }
+
+/* Utility: hide scrollbars while keeping scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
 
 /* Smooth theme transitions on interactive elements */
 *, *::before, *::after {

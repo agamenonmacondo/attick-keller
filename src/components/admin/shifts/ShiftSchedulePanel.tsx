@@ -336,7 +336,7 @@ export default function ShiftSchedulePanel() {
         </span>
 
         {/* Rango de semana */}
-        <span className="font-['Playfair_Display'] text-sm font-semibold text-[var(--text-primary)] min-w-[120px] text-center">
+        <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--text-primary)] min-w-[120px] text-center">
           {weekDates[0] && (() => {
             const from = weekDates[0];
             const to = weekDates[6];
@@ -347,8 +347,7 @@ export default function ShiftSchedulePanel() {
         <button
           type="button"
           onClick={handleToday}
-          className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[var(--color-ak-borgona)]/30 text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
-          style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+          className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[var(--color-ak-borgona)]/30 text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97] transition-all duration-200"
         >
           Hoy
         </button>
@@ -421,8 +420,7 @@ export default function ShiftSchedulePanel() {
             type="button"
             onClick={handlePrevWeek}
             disabled={weekStr <= currentWeekStr}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
-            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
             aria-label="Semana anterior"
           >
             <CaretLeft size={16} weight="bold" />
@@ -430,8 +428,7 @@ export default function ShiftSchedulePanel() {
           <button
             type="button"
             onClick={handleNextWeek}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
-            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] transition-all duration-200"
             aria-label="Semana siguiente"
           >
             <CaretRight size={16} weight="bold" />

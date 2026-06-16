@@ -44,6 +44,7 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
     timeStart: string
     timeEnd: string
   } | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const {
     data: dashData,
@@ -56,6 +57,11 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
     refetch: resRefetch,
   } = useAdminReservations(selectedDate, filter)
   const { dates: datesWithReservations, days: reservationDays } = useDatesWithReservations(selectedDate)
+
+  const showError = useCallback((message: string) => {
+    setError(message)
+    setTimeout(() => setError(null), 4000)
+  }, [])
 
   const handleStatusChange = useCallback(
     async (id: string, status: string) => {
@@ -71,14 +77,14 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
           setDetailId(null)
         } else {
           const d = await res.json()
-          alert(d.error || 'Error al cambiar estado')
+          showError(d.error || 'Error al cambiar estado')
         }
       } catch {
-        alert('Error de conexion')
+        showError('Error de conexion')
       }
       setConfirmAction(null)
     },
-    [dashRefetch, resRefetch],
+    [dashRefetch, resRefetch, showError],
   )
 
   const handleEdit = useCallback(
@@ -94,13 +100,13 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
           resRefetch()
         } else {
           const d = await res.json()
-          alert(d.error || 'Error al guardar')
+          showError(d.error || 'Error al guardar')
         }
       } catch {
-        alert('Error de conexion')
+        showError('Error de conexion')
       }
     },
-    [dashRefetch, resRefetch],
+    [dashRefetch, resRefetch, showError],
   )
 
   const handleCreated = useCallback(() => {
@@ -141,13 +147,22 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
         <button
           type="button"
           onClick={() => setShowNewForm(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 dark:hover:bg-[var(--color-ak-borgona-light)]/90 active:scale-[0.97]"
-          style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 dark:hover:bg-[var(--color-ak-borgona-light)]/90 active:scale-[0.97] transition-all duration-200"
         >
           <Plus size={16} weight="bold" />
           Nueva Reserva
         </button>
       </div>
+
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 px-3 py-2 text-sm text-[var(--color-danger)]"
+        >
+          {error}
+        </motion.div>
+      )}
 
       <ReservationCalendar
         selectedDate={selectedDate}
@@ -234,9 +249,7 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
           onSelect={setDetailId}
           onConfirm={(id) => handleStatusChange(id, 'confirmed')}
           onCancel={(id) => {
-            if (window.confirm('¿Cancelar esta reserva? Esta acción no se puede deshacer.')) {
-              handleStatusChange(id, 'cancelled')
-            }
+            setConfirmAction({ id, status: 'cancelled', label: 'Cancelar Reserva' })
           }}
         />
       </div>
@@ -245,7 +258,8 @@ export function ReservationsPanel({ selectedDate, onDateChange }: ReservationsPa
       {detailId && detailReservation && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-4 pt-16 sm:pt-4" onClick={() => setDetailId(null)}>
           <div
-            className="w-full max-w-lg max-h-[85vh] overflow-y-auto"
+            className="w-full max-w-lg max-h-[85vh] overflow-y-auto bg-[var(--bg-card)] rounded-2xl border border-[var(--border-default)] shadow-xl"
+            style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 16px), 24px)' }}
             onClick={e => e.stopPropagation()}
           >
             <ReservationDetail

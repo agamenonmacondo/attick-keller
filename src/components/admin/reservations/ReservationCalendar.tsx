@@ -5,7 +5,6 @@ import { motion } from 'framer-motion'
 import { CaretLeft, CaretRight } from '@phosphor-icons/react'
 import { addDays, getLocalDate } from '@/lib/utils/formatDate'
 import { cn } from '@/lib/utils/cn'
-import { useTheme } from '@/lib/ThemeProvider'
 
 interface ReservationCalendarProps {
   selectedDate: string
@@ -19,17 +18,11 @@ const MONTH_NAMES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ]
 
-function getHeatClasses(count: number, isDark: boolean): { bg: string; text: string } {
-  if (isDark) {
-    if (count === 0) return { bg: 'bg-[var(--bg-input)]', text: 'text-[var(--text-muted)]' }
-    if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/25', text: 'text-[var(--border-light)]' }
-    if (count <= 5) return { bg: 'bg-[var(--color-ak-borgona)]/45', text: 'text-white' }
-    return { bg: 'bg-[var(--color-ak-borgona)]/70', text: 'text-white' }
-  }
-  if (count === 0) return { bg: 'bg-[var(--bg-input)]', text: 'text-[var(--text-secondary)]' }
-  if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/15', text: 'text-[var(--text-primary)]' }
-  if (count <= 5) return { bg: 'bg-[var(--color-ak-borgona)]/35', text: 'text-[var(--text-primary)]' }
-  return { bg: 'bg-[var(--color-ak-borgona)]/60', text: 'text-white' }
+function getHeatClasses(count: number): { bg: string; text: string } {
+  if (count === 0) return { bg: 'bg-[var(--bg-input)]', text: 'text-[var(--text-muted)]' }
+  if (count <= 2) return { bg: 'bg-[var(--color-ak-borgona)]/20', text: 'text-[var(--text-primary)]' }
+  if (count <= 5) return { bg: 'bg-[var(--color-ak-borgona)]/40', text: 'text-[var(--text-primary)]' }
+  return { bg: 'bg-[var(--color-ak-borgona)]/70', text: 'text-[var(--color-ak-cal)]' }
 }
 
 export function ReservationCalendar({
@@ -37,8 +30,6 @@ export function ReservationCalendar({
   onDateChange,
   days,
 }: ReservationCalendarProps) {
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
   const today = getLocalDate()
 
   const viewYear = parseInt(selectedDate.substring(0, 4), 10)
@@ -100,22 +91,20 @@ export function ReservationCalendar({
         <button
           type="button"
           onClick={handlePrevMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
-          style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] transition-all duration-200"
           aria-label="Mes anterior"
         >
           <CaretLeft size={16} weight="bold" />
         </button>
 
         <div className="flex items-center gap-3">
-          <span className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
+          <span className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
             {MONTH_NAMES[viewMonth]} {viewYear}
           </span>
           <button
             type="button"
             onClick={handleToday}
-            className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[var(--color-ak-borgona)]/30 text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
-            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            className="rounded-lg px-2.5 py-1 text-[10px] font-medium border border-[var(--color-ak-borgona)]/30 text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97] transition-all duration-200"
           >
             Hoy
           </button>
@@ -124,8 +113,7 @@ export function ReservationCalendar({
         <button
           type="button"
           onClick={handleNextMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
-          style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] transition-all duration-200"
           aria-label="Mes siguiente"
         >
           <CaretRight size={16} weight="bold" />
@@ -148,7 +136,7 @@ export function ReservationCalendar({
           const isSelected = cell.date === selectedDate
           const isToday = cell.date === today
           const isWeekend = i % 7 === 5 || i % 7 === 6
-          const heat = getHeatClasses(count, isDark)
+          const heat = getHeatClasses(count)
 
           return (
             <motion.button
@@ -159,14 +147,13 @@ export function ReservationCalendar({
               transition={{ duration: 0.15, delay: i * 0.008 }}
               onClick={() => onDateChange(cell.date)}
               className={cn(
-                'relative rounded-lg py-1.5 text-center text-xs font-medium cursor-pointer active:scale-[0.95]',
+                'relative rounded-lg min-h-[40px] sm:min-h-0 flex items-center justify-center text-xs font-medium cursor-pointer active:scale-[0.95] transition-transform duration-150',
                 heat.bg,
                 heat.text,
                 !cell.inMonth && 'opacity-40',
                 isSelected && 'ring-2 ring-[var(--color-ak-borgona)] ring-offset-1 ring-offset-[var(--bg-card)]',
                 isWeekend && cell.inMonth && 'font-semibold',
               )}
-              style={{ transition: 'transform 120ms ease-out' }}
               title={count > 0 ? `${count} reservas` : 'Sin reservas'}
             >
               {cell.day}

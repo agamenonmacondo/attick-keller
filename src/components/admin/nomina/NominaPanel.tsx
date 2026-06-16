@@ -14,7 +14,7 @@ function formatCOP(n: number): string {
 /** Bar chart for hours distribution */
 function HoursBarChart({ resumen }: { resumen: NominaResumen }) {
   const items = [
-    { label: 'Ordinarias', mins: resumen.hoMins, barClass: 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]' },
+    { label: 'Ordinarias', mins: resumen.hoMins, barClass: 'bg-[var(--color-ak-borgona)]' },
     { label: 'Extra Diurna', mins: resumen.hedMins, barClass: 'bg-[var(--color-ak-crema)]' },
     { label: 'Extra Nocturna', mins: resumen.henMins, barClass: 'bg-purple-600 dark:bg-purple-400' },
     { label: 'Dom. Diurna', mins: resumen.hddMins, barClass: 'bg-[var(--color-warning)] dark:bg-amber-400' },
@@ -80,7 +80,7 @@ function StaffDetailPanel({
 
   return (
     <div className="space-y-5">
-      <button onClick={onBack} className="flex items-center gap-2 text-sm text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] hover:underline">
+      <button onClick={onBack} className="flex items-center gap-2 text-sm text-[var(--color-ak-borgona)] hover:underline">
         <ArrowLeft size={16} /> Volver al resumen
       </button>
 
@@ -91,7 +91,7 @@ function StaffDetailPanel({
           <p className="text-sm text-[var(--text-secondary)]">CC {staff.cedula}{staff.es_medio_tiempo ? ' - Medio tiempo' : ''}</p>
         </div>
         {staff.pos_staff_id && (
-          <span className="text-xs px-2 py-1 rounded bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]/15 dark:text-[var(--color-ak-borgona-light)]">
+          <span className="text-xs px-2 py-1 rounded bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-borgona)]">
             Mesero POS #{staff.pos_staff_id}
           </span>
         )}
@@ -122,7 +122,7 @@ function StaffDetailPanel({
         <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Desglose de horas</h4>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {[
-            { label: 'HO', val: totals.ho, hrs: totals.hoHours, colorClass: 'text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]' },
+            { label: 'HO', val: totals.ho, hrs: totals.hoHours, colorClass: 'text-[var(--color-ak-borgona)]' },
             { label: 'HED', val: totals.hed, hrs: totals.hedHours, colorClass: 'text-[var(--color-ak-crema)]' },
             { label: 'HEN', val: totals.hen, hrs: totals.henHours, colorClass: 'text-purple-600 dark:text-purple-400' },
             { label: 'HDD', val: totals.hdd, colorClass: 'text-[var(--color-warning)] dark:text-[var(--color-warning)]' },
@@ -144,7 +144,7 @@ function StaffDetailPanel({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
               <div className="text-xs text-[var(--text-secondary)]">Revenue</div>
-              <div className="text-lg font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatCOP(posData.totalRevenue)}</div>
+              <div className="text-lg font-bold text-[var(--color-ak-borgona)]">{formatCOP(posData.totalRevenue)}</div>
             </div>
             <div>
               <div className="text-xs text-[var(--text-secondary)]">Propinas</div>
@@ -156,7 +156,7 @@ function StaffDetailPanel({
             </div>
             <div>
               <div className="text-xs text-[var(--text-secondary)]">Productividad</div>
-              <div className="text-lg font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatCOP(posData.productivity)}/h</div>
+              <div className="text-lg font-bold text-[var(--color-ak-borgona)]">{formatCOP(posData.productivity)}/h</div>
             </div>
           </div>
         </AnimatedCard>
@@ -204,9 +204,9 @@ function StaffDetailPanel({
             </thead>
             <tbody>
               {sortedDaily.map((d, i) => (
-                <tr key={i} className={`border-b border-[var(--border-default)]/50 ${d.es_dominical ? 'bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/5' : ''}`}>
+                <tr key={i} className={`border-b border-[var(--border-default)]/50 ${d.es_dominical ? 'bg-[var(--color-ak-borgona)]/5' : ''}`}>
                   <td className="py-1.5 px-1 text-[var(--text-primary)]">
-                    {d.fecha.slice(5)} {d.es_dominical && <span className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] text-[10px]">DOM</span>}
+                    {d.fecha.slice(5)} {d.es_dominical && <span className="text-[var(--color-ak-borgona)] text-[10px]">DOM</span>}
                   </td>
                   <td className="py-1.5 px-1 text-[var(--text-secondary)]">{d.hora_entrada || '-'}</td>
                   <td className="py-1.5 px-1 text-[var(--text-secondary)]">{d.hora_salida || '-'}</td>
@@ -243,7 +243,7 @@ export function NominaPanel() {
     return (
       <div className="py-16 text-center">
         <p className="text-sm text-[var(--color-danger)]">{error}</p>
-        <button onClick={refetch} className="mt-3 text-xs text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] hover:underline">Reintentar</button>
+        <button onClick={refetch} className="mt-3 text-xs text-[var(--color-ak-borgona)] hover:underline">Reintentar</button>
       </div>
     )
   }
@@ -283,28 +283,28 @@ export function NominaPanel() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <AnimatedCard className="p-3">
           <div className="flex items-center gap-2 mb-1">
-            <Users size={16} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
+            <Users size={16} className="text-[var(--color-ak-borgona)]" />
             <span className="text-xs text-[var(--text-secondary)]">Empleados activos</span>
           </div>
           <div className="text-2xl font-bold text-[var(--text-primary)]">{resumen.totalEmpleados}</div>
         </AnimatedCard>
         <AnimatedCard className="p-3">
           <div className="flex items-center gap-2 mb-1">
-            <ClockCounterClockwise size={16} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
+            <ClockCounterClockwise size={16} className="text-[var(--color-ak-borgona)]" />
             <span className="text-xs text-[var(--text-secondary)]">Horas totales</span>
           </div>
           <div className="text-2xl font-bold text-[var(--text-primary)]">{resumen.totalHoras}</div>
         </AnimatedCard>
         <AnimatedCard className="p-3">
           <div className="flex items-center gap-2 mb-1">
-            <ChartBar size={16} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
+            <ChartBar size={16} className="text-[var(--color-ak-borgona)]" />
             <span className="text-xs text-[var(--text-secondary)]">Horas ordinarias</span>
           </div>
           <div className="text-2xl font-bold text-[var(--text-primary)]">{resumen.totalHorasOrdinarias}h</div>
         </AnimatedCard>
         <AnimatedCard className="p-3">
           <div className="flex items-center gap-2 mb-1">
-            <Lightning size={16} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
+            <Lightning size={16} className="text-[var(--color-ak-borgona)]" />
             <span className="text-xs text-[var(--text-secondary)]">% Extras</span>
           </div>
           <div className="text-2xl font-bold text-[var(--text-primary)]">{resumen.pctExtras}%</div>
@@ -380,13 +380,13 @@ export function NominaPanel() {
                 const minPersons = Math.min(...(data.dailyBreakdown?.map((x: DailyBreakdown) => x.personas) || [1]))
                 const isMinDay = d.personas === minPersons && minPersons !== maxPersons
                 return (
-                  <tr key={d.fecha} className={`border-b border-[var(--border-default)]/50 ${isWeekend ? 'bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/5' : ''} ${isMinDay ? 'bg-[var(--color-danger)]/10' : ''}`}>
+                  <tr key={d.fecha} className={`border-b border-[var(--border-default)]/50 ${isWeekend ? 'bg-[var(--color-ak-borgona)]/5' : ''} ${isMinDay ? 'bg-[var(--color-danger)]/10' : ''}`}>
                     <td className="py-1.5 px-1 text-[var(--text-primary)]">{d.fecha.slice(5)}</td>
                     <td className="py-1.5 px-1 text-[var(--text-secondary)]">{d.diaSemana}</td>
                     <td className="py-1.5 px-1">
                       <div className="flex items-center gap-1.5">
                         <div className="w-16 h-3 bg-[var(--bg-secondary)] rounded overflow-hidden">
-                          <div className={`h-full rounded ${isMinDay ? 'bg-[var(--color-danger)] dark:bg-[var(--color-danger)]/30' : 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]'}`} style={{ width: `${barWidth}%`, transition: 'width 0.3s' }} />
+                          <div className={`h-full rounded ${isMinDay ? 'bg-[var(--color-danger)] dark:bg-[var(--color-danger)]/30' : 'bg-[var(--color-ak-borgona)]'}`} style={{ width: `${barWidth}%`, transition: 'width 0.3s' }} />
                         </div>
                         <span className={`font-medium ${isMinDay ? 'text-[var(--color-danger)]' : 'text-[var(--text-primary)]'}`}>{d.personas}</span>
                       </div>
@@ -401,9 +401,9 @@ export function NominaPanel() {
         </div>
         {data.dailyBreakdown && data.dailyBreakdown.length > 0 && (
           <div className="mt-2 flex items-center gap-3 text-[10px] text-[var(--text-secondary)]">
-            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]"></span> Normal</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)]"></span> Normal</span>
             <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-danger)] dark:bg-[var(--color-danger)]/30"></span> Menos personal</span>
-            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)]/20 dark:bg-[var(--color-ak-borgona-light)]/20"></span> Fin de semana</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)]/20"></span> Fin de semana</span>
           </div>
         )}
       </AnimatedCard>
@@ -422,7 +422,7 @@ export function NominaPanel() {
                 <span className="text-xs text-[var(--text-secondary)] w-8 shrink-0">{w.dia}</span>
                 <div className="flex-1 h-5 bg-[var(--bg-secondary)] rounded overflow-hidden">
                   <div
-                    className={`h-full rounded flex items-center pl-1.5 text-[10px] font-medium text-white ${isMin ? 'bg-[var(--color-danger)] dark:bg-[var(--color-danger)]/30' : 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]'}`}
+                    className={`h-full rounded flex items-center pl-1.5 text-[10px] font-medium text-white ${isMin ? 'bg-[var(--color-danger)] dark:bg-[var(--color-danger)]/30' : 'bg-[var(--color-ak-borgona)]'}`}
                     style={{ width: `${Math.max(barP, 12)}%`, transition: 'width 0.5s' }}
                   >
                     {w.avgPersonas}
@@ -469,7 +469,7 @@ export function NominaPanel() {
                 <tr
                   key={s.id}
                   onClick={() => fetchStaffDetail(s.id)}
-                  className="border-b border-[var(--border-default)]/50 hover:bg-[var(--color-ak-borgona)]/5 dark:hover:bg-[var(--color-ak-borgona-light)]/5 cursor-pointer transition-colors"
+                  className="border-b border-[var(--border-default)]/50 hover:bg-[var(--color-ak-borgona)]/5 cursor-pointer transition-colors"
                 >
                   <td className="py-2 px-1">
                     <div className="font-medium text-[var(--text-primary)]">{s.nombre_completo}</div>

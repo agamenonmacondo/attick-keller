@@ -130,7 +130,7 @@ export function ReservationDetail({ reservation, compact = false }: ReservationD
               {reservation.customer_email && (
                 <a
                   href={`mailto:${reservation.customer_email}`}
-                  className="flex items-center gap-1.5 text-xs text-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-[var(--color-ak-ambar)] hover:text-[var(--color-ak-ambar)]/80 transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <EnvelopeSimple size={12} />

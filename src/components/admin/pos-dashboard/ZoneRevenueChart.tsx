@@ -47,15 +47,13 @@ export function ZoneRevenueChart({ data, selectedZone, onZoneClick, onZoneDrillD
               <div className="flex items-center gap-2 mb-0.5">
                 <button
                   onClick={() => onZoneClick(isSelected ? 'all' : d.zone)}
-                  className={`text-xs font-medium ${isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}
-                  style={{ transition: 'color 150ms ease-out' }}
+                  className={`text-xs font-medium transition-colors duration-150 ${isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}
                 >
                   {d.zone}
                 </button>
                 <span className="text-[9px] text-[var(--text-secondary)]">{d.pct}%</span>
                 <span
-                  className={`ml-auto text-xs font-mono tabular-nums ${onZoneDrillDown ? 'cursor-pointer hover:text-[var(--color-ak-borgona)]' : 'text-[var(--text-primary)]'}`}
-                  style={{ transition: 'color 150ms ease-out' }}
+                  className={`ml-auto text-xs font-mono tabular-nums transition-colors duration-150 ${onZoneDrillDown ? 'cursor-pointer hover:text-[var(--color-ak-borgona)]' : 'text-[var(--text-primary)]'}`}
                   onClick={onZoneDrillDown ? () => onZoneDrillDown(d.zone) : undefined}
                   title={onZoneDrillDown ? 'Ver detalle de zona' : undefined}
                 >

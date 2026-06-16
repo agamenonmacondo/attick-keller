@@ -438,8 +438,7 @@ export function MenuPanel() {
             <button
               type="button"
               onClick={() => { setEditingCategory(null); setShowCategoryForm(true) }}
-              className="flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97]"
-              style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+              className="flex items-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] transition-all duration-200"
             >
               <Plus size={16} weight="bold" />
               Nueva Categoria
@@ -447,8 +446,7 @@ export function MenuPanel() {
             <button
               type="button"
               onClick={() => { setEditingItem(null); setShowItemForm(true) }}
-              className="flex items-center gap-1.5 rounded-lg border border-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97]"
-              style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/10 active:scale-[0.97] transition-all duration-200"
             >
               <Plus size={16} weight="bold" />
               Nuevo Plato
@@ -464,13 +462,12 @@ export function MenuPanel() {
               <AnimatedCard key={cat.id} delay={ci * 0.06} className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
                 {/* Category header */}
                 <div
-                  className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[var(--bg-input)]/50"
+                  className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-[var(--bg-input)]/50 transition-colors duration-200"
                   onClick={() => toggleCategory(cat.id)}
-                  style={{ transition: 'background-color 200ms ease-out' }}
                 >
                   <div className="flex items-center gap-2">
                     {isExpanded ? <CaretDown size={16} className="text-[var(--text-secondary)]" /> : <CaretRight size={16} className="text-[var(--text-secondary)]" />}
-                    <h3 className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
+                    <h3 className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
                       {cat.name}
                     </h3>
                     <span className="text-xs text-[var(--text-secondary)]">({categoryItems.length} platos)</span>
@@ -531,7 +528,7 @@ export function MenuPanel() {
 
                                 <div className="flex items-start justify-between mb-1">
                                   <h4 className="text-sm font-medium text-[var(--text-primary)] leading-tight">{item.name}</h4>
-                                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100" style={{ transition: 'opacity 150ms ease-out' }}>
+                                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                                     <button
                                       type="button"
                                       onClick={e => { e.stopPropagation(); setEditingItem(item); setShowItemForm(true) }}
@@ -645,7 +642,7 @@ export function MenuPanel() {
                 return (
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">
+                      <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">
                         {group?.name || 'Sin grupo'}
                       </h3>
                       <span className="text-xs text-[var(--text-secondary)]">
@@ -660,13 +657,12 @@ export function MenuPanel() {
                         return (
                           <div
                             key={product.pos_product_id}
-                            className={`rounded-lg border p-3 relative cursor-pointer hover:border-[var(--color-ak-borgona)]/40 hover:bg-[var(--color-ak-borgona)]/5 ${
+                            className={`rounded-lg border p-3 relative cursor-pointer hover:border-[var(--color-ak-borgona)]/40 hover:bg-[var(--color-ak-borgona)]/5 transition-colors duration-200 ${
                               isLinked
                                 ? 'border-[var(--color-ak-dorado)]/30 bg-[var(--color-ak-dorado)]/5'
                                 : 'border-[var(--border-default)] bg-[var(--bg-card)]'
                             }`}
                             onClick={() => fetchPosRecipe(product.pos_product_id)}
-                            style={{ transition: 'border-color 150ms ease, background-color 150ms ease' }}
                           >
                             {isLinked && (
                               <span className="absolute top-2 right-2 rounded-full bg-[var(--color-ak-dorado)]/20 px-2 py-0.5 text-[9px] font-medium text-[var(--color-ak-dorado)]">
@@ -687,8 +683,7 @@ export function MenuPanel() {
                                 <button
                                   type="button"
                                   onClick={() => { setAddModalProduct(product); setAddModalCategory(''); setAddError(null) }}
-                                  className="flex items-center gap-1 rounded-lg bg-[var(--color-ak-borgona)] px-2.5 py-1.5 text-[11px] font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97]"
-                                  style={{ transition: 'transform 160ms ease-out' }}
+                                  className="flex items-center gap-1 rounded-lg bg-[var(--color-ak-borgona)] px-2.5 py-1.5 text-[11px] font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] transition-transform duration-200"
                                 >
                                   <Plus size={12} />
                                   Agregar
@@ -715,10 +710,9 @@ export function MenuPanel() {
                     key={groupId}
                     type="button"
                     onClick={() => setSelectedPosGroup(groupId)}
-                    className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 text-center hover:border-[var(--color-ak-borgona)]/40 hover:bg-[var(--color-ak-borgona)]/5 active:scale-[0.98]"
-                    style={{ transition: 'transform 120ms ease-out, border-color 150ms ease, background-color 150ms ease' }}
+                    className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 text-center hover:border-[var(--color-ak-borgona)]/40 hover:bg-[var(--color-ak-borgona)]/5 active:scale-[0.98] transition-all duration-200"
                   >
-                    <span className="font-['Playfair_Display'] text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--color-ak-borgona)]">
+                    <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--color-ak-borgona)]">
                       {group?.name || 'Sin grupo'}
                     </span>
                     <span className="text-[11px] text-[var(--text-secondary)]">
@@ -796,8 +790,7 @@ export function MenuPanel() {
                           <button
                             type="button"
                             onClick={() => handleVerifyMapping(mapping.id)}
-                            className="flex items-center gap-1 rounded-lg bg-[var(--color-ak-oliva)] px-2.5 py-1.5 text-[11px] font-medium text-white hover:bg-[var(--color-ak-oliva)]/90 active:scale-[0.97]"
-                            style={{ transition: 'transform 160ms ease-out' }}
+                            className="flex items-center gap-1 rounded-lg bg-[var(--color-ak-oliva)] px-2.5 py-1.5 text-[11px] font-medium text-white hover:bg-[var(--color-ak-oliva)]/90 active:scale-[0.97] transition-transform duration-200"
                           >
                             <CheckCircle size={12} />
                             Verificar
@@ -810,8 +803,7 @@ export function MenuPanel() {
                             setLinkSearchQuery('')
                             setLinkSearchResults([])
                           }}
-                          className="flex items-center gap-1 rounded-lg border border-[var(--border-default)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
-                          style={{ transition: 'transform 160ms ease-out' }}
+                          className="flex items-center gap-1 rounded-lg border border-[var(--border-default)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-transform duration-200"
                         >
                           <ArrowsLeftRight size={12} />
                           Cambiar
@@ -853,8 +845,7 @@ export function MenuPanel() {
                                     key={p.pos_product_id}
                                     type="button"
                                     onClick={() => handleLinkProduct(item.id, p.pos_product_id)}
-                                    className="w-full text-left px-3 py-2 hover:bg-[var(--bg-input)] flex items-center justify-between"
-                                    style={{ transition: 'background-color 150ms ease-out' }}
+                                    className="w-full text-left px-3 py-2 hover:bg-[var(--bg-input)] flex items-center justify-between transition-colors duration-150"
                                   >
                                     <span className="text-sm text-[var(--text-primary)]">{p.name}</span>
                                     <span className="text-xs text-[var(--text-secondary)]">{p.price != null ? formatCOP(p.price) : ''}</span>
@@ -886,7 +877,7 @@ export function MenuPanel() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setAddModalProduct(null)}>
           <div className="w-full max-w-sm rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-default)] shadow-xl p-5" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">
+              <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">
                 Agregar al Menu
               </h2>
               <button type="button" onClick={() => setAddModalProduct(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50">
@@ -926,16 +917,14 @@ export function MenuPanel() {
                   type="button"
                   onClick={handleAddToMenu}
                   disabled={!addModalCategory || adding}
-                  className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 disabled:opacity-50 active:scale-[0.97]"
-                  style={{ transition: 'transform 160ms ease-out' }}
+                  className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 disabled:opacity-50 active:scale-[0.97] transition-transform duration-200"
                 >
                   {adding ? 'Agregando...' : 'Agregar'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setAddModalProduct(null)}
-                  className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
-                  style={{ transition: 'transform 160ms ease-out' }}
+                  className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-transform duration-200"
                 >
                   Cancelar
                 </button>
@@ -956,7 +945,7 @@ export function MenuPanel() {
             className="fixed right-0 top-0 bottom-0 z-40 w-full max-w-md bg-[var(--bg-primary)] border-l border-[var(--border-default)] shadow-2xl overflow-y-auto"
           >
             <div className="sticky top-0 bg-[var(--bg-primary)] border-b border-[var(--border-default)] px-5 py-4 flex items-center justify-between z-10">
-              <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">
+              <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">
                 Receta
               </h2>
               <button
@@ -976,7 +965,7 @@ export function MenuPanel() {
               <div className="p-5 space-y-5">
                 {/* Menu item info */}
                 <div>
-                  <h3 className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
+                  <h3 className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
                     {recipeData.menuItem.name}
                   </h3>
                   {recipeData.posProduct && (
@@ -1067,7 +1056,7 @@ export function MenuPanel() {
             className="fixed right-0 top-0 bottom-0 z-40 w-full max-w-md bg-[var(--bg-primary)] border-l border-[var(--border-default)] shadow-2xl overflow-y-auto"
           >
             <div className="sticky top-0 bg-[var(--bg-primary)] border-b border-[var(--border-default)] px-5 py-4 flex items-center justify-between z-10">
-              <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">
+              <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">
                 Detalle del producto
               </h2>
               <button
@@ -1087,7 +1076,7 @@ export function MenuPanel() {
               <div className="p-5 space-y-5">
                 {/* Product info */}
                 <div>
-                  <h3 className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
+                  <h3 className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
                     {posRecipeData.posProduct.name}
                   </h3>
                   <p className="text-xs text-[var(--text-secondary)] mt-1">

@@ -15,10 +15,9 @@ export function HostQuickActions({ onSeatNext, confirmedCount }: HostQuickAction
         onClick={onSeatNext}
         disabled={confirmedCount === 0}
         className={cn(
-          'flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-white active:scale-[0.97]',
-          confirmedCount > 0 ? 'bg-[var(--color-ak-oliva)] hover:bg-[var(--color-ak-oliva)] dark:bg-[var(--color-ak-oliva-light)] dark:hover:bg-[var(--color-ak-oliva-light)]/80' : 'bg-[var(--text-secondary)]/50 cursor-not-allowed'
+          'flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-white active:scale-[0.97] transition-all duration-200',
+          confirmedCount > 0 ? 'bg-[var(--color-ak-oliva)] hover:bg-[var(--color-success)] dark:bg-[var(--color-ak-oliva-light)] dark:hover:bg-[var(--color-success)]/80' : 'bg-[var(--text-secondary)]/50 cursor-not-allowed'
         )}
-        style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
       >
         <Armchair size={20} weight="bold" />
         Confirmar llegada {confirmedCount > 0 && `(${confirmedCount})`}

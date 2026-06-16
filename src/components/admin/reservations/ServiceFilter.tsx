@@ -23,8 +23,8 @@ export function ServiceFilter({ active, onChange, counts }: ServiceFilterProps) 
   return (
     <div className="min-w-0">
       <div
-        className="flex gap-1 overflow-x-auto border-b border-[var(--color-ak-madera)]/20 dark:border-[var(--border-light)]/10"
-        style={{ scrollbarWidth: 'none' }}
+        className="flex gap-1 overflow-x-auto border-b border-[var(--color-ak-madera)]/20 dark:border-[var(--border-light)]/10 scrollbar-hide"
+        aria-label="Filtro de servicio"
       >
         {SERVICE_FILTERS.map((filter) => {
           const Icon = ICON_MAP[filter.icon] || CalendarDots

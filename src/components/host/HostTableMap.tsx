@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils/cn'
 import { EmptyState } from '../admin/shared/EmptyState'
 import { SectionHeading } from '../admin/shared/SectionHeading'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
+import { useLockBodyScroll } from '@/lib/hooks/useLockBodyScroll'
 import { useTableSuggestion } from '@/lib/hooks/useTableSuggestion'
 import { timeToMinutes } from '@/lib/utils/time'
 import { formatTime12, formatTimeRange12 } from '@/lib/utils/format-time'
@@ -136,11 +137,11 @@ function getTableCardStyle(table: TableItem): CardStyle {
       }
     case 'info':
       return {
-        border: 'border-[var(--color-accent)]',
-        bg: 'bg-[var(--color-accent)]/8',
-        dot: 'bg-[var(--color-accent)]',
-        hoverBorder: 'hover:border-[var(--color-accent)]/50',
-        badge: 'bg-[var(--color-accent)] text-white',
+        border: 'border-[var(--color-info)]',
+        bg: 'bg-[var(--color-info)]/8',
+        dot: 'bg-[var(--color-info)]',
+        hoverBorder: 'hover:border-[var(--color-info)]/50',
+        badge: 'bg-[var(--color-info)] text-white',
         pulse: '',
       }
     default: {
@@ -255,6 +256,8 @@ export function HostTableMap({ zones, reservations, onAction, currentTime, onRea
   const [selectedReservationId, setSelectedReservationId] = useState<string | null>(null)
   const prefersReduced = usePrefersReducedMotion()
   const suggestion = useTableSuggestion()
+
+  useLockBodyScroll(activeTableId !== null)
 
   const unassignedReservations = reservations.filter(
     r => ['confirmed', 'pre_paid', 'pending'].includes(r.status as string) && !r.table_id
@@ -374,7 +377,7 @@ export function HostTableMap({ zones, reservations, onAction, currentTime, onRea
           Reservada
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-accent)]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-info)]" />
           1h
         </span>
         <span className="flex items-center gap-1.5">
@@ -490,14 +493,13 @@ function HostTableCard({
         onClick={onClick}
         variants={variants}
         className={cn(
-          'w-full rounded-xl border-2 p-2 md:p-3 text-left transition-colors',
+          'w-full rounded-xl border-2 p-2 md:p-3 text-left transition-all duration-200',
           style.border,
           style.bg,
           style.hoverBorder,
           style.pulse,
           isActive && 'ring-2 ring-[var(--color-ak-ambar)] dark:ring-[var(--color-ak-ambar-light)] ring-offset-1'
         )}
-        style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out' }}
         whileTap={prefersReduced ? undefined : { scale: 0.97 }}
       >
         {/* Top row: name + urgency badge */}
@@ -589,9 +591,10 @@ function HostTableCard({
           {/* Dismiss */}
           <button
             onClick={(e) => { e.stopPropagation(); onClick(); suggestion.clear() }}
-            className="absolute top-3 right-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors z-10 p-1"
+            className="absolute top-2 right-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors z-10 rounded-lg"
+            aria-label="Cerrar"
           >
-            <X size={16} />
+            <X size={20} />
           </button>
 
           {reservationsList.length > 0 ? (
@@ -621,8 +624,7 @@ function HostTableCard({
               )}
               <button
                 onClick={(e) => { e.stopPropagation(); onUnassign(table.current_reservation_id!) }}
-                className="w-full py-2 text-sm font-medium rounded-lg bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-borgona-light)] hover:bg-[var(--color-ak-borgona)] dark:hover:bg-[var(--color-ak-borgona-light)]/80 active:scale-[0.97] transition-all"
-                style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                className="w-full py-2 text-sm font-medium rounded-lg bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-borgona-light)] hover:bg-[var(--color-ak-borgona)] dark:hover:bg-[var(--color-ak-borgona-light)]/80 active:scale-[0.97] transition-all duration-200"
               >
                 Liberar mesa
               </button>
@@ -680,7 +682,7 @@ function TimelinePopover({
       <div className="flex items-center justify-between mb-3 pr-6">
         <div className="flex items-center gap-2">
           <Armchair size={16} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
-          <span className="font-bold text-base text-[var(--text-primary)] font-['Playfair_Display']">
+          <span className="font-bold text-base text-[var(--text-primary)] font-[family-name:var(--font-display)]">
             {table.name_attick || `Mesa ${table.number}`}
           </span>
           {table.zone_name && (

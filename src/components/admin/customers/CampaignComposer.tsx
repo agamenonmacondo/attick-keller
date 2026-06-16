@@ -82,7 +82,7 @@ export function CampaignComposer({
   return (
     <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] overflow-hidden h-full flex flex-col">
       <div className="px-5 py-4 border-b border-[var(--border-default)]">
-        <h3 className="text-sm font-semibold text-[var(--text-primary)] font-['Playfair_Display']">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] font-[family-name:var(--font-display)]">
           Nueva Campana
         </h3>
         <p className="text-xs text-[var(--text-secondary)] mt-1">

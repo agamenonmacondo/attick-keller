@@ -163,6 +163,7 @@ export function ReassignModal({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
         className="bg-[var(--bg-primary)] rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 16px), 24px)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -170,12 +171,16 @@ export function ReassignModal({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ArrowsLeftRight size={18} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
-              <h2 className="font-['Playfair_Display'] text-lg font-bold text-[var(--text-primary)]">
+              <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--text-primary)]">
                 Reasignar Reserva
               </h2>
             </div>
-            <button onClick={onClose} className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-              <X size={20} />
+            <button
+              onClick={onClose}
+              className="-mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors rounded-lg"
+              aria-label="Cerrar"
+            >
+              <X size={24} />
             </button>
           </div>
         </div>

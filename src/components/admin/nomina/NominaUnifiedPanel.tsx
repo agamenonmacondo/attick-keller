@@ -110,7 +110,7 @@ function StaffDetailPanel({
 
   return (
     <div className="space-y-5">
-      <button onClick={onBack} className="flex items-center gap-2 text-sm text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] hover:underline">
+      <button onClick={onBack} className="flex items-center gap-2 text-sm text-[var(--color-ak-borgona)] hover:underline">
         <ArrowLeft size={16} /> Volver al resumen
       </button>
 
@@ -120,7 +120,7 @@ function StaffDetailPanel({
           <p className="text-sm text-[var(--text-secondary)]">CC {staff.cedula}{staff.es_medio_tiempo ? ' - Medio tiempo' : ''}</p>
         </div>
         {staff.pos_staff_id && (
-          <span className="text-xs px-2 py-1 rounded bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]/15 dark:text-[var(--color-ak-borgona-light)]">
+          <span className="text-xs px-2 py-1 rounded bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-borgona)]">
             Mesero POS #{staff.pos_staff_id}
           </span>
         )}
@@ -170,7 +170,7 @@ function StaffDetailPanel({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
               <div className="text-xs text-[var(--text-secondary)]">Revenue</div>
-              <div className="text-lg font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatCOP(posData.totalRevenue)}</div>
+              <div className="text-lg font-bold text-[var(--color-ak-borgona)]">{formatCOP(posData.totalRevenue)}</div>
             </div>
             <div>
               <div className="text-xs text-[var(--text-secondary)]">Propinas</div>
@@ -182,7 +182,7 @@ function StaffDetailPanel({
             </div>
             <div>
               <div className="text-xs text-[var(--text-secondary)]">Productividad</div>
-              <div className="text-lg font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatCOP(posData.productivity)}/h</div>
+              <div className="text-lg font-bold text-[var(--color-ak-borgona)]">{formatCOP(posData.productivity)}/h</div>
             </div>
           </div>
         </AnimatedCard>
@@ -228,9 +228,9 @@ function StaffDetailPanel({
             </thead>
             <tbody>
               {sortedDaily.map((d, i) => (
-                <tr key={i} className={`border-b border-[var(--border-default)]/50 ${d.es_dominical ? 'bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/5' : ''}`}>
+                <tr key={i} className={`border-b border-[var(--border-default)]/50 ${d.es_dominical ? 'bg-[var(--color-ak-borgona)]/5' : ''}`}>
                   <td className="py-1.5 px-1 text-[var(--text-primary)]">
-                    {d.fecha.slice(5)} {d.es_dominical && <span className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] text-[10px]">DOM</span>}
+                    {d.fecha.slice(5)} {d.es_dominical && <span className="text-[var(--color-ak-borgona)] text-[10px]">DOM</span>}
                   </td>
                   <td className="py-1.5 px-1 text-[var(--text-secondary)]">{d.hora_entrada || '-'}</td>
                   <td className="py-1.5 px-1 text-[var(--text-secondary)]">{d.hora_salida || '-'}</td>
@@ -295,7 +295,7 @@ function OperativoTab() {
     return (
       <div className="py-16 text-center">
         <p className="text-sm text-[var(--color-danger)]">{error}</p>
-        <button onClick={refetch} className="mt-3 text-xs text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)] hover:underline">Reintentar</button>
+        <button onClick={refetch} className="mt-3 text-xs text-[var(--color-ak-borgona)] hover:underline">Reintentar</button>
       </div>
     )
   }
@@ -340,14 +340,14 @@ function OperativoTab() {
               type="date"
               value={from}
               onChange={e => setFrom(e.target.value)}
-              className="px-2 py-1 rounded border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/20 bg-[var(--bg-secondary)] dark:bg-[var(--color-ak-madera-light)]/10 text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--color-ak-borgona)] dark:focus:border-[var(--color-ak-borgona-light)]"
+              className="px-2 py-1 rounded border border-[var(--border-default)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--color-ak-borgona)]"
             />
             <span>a</span>
             <input
               type="date"
               value={to}
               onChange={e => setTo(e.target.value)}
-              className="px-2 py-1 rounded border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/20 bg-[var(--bg-secondary)] dark:bg-[var(--color-ak-madera-light)]/10 text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--color-ak-borgona)] dark:focus:border-[var(--color-ak-borgona-light)]"
+              className="px-2 py-1 rounded border border-[var(--border-default)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--color-ak-borgona)]"
             />
           </div>
         </div>
@@ -357,28 +357,28 @@ function OperativoTab() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <AnimatedCard className="p-3">
           <div className="flex items-center gap-2 mb-1">
-            <Users size={16} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
+            <Users size={16} className="text-[var(--color-ak-borgona)]" />
             <span className="text-xs text-[var(--text-secondary)]">Empleados activos</span>
           </div>
           <div className="text-2xl font-bold text-[var(--text-primary)]">{resumen.totalEmpleados}</div>
         </AnimatedCard>
         <AnimatedCard className="p-3">
           <div className="flex items-center gap-2 mb-1">
-            <ClockCounterClockwise size={16} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
+            <ClockCounterClockwise size={16} className="text-[var(--color-ak-borgona)]" />
             <span className="text-xs text-[var(--text-secondary)]">Horas totales</span>
           </div>
           <div className="text-2xl font-bold text-[var(--text-primary)]">{resumen.totalHoras}</div>
         </AnimatedCard>
         <AnimatedCard className="p-3">
           <div className="flex items-center gap-2 mb-1">
-            <ChartBar size={16} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
+            <ChartBar size={16} className="text-[var(--color-ak-borgona)]" />
             <span className="text-xs text-[var(--text-secondary)]">Horas ordinarias</span>
           </div>
           <div className="text-2xl font-bold text-[var(--text-primary)]">{resumen.totalHorasOrdinarias}h</div>
         </AnimatedCard>
         <AnimatedCard className="p-3">
           <div className="flex items-center gap-2 mb-1">
-            <Lightning size={16} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
+            <Lightning size={16} className="text-[var(--color-ak-borgona)]" />
             <span className="text-xs text-[var(--text-secondary)]">% Extras</span>
           </div>
           <div className="text-2xl font-bold text-[var(--text-primary)]">{resumen.pctExtras}%</div>
@@ -454,13 +454,13 @@ function OperativoTab() {
                 const minPersons = Math.min(...(data.dailyBreakdown?.map((x: DailyBreakdown) => x.personas) || [1]))
                 const isMinDay = d.personas === minPersons && minPersons !== maxPersons
                 return (
-                  <tr key={d.fecha} className={`border-b border-[var(--border-default)]/50 ${isWeekend ? 'bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/5' : ''} ${isMinDay ? 'bg-[var(--color-danger)]/10' : ''}`}>
+                  <tr key={d.fecha} className={`border-b border-[var(--border-default)]/50 ${isWeekend ? 'bg-[var(--color-ak-borgona)]/5' : ''} ${isMinDay ? 'bg-[var(--color-danger)]/10' : ''}`}>
                     <td className="py-1.5 px-1 text-[var(--text-primary)]">{d.fecha.slice(5)}</td>
                     <td className="py-1.5 px-1 text-[var(--text-secondary)]">{d.diaSemana}</td>
                     <td className="py-1.5 px-1">
                       <div className="flex items-center gap-1.5">
                         <div className="w-16 h-3 bg-[var(--bg-secondary)] rounded overflow-hidden">
-                          <div className={`h-full rounded bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]`} style={{ width: `${barWidth}%`, transition: 'width 0.3s' }} />
+                          <div className={`h-full rounded bg-[var(--color-ak-borgona)]`} style={{ width: `${barWidth}%`, transition: 'width 0.3s' }} />
                         </div>
                         <span className={`font-medium ${isMinDay ? 'text-[var(--color-danger)]' : 'text-[var(--text-primary)]'}`}>{d.personas}</span>
                       </div>
@@ -475,9 +475,9 @@ function OperativoTab() {
         </div>
         {data.dailyBreakdown && data.dailyBreakdown.length > 0 && (
           <div className="mt-2 flex items-center gap-3 text-[10px] text-[var(--text-secondary)]">
-            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]"></span> Normal</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)]"></span> Normal</span>
             <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-danger)]"></span> Menos personal</span>
-            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)]/20 dark:bg-[var(--color-ak-borgona-light)]/20"></span> Fin de semana</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-[var(--color-ak-borgona)]/20"></span> Fin de semana</span>
           </div>
         )}
       </AnimatedCard>
@@ -521,7 +521,7 @@ function OperativoTab() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar por nombre o cedula..."
-              className="w-full sm:w-56 pl-8 pr-3 py-1.5 text-xs rounded-md border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/20 bg-[var(--bg-secondary)] dark:bg-[var(--color-ak-madera-light)]/10 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--color-ak-borgona)] dark:focus:border-[var(--color-ak-borgona-light)]"
+              className="w-full sm:w-56 pl-8 pr-3 py-1.5 text-xs rounded-md border border-[var(--border-default)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--color-ak-borgona)]"
             />
           </div>
         </div>
@@ -543,7 +543,7 @@ function OperativoTab() {
                 <tr
                   key={s.id}
                   onClick={() => fetchStaffDetail(s.id)}
-                  className="border-b border-[var(--border-default)]/50 hover:bg-[var(--color-ak-borgona)]/5 dark:hover:bg-[var(--color-ak-borgona-light)]/5 cursor-pointer transition-colors"
+                  className="border-b border-[var(--border-default)]/50 hover:bg-[var(--color-ak-borgona)]/5 cursor-pointer transition-colors"
                 >
                   <td className="py-2 px-1">
                     <div className="font-medium text-[var(--text-primary)]">{s.nombre_completo}</div>
@@ -627,7 +627,7 @@ function CostosTab() {
   if (loading) {
     return (
       <div className="py-12 flex items-center justify-center">
-        <Spinner size={28} className="animate-spin text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
+        <Spinner size={28} className="animate-spin text-[var(--color-ak-borgona)]" />
       </div>
     )
   }
@@ -680,8 +680,8 @@ function CostosTab() {
                 onClick={() => setSede(s)}
                 className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                   sede === s
-                    ? 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] text-white'
-                    : 'bg-[var(--bg-secondary)] dark:bg-[var(--color-ak-madera-light)]/10 text-[var(--text-secondary)] hover:bg-[var(--color-ak-borgona)]/10 dark:hover:bg-[var(--color-ak-borgona-light)]/10'
+                    ? 'bg-[var(--color-ak-borgona)] text-white'
+                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--color-ak-borgona)]/10'
                 }`}
               >
                 {SEDE_LABELS[s] || s}
@@ -693,7 +693,7 @@ function CostosTab() {
 
       {/* Employee count badge */}
       <div className="flex items-center gap-1.5">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]/10 dark:text-[var(--color-ak-borgona-light)]">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)]">
           <Users size={14} weight="fill" />
           <span className="text-xs font-semibold">{empleados} empleados</span>
         </div>
@@ -701,9 +701,9 @@ function CostosTab() {
 
       {/* Ratios Nomina/Ventas */}
       {ventas.revenue > 0 && (
-        <AnimatedCard delay={0} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--color-ak-borgona)]/20 dark:border-[var(--color-ak-borgona-light)]/20 p-5">
+        <AnimatedCard delay={0} className="bg-[var(--bg-card)] rounded-xl border border-[var(--color-ak-borgona)]/20 p-5">
           <div className="flex items-center gap-2 mb-4">
-            <TrendUp size={18} weight="fill" className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
+            <TrendUp size={18} weight="fill" className="text-[var(--color-ak-borgona)]" />
             <h4 className="text-sm font-semibold text-[var(--text-primary)]">Nomina vs Ventas</h4>
           </div>
 
@@ -806,7 +806,7 @@ function CostosTab() {
           label="Devengado"
           value={formatCOP(resumen.totalDevengado)}
           sub={formatFull(resumen.totalDevengado)}
-          color="bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/5"
+          color="bg-[var(--color-ak-borgona)]/5"
           icon={<Money size={14} />}
         />
         <KPIBox
@@ -830,7 +830,7 @@ function CostosTab() {
       </div>
 
       {/* Composicion del devengado */}
-      <AnimatedCard delay={0.05} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
+      <AnimatedCard delay={0.05} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
         <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Composicion del Devengado</h4>
         <div className="space-y-2.5">
           {[
@@ -856,13 +856,13 @@ function CostosTab() {
         </div>
         <div className="mt-3 pt-2 border-t border-[var(--border-default)] flex items-center justify-between">
           <span className="text-xs font-semibold text-[var(--text-primary)]">Total Devengado</span>
-          <span className="text-sm font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatFull(resumen.totalDevengado)}</span>
+          <span className="text-sm font-bold text-[var(--color-ak-borgona)]">{formatFull(resumen.totalDevengado)}</span>
         </div>
       </AnimatedCard>
 
       {/* 2 columnas: Provisiones + Deducciones */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AnimatedCard delay={0.10} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
+        <AnimatedCard delay={0.10} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
           <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Provisiones Empleador</h4>
           <div className="space-y-2">
             {[
@@ -891,7 +891,7 @@ function CostosTab() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard delay={0.15} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
+        <AnimatedCard delay={0.15} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
           <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Deducciones Empleado</h4>
           <div className="space-y-2">
             {[
@@ -931,9 +931,9 @@ function CostosTab() {
 
       {/* HE/Recargos + Novedades */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AnimatedCard delay={0.20} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
+        <AnimatedCard delay={0.20} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
           <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Horas Extra y Recargos</h4>
-          <p className="text-2xl font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatFull(heRecargos.total)}</p>
+          <p className="text-2xl font-bold text-[var(--color-ak-borgona)]">{formatFull(heRecargos.total)}</p>
           <p className="text-xs text-[var(--text-secondary)] mt-1">
             {heRecargos.count} empleados con HE/recargos
           </p>
@@ -953,9 +953,9 @@ function CostosTab() {
           </div>
         </AnimatedCard>
 
-        <AnimatedCard delay={0.25} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--border-default)] dark:border-[var(--color-ak-madera-light)]/15 p-4">
+        <AnimatedCard delay={0.25} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4">
           <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Novedades del Mes</h4>
-          <p className="text-2xl font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{novedades.total}</p>
+          <p className="text-2xl font-bold text-[var(--color-ak-borgona)]">{novedades.total}</p>
           <p className="text-xs text-[var(--text-secondary)] mb-3">incidencias registradas</p>
           {novedades.detail && novedades.detail.length > 0 && (
             <div className="space-y-1.5 max-h-48 overflow-y-auto">
@@ -971,7 +971,7 @@ function CostosTab() {
                 </div>
               ))}
               {novedades.detail.length > 8 && (
-                <p className="text-[10px] text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">
+                <p className="text-[10px] text-[var(--color-ak-borgona)]">
                   +{novedades.detail.length - 8} mas
                 </p>
               )}
@@ -981,12 +981,12 @@ function CostosTab() {
       </div>
 
       {/* Costo real desglosado */}
-      <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10 rounded-xl border border-[var(--color-ak-borgona)]/20 dark:border-[var(--color-ak-borgona-light)]/20 p-4">
+      <AnimatedCard delay={0.30} className="bg-[var(--bg-card)] rounded-xl border border-[var(--color-ak-borgona)]/20 p-4">
         <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Resumen Costo Real Empleador</h4>
         <div className="grid grid-cols-3 gap-3 text-center">
-          <div className="rounded-lg bg-[var(--color-ak-borgona)]/5 dark:bg-[var(--color-ak-borgona-light)]/10 p-3">
+          <div className="rounded-lg bg-[var(--color-ak-borgona)]/5 p-3">
             <p className="text-[10px] text-[var(--text-secondary)] uppercase">Devengado</p>
-            <p className="text-lg font-bold text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]">{formatCOP(resumen.totalDevengado)}</p>
+            <p className="text-lg font-bold text-[var(--color-ak-borgona)]">{formatCOP(resumen.totalDevengado)}</p>
           </div>
           <div className="rounded-lg bg-[var(--color-warning)]/5 p-3">
             <p className="text-[10px] text-[var(--text-secondary)] uppercase">+ Provisiones</p>
@@ -1012,15 +1012,15 @@ export function NominaUnifiedPanel() {
   return (
     <div className="space-y-5 px-3 sm:px-0">
       {/* Sub-tabs */}
-      <div className="flex gap-1 overflow-x-auto pb-1">
+      <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-1">
         {SUB_TABS.map(tab => (
           <button
             key={tab.key}
             onClick={() => setSubTab(tab.key)}
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md whitespace-nowrap transition-colors ${
               subTab === tab.key
-                ? 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)] text-white'
-                : 'bg-[var(--bg-secondary)] dark:bg-[var(--color-ak-madera-light)]/10 text-[var(--text-secondary)] hover:bg-[var(--color-ak-borgona)]/10 dark:hover:bg-[var(--color-ak-borgona-light)]/10'
+                ? 'bg-[var(--color-ak-borgona)] text-white'
+                : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--color-ak-borgona)]/10'
             }`}
           >
             {tab.icon}

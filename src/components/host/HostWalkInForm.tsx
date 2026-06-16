@@ -171,11 +171,16 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
     <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
       <div
         className="bg-[var(--bg-primary)] rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 16px), 24px)' }}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-['Playfair_Display'] text-xl font-bold text-[var(--text-primary)]">Walk-in</h2>
-          <button onClick={onClose} className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+          <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--text-primary)]">Walk-in</h2>
+          <button
+            onClick={onClose}
+            className="-mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors rounded-lg"
+            aria-label="Cerrar"
+          >
             <X size={24} />
           </button>
         </div>
@@ -294,7 +299,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
           </div>
 
           {error && (
-            <p className="text-sm text-[var(--color-danger)] bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>
+            <p className="text-sm text-[var(--color-danger)] bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 px-3 py-2 rounded-lg">{error}</p>
           )}
 
           <button

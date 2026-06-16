@@ -230,12 +230,11 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--border-default)] px-5 py-4">
-          <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">Nueva Reserva</h2>
+          <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">Nueva Reserva</h2>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
-            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] transition-all duration-200"
           >
             <X size={18} />
           </button>
@@ -517,16 +516,14 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] disabled:opacity-50"
-              style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+              className="flex-1 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] disabled:opacity-50 transition-all duration-200"
             >
               {submitting ? 'Creando...' : 'Crear Reserva'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
-              style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+              className="rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-all duration-200"
             >
               Cancelar
             </button>

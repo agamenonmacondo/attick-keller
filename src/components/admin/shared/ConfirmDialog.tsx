@@ -87,8 +87,7 @@ export function ConfirmDialog({
               <button
                 type="button"
                 onClick={onCancel}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--color-ak-madera)]/5 active:scale-[0.97]"
-                style={{ transition: 'transform 160ms ease-out' }}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors duration-200 hover:bg-[var(--color-ak-madera)]/5 active:scale-[0.97]"
               >
                 Cancelar
               </button>
@@ -96,12 +95,11 @@ export function ConfirmDialog({
                 type="button"
                 onClick={onConfirm}
                 className={cn(
-                  'rounded-lg px-4 py-2 text-sm font-medium text-white active:scale-[0.97]',
+                  'rounded-lg px-4 py-2 text-sm font-medium text-white active:scale-[0.97] transition-transform duration-200',
                   confirmVariant === 'danger'
                     ? 'bg-[var(--color-danger)] hover:bg-red-700'
                     : 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/90',
                 )}
-                style={{ transition: 'transform 160ms ease-out' }}
               >
                 {confirmLabel}
               </button>

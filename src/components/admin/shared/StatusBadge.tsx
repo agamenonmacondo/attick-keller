@@ -38,9 +38,9 @@ export const STATUS_CONFIG: Record<ReservationStatus, StatusConfig> = {
   },
   seated: {
     label: 'Sentado',
-    bg: 'bg-[var(--color-ak-borgona)]/10 dark:bg-[var(--color-ak-borgona-light)]/10',
-    text: 'text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]',
-    dot: 'bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]',
+    bg: 'bg-[var(--color-ak-borgona)]/10',
+    text: 'text-[var(--color-ak-borgona)]',
+    dot: 'bg-[var(--color-ak-borgona)]',
   },
   completed: {
     label: 'Completado',

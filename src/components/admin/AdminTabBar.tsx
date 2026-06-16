@@ -31,18 +31,17 @@ export function AdminTabBar({ active, onChange, allowedTabs }: AdminTabBarProps)
   const visibleTabs = TABS.filter(tab => allowedTabs.includes(tab.key))
 
   return (
-    <div className="border-b border-[var(--border-default)] bg-[var(--bg-card)] dark:bg-[var(--color-ak-madera-light)]/10">
+    <div className="border-b border-[var(--border-default)] bg-[var(--bg-card)]">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6">
-        <nav className="flex gap-1 overflow-x-auto -mb-px">
+        <nav className="flex gap-1 overflow-x-auto -mb-px scrollbar-hide" aria-label="Navegación de administración">
           {visibleTabs.map(tab => (
             <button
               key={tab.key}
               onClick={() => onChange(tab.key)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap',
-                active === tab.key ? 'border-[var(--color-ak-borgona)] dark:border-[var(--color-ak-borgona-light)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors duration-200',
+                active === tab.key ? 'border-[var(--color-ak-borgona)] text-[var(--color-ak-borgona)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               )}
-              style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
             >
               {tab.icon}
               <span className="hidden sm:inline">{tab.label}</span>

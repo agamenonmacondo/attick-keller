@@ -13,7 +13,7 @@ export function ConversionCard({ pending, confirmed, rate }: ConversionCardProps
     <div className="p-5">
       <SectionHeading>Tasa de conversion</SectionHeading>
       <div className="flex items-end gap-1 mt-2">
-        <AnimatedCounter value={rate} className="text-4xl font-['Playfair_Display'] font-bold text-[var(--text-primary)]" />
+        <AnimatedCounter value={rate} className="text-4xl font-[family-name:var(--font-display)] font-bold text-[var(--text-primary)]" />
         <span className="text-lg text-[var(--text-secondary)] mb-1">%</span>
       </div>
       <p className="text-xs text-[var(--text-secondary)] mt-1">{confirmed} confirmadas de {total} reservas</p>

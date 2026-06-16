@@ -175,7 +175,7 @@ export function ReservationDetail({
         {/* Header */}
         <div className="flex items-start justify-between px-5 py-4">
           <div>
-            <h2 className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
+            <h2 className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
               {reservation.customers?.full_name || 'Cliente'}
             </h2>
             <StatusBadge status={reservation.status} size="md" className="mt-1" />
@@ -185,8 +185,7 @@ export function ReservationDetail({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
-                style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] transition-all duration-200"
                 aria-label="Editar reserva"
               >
                 <PencilSimple size={18} />
@@ -195,8 +194,7 @@ export function ReservationDetail({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
-              style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] transition-all duration-200"
               aria-label="Cerrar detalle"
             >
               <X size={18} />
@@ -217,8 +215,7 @@ export function ReservationDetail({
                   )}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-[var(--text-primary)] hover:bg-[var(--border-default)]/30 active:scale-[0.97]"
-                  style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-[var(--text-primary)] hover:bg-[var(--border-default)]/30 active:scale-[0.97] transition-all duration-200"
                 >
                   <WhatsappLogo size={16} className="text-[var(--color-success)]" weight="fill" />
                   {reservation.customers.phone}
@@ -230,8 +227,7 @@ export function ReservationDetail({
                     reservation.customers.email,
                     `Reserva Attick & Keller - ${formatDate(reservation.date, 'short')}`,
                   )}
-                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-[var(--text-primary)] hover:bg-[var(--border-default)]/30 active:scale-[0.97]"
-                  style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-[var(--text-primary)] hover:bg-[var(--border-default)]/30 active:scale-[0.97] transition-all duration-200"
                 >
                   <Envelope size={16} className="text-[var(--color-ak-borgona)]" weight="fill" />
                   {reservation.customers.email}
@@ -321,8 +317,7 @@ export function ReservationDetail({
                     type="button"
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] disabled:opacity-50"
-                    style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] disabled:opacity-50 transition-all duration-200"
                   >
                     <FloppyDisk size={16} />
                     {saving ? 'Guardando...' : 'Guardar'}
@@ -330,8 +325,7 @@ export function ReservationDetail({
                   <button
                     type="button"
                     onClick={() => setEditing(false)}
-                    className="flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
-                    style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-all duration-200"
                   >
                     <ArrowLeft size={16} />
                     Cancelar
@@ -391,14 +385,13 @@ export function ReservationDetail({
                   type="button"
                   onClick={() => onStatusChange(reservation.id, action.status)}
                   className={cn(
-                    'w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white active:scale-[0.97]',
+                    'w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white active:scale-[0.97] transition-all duration-200',
                     action.variant === 'danger'
                       ? 'bg-[var(--color-danger)] hover:bg-[var(--color-danger)]/80'
                       : action.variant === 'warning'
                       ? 'bg-[var(--color-ak-ambar)] hover:bg-[var(--color-ak-ambar)]/90'
                       : 'bg-[var(--color-ak-borgona)] hover:bg-[var(--color-ak-borgona)]/90',
                   )}
-                  style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                 >
                   {action.label}
                 </button>

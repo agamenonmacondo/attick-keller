@@ -103,7 +103,7 @@ export function HourlyRevenueChart({ data, onHourDrillDown }: HourlyRevenueChart
             dataKey="revenue"
             fill="var(--color-ak-borgona)"
             radius={[4, 4, 0, 0]}
-            style={{ transition: 'all 300ms ease-out', cursor: onHourDrillDown ? 'pointer' : 'default' }}
+            className={`transition-all duration-300 ${onHourDrillDown ? 'cursor-pointer' : 'cursor-default'}`}
             onClick={onHourDrillDown ? (_data: unknown, index: number) => {
               const item = chartData[index]
               if (item) onHourDrillDown(item.hour, {

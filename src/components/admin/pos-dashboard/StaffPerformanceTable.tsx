@@ -84,8 +84,7 @@ export function StaffPerformanceTable({ data, onStaffDrillDown }: StaffPerforman
               {filteredData.map(s => (
                 <tr
                   key={s.staffId}
-                  className={`border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-input)] ${onStaffDrillDown ? 'cursor-pointer' : ''}`}
-                  style={{ transition: 'background 150ms ease-out' }}
+                  className={`border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-input)] transition-colors duration-150 ${onStaffDrillDown ? 'cursor-pointer' : ''}`}
                   onClick={onStaffDrillDown ? () => onStaffDrillDown(s.staffId, s.staffName) : undefined}
                   title={onStaffDrillDown ? 'Ver detalle del staff' : undefined}
                 >

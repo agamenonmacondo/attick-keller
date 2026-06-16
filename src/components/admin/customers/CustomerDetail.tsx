@@ -132,11 +132,11 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
               type="text"
               value={form.full_name}
               onChange={(e) => setForm(f => ({ ...f, full_name: e.target.value }))}
-              className="w-full font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)] bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg px-3 py-1 focus:border-[var(--color-ak-borgona)] focus:outline-none"
+              className="w-full font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)] bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg px-3 py-1 focus:border-[var(--color-ak-borgona)] focus:outline-none"
               placeholder="Nombre completo"
             />
           ) : (
-            <h2 className="font-['Playfair_Display'] text-lg font-semibold text-[var(--text-primary)]">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">
               {customer.full_name || 'Cliente'}
             </h2>
           )}
@@ -152,8 +152,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
-              style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] transition-all duration-200"
               aria-label="Editar cliente"
             >
               <PencilSimple size={18} />
@@ -162,8 +161,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
-            style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 active:scale-[0.97] transition-all duration-200"
             aria-label="Cerrar detalle"
           >
             <X size={18} />
@@ -215,8 +213,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] disabled:opacity-50"
-                  style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--color-ak-borgona)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] disabled:opacity-50 transition-all duration-200"
                 >
                   <FloppyDisk size={16} />
                   {saving ? 'Guardando...' : 'Guardar'}
@@ -224,8 +221,7 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
                 <button
                   type="button"
                   onClick={() => setEditing(false)}
-                  className="flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97]"
-                  style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+                  className="flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border-default)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-input)] active:scale-[0.97] transition-all duration-200"
                 >
                   <ArrowLeft size={16} />
                   Cancelar

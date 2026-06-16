@@ -44,10 +44,10 @@ export default function PhotoCTA() {
           transition={{ duration: 0.8, delay: 0.5, ease: [0.23, 1, 0.32, 1] }}
           className="text-center px-6"
         >
-          <p className="font-['Caveat'] text-[var(--color-ak-dorado)] text-2xl md:text-3xl mb-4">
+          <p className="font-[family-name:var(--font-accent)] text-[var(--color-ak-dorado)] text-2xl md:text-3xl mb-4">
             Vive la experiencia
           </p>
-          <h2 className="font-['Playfair_Display'] text-5xl md:text-7xl lg:text-8xl font-bold text-[var(--color-ak-cal)] tracking-tighter leading-[0.9] mb-6">
+          <h2 className="font-[family-name:var(--font-display)] text-5xl md:text-7xl lg:text-8xl font-bold text-[var(--color-ak-cal)] tracking-tighter leading-[0.9] mb-6">
             Cada visita,<br />una historia
           </h2>
           <p className="text-[var(--border-light)] text-base md:text-lg max-w-md mx-auto mb-10">
@@ -55,7 +55,7 @@ export default function PhotoCTA() {
           </p>
           <Link
             href="/reservar"
-            className="inline-block bg-[var(--color-ak-borgona)] text-[var(--color-ak-cal)] px-12 py-5 rounded-full font-['Playfair_Display'] text-xl font-bold tracking-tight hover:bg-[var(--color-accent)] transition-all duration-300 active:scale-[0.97]"
+            className="inline-block bg-[var(--color-ak-borgona)] text-[var(--color-ak-cal)] px-12 py-5 rounded-full font-[family-name:var(--font-display)] text-xl font-bold tracking-tight hover:bg-[var(--color-accent)] transition-all duration-300 active:scale-[0.97]"
           >
             Reservar Mesa
           </Link>

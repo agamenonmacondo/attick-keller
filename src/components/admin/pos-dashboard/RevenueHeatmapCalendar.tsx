@@ -253,7 +253,7 @@ export function RevenueHeatmapCalendar({
         </button>
 
         <div className="flex items-center gap-3">
-          <span className="font-['Playfair_Display'] text-base font-semibold text-[var(--text-primary)]">
+          <span className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
             {MONTH_NAMES[vm]} {vy}
           </span>
           <button
@@ -307,14 +307,13 @@ export function RevenueHeatmapCalendar({
               type="button"
               onClick={() => onDayClick(cell.date)}
               className={cn(
-                'relative z-10 rounded-lg py-1.5 text-center text-xs font-medium cursor-pointer active:scale-[0.95]',
+                'relative z-10 rounded-lg py-1.5 text-center text-xs font-medium cursor-pointer active:scale-[0.95] transition-transform duration-150',
                 bgClass,
                 textClass,
                 !cell.inMonth && 'opacity-30',
                 isSelected && 'ring-2 ring-[var(--color-ak-borgona)] ring-offset-1 ring-offset-[var(--bg-card)]',
                 isWeekend && cell.inMonth && 'font-semibold',
               )}
-              style={{ transition: 'transform 120ms ease-out' }}
               title={tooltip}
             >
               {cell.day}

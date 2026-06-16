@@ -126,7 +126,6 @@ export function HostShell() {
             className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 transition-colors duration-200 ${
               activeTab === 'mesas' ? 'border-[var(--color-ak-borgona)] dark:border-[var(--color-ak-borgona-light)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)]'
             }`}
-            style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
           >
             <Table size={16} />
             Mesas
@@ -136,7 +135,6 @@ export function HostShell() {
             className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 transition-colors duration-200 ${
               activeTab === 'reservas' ? 'border-[var(--color-ak-borgona)] dark:border-[var(--color-ak-borgona-light)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)]'
             }`}
-            style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
           >
             <CalendarDots size={16} />
             Reservas
@@ -146,7 +144,6 @@ export function HostShell() {
             className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 transition-colors duration-200 ${
               activeTab === 'plano' ? 'border-[var(--color-ak-borgona)] dark:border-[var(--color-ak-borgona-light)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)]'
             }`}
-            style={{ transition: 'color 200ms ease-out, border-color 200ms ease-out' }}
           >
             <MapTrifold size={16} />
             Plano
@@ -156,7 +153,7 @@ export function HostShell() {
 
       {/* Content */}
       <motion.div
-        className="flex-1 max-w-[1400px] mx-auto w-full px-4 md:px-6 py-4"
+        className="flex-1 max-w-[1400px] mx-auto w-full px-4 md:px-6 py-4 pb-24 lg:pb-8"
         variants={prefersReduced ? undefined : containerVariants}
         initial="hidden"
         animate="visible"
@@ -273,9 +270,13 @@ export function HostShell() {
       {/* Walk-in button */}
       <button
         onClick={() => setShowWalkIn(true)}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-[var(--color-ak-borgona)] text-white dark:bg-[var(--color-ak-borgona-light)] shadow-lg flex items-center justify-center hover:bg-[var(--color-ak-borgona)] dark:hover:bg-[var(--color-ak-borgona-light)]/80 active:scale-[0.97]"
-        style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+        className="fixed z-40 w-14 h-14 rounded-full bg-[var(--color-ak-borgona)] text-white shadow-lg flex items-center justify-center hover:bg-[var(--color-ak-borgona)]/90 active:scale-[0.97] transition-all duration-200"
+        style={{
+          right: 'max(1.5rem, env(safe-area-inset-right, 16px))',
+          bottom: 'max(1.5rem, env(safe-area-inset-bottom, 16px))',
+        }}
         title="Walk-in"
+        aria-label="Nuevo walk-in"
       >
         <Plus size={24} weight="bold" />
       </button>

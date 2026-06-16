@@ -34,8 +34,7 @@ export function DateNavigator({
         <button
           type="button"
           onClick={handlePrev}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] transition-colors hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
-          style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] transition-colors duration-200 hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
           aria-label="Dia anterior"
         >
           <CaretLeft size={16} weight="bold" />
@@ -45,25 +44,23 @@ export function DateNavigator({
           type="button"
           onClick={handleToday}
           className={cn(
-            'rounded-lg px-3 py-1.5 text-xs font-medium active:scale-[0.97]',
+            'rounded-lg px-3 py-1.5 text-xs font-medium active:scale-[0.97] transition-all duration-200',
             selectedDate === today
               ? 'bg-[var(--color-ak-borgona)] text-white'
               : 'border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--border-default)]/50',
           )}
-          style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
         >
           Hoy
         </button>
 
-        <span className="flex-1 text-center text-lg font-semibold text-[var(--text-primary)] font-['Playfair_Display']">
+        <span className="flex-1 text-center text-lg font-semibold text-[var(--text-primary)] font-[family-name:var(--font-display)]">
           {formatDate(selectedDate, 'weekday')}
         </span>
 
         <button
           type="button"
           onClick={handleNext}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] transition-colors hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
-          style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] transition-colors duration-200 hover:bg-[var(--border-default)]/50 active:scale-[0.97]"
           aria-label="Dia siguiente"
         >
           <CaretRight size={16} weight="bold" />
@@ -85,13 +82,12 @@ export function DateNavigator({
               type="button"
               onClick={() => onDateChange(date)}
               className={cn(
-                'relative rounded-lg px-3 py-1.5 text-xs font-medium active:scale-[0.97]',
+                'relative rounded-lg px-3 py-1.5 text-xs font-medium active:scale-[0.97] transition-all duration-200',
                 isSelected
                   ? 'bg-[var(--color-ak-borgona)] text-white'
                   : 'text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50 hover:text-[var(--text-primary)]',
                 isToday && !isSelected && 'border border-[var(--color-ak-borgona)]/30',
               )}
-              style={{ transition: 'transform 160ms ease-out, color 200ms ease-out, background-color 200ms ease-out' }}
             >
               {formatDate(date)}
               {hasReservations && !isSelected && (

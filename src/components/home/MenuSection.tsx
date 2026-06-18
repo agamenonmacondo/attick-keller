@@ -41,6 +41,7 @@ export default function MenuSection() {
   const [items, setItems] = useState<MenuItem[]>([])
   const [active, setActive] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const tabsRef = useRef<HTMLDivElement>(null)
 
@@ -63,6 +64,21 @@ export default function MenuSection() {
   const handleCategoryClick = (id: string) => {
     setActive(id)
   }
+
+  const handleMobileCategorySelect = (id: string) => {
+    setActive(id)
+    setMobileMenuOpen(false)
+  }
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = ''
+      }
+    }
+  }, [mobileMenuOpen])
 
   useEffect(() => {
     if (active && panelRef.current) {
@@ -186,13 +202,62 @@ export default function MenuSection() {
             />
           </div>
 
-          {/* Category tabs */}
+          {/* ── Mobile category selector (< md) ── */}
           <motion.div
             initial={{ opacity: 0, transform: 'translateY(10px)' }}
             whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
             viewport={viewOptions}
             transition={{ duration: 0.5, delay: 0.2, ease: EASE_OUT }}
-            className="relative mb-10 md:mb-14"
+            className="md:hidden mb-8"
+          >
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="w-full flex items-center justify-between gap-3 px-5 py-3.5 rounded-xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              style={{
+                fontFamily: "'DM Sans', sans-serif",
+                backgroundColor: 'var(--color-ak-borgona)',
+                color: 'var(--color-ak-cal)',
+                minHeight: '48px',
+              }}
+              aria-haspopup="listbox"
+              aria-expanded={mobileMenuOpen}
+              aria-label={`Categoría seleccionada: ${activeCategory?.name ?? 'Seleccionar'}`}
+            >
+              <span className="font-semibold text-base tracking-wide">
+                {activeCategory?.name ?? 'Seleccionar categoría'}
+              </span>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                className="shrink-0 transition-transform duration-200"
+                style={{ transform: mobileMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              >
+                <path
+                  d="M5 7.5L10 12.5L15 7.5"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <p
+              className="text-xs mt-2 text-center"
+              style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.4)' }}
+            >
+              Toca para ver todas las categorías
+            </p>
+          </motion.div>
+
+          {/* ── Desktop category tabs (≥ md) — UNCHANGED ── */}
+          <motion.div
+            initial={{ opacity: 0, transform: 'translateY(10px)' }}
+            whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
+            viewport={viewOptions}
+            transition={{ duration: 0.5, delay: 0.2, ease: EASE_OUT }}
+            className="hidden md:block relative mb-10 md:mb-14"
           >
             <div
               ref={tabsRef}
@@ -236,7 +301,7 @@ export default function MenuSection() {
             />
           </motion.div>
 
-          {/* Products panel */}
+          {/* ── Products panel (shared mobile + desktop) ── */}
           <AnimatePresence mode="wait">
             {active && activeCategory && (
               <motion.div
@@ -323,6 +388,122 @@ export default function MenuSection() {
           </AnimatePresence>
         </div>
       </section>
+
+      {/* ── Mobile category bottom-sheet overlay ── */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="mobile-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40 md:hidden"
+              style={{ backgroundColor: 'rgba(62,39,35,0.55)' }}
+              onClick={() => setMobileMenuOpen(false)}
+              aria-hidden="true"
+            />
+
+            {/* Bottom sheet */}
+            <motion.div
+              key="mobile-sheet"
+              initial={{ transform: 'translateY(100%)' }}
+              animate={{ transform: 'translateY(0%)' }}
+              exit={{ transform: 'translateY(100%)' }}
+              transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+              className="fixed inset-x-0 bottom-0 z-50 md:hidden"
+              style={{
+                borderTopLeftRadius: '20px',
+                borderTopRightRadius: '20px',
+                backgroundColor: 'var(--color-ak-cal)',
+                maxHeight: '75vh',
+                overflow: 'hidden',
+              }}
+              role="listbox"
+              aria-label="Seleccionar categoría del menú"
+            >
+              {/* Drag handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div
+                  className="w-10 h-1 rounded-full"
+                  style={{ backgroundColor: 'rgba(62,39,35,0.15)' }}
+                />
+              </div>
+
+              {/* Sheet header */}
+              <div className="px-5 pt-2 pb-4 flex items-center justify-between">
+                <h3
+                  className="text-lg font-bold"
+                  style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
+                >
+                  Categorías
+                </h3>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-10 h-10 flex items-center justify-center rounded-full cursor-pointer focus:outline-none focus-visible:ring-2"
+                  style={{
+                    backgroundColor: 'rgba(62,39,35,0.06)',
+                    color: 'var(--color-ak-madera)',
+                  }}
+                  aria-label="Cerrar categorías"
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M4.5 4.5L13.5 13.5M13.5 4.5L4.5 13.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div className="mx-5 h-px" style={{ background: 'linear-gradient(to right, transparent, rgba(201,169,78,0.4), transparent)' }} />
+
+              {/* Category grid */}
+              <div
+                className="px-5 py-4 overflow-y-auto"
+                style={{ maxHeight: 'calc(75vh - 120px)' }}
+              >
+                <div className="grid grid-cols-2 gap-2.5">
+                  {categories.map((cat) => {
+                    const isActive = active === cat.id
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => handleMobileCategorySelect(cat.id)}
+                        className={cn(
+                          'relative rounded-xl px-4 py-3 text-sm font-semibold text-center cursor-pointer',
+                          'focus:outline-none focus-visible:ring-2 transition-transform duration-100 active:scale-[0.97]'
+                        )}
+                        style={{
+                          fontFamily: "'DM Sans', sans-serif",
+                          minHeight: '48px',
+                          backgroundColor: isActive ? 'var(--color-ak-borgona)' : 'rgba(62,39,35,0.05)',
+                          color: isActive ? 'var(--color-ak-cal)' : 'var(--color-ak-madera)',
+                          border: isActive ? '2px solid var(--color-ak-borgona)' : '2px solid rgba(62,39,35,0.08)',
+                          letterSpacing: '0.01em',
+                        }}
+                        role="option"
+                        aria-selected={isActive}
+                      >
+                        {isActive && (
+                          <span
+                            className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+                            style={{ backgroundColor: 'var(--color-ak-dorado)' }}
+                          />
+                        )}
+                        {cat.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Safe area spacer for phones with home indicator */}
+              <div className="h-safe-area-inset-bottom" style={{ minHeight: 'env(safe-area-inset-bottom, 0px)' }} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <style jsx>{`
         .scrollbar-hide::-webkit-scrollbar {

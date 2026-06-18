@@ -516,7 +516,7 @@ export default function PerfilPage() {
               )}
               {isEmployee && (
                 <Link
-                  href="/mi-turno"
+                  href="/admin"
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-ak-borgona)] text-white rounded-xl text-sm font-semibold hover:bg-[var(--color-ak-borgona)] active:scale-[0.97] transition-colors shadow-sm"
                   style={{ transition: 'transform 160ms ease-out, background-color 200ms ease-out' }}
                 >

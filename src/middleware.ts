@@ -88,15 +88,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  // Protect /mi-turno — employee only
+  // Redirect /mi-turno to /admin (old route, now a tab in admin panel)
   if (request.nextUrl.pathname.startsWith('/mi-turno')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
-    }
-    const allowed = await hasAnyRole(['lider_area', 'colaborador', 'reservante', 'store_admin', 'super_admin'])
-    if (!allowed) {
-      return NextResponse.redirect(new URL('/perfil', request.url))
-    }
+    return NextResponse.redirect(new URL('/admin', request.url))
   }
 
   return response

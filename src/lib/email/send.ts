@@ -410,7 +410,7 @@ function buildShiftScheduleHtml(data: ShiftScheduleData, employeeName: string): 
     '</tr>' + rows +
     '</table>' +
     '<div style="text-align:center;margin-top:24px;">' +
-    '<a href="' + BASE_URL + '/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
+    '<a href="' + BASE_URL + '/admin" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
     '</div>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
@@ -455,7 +455,7 @@ function buildShiftReminderHtml(data: ShiftReminderData): string {
     '</td></tr>' +
     '</table>' +
     '<div style="text-align:center;margin-top:24px;">' +
-    '<a href="' + BASE_URL + '/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Entrada</a>' +
+    '<a href="' + BASE_URL + '/admin" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Entrada</a>' +
     '</div>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
@@ -498,7 +498,7 @@ function buildShiftCheckoutHtml(data: ShiftCheckoutData): string {
     '</td></tr>' +
     '</table>' +
     '<div style="text-align:center;margin-top:24px;">' +
-    '<a href="' + BASE_URL + '/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Salida</a>' +
+    '<a href="' + BASE_URL + '/admin" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Salida</a>' +
     '</div>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
@@ -549,7 +549,7 @@ function buildShiftChangeHtml(data: ShiftScheduleData, employeeName: string): st
     '</tr>' + rows +
     '</table>' +
     '<div style="text-align:center;margin-top:24px;">' +
-    '<a href="' + BASE_URL + '/mi-turno" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
+    '<a href="' + BASE_URL + '/admin" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
     '</div>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +

@@ -18,14 +18,16 @@ import { NominaUnifiedPanel } from './nomina/NominaUnifiedPanel'
 import { RodriPanel } from './rodri/RodriPanel'
 import ShiftSchedulePanel from './shifts/ShiftSchedulePanel'
 import { InformesRayoPanel } from './informes/InformesRayoPanel'
+import { MiTurnoPanel } from './miturno/MiTurnoPanel'
 import { Spinner } from '@phosphor-icons/react'
 
 // Tabs que CADA ROL desbloquea (se unen si el usuario tiene varios roles)
 const ROLE_TABS: Record<string, AdminTab[]> = {
-  super_admin: ['reservas', 'ocupacion', 'mesas', 'plano', 'metricas', 'operacion', 'clientes', 'menu', 'equipo', 'nomina', 'turnos', 'app-rodri', 'informes'],
+  super_admin: ['reservas', 'ocupacion', 'mesas', 'plano', 'metricas', 'operacion', 'clientes', 'menu', 'equipo', 'nomina', 'turnos', 'app-rodri', 'informes', 'mi-turno'],
   store_admin: ['reservas', 'ocupacion', 'mesas', 'plano', 'metricas'],
   host: ['reservas', 'ocupacion'],
   lider_area: ['turnos'],
+  colaborador: ['mi-turno'],
 }
 
 function computeAllowedTabs(roles: string[]): AdminTab[] {
@@ -97,6 +99,7 @@ export function AdminShell() {
         {activeTab === 'turnos' && <ShiftSchedulePanel areaFilter={area ?? undefined} />}
         {activeTab === 'app-rodri' && <RodriPanel />}
         {activeTab === 'informes' && <InformesRayoPanel />}
+        {activeTab === 'mi-turno' && <MiTurnoPanel />}
       </main>
     </div>
   )

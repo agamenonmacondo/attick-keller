@@ -51,7 +51,7 @@ export default function LoginPage() {
         const res = await fetch('/api/auth/role')
         if (res.ok) {
           const { roles: loginRoles } = await res.json()
-          const adminRoles = ['super_admin', 'store_admin', 'lider_area', 'host']
+          const adminRoles = ['super_admin', 'store_admin', 'lider_area', 'host', 'colaborador']
           const hasAdmin = (loginRoles || []).some((r: string) => adminRoles.includes(r))
           router.push(hasAdmin ? '/admin' : '/perfil')
         } else {

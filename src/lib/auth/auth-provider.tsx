@@ -158,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   // Derived booleans (backward compatible)
-  const isAdmin = roles.includes('super_admin') || roles.includes('store_admin') || roles.includes('lider_area') || roles.includes('host')
+  const isAdmin = roles.includes('super_admin') || roles.includes('store_admin') || roles.includes('lider_area') || roles.includes('host') || roles.includes('colaborador')
   const isHost = roles.includes('host')
   const isEmployee = roles.includes('lider_area') || roles.includes('colaborador') || roles.includes('reservante')
 

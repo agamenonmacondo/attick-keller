@@ -52,18 +52,18 @@ export async function middleware(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
     }
-    const allowed = await hasAnyRole(['store_admin', 'super_admin', 'host', 'lider_area'])
+    const allowed = await hasAnyRole(['store_admin', 'super_admin', 'host', 'lider_area', 'colaborador'])
     if (!allowed) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
     }
   }
 
-  // Protect /admin — store_admin, super_admin, host, or lider_area
+  // Protect /admin — store_admin, super_admin, host, lider_area, or colaborador
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
-    const allowed = await hasAnyRole(['store_admin', 'super_admin', 'host', 'lider_area'])
+    const allowed = await hasAnyRole(['store_admin', 'super_admin', 'host', 'lider_area', 'colaborador'])
     if (!allowed) {
       return NextResponse.redirect(new URL('/host', request.url))
     }

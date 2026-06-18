@@ -11,7 +11,7 @@ export default function AuthRedirectPage() {
     fetch('/api/auth/role')
       .then(res => res.ok ? res.json() : { roles: [] })
       .then(({ roles }) => {
-        const adminRoles = ['super_admin', 'store_admin', 'lider_area', 'host']
+        const adminRoles = ['super_admin', 'store_admin', 'lider_area', 'host', 'colaborador']
         const hasAdmin = (roles || []).some((r: string) => adminRoles.includes(r))
         router.replace(hasAdmin ? '/admin' : '/perfil')
       })

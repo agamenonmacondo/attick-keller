@@ -7,6 +7,7 @@ interface KPIs {
   revenue: number
   subtotal: number
   taxTotal: number
+  discountTotal: number
   cheques: number
   ticketPromedio: number
   propinaTotal: number
@@ -57,6 +58,7 @@ export function DayKPIBar({ kpis, averages, isSingleDay }: DayKPIBarProps) {
     { key: 'revenue', label: 'Revenue', value: kpis.revenue },
     { key: 'subtotal', label: 'Sin IVA', value: kpis.subtotal },
     { key: 'taxTotal', label: 'IVA (8%)', value: kpis.taxTotal },
+    { key: 'discountTotal', label: 'Descuentos', value: kpis.discountTotal },
     { key: 'cheques', label: 'Cheques', value: kpis.cheques },
     { key: 'ticketPromedio', label: 'Ticket prom.', value: kpis.ticketPromedio },
     { key: 'propinaTotal', label: 'Propinas', value: kpis.propinaTotal },

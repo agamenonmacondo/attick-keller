@@ -39,12 +39,13 @@ export async function GET(request: NextRequest) {
 
   if (!schedule) {
     // No hay cronograma, devolver datos basicos para crear uno nuevo
+    // Incluir personal del area + personal con secondary_areas que incluya el area
     const { data: staff } = await sb
       .from('pos_nomina_staff')
       .select('id, nombre_completo, cargo, area, secondary_areas, salario')
       .eq('sede', 'C75')
-      .not('area', 'in', '(apoyo,admin)')
-      .eq('area', area)
+      .eq('activo', true)
+      .or(`area.eq.${area},secondary_areas.cs.{${area}}`)
       .order('nombre_completo')
 
     const { data: shiftTypes } = await sb
@@ -104,13 +105,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: assignError.message }, { status: 500 })
   }
 
-  // Obtener personal del area (excluye apoyo/admin del cronograma)
+  // Incluir personal del area + personal con secondary_areas que incluya el area
   const { data: staff } = await sb
     .from('pos_nomina_staff')
     .select('id, nombre_completo, cargo, area, secondary_areas, salario')
     .eq('sede', 'C75')
-    .not('area', 'in', '(apoyo,admin)')
-    .eq('area', area)
+    .eq('activo', true)
+    .or(`area.eq.${area},secondary_areas.cs.{${area}}`)
     .order('nombre_completo')
 
   const { data: shiftTypes } = await sb

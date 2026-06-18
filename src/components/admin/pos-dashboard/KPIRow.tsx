@@ -1,13 +1,14 @@
 'use client'
 
 import { KPICard, formatCOPDisplay } from './KPICard'
-import { CurrencyDollar, Receipt, Calculator, Ticket, HandCoins, Users, UserPlus, CreditCard, Money, ClockCounterClockwise } from '@phosphor-icons/react'
+import { CurrencyDollar, Receipt, Calculator, ArrowDown, Ticket, HandCoins, Users, UserPlus, CreditCard, Money, ClockCounterClockwise } from '@phosphor-icons/react'
 
 interface KPIRowProps {
   kpis: {
     revenue: number
     subtotal: number
     taxTotal: number
+    discountTotal: number
     cheques: number
     ticketPromedio: number
     propinaTotal: number
@@ -22,7 +23,7 @@ interface KPIRowProps {
 
 export function KPIRow({ kpis }: KPIRowProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11 gap-2 sm:gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 gap-2 sm:gap-3">
       <KPICard
         label="Revenue"
         value={kpis.revenue}
@@ -39,6 +40,12 @@ export function KPIRow({ kpis }: KPIRowProps) {
         label="IVA (8%)"
         value={kpis.taxTotal}
         icon={<Calculator size={16} weight="regular" />}
+        format="currency"
+      />
+      <KPICard
+        label="Descuentos"
+        value={kpis.discountTotal}
+        icon={<ArrowDown size={16} weight="regular" />}
         format="currency"
       />
       <KPICard

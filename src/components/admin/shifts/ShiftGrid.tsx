@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useCallback } from 'react';
-import { Warning, ClockAfternoon, Coffee } from '@phosphor-icons/react';
+import { Warning, ClockAfternoon, Coffee, ArrowsLeftRight } from '@phosphor-icons/react';
 import type { ShiftType, StaffMemberForShift, ShiftAssignment, ShiftAlert } from '@/lib/types/shifts';
 import { calcularCostoTurnoEmpresa, formatCOP, getWeekDates, dayIndexToDateIndex, dateToDayIndex } from '@/lib/utils/costCalculator';
 import { LEGAL_PARAMS, DAY_NAMES } from '@/lib/types/shifts';
@@ -222,7 +222,15 @@ export default function ShiftGrid({
               {/* Header del empleado */}
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-[var(--text-primary)] text-sm">{emp.alias}</div>
+                  <div className="font-medium text-[var(--text-primary)] text-sm flex items-center gap-1.5">
+                    {emp.alias}
+                    {(emp.secondary_areas || []).length > 0 && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-borgona)] border border-[var(--color-ak-borgona)]/20" title={`Doble rol: ${emp.area} + ${(emp.secondary_areas || []).join(', ')}`}>
+                        <ArrowsLeftRight size={10} />
+                        {emp.area}
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xs text-[var(--text-secondary)]">{emp.cargo}</div>
                 </div>
                 <div className="text-right">
@@ -365,7 +373,15 @@ export default function ShiftGrid({
                   className="border-b border-[var(--border-default)] hover:bg-[var(--bg-hover)]/50"
                 >
                   <td className="p-2 sticky left-0 bg-[var(--bg-primary)] z-10">
-                    <div className="font-medium text-[var(--text-primary)]">{emp.alias}</div>
+                    <div className="font-medium text-[var(--text-primary)] flex items-center gap-1.5">
+                      {emp.alias}
+                      {(emp.secondary_areas || []).length > 0 && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-borgona)] border border-[var(--color-ak-borgona)]/20" title={`Doble rol: ${emp.area} + ${(emp.secondary_areas || []).join(', ')}`}>
+                          <ArrowsLeftRight size={10} />
+                          {emp.area}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-[var(--text-secondary)]">{emp.cargo}</div>
                   </td>
 

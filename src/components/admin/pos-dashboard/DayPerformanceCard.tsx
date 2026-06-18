@@ -10,6 +10,7 @@ interface DayPerformanceProps {
     revenue: number
     subtotal: number
     taxTotal: number
+    discountTotal: number
     cheques: number
     ticketPromedio: number
     propinaTotal: number
@@ -98,11 +99,12 @@ export function DayPerformanceCard({ date, kpis, byZone, topProducts, hourlyReve
       </div>
 
       {/* KPIs del dia */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3">
         {[
           { label: 'Revenue', value: formatCOP(kpis.revenue) },
           { label: 'Sin IVA', value: formatCOP(kpis.subtotal) },
           { label: 'IVA (8%)', value: formatCOP(kpis.taxTotal) },
+          { label: 'Descuentos', value: formatCOP(kpis.discountTotal) },
           { label: 'Cheques', value: kpis.cheques.toString() },
           { label: 'Ticket prom.', value: formatCOP(kpis.ticketPromedio) },
           { label: 'Propinas', value: formatCOP(kpis.propinaTotal) },

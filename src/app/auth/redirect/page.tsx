@@ -9,10 +9,11 @@ export default function AuthRedirectPage() {
 
   useEffect(() => {
     fetch('/api/auth/role')
-      .then(res => res.ok ? res.json() : { role: null })
-      .then(({ role }) => {
-        const admin = role === 'store_admin' || role === 'super_admin'
-        router.replace(admin ? '/admin' : '/perfil')
+      .then(res => res.ok ? res.json() : { roles: [] })
+      .then(({ roles }) => {
+        const adminRoles = ['super_admin', 'store_admin', 'lider_area', 'host']
+        const hasAdmin = (roles || []).some((r: string) => adminRoles.includes(r))
+        router.replace(hasAdmin ? '/admin' : '/perfil')
       })
       .catch(() => router.replace('/perfil'))
   }, [router])

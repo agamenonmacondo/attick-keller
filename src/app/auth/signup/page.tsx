@@ -51,8 +51,10 @@ export default function SignupPage() {
       try {
         const res = await fetch('/api/auth/role')
         if (res.ok) {
-          const { role } = await res.json()
-          router.push(role === 'store_admin' || role === 'super_admin' ? '/admin' : '/perfil')
+          const { roles: signupRoles } = await res.json()
+          const adminRoles = ['super_admin', 'store_admin', 'lider_area', 'host']
+          const hasAdmin = (signupRoles || []).some((r: string) => adminRoles.includes(r))
+          router.push(hasAdmin ? '/admin' : '/perfil')
         } else {
           router.push('/perfil')
         }

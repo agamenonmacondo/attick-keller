@@ -47,13 +47,21 @@ function getHeatClasses(count: number, isDark: boolean): { bg: string; text: str
   return { bg: 'bg-[var(--color-ak-borgona)]/60', text: 'text-white' };
 }
 
-export default function ShiftSchedulePanel() {
-  const [area, setArea] = useState<Area>('cocina');
+interface ShiftSchedulePanelProps {
+  areaFilter?: string; // When set (lider_area), lock area to this value
+}
+
+export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelProps) {
+  // If areaFilter is set, lock to that area and never allow changes
+  const [area, setArea] = useState<Area>(() =>
+    areaFilter && AREAS.some(a => a.value === areaFilter) ? (areaFilter as Area) : 'cocina'
+  );
   const [tab, setTab] = useState<Tab>('cronograma');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingShiftType, setEditingShiftType] = useState<ShiftType | null>(null);
 
   // Cuando se cambia a "todos", forzar tab de costos
+  // Si areaFilter está activo, nunca puede llegar a "todos"
   useEffect(() => {
     if (area === 'todos' && tab !== 'costos') setTab('costos');
   }, [area]);
@@ -465,16 +473,22 @@ export default function ShiftSchedulePanel() {
 
       {/* Controles superiores */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Selector de area */}
-        <select
-          value={area}
-          onChange={(e) => setArea(e.target.value as Area)}
-          className="min-h-[44px] px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] text-sm"
-        >
-          {AREAS.map((a) => (
-            <option key={a.value} value={a.value}>{a.label}</option>
-          ))}
-        </select>
+        {/* Selector de area — locked when areaFilter is set (lider_area) */}
+        {areaFilter ? (
+          <span className="min-h-[44px] px-3 py-2 rounded-lg border border-[var(--color-ak-borgona)]/40 bg-[var(--color-ak-borgona)]/10 text-[var(--text-primary)] text-sm font-semibold inline-flex items-center">
+            {AREAS.find(a => a.value === areaFilter)?.label ?? areaFilter}
+          </span>
+        ) : (
+          <select
+            value={area}
+            onChange={(e) => setArea(e.target.value as Area)}
+            className="min-h-[44px] px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] text-sm"
+          >
+            {AREAS.map((a) => (
+              <option key={a.value} value={a.value}>{a.label}</option>
+            ))}
+          </select>
+        )}
 
         {/* Status badge */}
         <span className={`text-xs px-2 py-1 rounded-full
@@ -718,7 +732,8 @@ export default function ShiftSchedulePanel() {
             throw new Error(err.error || 'Error guardando turno');
           }
           // Si el turno se creó/editó en un área distinta a la seleccionada, cambiar selector
-          if (data.area && data.area !== area) {
+          // (solo si no hay areaFilter bloqueando)
+          if (data.area && data.area !== area && !areaFilter) {
             setArea(data.area as Area);
           }
           loadData();

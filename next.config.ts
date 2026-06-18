@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // TODO: Remove ignoreBuildErrors after fixing the 98 TS errors.
+  // 78 errors are in lib/informes-rayo/pdf-chartjs/slides/ (color property names
+  // that don't exist on the color type — crema, madera, dorado, etc.).
+  // 20 errors are in components/ui/ (motion/react declarations, @radix-ui/react-slot
+  // missing) and a few in rodri tabs and AdminShell.
+  // Until those are fixed, removing this flag will break the Vercel build.
   typescript: { ignoreBuildErrors: true },
   turbopack: {
     resolveAlias: {

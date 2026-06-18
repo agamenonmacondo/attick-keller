@@ -28,7 +28,6 @@ async function runTests() {
     validateEmail,
     validateUUID,
     filterRowColumns,
-    maskPII,
     POS_UPLOAD_COLUMN_ALLOWLIST,
     requireAdmin,
     requireStaff,
@@ -99,36 +98,6 @@ async function runTests() {
   
   console.log('  ✅ All validateUUID tests passed\n')
 
-  // ─── maskPII ────────────────────────────────────────────────
-  console.log('📋 maskPII tests...')
-  
-  const hostRecord = {
-    id: '1',
-    customer_name: 'Juan',
-    customer_phone: '3101234567',
-    customer_email: 'juan@test.com',
-    status: 'confirmed',
-  }
-  const hostMasked = maskPII(hostRecord, 'host')
-  assertEqual(hostMasked.customer_phone, '***4567', 'host phone masked')
-  assertEqual(hostMasked.customer_email, null, 'host email removed')
-  assertEqual(hostMasked.customer_name, 'Juan', 'host name unchanged')
-  
-  const adminRecord = {
-    id: '2',
-    customer_phone: '3101234567',
-    customer_email: 'admin@test.com',
-  }
-  const adminMasked = maskPII(adminRecord, 'store_admin')
-  assertEqual(adminMasked.customer_phone, '3101234567', 'admin phone NOT masked')
-  assertEqual(adminMasked.customer_email, 'admin@test.com', 'admin email NOT masked')
-  
-  const nullRecord = { id: '3', customer_phone: null, customer_email: null }
-  const nullMasked = maskPII(nullRecord, 'host')
-  assertEqual(nullMasked.customer_phone, null, 'null phone stays null')
-  assertEqual(nullMasked.customer_email, null, 'null email stays null')
-  
-  console.log('  ✅ All maskPII tests passed\n')
 
   // ─── filterRowColumns (pos-upload allowlist) ───────────────
   console.log('📋 filterRowColumns tests...')

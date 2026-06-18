@@ -6,7 +6,7 @@
  * - requireAuth: middleware-style auth check
  * - rateLimit: simple in-memory rate limiter
  * - COLUMN_ALLOWLIST: for pos-upload sanitization
- * - maskPII: for host/leader role responses
+ * - maskPII: removed — PII access controlled by getAdminUser (admin-only routes)
  * - ROLE_HIERARCHY: for privilege escalation prevention
  */
 
@@ -77,6 +77,10 @@ export function canCreateRole(actorRole: string, targetRole: string): boolean {
 }
 
 // ─── Rate Limiter (in-memory, per-instance) ────────────
+// TODO: Migrate to Upstash Redis or Vercel Edge KV for multi-instance support.
+// The in-memory Map works for single-instance but in Vercel serverless each
+// instance has its own Map, so an attacker can bypass by hitting different
+// instances. For now this provides basic protection against naive abuse.
 
 interface RateLimitEntry {
   count: number
@@ -125,21 +129,6 @@ export function filterRowColumns(table: string, row: Record<string, unknown>): R
   }
   filtered.restaurant_id = RESTAURANT_ID
   return filtered
-}
-
-// ─── PII Masking ─────────────────────────────
-
-export function maskPII<T extends Record<string, unknown>>(record: T, callerRole: string): T {
-  if (callerRole === "host" || callerRole === "lider_area") {
-    return {
-      ...record,
-      customer_phone: record.customer_phone
-        ? "***" + String(record.customer_phone).slice(-4)
-        : null,
-      customer_email: null,
-    } as T
-  }
-  return record
 }
 
 // ─── Validation helpers ────────────────────────────

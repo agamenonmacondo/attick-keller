@@ -27,7 +27,6 @@ import {
   rateLimit,
   getClientIP,
   filterRowColumns,
-  maskPII,
   validateEmail,
   validateUUID,
   POS_UPLOAD_COLUMN_ALLOWLIST,
@@ -296,57 +295,6 @@ describe('filterRowColumns', () => {
   })
 })
 
-// ─── maskPII ───────────────────────────────────────────────
-
-describe('maskPII', () => {
-  it('masks phone and removes email for host role', () => {
-    const record = {
-      id: '1',
-      customer_name: 'Juan',
-      customer_phone: '3101234567',
-      customer_email: 'juan@test.com',
-      status: 'confirmed',
-    }
-    const masked = maskPII(record, 'host')
-    expect(masked.customer_phone).toBe('***4567')
-    expect(masked.customer_email).toBeNull()
-    expect(masked.customer_name).toBe('Juan') // unchanged
-    expect(masked.id).toBe('1') // unchanged
-  })
-
-  it('masks phone and removes email for lider_area role', () => {
-    const record = {
-      id: '2',
-      customer_phone: '573001111222',
-      customer_email: 'ana@test.com',
-    }
-    const masked = maskPII(record, 'lider_area')
-    expect(masked.customer_phone).toBe('***3222')
-    expect(masked.customer_email).toBeNull()
-  })
-
-  it('does NOT mask for store_admin or super_admin', () => {
-    const record = {
-      id: '3',
-      customer_phone: '3101234567',
-      customer_email: 'admin@test.com',
-    }
-    const masked = maskPII(record, 'store_admin')
-    expect(masked.customer_phone).toBe('3101234567')
-    expect(masked.customer_email).toBe('admin@test.com')
-  })
-
-  it('handles null phone gracefully', () => {
-    const record = {
-      id: '4',
-      customer_phone: null,
-      customer_email: null,
-    }
-    const masked = maskPII(record, 'host')
-    expect(masked.customer_phone).toBeNull()
-    expect(masked.customer_email).toBeNull()
-  })
-})
 
 // ─── POS_UPLOAD_COLUMN_ALLOWLIST ───────────────────────────
 

@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { getAdminOrLeaderUser, getServiceClient } from '@/lib/utils/admin-auth'
 
-// GET /api/admin/nomina-staff?area=cocina (opcional)
+// GET /api/admin/nomina-staff?area=cocina (opcional, lider_area filtrado a su área)
 export async function GET(request: NextRequest) {
-  const admin = await getAdminUser(request)
+  const admin = await getAdminOrLeaderUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()
   const { searchParams } = new URL(request.url)
-  const area = searchParams.get('area')
+  const requestedArea = searchParams.get('area')
+
+  // lider_area can only see their own area
+  const area = admin.role === 'lider_area' ? admin.area : requestedArea
 
   let query = sb
     .from('pos_nomina_staff')
@@ -61,8 +64,13 @@ export async function GET(request: NextRequest) {
 
 // POST /api/admin/nomina-staff — crear nuevo empleado
 export async function POST(request: NextRequest) {
-  const admin = await getAdminUser(request)
+  const admin = await getAdminOrLeaderUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+
+  // lider_area cannot create employees
+  if (admin.role === 'lider_area') {
+    return NextResponse.json({ error: 'No autorizado — lider de área no puede crear empleados' }, { status: 403 })
+  }
 
   const sb = getServiceClient()
   const body = await request.json()
@@ -106,8 +114,13 @@ export async function POST(request: NextRequest) {
 
 // PATCH /api/admin/nomina-staff — actualizar empleado
 export async function PATCH(request: NextRequest) {
-  const admin = await getAdminUser(request)
+  const admin = await getAdminOrLeaderUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+
+  // lider_area cannot update employees
+  if (admin.role === 'lider_area') {
+    return NextResponse.json({ error: 'No autorizado — lider de área no puede actualizar empleados' }, { status: 403 })
+  }
 
   const sb = getServiceClient()
   const body = await request.json()

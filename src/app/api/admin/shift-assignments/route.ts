@@ -16,6 +16,18 @@ export async function PUT(request: NextRequest) {
   const body = await request.json()
   const { schedule_id, assignments } = body
 
+  // lider_area can only modify schedules in their area
+  if (admin.role === 'lider_area' && admin.area) {
+    const { data: scheduleCheck } = await sb
+      .from('shift_schedules')
+      .select('area')
+      .eq('id', schedule_id)
+      .single()
+    if (scheduleCheck && scheduleCheck.area !== admin.area) {
+      return NextResponse.json({ error: 'No autorizado — solo puede gestionar su área asignada' }, { status: 403 })
+    }
+  }
+
   if (!schedule_id || !Array.isArray(assignments)) {
     return NextResponse.json({ error: 'schedule_id y assignments[] son requeridos' }, { status: 400 })
   }

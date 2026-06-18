@@ -11,8 +11,14 @@ export async function GET(request: NextRequest) {
 
   const sb = getServiceClient()
   const { searchParams } = new URL(request.url)
-  const area = searchParams.get('area')
+  let area = searchParams.get('area')
   const week_str = searchParams.get('week_str')
+
+  // lider_area can only see their own area
+  if (admin.role === 'lider_area') {
+    if (!admin.area) return NextResponse.json({ error: 'No autorizado — sin área asignada' }, { status: 403 })
+    area = admin.area
+  }
 
   if (!area || !week_str) {
     return NextResponse.json({ error: 'area y week_str son requeridos' }, { status: 400 })
@@ -184,9 +190,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Area invalida' }, { status: 400 })
   }
 
-  // Verificar permiso de lider_area (solo puede crear en su area)
+  // Verificar permiso de lider_area: solo puede crear en su area
   if (admin.role === 'lider_area') {
-    // TODO: verificar area del lider cuando user_roles tenga columna area
+    if (!admin.area || admin.area !== area) {
+      return NextResponse.json({ error: 'No autorizado — solo puede gestionar su área asignada' }, { status: 403 })
+    }
   }
 
   // Crear nuevo cronograma

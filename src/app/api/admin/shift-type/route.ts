@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { getAdminOrLeaderUser, getServiceClient } from '@/lib/utils/admin-auth'
 
 interface SegmentInput {
   segment_index: number
@@ -9,7 +9,7 @@ interface SegmentInput {
 
 // POST /api/admin/shift-type — crear un nuevo tipo de turno
 export async function POST(request: NextRequest) {
-  const admin = await getAdminUser(request)
+  const admin = await getAdminOrLeaderUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
 // PATCH /api/admin/shift-type — actualizar un tipo de turno existente
 export async function PATCH(request: NextRequest) {
-  const admin = await getAdminUser(request)
+  const admin = await getAdminOrLeaderUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()
@@ -157,7 +157,7 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE /api/admin/shift-type?id=... — eliminar un tipo de turno
 export async function DELETE(request: NextRequest) {
-  const admin = await getAdminUser(request)
+  const admin = await getAdminOrLeaderUser(request)
   if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const sb = getServiceClient()

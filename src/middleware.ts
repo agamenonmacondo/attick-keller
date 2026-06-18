@@ -45,6 +45,19 @@ export async function middleware(request: NextRequest) {
     return (roleData && roleData.length > 0) ? true : false
   }
 
+  // Protect /api/admin/* — require staff auth as a safety net
+  // Individual handlers still call requireStaff/requireAdmin, but this
+  // catches any route that forgets the check.
+  if (request.nextUrl.pathname.startsWith('/api/admin/')) {
+    if (!user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+    }
+    const allowed = await hasAnyRole(['store_admin', 'super_admin', 'host', 'lider_area'])
+    if (!allowed) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+    }
+  }
+
   // Protect /admin — store_admin, super_admin, host, or lider_area
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {

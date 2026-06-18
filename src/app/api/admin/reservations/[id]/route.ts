@@ -29,6 +29,7 @@ export async function PATCH(
     .from('reservations')
     .select('id, status, date, time_start, time_end, party_size, special_requests, table_id, table_combination_id')
     .eq('id', id)
+    .eq('restaurant_id', RESTAURANT_ID)
     .single()
 
   if (!reservation) return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })

@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { requireSuperAdmin } from '@/lib/utils/api-security'
+import { safeSupabaseError } from '@/lib/utils/error-handler'
 
 export async function GET(request: NextRequest) {
+  // ── AUTH CHECK FIRST — before any environment info is exposed ──
+  const admin = await requireSuperAdmin(request)
+  if (admin instanceof NextResponse) return admin
+
   if (process.env.ALLOW_DEBUG !== 'true') {
     return NextResponse.json({ error: 'Debug endpoint disabled' }, { status: 404 })
   }
 
   const steps: { step: string; ok: boolean; detail: string }[] = []
 
-  // Step 1: Check env vars
+  // Step 1: Check env vars (only show boolean, not values)
   const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL
   const hasAnonKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -22,24 +28,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ steps, error: 'Missing env vars' })
   }
 
-  // Step 2: Auth check
-  let admin
-  try {
-    admin = await getAdminUser(request)
-    steps.push({
-      step: '2. Auth',
-      ok: !!admin,
-      detail: admin ? `User: ${admin.email}, role: ${admin.role}` : 'No admin user found',
-    })
-    if (!admin) {
-      return NextResponse.json({ steps, error: 'Not authenticated' })
-    }
-  } catch (err) {
-    steps.push({ step: '2. Auth', ok: false, detail: String(err) })
-    return NextResponse.json({ steps, error: 'Auth threw error' })
-  }
-
-  // Step 3: Service client - query customers
+  // Step 2: Service client - query customers (no PII)
   const sb = getServiceClient()
   let customersResult
   try {
@@ -49,17 +38,17 @@ export async function GET(request: NextRequest) {
       .eq('restaurant_id', RESTAURANT_ID)
       .limit(1)
     steps.push({
-      step: '3. customers table',
+      step: '2. customers table',
       ok: !customersResult.error,
       detail: customersResult.error
-        ? `${customersResult.error.code}: ${customersResult.error.message}`
-        : `Found ${customersResult.count} rows, sample: ${JSON.stringify(customersResult.data?.[0])}`,
+        ? safeSupabaseError(customersResult.error)
+        : `Found ${customersResult.count} rows`,
     })
   } catch (err) {
-    steps.push({ step: '3. customers table', ok: false, detail: String(err) })
+    steps.push({ step: '2. customers table', ok: false, detail: String(err) })
   }
 
-  // Step 4: Query customer_stats
+  // Step 3: Query customer_stats
   let statsResult
   try {
     statsResult = await sb
@@ -67,17 +56,17 @@ export async function GET(request: NextRequest) {
       .select('customer_id, total_visits, last_visit_date, loyalty_tier')
       .limit(1)
     steps.push({
-      step: '4. customer_stats table',
+      step: '3. customer_stats table',
       ok: !statsResult.error,
       detail: statsResult.error
-        ? `${statsResult.error.code}: ${statsResult.error.message}`
+        ? safeSupabaseError(statsResult.error)
         : `Sample: ${JSON.stringify(statsResult.data?.[0])}`,
     })
   } catch (err) {
-    steps.push({ step: '4. customer_stats table', ok: false, detail: String(err) })
+    steps.push({ step: '3. customer_stats table', ok: false, detail: String(err) })
   }
 
-  // Step 5: Query customer_tag_links
+  // Step 4: Query customer_tag_links
   let tagsResult
   try {
     tagsResult = await sb
@@ -85,36 +74,36 @@ export async function GET(request: NextRequest) {
       .select('customer_id, tag_id')
       .limit(1)
     steps.push({
-      step: '5. customer_tag_links table',
+      step: '4. customer_tag_links table',
       ok: !tagsResult.error,
       detail: tagsResult.error
-        ? `${tagsResult.error.code}: ${tagsResult.error.message}`
+        ? safeSupabaseError(tagsResult.error)
         : `Sample: ${JSON.stringify(tagsResult.data?.[0])}`,
     })
   } catch (err) {
-    steps.push({ step: '5. customer_tag_links table', ok: false, detail: String(err) })
+    steps.push({ step: '4. customer_tag_links table', ok: false, detail: String(err) })
   }
 
-  // Step 6: Full customers query (like the endpoint does)
+  // Step 5: Customers count only (no PII exposure)
   try {
     const fullResult = await sb
       .from('customers')
-      .select('id, full_name, phone, email, created_at', { count: 'exact' })
+      .select('id', { count: 'exact' })
       .eq('restaurant_id', RESTAURANT_ID)
       .range(0, 0)
 
     steps.push({
-      step: '6. Full customers query',
+      step: '5. Customers count',
       ok: !fullResult.error,
       detail: fullResult.error
-        ? `${fullResult.error.code}: ${fullResult.error.message}`
-        : `Count: ${fullResult.count}, sample: ${JSON.stringify(fullResult.data?.[0])}`,
+        ? safeSupabaseError(fullResult.error)
+        : `Count: ${fullResult.count}`,
     })
   } catch (err) {
-    steps.push({ step: '6. Full customers query', ok: false, detail: String(err) })
+    steps.push({ step: '5. Customers count', ok: false, detail: String(err) })
   }
 
-  // Step 7: customers + stats join
+  // Step 6: customers + stats join (no PII)
   try {
     const customerId = customersResult?.data?.[0]?.id
     if (customerId) {
@@ -125,17 +114,17 @@ export async function GET(request: NextRequest) {
         .single()
 
       steps.push({
-        step: '7. customer_stats for one customer',
+        step: '6. customer_stats for one customer',
         ok: !joinResult.error,
         detail: joinResult.error
-          ? `${joinResult.error.code}: ${joinResult.error.message}`
+          ? safeSupabaseError(joinResult.error)
           : `Data: ${JSON.stringify(joinResult.data)}`,
       })
     } else {
-      steps.push({ step: '7. customer_stats for one customer', ok: true, detail: 'No customer ID to test with' })
+      steps.push({ step: '6. customer_stats for one customer', ok: true, detail: 'No customer ID to test with' })
     }
   } catch (err) {
-    steps.push({ step: '7. customer_stats for one customer', ok: false, detail: String(err) })
+    steps.push({ step: '6. customer_stats for one customer', ok: false, detail: String(err) })
   }
 
   return NextResponse.json({

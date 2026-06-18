@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     .order('nombre_completo')
 
   if (area) {
-    query = query.eq('area', area)
+    query = query.or(`area.eq.${area},secondary_areas.cs.{${area}}`)
   }
 
   const { data: staff, error } = await query

@@ -196,14 +196,19 @@ export async function getStaffOrLeaderUser(request: NextRequest): Promise<AdminU
     .eq('restaurant_id', RESTAURANT_ID)
     .eq('is_active', true)
     .in('role', ['store_admin', 'super_admin', 'lider_area'])
-    .single()
 
-  if (!roleData) return null
+  if (!roleData || roleData.length === 0) return null
+
+  // Pick highest-privilege role: super_admin > store_admin > lider_area
+  const ROLE_PRIORITY = ['super_admin', 'store_admin', 'lider_area']
+  const bestRole = roleData.find(r => ROLE_PRIORITY.includes(r.role))
+    ? ROLE_PRIORITY.find(p => roleData.some(r => r.role === p))!
+    : roleData[0].role
 
   return {
     id: user.id,
     email: user.email,
-    role: roleData.role as AdminUser['role'],
+    role: bestRole as AdminUser['role'],
   }
 }
 

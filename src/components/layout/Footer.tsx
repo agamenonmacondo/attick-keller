@@ -19,8 +19,7 @@ export default function Footer() {
         <div>
           <p className="font-semibold mb-2">Dirección</p>
           <p className="text-[var(--color-ak-cal)]/80">Carrera 13 #75-51, Bogotá</p>
-          <p className="mt-2 text-[var(--color-ak-cal)]/80">+57 310 7874752</p>
-          <p className="text-[var(--color-ak-cal)]/80">reservas@attickkeller.com</p>
+          <p className="text-[var(--color-ak-cal)]/80">+57 310 7874752</p>
         </div>
 
         {/* Horarios */}

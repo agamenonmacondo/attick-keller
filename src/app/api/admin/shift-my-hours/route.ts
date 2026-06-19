@@ -61,47 +61,95 @@ export async function GET(request: NextRequest) {
   const startDate = mondayOfWeek.toISOString().split('T')[0]
   const endDate = sundayOfWeek.toISOString().split('T')[0]
 
-  // Get all novedades with checkin/checkout for the week
-  const { data: novedades, error } = await sb
-    .from('shift_novedades')
-    .select('id, date, type, checkin_at, checkout_at, location, description')
-    .eq('employee_id', employeeId)
-    .gte('date', startDate)
-    .lte('date', endDate)
-    .order('date', { ascending: true })
+  // Calculate worked hours from shift_assignments (checkin_at/checkout_at)
+  // First, find the schedule for the employee's area
+  const { data: areaData } = await sb
+    .from('pos_nomina_staff')
+    .select('area')
+    .eq('id', employeeId)
+    .single()
 
-  if (error) {
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
-  }
+  const employeeArea = areaData?.area || 'cocina'
 
-  // Calculate total worked hours from checkin/checkout pairs
+  const { data: schedules } = await sb
+    .from('shift_schedules')
+    .select('id')
+    .eq('area', employeeArea)
+    .eq('week_str', week_str)
+
+  const scheduleIds = (schedules || []).map(s => s.id)
+
   let totalWorkedMinutes = 0
   const dailyHours: { date: string; checkin: string | null; checkout: string | null; hours: number; type?: string; description?: string }[] = []
 
+  if (scheduleIds.length > 0) {
+    // Get assignments with checkin/checkout data
+    const { data: assignments } = await sb
+      .from('shift_assignments')
+      .select('day_index, shift_code, entrada, salida, checkin_at, checkout_at, novedad')
+      .eq('employee_id', employeeId)
+      .in('schedule_id', scheduleIds)
+
+    // Map day_index to date for this week
+    const mondayDate = new Date(mondayOfWeek)
+    for (const asgn of (assignments || [])) {
+      if (asgn.checkin_at && asgn.checkout_at) {
+        const checkin = new Date(asgn.checkin_at)
+        const checkout = new Date(asgn.checkout_at)
+        const diffMinutes = (checkout.getTime() - checkin.getTime()) / (1000 * 60)
+        totalWorkedMinutes += diffMinutes
+        const dayDate = new Date(mondayDate)
+        dayDate.setDate(mondayDate.getDate() + asgn.day_index)
+        const dateStr = dayDate.toISOString().split('T')[0]
+        dailyHours.push({
+          date: dateStr,
+          checkin: asgn.checkin_at,
+          checkout: asgn.checkout_at,
+          hours: Math.round(diffMinutes / 60 * 100) / 100,
+        })
+      } else if (asgn.novedad) {
+        const dayDate = new Date(mondayDate)
+        dayDate.setDate(mondayDate.getDate() + asgn.day_index)
+        const dateStr = dayDate.toISOString().split('T')[0]
+        dailyHours.push({
+          date: dateStr,
+          checkin: asgn.checkin_at,
+          checkout: asgn.checkout_at,
+          hours: 0,
+          type: asgn.novedad,
+        })
+      }
+    }
+  }
+
+  // Also get non-attendance novedades (falta, permiso, incapacidad) from shift_novedades
+  const { data: novedades } = await sb
+    .from('shift_novedades')
+    .select('id, date, type, description')
+    .eq('employee_id', employeeId)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .neq('type', 'checkin')
+    .neq('type', 'checkout')
+    .order('date', { ascending: true })
+
   for (const nov of (novedades || [])) {
-    if (nov.checkin_at && nov.checkout_at) {
-      const checkin = new Date(nov.checkin_at)
-      const checkout = new Date(nov.checkout_at)
-      const diffMinutes = (checkout.getTime() - checkin.getTime()) / (1000 * 60)
-      totalWorkedMinutes += diffMinutes
+    // Only add if not already covered by assignment novedad
+    const alreadyHas = dailyHours.find(d => d.date === nov.date && d.type === nov.type)
+    if (!alreadyHas) {
       dailyHours.push({
         date: nov.date,
-        checkin: nov.checkin_at,
-        checkout: nov.checkout_at,
-        hours: Math.round(diffMinutes / 60 * 100) / 100,
-      })
-    } else if (nov.type !== 'checkin' && nov.type !== 'checkout') {
-      // Non-attendance novedades (falta, tarde, permiso, incapacidad)
-      dailyHours.push({
-        date: nov.date,
-        checkin: nov.checkin_at,
-        checkout: nov.checkout_at,
+        checkin: null,
+        checkout: null,
         hours: 0,
         type: nov.type,
         description: nov.description || undefined,
       })
     }
   }
+
+  // Sort by date
+  dailyHours.sort((a: { date: string }, b: { date: string }) => a.date.localeCompare(b.date))
 
   const totalWorkedHours = Math.round(totalWorkedMinutes / 60 * 100) / 100
 

@@ -284,8 +284,8 @@ export default function ShiftGrid({
                         <select
                           value={code || ''}
                           onChange={(e) => handleCellChange(emp.id, dayIndex, e.target.value)}
-                          className={`w-full min-h-[28px] px-0.5 py-0.5 text-[11px] rounded border-none bg-transparent
-                            focus:ring-1 focus:ring-[var(--color-ak-borgona)]/50
+                          className={`w-full min-h-[28px] px-0.5 py-0.5 text-[11px] rounded border-none bg-transparent dark:bg-[var(--bg-input)]
+                            focus:ring-1 focus:ring-[var(--color-ak-borgona)]/50 dark:focus:ring-[var(--color-ak-borgona)]/70
                             ${hours > 8 ? 'text-[var(--color-danger)] font-bold' : 'text-[var(--text-primary)]'}
                             ${isSunday ? 'font-semibold' : ''}`}
                         >
@@ -415,8 +415,8 @@ export default function ShiftGrid({
                           <select
                             value={code || ''}
                             onChange={(e) => handleCellChange(emp.id, dayIndex, e.target.value)}
-                            className={`w-full px-1 py-1.5 text-xs rounded border-none bg-transparent min-h-[36px]
-                              focus:ring-1 focus:ring-[var(--color-ak-borgona)]/50
+                            className={`w-full px-1 py-1.5 text-xs rounded border-none bg-transparent min-h-[36px] dark:bg-[var(--bg-input)]
+                              focus:ring-1 focus:ring-[var(--color-ak-borgona)]/50 dark:focus:ring-[var(--color-ak-borgona)]/70
                               ${hours > 8 ? 'text-[var(--color-danger)] font-bold' : 'text-[var(--text-primary)]'}
                               ${isSunday ? 'font-semibold' : ''}`}
                           >

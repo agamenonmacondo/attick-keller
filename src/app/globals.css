@@ -194,6 +194,12 @@
 
   /* Border white → subtle warm border */
   .dark .border-white { border-color: var(--border-light); }
+
+  /* Select dropdown options in dark mode */
+  select option {
+    background-color: var(--bg-input);
+    color: var(--text-primary);
+  }
 }
 
 @keyframes float-orb-1 {

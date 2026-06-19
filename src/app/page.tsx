@@ -1,20 +1,16 @@
 import Navbar from '@/components/layout/Navbar'
-import HeroCinematic from '@/components/home/HeroCinematic'
-import ManifestoSection from '@/components/home/ManifestoSection'
+import HeroSection from '@/components/home/HeroSection'
 import MenuSection from '@/components/home/MenuSection'
-import GallerySection from '@/components/home/GallerySection'
-import ReserveInfoSection from '@/components/home/ReserveInfoSection'
+import PhotoCTA from '@/components/home/PhotoCTA'
 import Footer from '@/components/layout/Footer'
 
 export default function Home() {
   return (
     <>
       <Navbar />
-      <HeroCinematic />
-      <ManifestoSection />
+      <HeroSection />
       <MenuSection />
-      <GallerySection />
-      <ReserveInfoSection />
+      <PhotoCTA />
       <Footer />
     </>
   )

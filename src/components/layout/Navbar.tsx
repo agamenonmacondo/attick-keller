@@ -30,10 +30,15 @@ export default function Navbar() {
   return (
     <nav className={cn(
       'fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-4 md:px-6 py-4',
-      scrolled ? 'bg-[var(--color-ak-madera)] shadow-lg' : 'bg-transparent'
+      scrolled
+        ? 'bg-[var(--color-ak-madera)]/95 dark:bg-[var(--color-ak-night)]/95 shadow-lg backdrop-blur-sm'
+        : 'bg-transparent'
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link href="/" className="font-[family-name:var(--font-display)] text-xl md:text-2xl font-bold text-white">
+        <Link
+          href="/"
+          className="font-[family-name:var(--font-display)] text-xl md:text-2xl font-bold text-white transition-opacity duration-200 hover:opacity-80"
+        >
           Attick &amp; Keller
         </Link>
 
@@ -69,16 +74,17 @@ function ProfileLink({ className }: { className?: string }) {
 
   if (loading) return null
 
+  const base =
+    'group relative text-white dark:text-[var(--color-ak-cal)] hover:text-[var(--color-ak-dorado)] transition-colors duration-200 text-sm font-medium'
+
   if (user) {
     return (
       <Link
         href={isAdmin ? '/admin' : '/perfil'}
-        className={cn(
-          'text-white hover:text-[var(--color-ak-dorado)] transition-colors text-sm font-medium',
-          className
-        )}
+        className={cn(base, className)}
       >
         {isAdmin ? 'Admin' : 'Mi Perfil'}
+        <span className="absolute -bottom-1 left-0 h-px w-0 bg-[var(--color-ak-dorado)] transition-all duration-300 group-hover:w-full" />
       </Link>
     )
   }
@@ -86,12 +92,10 @@ function ProfileLink({ className }: { className?: string }) {
   return (
     <Link
       href="/auth/login"
-      className={cn(
-        'text-white hover:text-[var(--color-ak-dorado)] transition-colors text-sm font-medium',
-        className
-      )}
+      className={cn(base, className)}
     >
       Ingresar
+      <span className="absolute -bottom-1 left-0 h-px w-0 bg-[var(--color-ak-dorado)] transition-all duration-300 group-hover:w-full" />
     </Link>
   )
 }
@@ -115,7 +119,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
-        className="fixed inset-0 z-[60] md:hidden"
+        className="fixed inset-0 z-[60] md:hidden backdrop-blur-md"
         style={{ backgroundColor: 'rgba(62,39,35,0.6)' }}
         onClick={onClose}
         aria-hidden="true"
@@ -128,9 +132,8 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         animate={{ transform: 'translateX(0%)' }}
         exit={{ transform: 'translateX(100%)' }}
         transition={{ duration: 0.35, ease: EASE_OUT }}
-        className="fixed top-0 right-0 bottom-0 z-[70] md:hidden w-[min(300px,85vw)] shadow-2xl flex flex-col"
+        className="fixed top-0 right-0 bottom-0 z-[70] md:hidden w-[min(300px,85vw)] shadow-2xl flex flex-col bg-[var(--color-ak-madera)] dark:bg-[var(--color-ak-night)] transition-colors duration-300"
         style={{
-          backgroundColor: 'var(--color-ak-madera)',
           paddingTop: 'max(1.25rem, env(safe-area-inset-top))',
           paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))',
         }}

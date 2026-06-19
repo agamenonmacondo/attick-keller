@@ -27,11 +27,11 @@ export default function PhotoCTA() {
             className="relative overflow-hidden"
           >
             <div
-              className="absolute inset-0 bg-cover bg-no-repeat transition-transform duration-[2s] hover:scale-105"
+              className="absolute inset-0 bg-cover bg-no-repeat bg-center md:bg-fixed transition-transform duration-[2s] hover:scale-105"
               style={{ backgroundImage: `url(${photo.src})`, backgroundPosition: photo.position }}
             />
-            {/* Dark gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-ak-madera)]/80 via-[var(--color-ak-madera)]/20 to-transparent" />
+            {/* Dark gradient — intensified for legibility */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-ak-madera)]/90 via-[var(--color-ak-madera)]/40 to-[var(--color-ak-madera)]/10 dark:from-black/90 dark:via-black/55 dark:to-black/20" />
           </motion.div>
         ))}
       </div>
@@ -44,7 +44,7 @@ export default function PhotoCTA() {
           transition={{ duration: 0.8, delay: 0.5, ease: [0.23, 1, 0.32, 1] }}
           className="text-center px-6"
         >
-          <p className="font-[family-name:var(--font-accent)] text-[var(--color-ak-dorado)] text-2xl md:text-3xl mb-4">
+          <p className="font-[family-name:var(--font-accent)] text-[var(--color-ak-dorado)] text-3xl md:text-4xl mb-4">
             Vive la experiencia
           </p>
           <h2 className="font-[family-name:var(--font-display)] text-5xl md:text-7xl lg:text-8xl font-bold text-[var(--color-ak-cal)] tracking-tighter leading-[0.9] mb-6">
@@ -55,7 +55,7 @@ export default function PhotoCTA() {
           </p>
           <Link
             href="/reservar"
-            className="inline-block bg-[var(--color-ak-borgona)] text-[var(--color-ak-cal)] px-12 py-5 rounded-full font-[family-name:var(--font-display)] text-xl font-bold tracking-tight hover:bg-[var(--color-accent)] transition-all duration-300 active:scale-[0.97]"
+            className="inline-block bg-[var(--color-ak-borgona)] text-[var(--color-ak-cal)] px-12 py-5 rounded-full font-[family-name:var(--font-display)] text-xl font-bold tracking-tight hover:bg-[var(--color-ak-borgona)]/90 hover:scale-[1.02] shadow-xl shadow-black/30 transition-all duration-300 active:scale-[0.97]"
           >
             Reservar Mesa
           </Link>

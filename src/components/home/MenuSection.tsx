@@ -100,7 +100,7 @@ export default function MenuSection() {
 
   if (loading) {
     return (
-      <section className="py-20 px-6" style={{ backgroundColor: 'var(--color-ak-cal)' }}>
+      <section className="py-20 px-6 bg-[var(--color-ak-cal)] dark:bg-[var(--color-ak-night)] transition-colors duration-300">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 space-y-4">
             <div className="h-6 w-24 mx-auto rounded animate-pulse" style={{ backgroundColor: 'rgba(201,169,78,0.2)' }} />
@@ -123,7 +123,7 @@ export default function MenuSection() {
 
   if (categories.length === 0) {
     return (
-      <section id="menu" className="py-20 px-6" style={{ backgroundColor: 'var(--color-ak-cal)' }}>
+      <section id="menu" className="py-20 px-6 bg-[var(--color-ak-cal)] dark:bg-[var(--color-ak-night)] transition-colors duration-300">
         <div className="max-w-4xl mx-auto text-center">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -135,6 +135,20 @@ export default function MenuSection() {
           >
             Próximamente
           </motion.p>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={viewOptions}
+            transition={{ duration: 0.6, delay: 0.15, ease: EASE_OUT }}
+            className="mx-auto mb-5 w-12 h-12 rounded-full flex items-center justify-center"
+            style={{ border: '1px solid rgba(201,169,78,0.35)' }}
+            aria-hidden="true"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--color-ak-dorado)' }}>
+              <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
+              <path d="M7 7h10M7 12h6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+            </svg>
+          </motion.div>
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -150,7 +164,7 @@ export default function MenuSection() {
             whileInView={{ scaleX: 1 }}
             viewport={viewOptions}
             transition={{ duration: 0.8, delay: 0.3, ease: EASE_IN_OUT }}
-            className="h-px w-24 mx-auto mb-6"
+            className="h-px w-32 mx-auto mb-6"
             style={{ background: 'linear-gradient(to right, transparent, var(--color-ak-dorado), transparent)' }}
           />
           <p className="text-lg" style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.5)' }}>
@@ -166,9 +180,9 @@ export default function MenuSection() {
 
   return (
     <>
-      <div className="h-16" style={{ background: 'linear-gradient(to bottom, var(--color-ak-madera), var(--color-ak-madera), var(--color-ak-cal))' }} />
+      <div className="h-16 bg-gradient-to-b from-[var(--color-ak-madera)] via-[var(--color-ak-madera)] to-[var(--color-ak-cal)] dark:from-[var(--color-ak-night)] dark:via-[var(--color-ak-night)] dark:to-[var(--color-ak-night)] transition-colors duration-300" />
 
-      <section id="menu" style={{ backgroundColor: 'var(--color-ak-cal)' }} className="py-12 md:py-20">
+      <section id="menu" className="py-12 md:py-20 bg-[var(--color-ak-cal)] dark:bg-[var(--color-ak-night)] transition-colors duration-300">
         <div className="max-w-4xl mx-auto px-4 md:px-6">
           {/* Header */}
           <div className="text-center mb-10 md:mb-14">
@@ -197,7 +211,7 @@ export default function MenuSection() {
               whileInView={{ scaleX: 1 }}
               viewport={viewOptions}
               transition={{ duration: 0.8, delay: 0.3, ease: EASE_IN_OUT }}
-              className="h-px w-24 mx-auto"
+              className="h-px w-32 mx-auto"
               style={{ background: 'linear-gradient(to right, transparent, var(--color-ak-dorado), transparent)', transformOrigin: 'center' }}
             />
           </div>
@@ -212,12 +226,15 @@ export default function MenuSection() {
           >
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="w-full flex items-center justify-between gap-3 px-5 py-3.5 rounded-xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              className="w-full flex items-center justify-between gap-3 px-5 py-3.5 rounded-xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-colors duration-200"
               style={{
                 fontFamily: "'DM Sans', sans-serif",
                 backgroundColor: 'var(--color-ak-borgona)',
                 color: 'var(--color-ak-cal)',
                 minHeight: '48px',
+                border: mobileMenuOpen
+                  ? '1px solid rgba(201,169,78,0.4)'
+                  : '1px solid rgba(201,169,78,0.18)',
               }}
               aria-haspopup="listbox"
               aria-expanded={mobileMenuOpen}
@@ -280,6 +297,7 @@ export default function MenuSection() {
                       fontFamily: "'DM Sans', sans-serif",
                       color: isActive ? 'var(--color-ak-cal)' : 'var(--color-ak-madera)',
                       letterSpacing: '0.02em',
+                      borderBottom: isActive ? '2px solid transparent' : '1px solid rgba(62,39,35,0.12)',
                     }}
                   >
                     {isActive && (
@@ -296,8 +314,7 @@ export default function MenuSection() {
               })}
             </div>
             <div
-              className="pointer-events-none absolute inset-y-0 right-0 w-12"
-              style={{ background: 'linear-gradient(to right, transparent, var(--color-ak-cal))' }}
+              className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-r from-transparent to-[var(--color-ak-cal)] dark:to-[var(--color-ak-night)]"
             />
           </motion.div>
 
@@ -350,7 +367,7 @@ export default function MenuSection() {
                           delay: Math.min(i * 0.06, 0.4),
                           ease: EASE_OUT,
                         }}
-                        className="group dish-row py-4 md:py-5 cursor-default"
+                        className="group dish-row py-4 md:py-5 cursor-default will-change-transform"
                         style={{ borderBottom: '1px solid rgba(62,39,35,0.08)' }}
                       >
                         <div className="flex items-baseline justify-between gap-4">
@@ -361,11 +378,11 @@ export default function MenuSection() {
                             {item.name}
                           </h4>
                           <div
-                            className="flex-1 border-b border-dashed mx-2 hidden md:block transition-opacity duration-200 ease-out opacity-40 group-hover:opacity-70"
+                            className="flex-1 border-b border-dashed mx-2 hidden md:block transition-opacity duration-200 ease-out opacity-50 group-hover:opacity-80"
                             style={{ borderColor: 'rgba(62,39,35,0.25)', transform: 'translateY(-4px)' }}
                           />
                           <span
-                            className="font-bold text-base md:text-lg whitespace-nowrap shrink-0 transition-colors duration-200 ease-out"
+                            className="dish-price font-bold text-base md:text-lg whitespace-nowrap shrink-0 transition-colors duration-200 ease-out"
                             style={{ fontFamily: "'DM Sans', sans-serif", color: 'var(--color-ak-borgona)' }}
                           >
                             {formatPrice(item.price)}
@@ -413,11 +430,10 @@ export default function MenuSection() {
               animate={{ transform: 'translateY(0%)' }}
               exit={{ transform: 'translateY(100%)' }}
               transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-              className="fixed inset-x-0 bottom-0 z-50 md:hidden"
+              className="fixed inset-x-0 bottom-0 z-50 md:hidden shadow-2xl bg-[var(--color-ak-cal)] dark:bg-[var(--color-ak-night-card)] transition-colors duration-300"
               style={{
                 borderTopLeftRadius: '20px',
                 borderTopRightRadius: '20px',
-                backgroundColor: 'var(--color-ak-cal)',
                 maxHeight: '75vh',
                 overflow: 'hidden',
               }}
@@ -510,7 +526,9 @@ export default function MenuSection() {
         @media (hover: hover) and (pointer: fine) {
           .dish-row:hover h4 { color: var(--color-ak-borgona) !important; }
           .dish-row:hover .group-hover\\:opacity-70 { opacity: 0.7 !important; }
+          .dish-row:hover .dish-price { color: var(--color-ak-dorado) !important; }
         }
+        .dark .dish-row { border-bottom-color: rgba(245,237,224,0.08) !important; }
       ` }} />
     </>
   )

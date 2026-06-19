@@ -26,7 +26,7 @@ export default function HeroCinematic() {
     <section
       ref={ref}
       id="inicio"
-      className="relative min-h-[100svh] w-full overflow-hidden bg-[var(--color-ak-night)]"
+      className="relative min-h-[100svh] w-full overflow-hidden bg-[var(--color-ak-madera)]"
     >
       {/* Full-bleed image with subtle parallax */}
       <motion.div
@@ -49,7 +49,7 @@ export default function HeroCinematic() {
           />
         </motion.div>
         {/* Editorial overlay — flat tone + soft bottom anchor gradient. */}
-        <div className="absolute inset-0 bg-[var(--color-ak-madera)]/55 dark:bg-[var(--color-ak-night)]/70" />
+        <div className="absolute inset-0 bg-[var(--color-ak-madera)]/55 dark:bg-[var(--color-ak-madera)]/70" />
         <div
           className="absolute inset-0"
           style={{

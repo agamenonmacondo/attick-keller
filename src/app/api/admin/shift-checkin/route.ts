@@ -24,12 +24,17 @@ export async function POST(request: NextRequest) {
   if (employee) {
     employeeId = employee.pos_nomina_staff_id
   } else {
-    const { data: userRole } = await sb
+    // Priorizar rol colaborador/lider_area sobre super_admin/store_admin
+    const { data: userRoles } = await sb
       .from('user_roles')
-      .select('pos_nomina_staff_id')
+      .select('role, pos_nomina_staff_id')
       .eq('auth_user_id', admin!.id)
-      .single()
-    employeeId = userRole?.pos_nomina_staff_id
+    const employeeRole = (userRoles || []).find((r: { role: string }) =>
+      r.role === 'colaborador' || r.role === 'lider_area'
+    )
+    const fallbackRole = (userRoles || []).find((r: { role: string }) => r.role === 'super_admin' || r.role === 'store_admin')
+    const targetRole = employeeRole || fallbackRole
+    employeeId = targetRole?.pos_nomina_staff_id
     if (!employeeId) {
       return NextResponse.json({ error: 'Perfil de colaborador no encontrado' }, { status: 404 })
     }

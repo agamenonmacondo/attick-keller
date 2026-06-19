@@ -18,8 +18,10 @@ export async function GET() {
     .in('role', ['store_admin', 'super_admin', 'host', 'lider_area', 'colaborador', 'reservante'])
 
   const roles = (rolesData || []).map(r => r.role)
-  // Tomar la primera area no-null (lider_area la necesita)
-  const area = (rolesData || []).find(r => r.area)?.area ?? null
+  // Area filtering: super_admin and store_admin should see ALL areas, not be locked to one
+  const isAdminRole = roles.includes('super_admin') || roles.includes('store_admin')
+  // Tomar la primera area no-null (solo lider_area la necesita para filtrar)
+  const area = isAdminRole ? null : ((rolesData || []).find(r => r.area)?.area ?? null)
 
   return NextResponse.json({ roles, area })
 }

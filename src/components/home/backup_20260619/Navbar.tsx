@@ -30,33 +30,17 @@ export default function Navbar() {
   return (
     <nav className={cn(
       'fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-4 md:px-6 py-4',
-      scrolled ? 'bg-[var(--color-ak-madera)] dark:bg-[var(--color-ak-night)] shadow-lg' : 'bg-transparent'
+      scrolled ? 'bg-[var(--color-ak-madera)] shadow-lg' : 'bg-transparent'
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link href="/" className="font-[family-name:var(--font-display)] text-xl md:text-2xl font-bold text-white">
           Attick &amp; Keller
         </Link>
 
-        <div className="flex items-center gap-3 md:gap-5">
-          {/* Internal section anchors — desktop, only once scrolled past the hero */}
-          {scrolled && (
-            <div className="hidden md:flex items-center gap-6">
-              <NavAnchor href="/#filosofia">Filosofía</NavAnchor>
-              <NavAnchor href="/#menu">Carta</NavAnchor>
-              <NavAnchor href="/#galeria">Galería</NavAnchor>
-              <NavAnchor href="/#reservar">Reservar</NavAnchor>
-            </div>
-          )}
-
+        <div className="flex items-center gap-3 md:gap-4">
           <Link
             href="/reservar"
-            className="hidden sm:inline-flex items-center px-5 py-2 rounded-sm font-semibold hover:bg-[var(--color-ak-ladrillo)] active:scale-[0.97] transition-all duration-200 text-sm"
-            style={{
-              fontFamily: 'var(--font-body)',
-              backgroundColor: 'var(--color-ak-borgona)',
-              border: '1px solid rgba(201,169,78,0.4)',
-              color: 'var(--color-ak-cal)',
-            }}
+            className="hidden sm:inline-flex px-5 py-2 bg-[var(--color-ak-borgona)] text-white rounded-full font-semibold hover:bg-[var(--color-ak-ladrillo)] active:scale-[0.97] transition-all duration-200 text-sm"
           >
             Reservar Mesa
           </Link>
@@ -77,19 +61,6 @@ export default function Navbar() {
         {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} />}
       </AnimatePresence>
     </nav>
-  )
-}
-
-function NavAnchor({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="group relative text-sm font-medium text-white/80 hover:text-white transition-colors"
-      style={{ fontFamily: 'var(--font-body)' }}
-    >
-      {children}
-      <span className="absolute left-0 -bottom-1 h-px w-full origin-left scale-x-0 bg-[var(--color-ak-dorado)] transition-transform duration-300 ease-out group-hover:scale-x-100" />
-    </Link>
   )
 }
 
@@ -129,10 +100,6 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
   const { user, isAdmin } = useAuth()
 
   const links = [
-    { href: '/#filosofia', label: 'Filosofía' },
-    { href: '/#menu', label: 'Carta' },
-    { href: '/#galeria', label: 'Galería' },
-    { href: '/#reservar', label: 'Reservar' },
     { href: '/reservar', label: 'Reservar Mesa', primary: true },
     { href: '/host', label: 'Panel de Host', adminOnly: true },
     { href: '/admin', label: 'Panel Admin', adminOnly: true },

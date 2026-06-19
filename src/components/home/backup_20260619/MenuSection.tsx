@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface MenuItem {
@@ -101,7 +100,7 @@ export default function MenuSection() {
 
   if (loading) {
     return (
-      <section className="py-20 px-6 bg-[var(--color-ak-cal)] dark:bg-[var(--color-ak-night)]">
+      <section className="py-20 px-6" style={{ backgroundColor: 'var(--color-ak-cal)' }}>
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 space-y-4">
             <div className="h-6 w-24 mx-auto rounded animate-pulse" style={{ backgroundColor: 'rgba(201,169,78,0.2)' }} />
@@ -124,7 +123,7 @@ export default function MenuSection() {
 
   if (categories.length === 0) {
     return (
-      <section id="menu" className="py-20 px-6 bg-[var(--color-ak-cal)] dark:bg-[var(--color-ak-night)]">
+      <section id="menu" className="py-20 px-6" style={{ backgroundColor: 'var(--color-ak-cal)' }}>
         <div className="max-w-4xl mx-auto text-center">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -132,7 +131,7 @@ export default function MenuSection() {
             viewport={viewOptions}
             transition={{ duration: 0.5, ease: EASE_OUT }}
             className="text-xl md:text-2xl mb-2"
-            style={{ fontFamily: 'var(--font-accent)', color: 'var(--color-ak-ambar)' }}
+            style={{ fontFamily: 'Caveat, cursive', color: 'var(--color-ak-ambar)' }}
           >
             Próximamente
           </motion.p>
@@ -142,7 +141,7 @@ export default function MenuSection() {
             viewport={viewOptions}
             transition={{ duration: 0.6, delay: 0.1, ease: EASE_OUT }}
             className="text-4xl md:text-5xl font-bold tracking-tight leading-none mb-4"
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ak-madera)' }}
+            style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
           >
             Nuestro Menú
           </motion.h2>
@@ -154,7 +153,7 @@ export default function MenuSection() {
             className="h-px w-24 mx-auto mb-6"
             style={{ background: 'linear-gradient(to right, transparent, var(--color-ak-dorado), transparent)' }}
           />
-          <p className="text-lg text-[var(--text-secondary)]" style={{ fontFamily: 'var(--font-body)' }}>
+          <p className="text-lg" style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.5)' }}>
             Estamos preparando nuestra carta. Vuelve pronto para descubrir nuestras creaciones mediterráneas.
           </p>
         </div>
@@ -167,10 +166,9 @@ export default function MenuSection() {
 
   return (
     <>
-      <section
-        id="menu"
-        className="bg-[var(--color-ak-cal)] dark:bg-[var(--color-ak-night)] py-12 md:py-20"
-      >
+      <div className="h-16" style={{ background: 'linear-gradient(to bottom, var(--color-ak-madera), var(--color-ak-madera), var(--color-ak-cal))' }} />
+
+      <section id="menu" style={{ backgroundColor: 'var(--color-ak-cal)' }} className="py-12 md:py-20">
         <div className="max-w-4xl mx-auto px-4 md:px-6">
           {/* Header */}
           <div className="text-center mb-10 md:mb-14">
@@ -180,7 +178,7 @@ export default function MenuSection() {
               viewport={viewOptions}
               transition={{ duration: 0.5, ease: EASE_OUT }}
               className="text-xl md:text-2xl mb-1"
-              style={{ fontFamily: 'var(--font-accent)', color: 'var(--color-ak-ambar)' }}
+              style={{ fontFamily: 'Caveat, cursive', color: 'var(--color-ak-ambar)' }}
             >
               Descubre
             </motion.p>
@@ -190,7 +188,7 @@ export default function MenuSection() {
               viewport={viewOptions}
               transition={{ duration: 0.6, delay: 0.1, ease: EASE_OUT }}
               className="text-4xl md:text-5xl font-bold tracking-tight leading-none mb-3"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ak-madera)' }}
+              style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
             >
               Nuestra Carta
             </motion.h2>
@@ -202,18 +200,6 @@ export default function MenuSection() {
               className="h-px w-24 mx-auto"
               style={{ background: 'linear-gradient(to right, transparent, var(--color-ak-dorado), transparent)', transformOrigin: 'center' }}
             />
-            {items.length > 0 && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={viewOptions}
-                transition={{ duration: 0.5, delay: 0.4, ease: EASE_OUT }}
-                className="hidden md:block mt-4 text-sm text-[var(--text-secondary)]"
-                style={{ fontFamily: 'var(--font-body)' }}
-              >
-                {items.length} platos · desde {formatPrice(Math.min(...items.map(i => i.price)))}
-              </motion.p>
-            )}
           </div>
 
           {/* ── Mobile category selector (< md) ── */}
@@ -228,7 +214,7 @@ export default function MenuSection() {
               onClick={() => setMobileMenuOpen(true)}
               className="w-full flex items-center justify-between gap-3 px-5 py-3.5 rounded-xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               style={{
-                fontFamily: 'var(--font-body)',
+                fontFamily: "'DM Sans', sans-serif",
                 backgroundColor: 'var(--color-ak-borgona)',
                 color: 'var(--color-ak-cal)',
                 minHeight: '48px',
@@ -258,8 +244,8 @@ export default function MenuSection() {
               </svg>
             </button>
             <p
-              className="text-xs mt-2 text-center text-[var(--text-secondary)]"
-              style={{ fontFamily: 'var(--font-body)' }}
+              className="text-xs mt-2 text-center"
+              style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.4)' }}
             >
               Toca para ver todas las categorías
             </p>
@@ -291,7 +277,7 @@ export default function MenuSection() {
                       'active:scale-[0.97]'
                     )}
                     style={{
-                      fontFamily: 'var(--font-body)',
+                      fontFamily: "'DM Sans', sans-serif",
                       color: isActive ? 'var(--color-ak-cal)' : 'var(--color-ak-madera)',
                       letterSpacing: '0.02em',
                     }}
@@ -335,7 +321,7 @@ export default function MenuSection() {
                   <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, transparent, rgba(201,169,78,0.5), transparent)' }} />
                   <h3
                     className="text-2xl md:text-3xl font-bold text-center"
-                    style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ak-madera)' }}
+                    style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
                   >
                     {activeCategory.name}
                   </h3>
@@ -347,8 +333,8 @@ export default function MenuSection() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.3, ease: EASE_OUT }}
-                    className="text-center py-8 text-base italic text-[var(--text-secondary)]"
-                    style={{ fontFamily: 'var(--font-body)' }}
+                    className="text-center py-8 text-base italic"
+                    style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.4)' }}
                   >
                     No hay platos disponibles en esta categoría por el momento.
                   </motion.p>
@@ -365,47 +351,30 @@ export default function MenuSection() {
                           ease: EASE_OUT,
                         }}
                         className="group dish-row py-4 md:py-5 cursor-default"
-                        style={{ borderBottom: '1px solid var(--border-light)' }}
+                        style={{ borderBottom: '1px solid rgba(62,39,35,0.08)' }}
                       >
                         <div className="flex items-baseline justify-between gap-4">
                           <h4
-                            className="flex items-baseline gap-2 text-lg md:text-xl font-semibold transition-colors duration-200 ease-out"
-                            style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ak-madera)' }}
+                            className="text-lg md:text-xl font-semibold transition-colors duration-200 ease-out"
+                            style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
                           >
-                            {item.is_featured && (
-                              <span
-                                aria-hidden
-                                className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                                style={{ backgroundColor: 'var(--color-ak-dorado)', transform: 'translateY(-2px)' }}
-                              />
-                            )}
                             {item.name}
                           </h4>
                           <div
                             className="flex-1 border-b border-dashed mx-2 hidden md:block transition-opacity duration-200 ease-out opacity-40 group-hover:opacity-70"
-                            style={{ borderColor: 'var(--border-light)', transform: 'translateY(-4px)' }}
+                            style={{ borderColor: 'rgba(62,39,35,0.25)', transform: 'translateY(-4px)' }}
                           />
-                          {item.is_featured && item.image_url && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={item.image_url}
-                              alt=""
-                              className="hidden md:block w-14 h-14 object-cover shrink-0 rounded-sm"
-                              style={{ border: '1px solid rgba(201,169,78,0.3)', transform: 'translateY(2px)' }}
-                              loading="lazy"
-                            />
-                          )}
                           <span
                             className="font-bold text-base md:text-lg whitespace-nowrap shrink-0 transition-colors duration-200 ease-out"
-                            style={{ fontFamily: 'var(--font-body)', color: 'var(--color-ak-borgona)' }}
+                            style={{ fontFamily: "'DM Sans', sans-serif", color: 'var(--color-ak-borgona)' }}
                           >
                             {formatPrice(item.price)}
                           </span>
                         </div>
                         {item.description && (
                           <p
-                            className="text-sm mt-1.5 leading-relaxed max-w-2xl transition-colors duration-200 ease-out text-[var(--text-secondary)]"
-                            style={{ fontFamily: 'var(--font-body)' }}
+                            className="text-sm mt-1.5 leading-relaxed max-w-2xl transition-colors duration-200 ease-out"
+                            style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.55)' }}
                           >
                             {item.description}
                           </p>
@@ -417,27 +386,6 @@ export default function MenuSection() {
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* CTA final — discreet, underlined reveal, anchors to #reservar */}
-          {items.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={viewOptions}
-              transition={{ duration: 0.5, ease: EASE_OUT }}
-              className="mt-12 md:mt-16 text-center"
-            >
-              <Link
-                href="/#reservar"
-                className="group relative inline-flex items-center gap-2 text-base font-medium"
-                style={{ fontFamily: 'var(--font-body)', color: 'var(--color-ak-borgona)' }}
-              >
-                Ver horarios y reservar
-                <span aria-hidden className="transition-transform duration-200 group-hover:translate-x-1">→</span>
-                <span className="absolute left-0 -bottom-1 h-px w-full origin-left scale-x-0 bg-[var(--color-ak-dorado)] transition-transform duration-300 ease-out group-hover:scale-x-100" />
-              </Link>
-            </motion.div>
-          )}
         </div>
       </section>
 
@@ -488,7 +436,7 @@ export default function MenuSection() {
               <div className="px-5 pt-2 pb-4 flex items-center justify-between">
                 <h3
                   className="text-lg font-bold"
-                  style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ak-madera)' }}
+                  style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
                 >
                   Categorías
                 </h3>
@@ -527,7 +475,7 @@ export default function MenuSection() {
                           'focus:outline-none focus-visible:ring-2 transition-transform duration-100 active:scale-[0.97]'
                         )}
                         style={{
-                          fontFamily: 'var(--font-body)',
+                          fontFamily: "'DM Sans', sans-serif",
                           minHeight: '48px',
                           backgroundColor: isActive ? 'var(--color-ak-borgona)' : 'rgba(62,39,35,0.05)',
                           color: isActive ? 'var(--color-ak-cal)' : 'var(--color-ak-madera)',

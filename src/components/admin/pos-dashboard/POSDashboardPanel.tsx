@@ -72,6 +72,26 @@ export function POSDashboardPanel() {
     return filters
   }, [viewMode, filters, calendarMonth])
 
+  // ── Costs tab always shows a CONSOLIDATED month view ──
+  // Costs analysis is inherently aggregate — it must NEVER narrow to a single day
+  // (which happens when the user clicks a day in Operation mode). Instead, derive
+  // the full month bounds from the calendar month (or the clicked day's month, or
+  // the current month). This keeps the Costs tab consistent with the selected
+  // month and guarantees consolidated results are always shown.
+  const costsRange = useMemo(() => {
+    const monthStr = calendarMonth
+      || (filters.from ? filters.from.substring(0, 7) : undefined)
+      || (() => {
+        const now = new Date()
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      })()
+    const [yStr, mStr] = monthStr.split('-')
+    const y = parseInt(yStr, 10)
+    const m = parseInt(mStr, 10) // 1-based
+    const lastDay = new Date(y, m, 0).getDate()
+    return { from: `${monthStr}-01`, to: `${monthStr}-${lastDay}` }
+  }, [calendarMonth, filters.from])
+
   // ── Operation hook ──
   const { data, loading, error, refetch, drillDown, drillDownData, drillDownLoading, drillDownError, fetchDrillDown, closeDrillDown } = usePOSDashboard(effectiveFilters)
 
@@ -457,8 +477,8 @@ export function POSDashboardPanel() {
       {/* Cost panel — lazy-loaded only when tab is active */}
       {activeTab === 'costs' && (
         <POSCostsTabContent
-          from={filters.from}
-          to={filters.to}
+          from={costsRange.from}
+          to={costsRange.to}
           category={filters.category}
           isSingleDay={isSingleDay}
           selectedDate={filters.from}

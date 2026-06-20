@@ -29,6 +29,12 @@ export interface StaffMember {
   auxilio_no_salarial: number;
   modalidad: string;
   es_medio_tiempo: boolean;
+  fecha_ingreso: string | null;
+  // Líderes / costo fijo (Fase 1)
+  is_fixed_cost: boolean;        // líderes sin turnos que se suman como costo fijo mensual
+  costo_fijo_mensual: number;    // costo empresa mensual precalculado (is_fixed_cost=true)
+  is_leader: boolean;            // jefes de área (barra/servicio/cocina)
+  rubro: string | null;           // 'barra' | 'servicio' | 'cocina' | null
 }
 
 export interface ShiftType {

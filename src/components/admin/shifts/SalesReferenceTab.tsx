@@ -40,33 +40,33 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
     [staff, area]
   );
 
-  // Categorize staff: fijos (apoyo + 3 líderes sin turno) vs con turno
+  // FIJOS: siempre se muestran, sin importar el filtro de área
   const FIJO_NAMES = ['WALTER VILLAMOROS', 'ESNEIDER BLANCO', 'VERONICA FRANCHESKA'];
-  const { fijos, conTurno } = useMemo(() => {
-    const fijos: typeof staff = [];
-    const conTurno: typeof staff = [];
-    for (const s of filteredStaff) {
+  const fijos = useMemo(() =>
+    staff.filter(s => {
       const a = s.area || '';
       const name = (s.nombre_completo || s.nombre || '').toUpperCase();
-      const isFijo = a === 'apoyo' || a === 'admin' || FIJO_NAMES.some(n => name.includes(n));
-      if (isFijo) {
-        fijos.push(s);
-      } else {
-        conTurno.push(s);
-      }
-    }
-    return { fijos, conTurno };
-  }, [filteredStaff]);
+      return a === 'apoyo' || a === 'admin' || FIJO_NAMES.some(n => name.includes(n));
+    }),
+    [staff]
+  );
+
+  // CON TURNO: staff que sí hace turnos (filtrado por área)
+  const conTurno = useMemo(() => {
+    const fijoIds = new Set(fijos.map(f => f.id));
+    return filteredStaff.filter(s => !fijoIds.has(s.id));
+  }, [filteredStaff, fijos]);
 
   // Costo fijo mensual for leaders + apoyo
   const fijosData = useMemo(() => {
     const items: { nombre: string; cargo: string; costoMensual: number }[] = [];
     let totalMensual = 0;
     for (const s of fijos) {
-      const costo = calcularCostoEmpresa(s.salario_mensual);
-      const costoTotal = costo.costoMensualTotal + ((s.auxilio_no_salarial || 0) - costo.auxilioTransporte);
-      totalMensual += costoTotal;
-      items.push({ nombre: s.nombre_completo || s.nombre, cargo: s.cargo || '', costoMensual: costoTotal });
+      const costo = calcularCostoEmpresa(s.salario_mensual, s.auxilio_no_salarial);
+      // Costo empresa SIN auxilio transporte (auxilio se paga al empleado, no es costo operacional)
+      const costoSinAuxilio = costo.costoMensualTotal - costo.auxilioTransporte;
+      totalMensual += costoSinAuxilio;
+      items.push({ nombre: s.nombre_completo || s.nombre, cargo: s.cargo || '', costoMensual: costoSinAuxilio });
     }
     return { items, totalMensual };
   }, [fijos]);

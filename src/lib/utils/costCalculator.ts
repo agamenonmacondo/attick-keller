@@ -280,7 +280,7 @@ export function calcularCostoSemanal(
  *   - ICBF: 3%
  *   - Auxilio de transporte: solo si gana <= 2 SMLV
  */
-export function calcularCostoEmpresa(salarioMensual: number): {
+export function calcularCostoEmpresa(salarioMensual: number, auxilioNoSalarial?: number): {
   salarioMensual: number;
   primaServicios: number;
   cesantias: number;
@@ -306,11 +306,10 @@ export function calcularCostoEmpresa(salarioMensual: number): {
     ARL_RATE: 0.00522, // comercio
   };
 
-  // Base para cesantías y prima = salario + auxilio transporte (ley colombiana)
-  // Quienes ganan ≤2 SMLV reciben auxilio transporte, que se incluye en esta base
-  const auxilioTransporte = salarioMensual <= LEGAL_PARAMS_LOCAL.SMMLV * 2
-    ? LEGAL_PARAMS_LOCAL.TRANSPORT_ALLOWANCE
-    : 0;
+  // Auxilio transporte: usar el de la BD si se proporciona, si no calcular automáticamente
+  const auxilioTransporte = auxilioNoSalarial !== undefined
+    ? auxilioNoSalarial
+    : (salarioMensual <= LEGAL_PARAMS_LOCAL.SMMLV * 2 ? LEGAL_PARAMS_LOCAL.TRANSPORT_ALLOWANCE : 0);
   const baseCesantiasPrima = salarioMensual + auxilioTransporte;
 
   // Prima de servicios: 1 mes/12 = 8.33% sobre (salario + auxilio transporte)

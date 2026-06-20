@@ -523,7 +523,7 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
             { id: 'referencia' as Tab, icon: <ChartLineUp size={14} />, label: 'Referencia' },
             { id: 'horarios' as Tab, icon: <PencilSimple size={14} />, label: 'Horarios' },
             { id: 'personal' as Tab, icon: <IdentificationBadge size={14} />, label: 'Personal' },
-          ].filter(t => area === 'todos' ? t.id === 'costos' || t.id === 'referencia' : true).map((t) => (
+          ].filter(t => area === 'todos' ? t.id === 'costos' || t.id === 'referencia' || t.id === 'personal' : true).map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
@@ -711,7 +711,7 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
       )}
 
       {tab === 'personal' && (
-        <StaffPanel area={area} />
+        <StaffPanel area={area === 'todos' ? '' : area} />
       )}
 
       {/* Modal para crear/editar turno */}

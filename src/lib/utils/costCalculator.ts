@@ -147,20 +147,22 @@ export function calcularCostoTurno(
       + (heDiurnas * valorHora * 2.0)
       + (heNocturnas * valorHora * 2.5);
 
-    // Desglose domingo:
-    // base_pay = horas a tarifa 1.0x (sin recargos)
-    // sunday_surcharge = recargo dominical 75% sobre TODAS las horas netas (no HE)
-    // night_surcharge = recargo nocturno 35% sobre horas nocturnas netas
-    // overtime_surcharge = recargo HE (25% diurna, 75% nocturna)
+    // Desglose domingo (Fase 2.3 — ahora SÍ suma al total):
+    // base_pay            = TODAS las horas (netas + HE) a tarifa 1.0x
+    // sunday_surcharge    = recargo dominical 75% sobre TODAS las horas (netas + HE)
+    // night_surcharge     = recargo nocturno 35% sobre horas nocturnas netas
+    //                       (la HE nocturna ya lleva su premium 0.75 en overtime, no se le suma 0.35)
+    // overtime_surcharge  = recargo HE (25% diurna, 75% nocturna) — solo el recargo, la base va en base_pay
     // Suma: base_pay + sunday_surcharge + night_surcharge + overtime_surcharge = total
+    const totalHorasDesg = hoNetas + hnNetas + heDiurnas + heNocturnas;
     return {
-      base_pay: Math.round(hoNetas * valorHora + hnNetas * valorHora),
+      base_pay: Math.round(totalHorasDesg * valorHora),
       night_surcharge: Math.round(hnNetas * valorHora * 0.35),
       overtime_surcharge: Math.round(
         heDiurnas * valorHora * 0.25
         + heNocturnas * valorHora * 0.75
       ),
-      sunday_surcharge: Math.round((hoNetas + hnNetas) * valorHora * 0.75),
+      sunday_surcharge: Math.round(totalHorasDesg * valorHora * 0.75),
       total: Math.round(totalReal),
     };
   } else {
@@ -169,8 +171,12 @@ export function calcularCostoTurno(
       + (heDiurnas * valorHora * 1.25)
       + (heNocturnas * valorHora * 1.75);
 
+    // Desglose día normal (Fase 2.3 — ahora SÍ suma al total):
+    // base_pay = TODAS las horas (netas + HE) a tarifa 1.0x (la base de la HE va aquí)
+    // overtime_surcharge = solo el recargo HE (25% diurna, 75% nocturna)
+    const totalHorasDesg = hoNetas + hnNetas + heDiurnas + heNocturnas;
     return {
-      base_pay: Math.round(hoNetas * valorHora + hnNetas * valorHora),
+      base_pay: Math.round(totalHorasDesg * valorHora),
       night_surcharge: Math.round(hnNetas * valorHora * 0.35),
       overtime_surcharge: Math.round(
         heDiurnas * valorHora * 0.25
@@ -180,6 +186,31 @@ export function calcularCostoTurno(
       total: Math.round(totalReal),
     };
   }
+}
+
+/**
+ * Tope anti-overflow para salarios sucios (datos importados corruptos).
+ * 50M = ~35x SMMLV 2026; cualquier valor mayor se considera inválido.
+ */
+export const SALARY_CAP = 50_000_000;
+
+/**
+ * Sanitización unificada de salario (Fase 2).
+ * Regla única en todo el sistema:
+ *   - null / undefined / NaN / <= 0  → fallbackSMMLV (SMMLV 2026 por defecto)
+ *   - > SALARY_CAP (50M)             → fallbackSMMLV (dato inválido, no descarta a 0)
+ *   - resto                          → valor saneado
+ *
+ * Usar SIEMPRE este helper en turnos y nómina antes de calcular costos.
+ */
+export function sanitizeSalario(
+  raw: number | null | undefined,
+  fallbackSMMLV: number = LEGAL_PARAMS.MIN_SALARY
+): number {
+  const v = Number(raw);
+  if (!Number.isFinite(v) || v <= 0) return fallbackSMMLV;
+  if (v > SALARY_CAP) return fallbackSMMLV;
+  return v;
 }
 
 /**
@@ -194,8 +225,8 @@ export function calcularCostoTurnoEmpresa(
   rawSalario: number | null | undefined,
   esDomingo: boolean = false
 ): ShiftCostEstimate {
-  // Sanitizar salario (misma logica en todo el sistema)
-  const salarioFallback = rawSalario && rawSalario > 50000000 ? 1423500 : (rawSalario || 1423500);
+  // Sanitizar salario (helper unificado Fase 2 — misma regla en todo el sistema)
+  const salarioFallback = sanitizeSalario(rawSalario);
   const costoEmp = calcularCostoEmpresa(salarioFallback);
   const scaleFactor = costoEmp.costoMensualTotal / salarioFallback;
   

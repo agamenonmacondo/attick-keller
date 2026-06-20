@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import type { StaffMemberForShift, ShiftType } from '@/lib/types/shifts';
 import { calcularCostoTurnoEmpresa, calcularCostoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
 import { useSalesAverages } from '@/lib/hooks/useSalesAverages';
@@ -32,6 +32,32 @@ const WEEKS_PER_MONTH = 52 / 12; // ~4.33
 export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, area }: SalesReferenceTabProps) {
   const { data: salesData, loading: salesLoading } = useSalesAverages();
 
+  // Fetch ALL staff for fijos calculation (independent of area filter)
+  const [allStaff, setAllStaff] = useState<StaffMemberForShift[]>([]);
+  useEffect(() => {
+    async function fetchAllStaff() {
+      try {
+        const areas: ('cocina' | 'barra' | 'servicio')[] = ['cocina', 'barra', 'servicio'];
+        const results = await Promise.all(
+          areas.map(a => fetch(`/api/admin/shift-schedules?area=${a}&week_str=${weekStr}`, { credentials: 'include' }).then(r => r.json()))
+        );
+        const combined = results.flatMap(r => r.staff || []);
+        // Deduplicate by id
+        const seen = new Set<string>();
+        const unique = combined.filter((s: StaffMemberForShift) => {
+          if (seen.has(s.id)) return false;
+          seen.add(s.id);
+          return true;
+        });
+        setAllStaff(unique);
+      } catch {
+        // Fallback: use the staff prop (may miss some fijos when filtered by area)
+        setAllStaff(staff);
+      }
+    }
+    fetchAllStaff();
+  }, [weekStr]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Filter staff by area — used by both nominaByDay and proyección mensual
   const filteredStaff = useMemo(() =>
     area === 'todos'
@@ -43,12 +69,12 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
   // FIJOS: siempre se muestran, sin importar el filtro de área
   const FIJO_NAMES = ['WALTER VILLAMOROS', 'ESNEIDER BLANCO', 'VERONICA FRANCHESKA'];
   const fijos = useMemo(() =>
-    staff.filter(s => {
+    allStaff.filter(s => {
       const a = s.area || '';
       const name = (s.nombre_completo || s.nombre || '').toUpperCase();
       return a === 'apoyo' || a === 'admin' || FIJO_NAMES.some(n => name.includes(n));
     }),
-    [staff]
+    [allStaff]
   );
 
   // CON TURNO: staff que sí hace turnos (filtrado por área)
@@ -62,8 +88,9 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
     const items: { nombre: string; cargo: string; costoMensual: number }[] = [];
     let totalMensual = 0;
     for (const s of fijos) {
-      const costo = calcularCostoEmpresa(s.salario_mensual, s.auxilio_no_salarial);
+      const costo = calcularCostoEmpresa(s.salario_mensual);
       // Costo empresa SIN auxilio transporte (auxilio se paga al empleado, no es costo operacional)
+      // Auxilio personalizado (Walter $1M, Verónica $1.05M) NO se usa como base de prima/cesantías
       const costoSinAuxilio = costo.costoMensualTotal - costo.auxilioTransporte;
       totalMensual += costoSinAuxilio;
       items.push({ nombre: s.nombre_completo || s.nombre, cargo: s.cargo || '', costoMensual: costoSinAuxilio });

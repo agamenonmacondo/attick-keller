@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, PencilSimple, Check, X, User, CaretDown, CaretRight } from '@phosphor-icons/react';
+import { Plus, PencilSimple, Check, X, User, CaretDown, CaretRight, Prohibit, SignIn, SignOut } from '@phosphor-icons/react';
 import { formatCOP, calcularCostoEmpresa } from '@/lib/utils/costCalculator';
 
 const AREAS: { value: string; label: string; color: string }[] = [
@@ -161,6 +161,23 @@ export default function StaffPanel({ area }: StaffPanelProps) {
     setEditForm(prev => { const next = { ...prev }; delete next[id]; return next; });
   };
 
+  const toggleActivo = async (member: StaffRow) => {
+    const nuevoEstado = !member.activo;
+    const accion = nuevoEstado ? 'reactivar' : 'desactivar';
+    if (!confirm(`${nuevoEstado ? 'Reactivar' : 'Desactivar'} a ${member.nombre_completo}?`)) return;
+    try {
+      const res = await fetch('/api/admin/nomina-staff', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: member.id, activo: nuevoEstado }),
+      });
+      if (!res.ok) throw new Error(`Error al ${accion}`);
+      fetchStaff();
+    } catch (err) {
+      console.error('Error toggling activo:', err);
+    }
+  };
+
   // Totales
   const totalSalarios = staff.reduce((s, m) => s + (m.salario_mensual || 0), 0);
   const totalAuxilios = staff.reduce((s, m) => s + (m.auxilio_no_salarial || 0), 0);
@@ -265,7 +282,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
               const vHO = valorHoraOrd(member);
               const d = desglose(member);
               return (
-                <div key={member.id} className="bg-[var(--bg-card)] rounded-lg overflow-hidden">
+                <div key={member.id} className={`bg-[var(--bg-card)] rounded-lg overflow-hidden ${!member.activo ? 'opacity-50' : ''}`}>
                   <button
                     onClick={() => { if (!isEditing) setExpandedId(isExpanded ? null : member.id); }}
                     className="w-full text-left p-3 flex items-start justify-between gap-2 min-h-[44px]"
@@ -273,6 +290,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-[var(--text-primary)] text-sm">{isEditing ? ef?.alias || member.alias : member.alias}</span>
+                        {!member.activo && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-danger)]/15 text-[var(--color-danger)] border border-[var(--color-danger)]/30">Inactivo</span>}
                         <span className="text-xs px-2 py-0.5 rounded-full border" style={{ color: areaMeta?.color || 'var(--text-secondary)', borderColor: areaMeta?.color || 'var(--border-default)', backgroundColor: areaMeta?.color ? `${areaMeta.color}15` : undefined }}>{areaMeta?.label || member.area || 'Sin area'}</span>
                       </div>
                       <div className="text-xs text-[var(--text-secondary)] mt-0.5">{member.cargo || '-'} &middot; {member.modalidad || 'COMPLETO'}{member.aplica_propinas ? ' +Prop' : ''}</div>
@@ -296,7 +314,12 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                         <div><span className="text-[var(--text-secondary)]">ARL (0.522%)</span> <span className="font-mono">{formatCOP(d.aporteARL)}</span></div>
                         <div><span className="text-[var(--text-secondary)]">Caja (4%)</span> <span className="font-mono">{formatCOP(d.aporteCaja)}</span></div>
                       </div>
-                      <button onClick={() => startEdit(member)} className="flex items-center gap-1 text-xs text-[var(--accent-primary)] min-h-[44px]"><PencilSimple size={14} /> Editar</button>
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => startEdit(member)} className="flex items-center gap-1 text-xs text-[var(--accent-primary)] min-h-[44px]"><PencilSimple size={14} /> Editar</button>
+                        <button onClick={() => toggleActivo(member)} className={`flex items-center gap-1 text-xs min-h-[44px] ${member.activo ? 'text-[var(--color-danger)]' : 'text-[var(--color-success)]'}`}>
+                          {member.activo ? <><Prohibit size={14} /> Desactivar</> : <><SignIn size={14} /> Reactivar</>}
+                        </button>
+                      </div>
                     </div>
                   )}
                   {isExpanded && isEditing && ef && (
@@ -357,7 +380,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                   const upEF = (field: string, value: string | number) => setEditForm(prev => ({ ...prev, [member.id]: { ...prev[member.id], [field]: value } }));
                   return (
                     <>
-                      <tr key={member.id} className={`border-b border-[var(--border-default)] hover:bg-[var(--bg-hover)]/50 transition-colors ${isExpanded ? 'bg-[var(--bg-hover)]/30' : ''} ${isEditing ? 'bg-[var(--accent-primary)]/5 ring-1 ring-[var(--accent-primary)]/30' : ''}`}>
+                      <tr key={member.id} className={`border-b border-[var(--border-default)] hover:bg-[var(--bg-hover)]/50 transition-colors ${isExpanded ? 'bg-[var(--bg-hover)]/30' : ''} ${isEditing ? 'bg-[var(--accent-primary)]/5 ring-1 ring-[var(--accent-primary)]/30' : ''} ${!member.activo ? 'opacity-50' : ''}`}>
                         <td className="p-3 text-[var(--text-secondary)] cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : member.id)}>
                           {isExpanded ? <CaretDown size={14} /> : <CaretRight size={14} />}
                         </td>
@@ -378,7 +401,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                           </>
                         ) : (
                           <>
-                            <td className="p-3"><span className="font-semibold text-[var(--text-primary)]">{member.alias}</span></td>
+                            <td className="p-3"><span className="font-semibold text-[var(--text-primary)]">{member.alias}</span>{!member.activo && <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-danger)]/15 text-[var(--color-danger)] border border-[var(--color-danger)]/30">Inactivo</span>}</td>
                             <td className="p-3 text-[var(--text-primary)] text-xs whitespace-nowrap">{member.nombre_completo}</td>
                             <td className="p-3 text-xs text-[var(--text-secondary)]">{member.cargo || '-'}</td>
                             <td className="p-3"><span className="text-xs px-2 py-0.5 rounded-full border" style={{ color: areaMeta?.color || 'var(--text-secondary)', borderColor: areaMeta?.color || 'var(--border-default)', backgroundColor: areaMeta?.color ? `${areaMeta.color}15` : undefined }}>{areaMeta?.label || member.area || 'Sin area'}</span></td>
@@ -386,8 +409,11 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                             <td className="p-3 text-right font-mono text-xs text-[var(--text-secondary)]">{formatCOP(member.salario_mensual || 0)}</td>
                             <td className="p-3 text-right font-mono text-xs font-semibold text-[var(--accent-primary)]">{formatCOP(costoEmp)}</td>
                             <td className="p-3 text-right font-mono text-xs text-[var(--text-primary)]">{formatCOP(vHO)}</td>
-                            <td className="p-3 text-center">
+                            <td className="p-3 text-center flex gap-1 justify-center">
                               <button onClick={(e) => { e.stopPropagation(); startEdit(member); }} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] min-h-[36px] min-w-[36px]"><PencilSimple size={14} /></button>
+                              <button onClick={(e) => { e.stopPropagation(); toggleActivo(member); }} className={`p-1.5 rounded hover:bg-[var(--bg-hover)] min-h-[36px] min-w-[36px] ${member.activo ? 'text-[var(--color-danger)] hover:text-[var(--color-danger)]' : 'text-[var(--color-success)] hover:text-[var(--color-success)]'}`} title={member.activo ? 'Desactivar' : 'Reactivar'}>
+                                {member.activo ? <Prohibit size={14} /> : <SignIn size={14} />}
+                              </button>
                             </td>
                           </>
                         )}

@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     // Incluir personal del area + personal con secondary_areas que incluya el area
     const { data: staff } = await sb
       .from('pos_nomina_staff')
-      .select('id, nombre_completo, cargo, area, secondary_areas, salario')
+      .select('id, nombre_completo, cargo, area, secondary_areas, salario, auxilio_no_salarial')
       .eq('sede', 'C75')
       .eq('activo', true)
       .or(`area.eq.${area},secondary_areas.cs.{${area}}`)
@@ -90,6 +90,8 @@ export async function GET(request: NextRequest) {
     const enrichedStaff = (staff || []).map((s: Record<string, unknown>) => ({
       ...s,
       salario_mensual: s.salario ?? 0,
+      auxilio_no_salarial: s.auxilio_no_salarial ?? 0,
+      nombre: (s.nombre_completo as string || '').split(' ')[0],
       alias: aliasMap.get(s.id as string) || (s.nombre_completo as string).split(' ')[0],
     }))
 
@@ -114,7 +116,7 @@ export async function GET(request: NextRequest) {
   // Incluir personal del area + personal con secondary_areas que incluya el area
   const { data: staff } = await sb
     .from('pos_nomina_staff')
-    .select('id, nombre_completo, cargo, area, secondary_areas, salario')
+    .select('id, nombre_completo, cargo, area, secondary_areas, salario, auxilio_no_salarial')
     .eq('sede', 'C75')
     .eq('activo', true)
     .or(`area.eq.${area},secondary_areas.cs.{${area}}`)
@@ -156,6 +158,8 @@ export async function GET(request: NextRequest) {
   const enrichedStaff = (staff || []).map((s: Record<string, unknown>) => ({
     ...s,
     salario_mensual: s.salario ?? 0,
+    auxilio_no_salarial: s.auxilio_no_salarial ?? 0,
+    nombre: (s.nombre_completo as string || '').split(' ')[0],
     alias: aliasMap.get(s.id as string) || (s.nombre_completo as string).split(' ')[0],
   }))
 

@@ -228,7 +228,14 @@ function StaffDetailPanel({
 }
 
 export function NominaPanel() {
-  const { data, loading, error, refetch, selectedStaffId, staffDetail, detailLoading, detailError, fetchStaffDetail, closeDetail } = useNomina('2026-04-01', '2026-04-30')
+  // Dynamic date range: current month
+  const now = new Date()
+  const monthNames = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']
+  const currentPeriodo = `${monthNames[now.getMonth()]} ${now.getFullYear()}`
+  const currentFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const currentTo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${lastDay}`
+  const { data, loading, error, refetch, selectedStaffId, staffDetail, detailLoading, detailError, fetchStaffDetail, closeDetail } = useNomina(currentFrom, currentTo)
   const [search, setSearch] = useState('')
 
   if (loading) {
@@ -275,7 +282,7 @@ export function NominaPanel() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h2 className="text-lg font-bold text-[var(--text-primary)]">Nomina</h2>
-          <p className="text-sm text-[var(--text-secondary)]">Abril 2026 - Biometrico</p>
+          <p className="text-sm text-[var(--text-secondary)]">{currentPeriodo} - Biométrico</p>
         </div>
       </div>
 

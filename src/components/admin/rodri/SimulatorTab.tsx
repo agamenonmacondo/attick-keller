@@ -97,7 +97,7 @@ export default function SimulatorTab() {
     const recExtDiur = Number(paramsDict.recExtDiur ?? 0.25)
     const recExtNoct = Number(paramsDict.recExtNoct ?? 0.75)
     const recDom = Number(paramsDict.recDom ?? 0.80)
-    const salario = Number(paramsDict.salario ?? 1750905)
+    const salario = Number(paramsDict.salario ?? 1423500)
     const inicioNoct = Number(paramsDict.inicioNoct ?? 19)
     const finNoct = Number(paramsDict.finNoct ?? 6)
     const valorHora = salario / jornadaSemanal

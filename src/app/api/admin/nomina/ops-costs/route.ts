@@ -92,21 +92,13 @@ export async function GET(request: NextRequest) {
       .single()
     if (propErr && propErr.code !== 'PGRST116') throw propErr
 
-    // 7. POS Revenue for the period's month
-    const periodoDateMap: Record<string, { from: string; to: string }> = {
-      'ABRIL 2026': { from: '2026-04-01', to: '2026-04-30' },
-      'MAYO 2026': { from: '2026-05-01', to: '2026-05-31' },
-      'JUNIO 2026': { from: '2026-06-01', to: '2026-06-30' },
-    }
-    const dateRange = periodoDateMap[periodoData.periodo] || (() => {
-      // Parse "MONTH YEAR" format to generate date range
-      const months: Record<string, number> = { ENERO: 1, FEBRERO: 2, MARZO: 3, ABRIL: 4, MAYO: 5, JUNIO: 6, JULIO: 7, AGOSTO: 8, SEPTIEMBRE: 9, OCTUBRE: 10, NOVIEMBRE: 11, DICIEMBRE: 12 }
-      const parts = periodoData.periodo.split(' ')
-      const m = months[(parts[0] || '').toUpperCase()] || new Date().getMonth() + 1
-      const y = parseInt(parts[1]) || new Date().getFullYear()
-      const lastDay = new Date(y, m, 0).getDate()
-      return { from: `${y}-${String(m).padStart(2, '0')}-01`, to: `${y}-${String(m).padStart(2, '0')}-${lastDay}` }
-    })()
+    // 7. POS Revenue for the period's month — parsed dynamically from "MONTH YEAR" format
+    const months: Record<string, number> = { ENERO: 1, FEBRERO: 2, MARZO: 3, ABRIL: 4, MAYO: 5, JUNIO: 6, JULIO: 7, AGOSTO: 8, SEPTIEMBRE: 9, OCTUBRE: 10, NOVIEMBRE: 11, DICIEMBRE: 12 }
+    const parts = (periodoData.periodo || '').split(' ')
+    const m = months[(parts[0] || '').toUpperCase()] || new Date().getMonth() + 1
+    const y = parseInt(parts[1]) || new Date().getFullYear()
+    const lastDay = new Date(y, m, 0).getDate()
+    const dateRange = { from: `${y}-${String(m).padStart(2, '0')}-01`, to: `${y}-${String(m).padStart(2, '0')}-${lastDay}` }
 
     const { data: posData, error: posErr } = await sb
       .from('pos_sales')

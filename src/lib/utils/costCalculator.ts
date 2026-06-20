@@ -306,21 +306,32 @@ export function calcularCostoEmpresa(salarioMensual: number): {
     ARL_RATE: 0.00522, // comercio
   };
 
-  const primaServicios = salarioMensual * 8.33 / 100;
-  const cesantias = salarioMensual * 8.33 / 100;
-  const interesesCesantias = salarioMensual * 1 / 100; // 12% anual = 1% mensual
-  const vacaciones = salarioMensual * 4.17 / 100;
-  const aporteSalud = salarioMensual * 8.5 / 100;
-  const aportePension = salarioMensual * 12 / 100;
-  const aporteARL = salarioMensual * LEGAL_PARAMS_LOCAL.ARL_RATE;
-  const aporteCaja = salarioMensual * 4 / 100;
-  const aporteSena = salarioMensual * 2 / 100;
-  const aporteICBF = salarioMensual * 3 / 100;
-
-  // Auxilio de transporte solo si gana <= 2 SMLV
+  // Base para cesantías y prima = salario + auxilio transporte (ley colombiana)
+  // Quienes ganan ≤2 SMLV reciben auxilio transporte, que se incluye en esta base
   const auxilioTransporte = salarioMensual <= LEGAL_PARAMS_LOCAL.SMMLV * 2
     ? LEGAL_PARAMS_LOCAL.TRANSPORT_ALLOWANCE
     : 0;
+  const baseCesantiasPrima = salarioMensual + auxilioTransporte;
+
+  // Prima de servicios: 1 mes/12 = 8.33% sobre (salario + auxilio transporte)
+  const primaServicios = baseCesantiasPrima * 8.33 / 100;
+  // Cesantías: 1 mes/12 = 8.33% sobre (salario + auxilio transporte)
+  const cesantias = baseCesantiasPrima * 8.33 / 100;
+  // Intereses sobre cesantías: 12% anual = 1% mensual sobre (salario + auxilio transporte)
+  const interesesCesantias = baseCesantiasPrima * 1 / 100;
+  // Vacaciones: 15 días/12 = 4.17% sobre salario (NO incluye auxilio transporte)
+  const vacaciones = salarioMensual * 4.17 / 100;
+
+  // Aportes patronales — exoneración art. 114-1 ET para empresas <47 trabajadores
+  // Si exonerado: EPS empleador = 0%, SENA = 0%, ICBF = 0%, Caja = 0%
+  // Solo pagan Pensión (12%) y ARL
+  const EXONERADO_114_1 = true; // A&K tiene <47 empleados
+  const aporteSalud = EXONERADO_114_1 ? 0 : salarioMensual * 8.5 / 100;
+  const aportePension = salarioMensual * 12 / 100;
+  const aporteARL = salarioMensual * LEGAL_PARAMS_LOCAL.ARL_RATE;
+  const aporteCaja = EXONERADO_114_1 ? 0 : salarioMensual * 4 / 100;
+  const aporteSena = EXONERADO_114_1 ? 0 : salarioMensual * 2 / 100;
+  const aporteICBF = EXONERADO_114_1 ? 0 : salarioMensual * 3 / 100;
 
   const prestaciones = primaServicios + cesantias + interesesCesantias + vacaciones;
   const aportesPatronales = aporteSalud + aportePension + aporteARL + aporteCaja + aporteSena + aporteICBF;

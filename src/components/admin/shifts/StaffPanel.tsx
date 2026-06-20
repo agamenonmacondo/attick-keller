@@ -6,7 +6,7 @@ import { formatCOP, calcularCostoEmpresa } from '@/lib/utils/costCalculator';
 
 const SMMLV = 1750905;
 const AUXILIO_TRANSPORTE = 249095;
-const autoAuxilio = (salario: number) => salario > 0 && salario <= SMMLV * 2 ? AUXILIO_TRANSPORTE : 0;
+const autoAuxilio = (salario: number) => salario === SMMLV ? AUXILIO_TRANSPORTE : 0;
 
 const AREAS: { value: string; label: string; color: string }[] = [
   { value: '', label: 'Todas las areas', color: '' },

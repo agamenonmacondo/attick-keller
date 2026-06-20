@@ -40,15 +40,16 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
     [staff, area]
   );
 
-  // Categorize staff: leaders + apoyo (fijos sin turno) vs con turno
+  // Categorize staff: fijos (apoyo + 3 líderes sin turno) vs con turno
+  const FIJO_NAMES = ['WALTER VILLAMOROS', 'ESNEIDER BLANCO', 'VERONICA FRANCHESKA'];
   const { fijos, conTurno } = useMemo(() => {
     const fijos: typeof staff = [];
     const conTurno: typeof staff = [];
     for (const s of filteredStaff) {
-      const cargo = (s.cargo || '').toLowerCase();
       const a = s.area || '';
-      if (cargo.includes('jefe') || cargo.includes('gerente') || cargo.includes('director') || cargo.includes('líder') || cargo.includes('lider')
-        || a === 'apoyo' || a === 'admin' || cargo.includes('pasante') || cargo.includes('ingeniero') || cargo.includes('servicios generales') || cargo.includes('asesor')) {
+      const name = (s.nombre_completo || s.nombre || '').toUpperCase();
+      const isFijo = a === 'apoyo' || a === 'admin' || FIJO_NAMES.some(n => name.includes(n));
+      if (isFijo) {
         fijos.push(s);
       } else {
         conTurno.push(s);

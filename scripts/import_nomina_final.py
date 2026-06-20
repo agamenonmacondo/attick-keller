@@ -1,12 +1,23 @@
 #!/usr/bin/env python3
 """Import nómina abril 2026 — A&K Supabase (Calle 75)"""
+import os
+import sys
 import psycopg2
 import openpyxl
 from decimal import Decimal, ROUND_HALF_UP
 import time
 
-DB_PASS = 'Pita5721@153'
-XLSX = '/home/mod/.hermes/cache/documents/doc_8319112453a1_Nomina atico mes de abril  2026.xlsx'
+# Credenciales BD desde entorno (Fase 6.1 — antes estaba en texto plano).
+# Exportar antes de ejecutar:  export NOMINA_DB_PASS='...'
+DB_PASS = os.environ.get('NOMINA_DB_PASS')
+if not DB_PASS:
+    sys.exit('ERROR: falta NOMINA_DB_PASS en el entorno (export NOMINA_DB_PASS=...)')
+
+# Ruta del Excel configurable por entorno; valor por defecto histórico.
+XLSX = os.environ.get(
+    'NOMINA_XLSX',
+    '/home/mod/.hermes/cache/documents/doc_8319112453a1_Nomina atico mes de abril  2026.xlsx',
+)
 
 def dec(val):
     if val is None: return Decimal('0')

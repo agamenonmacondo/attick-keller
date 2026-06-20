@@ -23,7 +23,7 @@ import { Spinner } from '@phosphor-icons/react'
 
 // Tabs que CADA ROL desbloquea (se unen si el usuario tiene varios roles)
 const ROLE_TABS: Record<string, AdminTab[]> = {
-  super_admin: ['reservas', 'ocupacion', 'mesas', 'plano', 'metricas', 'operacion', 'clientes', 'menu', 'equipo', 'nomina', 'turnos', 'app-rodri', 'informes', 'mi-turno'],
+  super_admin: ['reservas', 'ocupacion', 'mesas', 'plano', 'metricas', 'operacion', 'clientes', 'menu', 'equipo', 'nomina', 'turnos', 'informes', 'mi-turno'],
   store_admin: ['reservas', 'ocupacion', 'mesas', 'plano', 'metricas'],
   host: ['reservas', 'ocupacion'],
   lider_area: ['turnos'],

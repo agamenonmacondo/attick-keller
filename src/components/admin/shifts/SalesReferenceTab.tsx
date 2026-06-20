@@ -2,8 +2,10 @@
 
 import { useMemo } from 'react';
 import type { StaffMemberForShift, ShiftType } from '@/lib/types/shifts';
-import { calcularCostoTurnoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
+import { calcularCostoTurnoEmpresa, formatCOP, getWeekDates } from '@/lib/utils/costCalculator';
 import { useSalesAverages } from '@/lib/hooks/useSalesAverages';
+import { useMonthlyAccumulated } from '@/lib/hooks/useMonthlyAccumulated';
+import { useAuth } from '@/lib/auth/auth-provider';
 
 interface SalesReferenceTabProps {
   staff: StaffMemberForShift[];
@@ -29,6 +31,18 @@ function ratioLabel(pct: number): string {
 
 export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, area }: SalesReferenceTabProps) {
   const { data: salesData, loading: salesLoading } = useSalesAverages();
+  const { roles } = useAuth();
+  const isSuperAdmin = roles.includes('super_admin');
+
+  // Mes derivado del lunes de la semana actual (formato YYYY-MM para las APIs)
+  const month = useMemo(() => {
+    const dates = getWeekDates(weekStr);
+    const monday = dates[0];
+    return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}`;
+  }, [weekStr]);
+
+  // Acumulado real del mes (solo se carga para super_admin)
+  const monthly = useMonthlyAccumulated(isSuperAdmin ? month : null, area);
 
   // Filter staff by area — used by both nominaByDay and proyección mensual
   const filteredStaff = useMemo(() =>
@@ -216,6 +230,91 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           </div>
         </div>
       )}
+
+      {/* Row 2.5: Acumulado del Mes (real, solo super_admin) */}
+      {isSuperAdmin && (() => {
+        const nom = monthly.nomina;
+        const ventas = monthly.sales?.total_ventas || 0;
+        const costoNomina = nom?.total_costo_empresa || 0;
+        const pct = ventas > 0 ? (costoNomina / ventas) * 100 : 0;
+        const lideres = nom?.lideres_fijos || [];
+        const monthLabel = `${month}-${String(getWeekDates(weekStr)[0].getDate()).padStart(2, '0')}`;
+
+        return (
+          <div className="space-y-2">
+            <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide flex items-center gap-2">
+              <span>Acumulado del Mes (real)</span>
+              <span className="text-[10px] font-normal normal-case text-[var(--text-muted)]">
+                {monthLabel.slice(0, 7)} · {nom?._debug?.weeks ?? 0} sem · líderes fijos incluidos
+              </span>
+            </div>
+
+            {monthly.loading ? (
+              <div className="bg-[var(--bg-card)] rounded-lg p-3 text-sm text-[var(--text-secondary)]">
+                Cargando acumulado del mes…
+              </div>
+            ) : !nom && ventas === 0 ? (
+              <div className="bg-[var(--bg-card)] rounded-lg p-3 text-sm text-[var(--text-secondary)]">
+                Sin datos de nómina ni ventas para este mes.
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
+                    <div className="text-[11px] text-[var(--text-secondary)]">Costo nómina mes</div>
+                    <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">
+                      {costoNomina > 0 ? formatCOP(costoNomina) : '-'}
+                    </div>
+                    <div className="text-[10px] text-[var(--text-secondary)]">{nom?.total_personas ?? 0} turnos/líderes</div>
+                  </div>
+                  <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
+                    <div className="text-[11px] text-[var(--text-secondary)]">Ventas reales mes</div>
+                    <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">
+                      {ventas > 0 ? formatCOP(ventas) : '-'}
+                    </div>
+                    <div className="text-[10px] text-[var(--text-secondary)]">{monthly.sales?.dias_abiertos ?? 0} días abiertos</div>
+                  </div>
+                  <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--accent-primary)]/30">
+                    <div className="text-[11px] text-[var(--accent-primary)]">Nómina / Ventas</div>
+                    <div className={`text-sm font-mono font-bold ${ventas > 0 ? ratioColor(pct) : 'text-[var(--text-secondary)]'}`}>
+                      {ventas > 0 ? `${pct.toFixed(1)}%` : 'Sin ventas'}
+                    </div>
+                    <div className="text-[10px] text-[var(--text-secondary)]">{ventas > 0 ? ratioLabel(pct) : ''}</div>
+                  </div>
+                  <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
+                    <div className="text-[11px] text-[var(--text-secondary)]">Líderes fijos</div>
+                    <div className="text-sm font-mono font-semibold text-[var(--color-warning)]">
+                      {lideres.length > 0 ? formatCOP(lideres.reduce((s, l) => s + l.costo, 0)) : '-'}
+                    </div>
+                    <div className="text-[10px] text-[var(--text-secondary)]">{lideres.length} sin turno</div>
+                  </div>
+                </div>
+
+                {lideres.length > 0 && (
+                  <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
+                    <div className="text-[11px] font-semibold text-[var(--text-secondary)] mb-1.5">
+                      Líderes de costo fijo (sin turno)
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                      {lideres.map(l => (
+                        <div key={l.id} className="flex items-center gap-1.5">
+                          <span className="text-[var(--text-primary)]">{l.nombre}</span>
+                          {l.rubro && (
+                            <span className="text-[9px] px-1 py-0.5 rounded bg-[var(--color-ak-borgona)]/15 text-[var(--color-ak-borgona)] border border-[var(--color-ak-borgona)]/20">
+                              {l.rubro}
+                            </span>
+                          )}
+                          <span className="font-mono text-[var(--color-warning)]">{formatCOP(l.costo)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Row 3: Table — Desktop */}
       <div className="hidden md:block overflow-x-auto">

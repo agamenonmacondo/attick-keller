@@ -114,10 +114,12 @@ export interface StaffAlias {
 export interface StaffMemberForShift {
   id: string;
   nombre: string;
+  nombre_completo?: string;
   cargo: string;
   area: StaffArea;
   secondary_areas: string[];
   salario_mensual: number;
+  auxilio_no_salarial?: number;
   alias: string; // alias principal para mostrar en UI
 }
 

@@ -353,7 +353,25 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                     <div key={emp.id} className="flex items-center justify-between text-xs gap-2">
                       <span className="text-[var(--text-primary)] truncate flex-1">{emp.nombre}</span>
                       <span className="font-mono text-[var(--text-primary)] w-28 text-right">{formatCOP(emp.costo)}</span>
-                      <span className="font-mono text-[var(--text-secondary)] w-20 text-right">{emp.turnos} turnos</span>
+                      <span className="font-mono text-[var(--text-secondary)] w-20 text-right">{emp.is_fixed_salary ? 'Fijo' : `${emp.turnos} turnos`}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Lideres sin turnos (costo fijo) */}
+            {monthlyNomina && monthlyNomina.lideres_fijos && monthlyNomina.lideres_fijos.length > 0 && (
+              <div className="bg-[var(--bg-card)] rounded-lg p-3 border border-amber-500/30">
+                <div className="text-[11px] font-semibold text-amber-400 mb-2">
+                  Lideres de area (costo fijo)
+                </div>
+                <div className="space-y-1.5">
+                  {monthlyNomina.lideres_fijos.map(leader => (
+                    <div key={leader.id} className="flex items-center justify-between text-xs gap-2">
+                      <span className="text-amber-200 truncate flex-1">{leader.nombre}</span>
+                      <span className="font-mono text-amber-200 w-28 text-right">{formatCOP(leader.costo)}</span>
+                      <span className="font-mono text-amber-400/60 w-20 text-right">Sin turnos</span>
                     </div>
                   ))}
                 </div>

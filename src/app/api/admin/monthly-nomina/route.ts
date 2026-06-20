@@ -193,26 +193,78 @@ export async function GET(request: NextRequest) {
     empleadoMap.set(empId, emp);
   }
 
+  // === LIDERES SIN TURNOS (costo fijo mensual) ===
+  // Empleados activos con cargo de lider que NO tienen asignaciones de turno.
+  // Su costo se calcula como salario × factor_empresa × (semanas del mes / 4.33)
+  const LIDER_CARGOS = [
+    'JEFE DE BAR', 'JEFE DE SERVICIO', 'CHEF EJECUTIVO', 'JEFE DE COCINA',
+    'SUB JEFE SERVICIO', 'JEFE BAR',
+  ];
+  const FACTOR_EMPRESA = 1.548;
+
+  // Get all active staff matching the area filter (or all if "todos")
+  let staffQuery = sb
+    .from('pos_nomina_staff')
+    .select('id, nombre_completo, cargo, area, salario')
+    .eq('activo', true);
+  if (area !== 'todos') {
+    staffQuery = staffQuery.eq('area', area);
+  }
+  const { data: allStaffRows } = await staffQuery;
+
+  const leaderEntries: EmpleadoAgg[] = [];
+  let leaderCosto = 0;
+
+  for (const s of (allStaffRows || []) as { id: string; nombre_completo: string; cargo: string; area: string; salario: number | null }[]) {
+    const cargo = (s.cargo || '').toUpperCase();
+    const isLeader = LIDER_CARGOS.some(lc => cargo.includes(lc));
+    if (!isLeader) continue;
+
+    // Check if this leader already has shift assignments (they're counted in the per-turno calculation)
+    if (empleadoMap.has(s.id)) continue;
+
+    // Leader without shifts — fixed monthly cost
+    const salario = Number(s.salario) || 0;
+    if (salario === 0) continue;
+
+    const costoMensual = salario * FACTOR_EMPRESA;
+    const semanasEnMes = weeks.length;
+    const costoParaMes = costoMensual * (semanasEnMes / 4.33);
+
+    leaderCosto += costoParaMes;
+    leaderEntries.push({
+      id: s.id,
+      nombre: s.nombre_completo || '—',
+      costo: Math.round(costoParaMes),
+      turnos: 0,
+    });
+  }
+
+  totalCosto += leaderCosto;
+
   const semanas = Array.from(semanaMap.values())
     .sort((a, b) => a.week_str.localeCompare(b.week_str))
     .map(s => ({ ...s, costo: Math.round(s.costo) }));
 
   const empleados = Array.from(empleadoMap.values())
     .sort((a, b) => b.costo - a.costo)
-    .map(e => ({ ...e, costo: Math.round(e.costo) }));
+    .map(e => ({ ...e, costo: Math.round(e.costo) }))
+    .concat(leaderEntries.map(e => ({ ...e, costo: Math.round(e.costo), is_fixed_salary: true })));
 
   return NextResponse.json({
     month,
     area,
     total_costo_empresa: Math.round(totalCosto),
-    total_personas: totalPersonas,
+    total_personas: totalPersonas + leaderEntries.length,
     semanas,
     empleados,
+    lideres_fijos: leaderEntries.map(e => ({ ...e, costo: Math.round(e.costo), is_fixed_salary: true })),
     _debug: {
       weeks: weeks.length,
       schedules: activeSchedules.length,
       assignments: (assignments || []).length,
       skipped_no_type: skippedNoType,
+      leader_entries: leaderEntries.length,
     },
   });
 }

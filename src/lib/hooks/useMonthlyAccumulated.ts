@@ -12,6 +12,7 @@ export interface MonthlyNominaEmpleado {
   nombre: string;
   costo: number;
   turnos: number;
+  is_fixed_salary?: boolean;
 }
 
 export interface MonthlyNomina {
@@ -21,6 +22,7 @@ export interface MonthlyNomina {
   total_personas: number;
   semanas: MonthlyNominaSemana[];
   empleados: MonthlyNominaEmpleado[];
+  lideres_fijos: MonthlyNominaEmpleado[];
 }
 
 export interface MonthlySalesSemana {

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Plus, PencilSimple, Check, X, User, CaretDown, CaretRight, Prohibit, SignIn, SignOut } from '@phosphor-icons/react';
+import { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
+import { Plus, PencilSimple, Check, X, User, CaretDown, CaretRight, Prohibit, SignIn, SignOut, Trash } from '@phosphor-icons/react';
 import { formatCOP, calcularCostoEmpresa } from '@/lib/utils/costCalculator';
 
 const AREAS: { value: string; label: string; color: string }[] = [
@@ -96,6 +96,20 @@ export default function StaffPanel({ area }: StaffPanelProps) {
     }
   }, [filterArea]);
 
+  // Ordenar por área cuando se muestran todos
+  const AREA_ORDER = ['cocina', 'barra', 'servicio', 'apoyo', 'admin'];
+  const sortedStaff = useMemo(() => {
+    if (!filterArea) {
+      return [...staff].sort((a, b) => {
+        const ai = AREA_ORDER.indexOf(a.area || '') ?? 99;
+        const bi = AREA_ORDER.indexOf(b.area || '') ?? 99;
+        if (ai !== bi) return ai - bi;
+        return (a.nombre_completo || '').localeCompare(b.nombre_completo || '');
+      });
+    }
+    return staff;
+  }, [staff, filterArea]);
+
   useEffect(() => { fetchStaff(); }, [fetchStaff]);
   useEffect(() => { setFilterArea(area); }, [area]);
 
@@ -175,6 +189,17 @@ export default function StaffPanel({ area }: StaffPanelProps) {
       fetchStaff();
     } catch (err) {
       console.error('Error toggling activo:', err);
+    }
+  };
+
+  const deleteMember = async (member: StaffRow) => {
+    if (!confirm(`¿Eliminar permanentemente a ${member.nombre_completo}? Esta acción no se puede deshacer.`)) return;
+    try {
+      const res = await fetch(`/api/admin/nomina-staff?id=${member.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Error al eliminar');
+      fetchStaff();
+    } catch (err) {
+      console.error('Error deleting member:', err);
     }
   };
 
@@ -273,16 +298,24 @@ export default function StaffPanel({ area }: StaffPanelProps) {
       ) : (
         <>
           <div className="md:hidden space-y-2">
-            {staff.map((member) => {
+            {sortedStaff.map((member, idx) => {
               const areaMeta = AREAS.find((a) => a.value === member.area);
               const isExpanded = expandedId === member.id;
+              const prevArea = idx > 0 ? sortedStaff[idx - 1].area : null;
+              const showAreaHeader = !filterArea && member.area !== prevArea;
               const isEditing = editingId === member.id;
               const ef = editForm[member.id];
               const costoEmp = costoEmpresaMensual(member.salario_mensual || 0, member.auxilio_no_salarial || 0);
               const vHO = valorHoraOrd(member);
               const d = desglose(member);
               return (
-                <div key={member.id} className={`bg-[var(--bg-card)] rounded-lg overflow-hidden ${!member.activo ? 'opacity-50' : ''}`}>
+                <Fragment key={member.id}>
+                {showAreaHeader && (
+                  <div className="flex items-center gap-2 pt-3 pb-1">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border" style={{ color: areaMeta?.color || 'var(--text-secondary)', borderColor: areaMeta?.color || 'var(--border-default)', backgroundColor: areaMeta?.color ? `${areaMeta.color}15` : undefined }}>{areaMeta?.label || member.area || 'Sin área'}</span>
+                  </div>
+                )}
+                <div className={`bg-[var(--bg-card)] rounded-lg overflow-hidden ${!member.activo ? 'opacity-50' : ''}`}>
                   <button
                     onClick={() => { if (!isEditing) setExpandedId(isExpanded ? null : member.id); }}
                     className="w-full text-left p-3 flex items-start justify-between gap-2 min-h-[44px]"
@@ -319,6 +352,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                         <button onClick={() => toggleActivo(member)} className={`flex items-center gap-1 text-xs min-h-[44px] ${member.activo ? 'text-[var(--color-danger)]' : 'text-[var(--color-success)]'}`}>
                           {member.activo ? <><Prohibit size={14} /> Desactivar</> : <><SignIn size={14} /> Reactivar</>}
                         </button>
+                        <button onClick={() => deleteMember(member)} className="flex items-center gap-1 text-xs text-[var(--color-danger)] min-h-[44px]"><Trash size={14} /> Eliminar</button>
                       </div>
                     </div>
                   )}
@@ -347,6 +381,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                     </div>
                   )}
                 </div>
+                </Fragment>
               );
             })}
           </div>
@@ -369,7 +404,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                 </tr>
               </thead>
               <tbody>
-                {staff.map((member) => {
+                {sortedStaff.map((member, idx) => {
                   const areaMeta = AREAS.find((a) => a.value === member.area);
                   const isExpanded = expandedId === member.id;
                   const isEditing = editingId === member.id;
@@ -378,9 +413,18 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                   const vHO = valorHoraOrd(member);
                   const d = desglose(member);
                   const upEF = (field: string, value: string | number) => setEditForm(prev => ({ ...prev, [member.id]: { ...prev[member.id], [field]: value } }));
+                  const prevArea = idx > 0 ? sortedStaff[idx - 1].area : null;
+                  const showAreaRow = !filterArea && member.area !== prevArea;
                   return (
-                    <>
-                      <tr key={member.id} className={`border-b border-[var(--border-default)] hover:bg-[var(--bg-hover)]/50 transition-colors ${isExpanded ? 'bg-[var(--bg-hover)]/30' : ''} ${isEditing ? 'bg-[var(--accent-primary)]/5 ring-1 ring-[var(--accent-primary)]/30' : ''} ${!member.activo ? 'opacity-50' : ''}`}>
+                    <Fragment key={member.id}>
+                    {showAreaRow && (
+                      <tr className="border-b border-[var(--border-default)]">
+                        <td colSpan={10} className="p-2">
+                          <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border" style={{ color: areaMeta?.color || 'var(--text-secondary)', borderColor: areaMeta?.color || 'var(--border-default)', backgroundColor: areaMeta?.color ? `${areaMeta.color}15` : undefined }}>{areaMeta?.label || member.area || 'Sin área'}</span>
+                        </td>
+                      </tr>
+                    )}
+                      <tr className={`border-b border-[var(--border-default)] hover:bg-[var(--bg-hover)]/50 transition-colors ${isExpanded ? 'bg-[var(--bg-hover)]/30' : ''} ${isEditing ? 'bg-[var(--accent-primary)]/5 ring-1 ring-[var(--accent-primary)]/30' : ''} ${!member.activo ? 'opacity-50' : ''}`}>
                         <td className="p-3 text-[var(--text-secondary)] cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : member.id)}>
                           {isExpanded ? <CaretDown size={14} /> : <CaretRight size={14} />}
                         </td>
@@ -414,6 +458,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                               <button onClick={(e) => { e.stopPropagation(); toggleActivo(member); }} className={`p-1.5 rounded hover:bg-[var(--bg-hover)] min-h-[36px] min-w-[36px] ${member.activo ? 'text-[var(--color-danger)] hover:text-[var(--color-danger)]' : 'text-[var(--color-success)] hover:text-[var(--color-success)]'}`} title={member.activo ? 'Desactivar' : 'Reactivar'}>
                                 {member.activo ? <Prohibit size={14} /> : <SignIn size={14} />}
                               </button>
+                              <button onClick={(e) => { e.stopPropagation(); deleteMember(member); }} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--color-danger)] hover:text-[var(--color-danger)] min-h-[36px] min-w-[36px]" title="Eliminar"><Trash size={14} /></button>
                             </td>
                           </>
                         )}
@@ -438,7 +483,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
               </tbody>

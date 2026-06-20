@@ -153,3 +153,31 @@ export async function PATCH(request: NextRequest) {
 
   return NextResponse.json(data)
 }
+
+// DELETE /api/admin/nomina-staff?id=xxx — eliminar empleado permanentemente
+export async function DELETE(request: NextRequest) {
+  const admin = await getAdminOrLeaderUser(request)
+  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  if (admin.role === 'lider_area') {
+    return NextResponse.json({ error: 'No autorizado — lider de área no puede eliminar empleados' }, { status: 403 })
+  }
+
+  const sb = getServiceClient()
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')
+
+  if (!id) {
+    return NextResponse.json({ error: 'id es requerido' }, { status: 400 })
+  }
+
+  const { error } = await sb
+    .from('pos_nomina_staff')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true })
+}

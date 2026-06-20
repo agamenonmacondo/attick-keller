@@ -250,6 +250,21 @@ async function computeFixedLeaders(
   }
   const { data: fixedRows } = await staffQuery;
 
+  // Fetch aliases for display names (prefer alias over nombre_completo)
+  const fixedIds = (fixedRows || []).map(r => r.id);
+  const { data: aliasRows } = await sb
+    .from('staff_aliases')
+    .select('employee_id, alias')
+    .in('employee_id', fixedIds);
+  const aliasMap = new Map<string, string>();
+  for (const a of (aliasRows || []) as { employee_id: string; alias: string }[]) {
+    // Prefer shorter alias (e.g. "MELLO" over "WALTER") or first seen
+    const existing = aliasMap.get(a.employee_id);
+    if (!existing || a.alias.length < existing.length) {
+      aliasMap.set(a.employee_id, a.alias);
+    }
+  }
+
   const leaderEntries: EmpleadoAgg[] = [];
   let leaderCosto = 0;
 
@@ -264,11 +279,14 @@ async function computeFixedLeaders(
     const costoFijo = Number(s.costo_fijo_mensual) || 0;
     if (costoFijo === 0) continue;
 
+    // Prefer alias over nombre_completo (e.g. "Mello" vs "WALTER VILLAMOROS RODRIGUEZ")
+    const displayName = aliasMap.get(s.id) || s.nombre_completo || '—';
+
     const costoParaMes = costoFijo * (semanasEnMes / 4.33);
     leaderCosto += costoParaMes;
     leaderEntries.push({
       id: s.id,
-      nombre: s.nombre_completo || '—',
+      nombre: displayName,
       costo: Math.round(costoParaMes),
       turnos: 0,
       is_fixed_cost: true,

@@ -36,9 +36,14 @@ export async function GET(request: NextRequest) {
     .select('employee_id, alias')
     .in('employee_id', staffIds)
 
-  const aliasMap = new Map(
-    (aliases || []).map((a: Record<string, unknown>) => [a.employee_id as string, a.alias as string])
-  )
+  // Prefer shorter alias (e.g. "MELLO" over "WALTER") for display
+  const aliasMap = new Map<string, string>()
+  for (const a of (aliases || []) as { employee_id: string; alias: string }[]) {
+    const existing = aliasMap.get(a.employee_id)
+    if (!existing || a.alias.length < existing.length) {
+      aliasMap.set(a.employee_id, a.alias)
+    }
+  }
 
   const enrichedStaff = (staff || []).map((s: Record<string, unknown>) => ({
     id: s.id,

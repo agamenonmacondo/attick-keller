@@ -34,7 +34,7 @@ export default function CostEstimationBar({
       .then((rows: { is_fixed_cost?: boolean; costo_fijo_mensual?: number; nombre_completo?: string; alias?: string }[]) =>
         (rows || [])
           .filter(r => r.is_fixed_cost && (Number(r.costo_fijo_mensual) || 0) > 0)
-          .map(r => ({ nombre: r.nombre_completo || r.alias || '—', costo: Math.round((Number(r.costo_fijo_mensual) || 0) / 4.33) }))
+          .map(r => ({ nombre: r.alias || r.nombre_completo || '—', costo: Math.round((Number(r.costo_fijo_mensual) || 0) / 4.33) }))
       )
       .then(setLideresFijos)
       .catch(() => setLideresFijos([]));

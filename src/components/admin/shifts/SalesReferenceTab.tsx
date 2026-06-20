@@ -1,11 +1,14 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { StaffMemberForShift, ShiftType } from '@/lib/types/shifts';
 import { calcularCostoTurnoEmpresa, formatCOP, getWeekDates } from '@/lib/utils/costCalculator';
 import { useSalesAverages } from '@/lib/hooks/useSalesAverages';
 import { useMonthlyAccumulated } from '@/lib/hooks/useMonthlyAccumulated';
+import { useNominaOpsCosts } from '@/lib/hooks/useNominaOpsCosts';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { SEDE_LABELS, SEDES } from '@/lib/utils/constants';
+import { formatCOPFull } from '@/lib/utils/format';
 
 interface SalesReferenceTabProps {
   staff: StaffMemberForShift[];
@@ -29,6 +32,31 @@ function ratioLabel(pct: number): string {
   return 'Costo alto';
 }
 
+// Gauge circular para los ratios de Nómina vs Ventas (Fase 4.2)
+function RatioGauge({ label, pct, value, sub, warn = false }: { label: string; pct: number; value: string; sub?: string; warn?: boolean }) {
+  const circumference = 2 * Math.PI * 40;
+  const offset = circumference - (pct / 100) * circumference;
+  const color = warn
+    ? (pct > 35 ? 'var(--color-danger)' : pct > 25 ? 'var(--color-ak-borgona)' : 'var(--color-success, #10b981)')
+    : 'var(--color-ak-borgona)';
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-20 h-20">
+        <svg className="w-20 h-20 -rotate-90" viewBox="0 0 96 96">
+          <circle cx="48" cy="48" r="40" fill="none" stroke="var(--bg-card-hover)" strokeWidth="8" />
+          <circle cx="48" cy="48" r="40" fill="none" stroke={color} strokeWidth="8" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" className="transition-all duration-700" />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-base font-bold text-[var(--text-primary)]">{pct.toFixed(1)}%</span>
+        </div>
+      </div>
+      <p className="text-[11px] font-medium text-[var(--text-primary)] mt-1 text-center">{label}</p>
+      <p className="text-[10px] text-[var(--text-secondary)] text-center">{value}</p>
+      {sub && <p className="text-[10px] text-[var(--text-secondary)] text-center">{sub}</p>}
+    </div>
+  );
+}
+
 export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, area }: SalesReferenceTabProps) {
   const { data: salesData, loading: salesLoading } = useSalesAverages();
   const { roles } = useAuth();
@@ -43,6 +71,16 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
 
   // Acumulado real del mes (solo se carga para super_admin)
   const monthly = useMonthlyAccumulated(isSuperAdmin ? month : null, area);
+
+  // ── Nómina vs Ventas (contable) — Fase 4.2: movido aquí desde NominaUnifiedPanel ──
+  // Solo se carga para super_admin. Sede por defecto C75; el selector vive en la sección.
+  const MONTHS_ES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+  const periodoStr = useMemo(() => {
+    const [mY, mM] = month.split('-').map(Number);
+    return `${MONTHS_ES[(mM || 1) - 1]} ${mY}`;
+  }, [month]);
+  const [sede, setSede] = useState('C75');
+  const ops = useNominaOpsCosts(periodoStr, sede, isSuperAdmin);
 
   // Filter staff by area — used by both nominaByDay and proyección mensual
   const filteredStaff = useMemo(() =>
@@ -312,6 +350,118 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                 )}
               </>
             )}
+          </div>
+        );
+      })()}
+
+      {/* Row 2.6: Nómina vs Ventas — contable (solo super_admin) — Fase 4.2 */}
+      {isSuperAdmin && (() => {
+        const d = ops.data;
+        if (ops.loading) {
+          return (
+            <div className="bg-[var(--bg-card)] rounded-lg p-3 text-sm text-[var(--text-secondary)]">
+              Cargando nómina vs ventas…
+            </div>
+          );
+        }
+        if (ops.error || !d) {
+          return (
+            <div className="bg-[var(--bg-card)] rounded-lg p-3 text-sm text-[var(--text-secondary)]">
+              Sin datos contables de nómina vs ventas para {periodoStr}.
+            </div>
+          );
+        }
+        const { resumen, composicion, ventas, ratios } = d;
+        if (ventas.revenue <= 0) {
+          return (
+            <div className="bg-[var(--bg-card)] rounded-lg p-3 text-sm text-[var(--text-secondary)]">
+              Nómina vs Ventas ({periodoStr} · {SEDE_LABELS[sede] || sede}) — sin ventas registradas en el periodo.
+            </div>
+          );
+        }
+        return (
+          <div className="space-y-2">
+            <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide flex items-center justify-between gap-2">
+              <span>Nómina vs Ventas (contable)</span>
+              <span className="flex items-center gap-2 font-normal normal-case text-[var(--text-muted)]">
+                <span>{periodoStr}</span>
+                <select
+                  value={sede}
+                  onChange={e => setSede(e.target.value)}
+                  className="px-2 py-1 rounded border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] text-[11px]"
+                >
+                  {SEDES.map(s => (
+                    <option key={s} value={s}>{SEDE_LABELS[s] || s}</option>
+                  ))}
+                </select>
+              </span>
+            </div>
+
+            <div className="bg-[var(--bg-card)] rounded-lg p-4 border border-[var(--color-ak-borgona)]/20">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                {ratios.nominaDevenidoVsRevenue !== null && (
+                  <RatioGauge label="Devengado / Ventas" pct={ratios.nominaDevenidoVsRevenue} value={formatCOPFull(resumen.totalDevengado)} sub={`de ${formatCOPFull(ventas.revenue)}`} warn />
+                )}
+                {ratios.costoRealVsRevenue !== null && (
+                  <RatioGauge label="Costo Real / Ventas" pct={ratios.costoRealVsRevenue} value={formatCOPFull(resumen.costoReal)} sub={`+${((resumen.totalProvisiones / resumen.totalDevengado) * 100).toFixed(0)}% prov.`} warn />
+                )}
+                {ratios.salarioVsRevenue !== null && (
+                  <RatioGauge label="Salario / Ventas" pct={ratios.salarioVsRevenue} value={formatCOPFull(composicion.salarioDevengado)} warn />
+                )}
+                {ratios.propinasVsRevenue !== null && (
+                  <RatioGauge label="Propinas / Ventas" pct={ratios.propinasVsRevenue} value={formatCOPFull(composicion.propinas)} />
+                )}
+                {ratios.margenBruto !== null && (
+                  <RatioGauge label="Margen Bruto" pct={ratios.margenBruto} value={`${ratios.margenBruto.toFixed(1)}%`} sub="Ventas - Costo real" warn />
+                )}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-[var(--border-default)] grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <p className="text-[10px] text-[var(--text-secondary)] uppercase">Ventas del periodo</p>
+                  <p className="text-sm font-bold text-[var(--text-primary)]">{formatCOPFull(ventas.revenue)}</p>
+                  <p className="text-[10px] text-[var(--text-secondary)]">{ventas.transactions} transacciones</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-[var(--text-secondary)] uppercase">Costo Nómina Real</p>
+                  <p className="text-sm font-bold text-[var(--color-warning)]">{formatCOPFull(resumen.costoReal)}</p>
+                  <p className="text-[10px] text-[var(--text-secondary)]">devengado + provisiones</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-[var(--text-secondary)] uppercase">Margen</p>
+                  <p className={`text-sm font-bold ${ratios.margenBruto && ratios.margenBruto < 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-success)]'}`}>
+                    {ratios.margenBruto !== null ? formatCOPFull(ventas.revenue - resumen.costoReal) : '—'}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-secondary)]">{ratios.margenBruto !== null ? `${ratios.margenBruto.toFixed(1)}% margen` : ''}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-[var(--border-default)]">
+                <p className="text-[10px] text-[var(--text-secondary)] uppercase mb-2">De cada COP 100 en ventas:</p>
+                <div className="w-full h-6 rounded-full overflow-hidden flex">
+                  {ratios.salarioVsRevenue !== null && (
+                    <div className="bg-[var(--color-ak-borgona)] flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.salarioVsRevenue}%` }}>
+                      Salario {ratios.salarioVsRevenue.toFixed(0)}
+                    </div>
+                  )}
+                  {ratios.propinasVsRevenue !== null && (
+                    <div className="bg-[var(--color-warning)] flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.propinasVsRevenue}%` }}>
+                      Prop {ratios.propinasVsRevenue.toFixed(0)}
+                    </div>
+                  )}
+                  {ratios.provisionesVsRevenue !== null && ratios.provisionesVsRevenue > 1 && (
+                    <div className="bg-[var(--color-warning)] flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.provisionesVsRevenue}%` }}>
+                      Prov {ratios.provisionesVsRevenue.toFixed(0)}
+                    </div>
+                  )}
+                  {ratios.margenBruto !== null && ratios.margenBruto > 0 && (
+                    <div className="bg-[var(--color-success)] flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${ratios.margenBruto}%` }}>
+                      Margen {ratios.margenBruto.toFixed(0)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         );
       })()}

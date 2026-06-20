@@ -4,12 +4,7 @@ import { useState, useMemo } from 'react'
 import { useNomina } from '@/lib/hooks/useNomina'
 import { AnimatedCard } from '../shared/AnimatedCard'
 import { Spinner, ClockCounterClockwise, Users, ArrowLeft, CalendarDots, Sun, Moon, ChartBar, Lightning, CaretDown, CaretUp, MagnifyingGlass, Clock } from '@phosphor-icons/react'
-
-function formatCOP(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
-  return `$${n.toLocaleString('es-CO')}`
-}
+import { formatCOP } from '@/lib/utils/format'
 
 /** Bar chart for hours distribution */
 function HoursBarChart({ resumen }: { resumen: NominaResumen }) {

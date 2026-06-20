@@ -13,20 +13,10 @@ import type {
 } from '@/lib/hooks/useNomina'
 import { AnimatedCard } from '../shared/AnimatedCard'
 import { Spinner, Money, Users, ArrowDown, ArrowUp, Lightning, Clock, CalendarDots, CaretDown, CaretUp, Table, HandCoins, FirstAidKit, Warning } from '@phosphor-icons/react'
-
-function formatCOP(n: number): string {
-  if (!n && n !== 0) return '$0'
-  return '$' + Math.round(n).toLocaleString('es-CO')
-}
+import { formatCOPFull as formatCOP } from '@/lib/utils/format'
+import { SEDE_LABELS } from '@/lib/utils/constants'
 
 type SubTab = 'detalle' | 'he-recargos' | 'provisiones' | 'novedades' | 'propinas'
-
-const SEDE_LABELS: Record<string, string> = {
-  C75: 'Calle 75',
-  C85: 'Calle 85',
-  KINDER: 'Kinder',
-  ADMIN: 'Admin',
-}
 
 function KPICard({ label, value, icon: Icon, color }: { label: string; value: string; icon: any; color?: string }) {
   return (

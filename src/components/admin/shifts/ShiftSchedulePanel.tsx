@@ -245,13 +245,6 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
   const today = useMemo(() => getLocalDate(), []);
   const weekDates = useMemo(() => getWeekDates(weekStr), [weekStr]);
 
-  // Mes (YYYY-MM) del que se muestra la semana: el Jueves (weekDates[3]) cae
-  // siempre dentro del mes ISO de la semana, evitando ambigüedad en bordes.
-  const monthStr = useMemo(() => {
-    const thu = weekDates[3];
-    return `${thu.getFullYear()}-${String(thu.getMonth() + 1).padStart(2, '0')}`;
-  }, [weekDates]);
-
   // Bloquear semanas pasadas — solo semana actual y futuras
   const currentWeekStr = useMemo(() => getWeekStr(new Date()), []);
   const isWeekEditable = (wStr: string) => wStr >= currentWeekStr;
@@ -704,7 +697,6 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
           grid={grid}
           weekStr={weekStr}
           area={area}
-          monthStr={monthStr}
         />
       )}
 

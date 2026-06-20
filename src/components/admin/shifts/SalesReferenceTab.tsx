@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import type { StaffMemberForShift, ShiftType } from '@/lib/types/shifts';
 import { calcularCostoTurnoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
 import { useSalesAverages } from '@/lib/hooks/useSalesAverages';
-import { useMonthlyAccumulated } from '@/lib/hooks/useMonthlyAccumulated';
 
 interface SalesReferenceTabProps {
   staff: StaffMemberForShift[];
@@ -12,21 +11,6 @@ interface SalesReferenceTabProps {
   grid: Record<string, Record<number, string>>;
   weekStr: string;
   area: string;
-  monthStr: string;
-}
-
-const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-
-function monthLabel(monthStr: string): string {
-  const [y, m] = monthStr.split('-').map(Number);
-  if (!y || !m) return monthStr;
-  return `${MONTH_NAMES[m - 1]} ${y}`;
-}
-
-function daysInMonthFromStr(monthStr: string): number {
-  const [y, m] = monthStr.split('-').map(Number);
-  if (!y || !m) return 0;
-  return new Date(y, m, 0).getDate();
 }
 
 // Ratio color helper — now based on COSTO NÓMINA / VENTAS (lower = better)
@@ -43,9 +27,8 @@ function ratioLabel(pct: number): string {
   return 'Costo alto';
 }
 
-export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, area, monthStr }: SalesReferenceTabProps) {
+export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, area }: SalesReferenceTabProps) {
   const { data: salesData, loading: salesLoading } = useSalesAverages();
-  const { nomina: monthlyNomina, sales: monthlySales, loading: monthlyLoading } = useMonthlyAccumulated(monthStr, area);
 
   // Filter staff by area — used by both nominaByDay and proyección mensual
   const filteredStaff = useMemo(() =>
@@ -130,36 +113,6 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
   const nominaVentasMensualPct = nominaMensual > 0 && ventasMensuales > 0
     ? (nominaMensual / ventasMensuales) * 100
     : 0;
-
-  // === ACUMULADO DEL MES (real, no proyección) ===
-  const monthlyVentas = monthlySales?.total_ventas || 0;
-  const monthlyNominaTotal = monthlyNomina?.total_costo_empresa || 0;
-  const monthlyPct = monthlyNominaTotal > 0 && monthlyVentas > 0
-    ? (monthlyNominaTotal / monthlyVentas) * 100
-    : 0;
-  const diasAbiertos = monthlySales?.dias_abiertos || 0;
-  const dimMes = daysInMonthFromStr(monthStr);
-  const hasMonthlyData = monthlyNominaTotal > 0 || monthlyVentas > 0;
-
-  // Join semanal: nómina + ventas por week_str
-  const weeklyMonthlyRows = useMemo(() => {
-    if (!monthlyNomina && !monthlySales) return [];
-    const map = new Map<string, { week_str: string; ventas: number; nomina: number }>();
-    for (const s of monthlySales?.por_semana || []) {
-      map.set(s.week_str, { week_str: s.week_str, ventas: s.ventas, nomina: 0 });
-    }
-    for (const s of monthlyNomina?.semanas || []) {
-      const existing = map.get(s.week_str) || { week_str: s.week_str, ventas: 0, nomina: 0 };
-      existing.nomina = s.costo;
-      map.set(s.week_str, existing);
-    }
-    return Array.from(map.values()).sort((a, b) => a.week_str.localeCompare(b.week_str));
-  }, [monthlyNomina, monthlySales]);
-
-  const topEmpleados = useMemo(() =>
-    (monthlyNomina?.empleados || []).slice(0, 5),
-    [monthlyNomina]
-  );
 
   if (salesLoading) {
     return (
@@ -260,123 +213,6 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               </div>
               <div className="text-[10px] text-[var(--text-secondary)]">Nómina ÷ salario base</div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Row 2.5: Acumulado del Mes — datos reales del mes */}
-      {monthlyLoading && (
-        <div className="bg-[var(--bg-card)] rounded-lg p-3 border border-[var(--border-default)]">
-          <div className="text-xs text-[var(--text-secondary)]">Cargando acumulado mensual...</div>
-        </div>
-      )}
-
-      {!monthlyLoading && hasMonthlyData && (
-        <div className="space-y-2">
-          <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
-            Acumulado del Mes — {monthLabel(monthStr)}
-          </div>
-
-          {/* KPI row */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-            <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
-              <div className="text-[11px] text-[var(--text-secondary)]">Ventas real</div>
-              <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">
-                {formatCOP(monthlyVentas)}
-              </div>
-              {monthlySales && (
-                <div className="text-[10px] text-[var(--text-secondary)]">{monthlySales.total_cheques} cheques</div>
-              )}
-            </div>
-            <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
-              <div className="text-[11px] text-[var(--text-secondary)]">Nómina real</div>
-              <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">
-                {monthlyNominaTotal > 0 ? formatCOP(monthlyNominaTotal) : '-'}
-              </div>
-              <div className="text-[10px] text-[var(--text-secondary)]">
-                {monthlyNomina?.total_personas ?? 0} turnos · costo empresa
-              </div>
-            </div>
-            <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
-              <div className="text-[11px] text-[var(--text-secondary)]">% Nóm/Ventas</div>
-              <div className={`text-sm font-mono font-semibold ${monthlyNominaTotal > 0 && monthlyVentas > 0 ? ratioColor(monthlyPct) : 'text-[var(--text-secondary)]'}`}>
-                {monthlyNominaTotal > 0 && monthlyVentas > 0 ? `${monthlyPct.toFixed(1)}%` : 'Sin datos'}
-              </div>
-              {monthlyNominaTotal > 0 && monthlyVentas > 0 && (
-                <div className="text-[10px] text-[var(--text-secondary)]">{ratioLabel(monthlyPct)}</div>
-              )}
-            </div>
-            <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
-              <div className="text-[11px] text-[var(--text-secondary)]">Días abiertos</div>
-              <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">
-                {diasAbiertos} <span className="text-[var(--text-secondary)] font-normal text-xs">de {dimMes}</span>
-              </div>
-              <div className="text-[10px] text-[var(--text-secondary)]">Días con ventas ≥ {formatCOP(100000)}</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-            {/* Por semana */}
-            {weeklyMonthlyRows.length > 0 && (
-              <div className="bg-[var(--bg-card)] rounded-lg p-3 border border-[var(--border-default)]">
-                <div className="text-[11px] text-[var(--text-secondary)] mb-2">Por semana</div>
-                <div className="space-y-1.5">
-                  {weeklyMonthlyRows.map(row => {
-                    const pct = row.nomina > 0 && row.ventas > 0
-                      ? (row.nomina / row.ventas) * 100
-                      : 0;
-                    const projected = row.ventas === 0;
-                    return (
-                      <div key={row.week_str} className="flex items-center justify-between text-xs gap-2">
-                        <span className="font-mono text-[var(--text-secondary)] w-16 shrink-0">{row.week_str}</span>
-                        <span className="font-mono text-[var(--text-primary)] flex-1 text-right">
-                          {formatCOP(row.ventas)}
-                          {projected && <span className="text-[10px] text-[var(--text-secondary)]"> (proyectado)</span>}
-                        </span>
-                        <span className="font-mono text-[var(--text-secondary)] w-28 text-right">{formatCOP(row.nomina)}</span>
-                        <span className={`font-mono font-semibold w-16 text-right ${row.nomina > 0 && row.ventas > 0 ? ratioColor(pct) : 'text-[var(--text-secondary)]'}`}>
-                          {row.nomina > 0 && row.ventas > 0 ? `${pct.toFixed(0)}%` : '-'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Por empleado (top 5) */}
-            {topEmpleados.length > 0 && (
-              <div className="bg-[var(--bg-card)] rounded-lg p-3 border border-[var(--border-default)]">
-                <div className="text-[11px] text-[var(--text-secondary)] mb-2">Por empleado (top 5)</div>
-                <div className="space-y-1.5">
-                  {topEmpleados.map(emp => (
-                    <div key={emp.id} className="flex items-center justify-between text-xs gap-2">
-                      <span className="text-[var(--text-primary)] truncate flex-1">{emp.nombre}</span>
-                      <span className="font-mono text-[var(--text-primary)] w-28 text-right">{formatCOP(emp.costo)}</span>
-                      <span className="font-mono text-[var(--text-secondary)] w-20 text-right">{emp.is_fixed_salary ? 'Fijo' : `${emp.turnos} turnos`}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Lideres sin turnos (costo fijo) */}
-            {monthlyNomina && monthlyNomina.lideres_fijos && monthlyNomina.lideres_fijos.length > 0 && (
-              <div className="bg-[var(--bg-card)] rounded-lg p-3 border border-amber-500/30">
-                <div className="text-[11px] font-semibold text-amber-400 mb-2">
-                  Lideres de area (costo fijo)
-                </div>
-                <div className="space-y-1.5">
-                  {monthlyNomina.lideres_fijos.map(leader => (
-                    <div key={leader.id} className="flex items-center justify-between text-xs gap-2">
-                      <span className="text-amber-200 truncate flex-1">{leader.nombre}</span>
-                      <span className="font-mono text-amber-200 w-28 text-right">{formatCOP(leader.costo)}</span>
-                      <span className="font-mono text-amber-400/60 w-20 text-right">Sin turnos</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}

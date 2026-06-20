@@ -88,6 +88,8 @@ export async function POST(request: NextRequest) {
       area,
       secondary_areas: [],
       salario: salario_mensual || 0,
+      auxilio_no_salarial: body.auxilio_no_salarial ?? 0,
+      aplica_propinas: body.aplica_propinas ?? true,
       sede: 'C75',
       cedula: cedula || null,
       correo: correo || null,
@@ -139,6 +141,7 @@ export async function PATCH(request: NextRequest) {
   if (correo !== undefined) updates.correo = correo
   if (salario_mensual !== undefined) updates.salario = salario_mensual
   if (activo !== undefined) updates.activo = activo
+  if (body.auxilio_no_salarial !== undefined) updates.auxilio_no_salarial = body.auxilio_no_salarial
 
   const { data, error } = await sb
     .from('pos_nomina_staff')

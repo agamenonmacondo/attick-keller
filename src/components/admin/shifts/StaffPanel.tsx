@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
 import { Plus, PencilSimple, Check, X, User, CaretDown, CaretRight, Prohibit, SignIn, SignOut, Trash } from '@phosphor-icons/react';
 import { formatCOP, calcularCostoEmpresa } from '@/lib/utils/costCalculator';
 
+const SMMLV = 1750905;
+const AUXILIO_TRANSPORTE = 249095;
+const autoAuxilio = (salario: number) => salario > 0 && salario <= SMMLV * 2 ? AUXILIO_TRANSPORTE : 0;
+
 const AREAS: { value: string; label: string; color: string }[] = [
   { value: '', label: 'Todas las areas', color: '' },
   { value: 'cocina', label: 'Cocina', color: 'var(--color-ak-borgona)' },
@@ -125,7 +129,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
       const res = await fetch('/api/admin/nomina-staff', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre_completo: addForm.nombre_completo, cargo: addForm.cargo, area: addForm.area, contrato: addForm.contrato, cedula: addForm.cedula || null, correo: addForm.correo || null, salario_mensual: addForm.salario_mensual, alias: addForm.alias || null }),
+        body: JSON.stringify({ nombre_completo: addForm.nombre_completo, cargo: addForm.cargo, area: addForm.area, contrato: addForm.contrato, cedula: addForm.cedula || null, correo: addForm.correo || null, salario_mensual: addForm.salario_mensual, alias: addForm.alias || null, auxilio_no_salarial: autoAuxilio(addForm.salario_mensual) }),
       });
       if (!res.ok) throw new Error('Error creando empleado');
       resetAddForm();
@@ -142,7 +146,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
       const res = await fetch('/api/admin/nomina-staff', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, nombre_completo: f.nombre_completo, cargo: f.cargo, area: f.area, contrato: f.contrato, cedula: f.cedula || null, correo: f.correo || null, salario_mensual: f.salario_mensual }),
+        body: JSON.stringify({ id, nombre_completo: f.nombre_completo, cargo: f.cargo, area: f.area, contrato: f.contrato, cedula: f.cedula || null, correo: f.correo || null, salario_mensual: f.salario_mensual, auxilio_no_salarial: autoAuxilio(f.salario_mensual) }),
       });
       if (!res.ok) throw new Error('Error actualizando empleado');
       setEditingId(null);

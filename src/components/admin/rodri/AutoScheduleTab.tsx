@@ -372,7 +372,7 @@ function makeCostCalculator(p: Record<string, number>) {
   const recExtDomNoct = p.recExtDomNoct ?? 1.55
   const inicioNoct = p.inicioNoct ?? 19
   const finNoct = p.finNoct ?? 6
-  const valorHora = p.valorHora ?? (p.salario ?? 1423500) / (p.jornadaSemanal ?? 44)
+  const valorHora = p.valorHora ?? (p.salario ?? 1750905) / (p.jornadaSemanal ?? 44)
 
   return (shiftCode: string, dayIndex: number): DayAssignment => {
     const def = SHIFT_DEFS[shiftCode]
@@ -658,7 +658,7 @@ function runSimulations(
   weekSeed: number,
 ): SimulationResult[] {
   const jSemanal = Number(params.jornadaSemanal ?? 44)
-  const valorHora = Number(params.valorHora ?? (params.salario ?? 1423500) / jSemanal)
+  const valorHora = Number(params.valorHora ?? (params.salario ?? 1750905) / jSemanal)
 
   const scenarios = [
     { name: 'Conservador', maxWeeklyHours: jSemanal, allowSeguido: false },
@@ -742,7 +742,7 @@ export default function AutoScheduleTab() {
     const recDom = Number(paramsDict.recDom ?? 0.80)
     const recExtDomDiur = Number(paramsDict.recExtDomDiur ?? 1.05)
     const recExtDomNoct = Number(paramsDict.recExtDomNoct ?? 1.55)
-    const salario = Number(paramsDict.salario ?? 1423500)
+    const salario = Number(paramsDict.salario ?? 1750905)
     const inicioNoct = Number(paramsDict.inicioNoct ?? 19)
     const finNoct = Number(paramsDict.finNoct ?? 6)
     const valorHora = salario / jSemanal
@@ -844,7 +844,7 @@ export default function AutoScheduleTab() {
       }
     }
     const jSemanal = Number(paramsDict.jornadaSemanal ?? 44)
-    const valorHora = Number(paramsDict.salario ?? 1423500) / jSemanal
+    const valorHora = Number(paramsDict.salario ?? 1750905) / jSemanal
     let totalTerceros = 0
     let tercerosCost = 0
     for (let d = 0; d < 7; d++) {

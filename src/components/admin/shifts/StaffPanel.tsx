@@ -49,35 +49,7 @@ interface StaffRow {
   modalidad: string | null;
   es_medio_tiempo: boolean;
   fecha_ingreso: string | null;
-  is_fixed_cost: boolean;
-  costo_fijo_mensual: number;
-  is_leader: boolean;
-  rubro: string | null;
 }
-
-// Campos editables de un empleado (incluye líderes / costo fijo — Fase 4.1)
-interface EditFields {
-  nombre_completo: string;
-  cargo: string;
-  area: string;
-  contrato: string;
-  cedula: string;
-  correo: string;
-  salario_mensual: number;
-  alias: string;
-  aplica_propinas: boolean;
-  auxilio_no_salarial: number;
-  modalidad: string;
-  fecha_ingreso: string;
-  activo: boolean;
-  is_fixed_cost: boolean;
-  costo_fijo_mensual: number;
-  is_leader: boolean;
-  rubro: string;
-}
-
-const RUBROS = ['', 'barra', 'servicio', 'cocina'];
-const MODALIDADES = ['COMPLETO', 'MEDIO_TIEMPO'];
 
 export default function StaffPanel({ area }: StaffPanelProps) {
   const [staff, setStaff] = useState<StaffRow[]>([]);
@@ -97,7 +69,16 @@ export default function StaffPanel({ area }: StaffPanelProps) {
     salario_mensual: 0,
     alias: '',
   });
-  const [editForm, setEditForm] = useState<Record<string, EditFields>>({});
+  const [editForm, setEditForm] = useState<Record<string, {
+    nombre_completo: string;
+    cargo: string;
+    area: string;
+    contrato: string;
+    cedula: string;
+    correo: string;
+    salario_mensual: number;
+    alias: string;
+  }>>({});
 
   const fetchStaff = useCallback(async () => {
     setLoading(true);
@@ -147,25 +128,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
       const res = await fetch('/api/admin/nomina-staff', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id,
-          nombre_completo: f.nombre_completo,
-          cargo: f.cargo,
-          area: f.area,
-          contrato: f.contrato,
-          cedula: f.cedula || null,
-          correo: f.correo || null,
-          salario_mensual: f.salario_mensual,
-          aplica_propinas: f.aplica_propinas,
-          auxilio_no_salarial: f.auxilio_no_salarial,
-          modalidad: f.modalidad,
-          fecha_ingreso: f.fecha_ingreso || null,
-          activo: f.activo,
-          is_fixed_cost: f.is_fixed_cost,
-          costo_fijo_mensual: f.costo_fijo_mensual,
-          is_leader: f.is_leader,
-          rubro: f.rubro || null,
-        }),
+        body: JSON.stringify({ id, nombre_completo: f.nombre_completo, cargo: f.cargo, area: f.area, contrato: f.contrato, cedula: f.cedula || null, correo: f.correo || null, salario_mensual: f.salario_mensual }),
       });
       if (!res.ok) throw new Error('Error actualizando empleado');
       setEditingId(null);
@@ -187,15 +150,6 @@ export default function StaffPanel({ area }: StaffPanelProps) {
         correo: member.correo || '',
         salario_mensual: member.salario_mensual || 0,
         alias: member.alias || '',
-        aplica_propinas: member.aplica_propinas,
-        auxilio_no_salarial: member.auxilio_no_salarial || 0,
-        modalidad: member.modalidad || 'COMPLETO',
-        fecha_ingreso: member.fecha_ingreso || '',
-        activo: member.activo,
-        is_fixed_cost: member.is_fixed_cost || false,
-        costo_fijo_mensual: member.costo_fijo_mensual || 0,
-        is_leader: member.is_leader || false,
-        rubro: member.rubro || '',
       },
     }));
     setEditingId(member.id);
@@ -205,65 +159,6 @@ export default function StaffPanel({ area }: StaffPanelProps) {
   const cancelEdit = (id: string) => {
     setEditingId(null);
     setEditForm(prev => { const next = { ...prev }; delete next[id]; return next; });
-  };
-
-  // Campos avanzados editables (lider/costo fijo + datos nómina) — Fase 4.1
-  const upField = (id: string, field: keyof EditFields, value: string | number | boolean) =>
-    setEditForm(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
-
-  const AdvancedEditFields = ({ id }: { id: string }) => {
-    const f = editForm[id];
-    if (!f) return null;
-    const inputCls = 'w-full min-h-[36px] px-2 py-1 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-xs';
-    const labelCls = 'block text-[10px] text-[var(--text-secondary)] mb-0.5';
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mt-2 pt-2 border-t border-[var(--border-default)]">
-        <div>
-          <label className={labelCls}>Modalidad</label>
-          <select value={f.modalidad} onChange={(e) => upField(id, 'modalidad', e.target.value)} className={inputCls}>
-            {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelCls}>Auxilio no salarial</label>
-          <input type="number" value={f.auxilio_no_salarial || ''} onChange={(e) => upField(id, 'auxilio_no_salarial', Number(e.target.value) || 0)} className={inputCls + ' font-mono'} />
-        </div>
-        <div>
-          <label className={labelCls}>Fecha ingreso</label>
-          <input type="date" value={f.fecha_ingreso} onChange={(e) => upField(id, 'fecha_ingreso', e.target.value)} className={inputCls} />
-        </div>
-        <div className="flex items-end gap-3 pb-1">
-          <label className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] cursor-pointer">
-            <input type="checkbox" checked={f.activo} onChange={(e) => upField(id, 'activo', e.target.checked)} /> Activo
-          </label>
-          <label className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] cursor-pointer">
-            <input type="checkbox" checked={f.aplica_propinas} onChange={(e) => upField(id, 'aplica_propinas', e.target.checked)} /> Propinas
-          </label>
-        </div>
-        <div>
-          <label className={labelCls}>Líder</label>
-          <label className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] cursor-pointer min-h-[36px]">
-            <input type="checkbox" checked={f.is_leader} onChange={(e) => upField(id, 'is_leader', e.target.checked)} /> Jefe de área
-          </label>
-        </div>
-        <div>
-          <label className={labelCls}>Rubro del líder</label>
-          <select value={f.rubro} onChange={(e) => upField(id, 'rubro', e.target.value)} className={inputCls}>
-            {RUBROS.map(r => <option key={r} value={r}>{r || '—'}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelCls}>Costo fijo (sin turno)</label>
-          <label className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] cursor-pointer min-h-[36px]">
-            <input type="checkbox" checked={f.is_fixed_cost} onChange={(e) => upField(id, 'is_fixed_cost', e.target.checked)} /> Líder fijo
-          </label>
-        </div>
-        <div>
-          <label className={labelCls}>Costo fijo mensual</label>
-          <input type="number" value={f.costo_fijo_mensual || ''} onChange={(e) => upField(id, 'costo_fijo_mensual', Number(e.target.value) || 0)} className={inputCls + ' font-mono'} disabled={!f.is_fixed_cost} />
-        </div>
-      </div>
-    );
   };
 
   // Totales
@@ -422,7 +317,6 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                           <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Correo</label><input type="email" value={ef.correo} onChange={(e) => setEditForm(prev => ({ ...prev, [member.id]: { ...prev[member.id], correo: e.target.value } }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
                         </div>
                       </div>
-                      <AdvancedEditFields id={member.id} />
                       <div className="flex gap-2 sticky bottom-0 bg-[var(--bg-card)] pt-2 pb-1">
                         <button onClick={() => cancelEdit(member.id)} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[44px] border border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><X size={14} /> Cancelar</button>
                         <button onClick={() => handleUpdate(member.id)} disabled={saving} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[44px] bg-[var(--accent-primary)] text-white hover:opacity-90 disabled:opacity-50"><Check size={14} /> {saving ? 'Guardando...' : 'Guardar'}</button>
@@ -498,13 +392,6 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                           </>
                         )}
                       </tr>
-                      {isEditing && (
-                        <tr key={`${member.id}-edit-detail`} className="border-b border-[var(--border-default)] bg-[var(--accent-primary)]/5">
-                          <td colSpan={10} className="p-3">
-                            <AdvancedEditFields id={member.id} />
-                          </td>
-                        </tr>
-                      )}
                       {isExpanded && !isEditing && (
                         <tr key={`${member.id}-detail`} className="border-b border-[var(--border-default)] bg-[var(--bg-card)]">
                           <td colSpan={10} className="p-4">

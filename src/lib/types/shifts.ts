@@ -29,12 +29,6 @@ export interface StaffMember {
   auxilio_no_salarial: number;
   modalidad: string;
   es_medio_tiempo: boolean;
-  fecha_ingreso: string | null;
-  // Líderes / costo fijo (Fase 1)
-  is_fixed_cost: boolean;        // líderes sin turnos que se suman como costo fijo mensual
-  costo_fijo_mensual: number;    // costo empresa mensual precalculado (is_fixed_cost=true)
-  is_leader: boolean;            // jefes de área (barra/servicio/cocina)
-  rubro: string | null;           // 'barra' | 'servicio' | 'cocina' | null
 }
 
 export interface ShiftType {
@@ -158,17 +152,16 @@ export interface ShiftAlert {
 export const LEGAL_PARAMS = {
   MAX_WEEKLY_HOURS: 44,
   MAX_DAILY_HOURS: 8,
-  NIGHT_SURCHARGE: 0.35,     // Recargo nocturno sobre horas entre 21:00-06:00 (CST Art. 160)
-  SUNDAY_SURCHARGE: 0.75,     // Recargo dominical sobre TODAS las horas del día domingo
-  OVERTIME_DIURNAL: 0.25,     // HE antes de 21:00 (diurna)
-  OVERTIME_NIGHT: 0.75,      // HE después de 21:00 (nocturna)
-  OVERTIME_SUNDAY_DIURNAL: 1.05,  // HE domingo antes de 21:00
-  OVERTIME_SUNDAY_NIGHT: 1.55,    // HE domingo después de 21:00
-  HE_CUTOFF_HOUR: 19,  // Corte entre HE diurna/nocturna (19:00). NOTA: distinto del recargo nocturno.
-  NIGHT_START: 21,     // Inicio recargo nocturno 21:00 (CST Art. 160). NOTA: HE usa 19:00, recargo nocturno usa 21:00.
-  NIGHT_END: 6,        // Fin recargo nocturno 06:00
+  NIGHT_SURCHARGE: 0.35,     // 19:00-06:00
+  SUNDAY_SURCHARGE: 0.75,     // Todo el dia domingo
+  OVERTIME_DIURNAL: 0.25,     // HE antes de 19:00
+  OVERTIME_NIGHT: 0.75,      // HE despues de 19:00
+  OVERTIME_SUNDAY_DIURNAL: 1.05,  // HE domingo antes de 19:00
+  OVERTIME_SUNDAY_NIGHT: 1.55,    // HE domingo despues de 19:00
+  NIGHT_START: 19, // horas (19:00)
+  NIGHT_END: 6,    // horas (06:00)
   TRANSPORT_ALLOWANCE: 249095, // Auxilio transporte 2026
-  MIN_SALARY: 1423500,       // Salario mínimo 2026
+  MIN_SALARY: 1423500,       // Salario minimo 2026
 } as const;
 
 // Colores por tipo de turno (para la grilla)

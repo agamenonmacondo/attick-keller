@@ -60,10 +60,10 @@ export function calcularValorHora(salarioMensual: number): number {
  * Calcula el costo estimado de un turno para un empleado,
  * siguiendo la ley laboral colombiana:
  *
- * - Recargo nocturno: 35% sobre horas entre 21:00-06:00 (CST Art. 160)
+ * - Recargo nocturno: 35% sobre horas entre 19:00-06:00
  * - Recargo dominical: 75% sobre TODAS las horas del dia domingo
- * - Horas extra diurnas (antes de 21:00): 25% sobre valor hora
- * - Horas extra nocturnas (despues de 21:00): 75% sobre valor hora
+ * - Horas extra diurnas (antes de 19:00): 25% sobre valor hora
+ * - Horas extra nocturnas (despues de 19:00): 75% sobre valor hora
  * - HE dominical diurna: 1.05 (recargo compuesto = 75% dom + 25% HE diurna)
  *   => valor hora + valor hora * 0.75 + valor hora * 1.05 = valor hora * (1 + 0.75 + 1.05) NO
  *   => La HE dominical diurna se paga a valor hora * 1.05 ADICIONAL al recargo dominical
@@ -147,22 +147,14 @@ export function calcularCostoTurno(
       + (heDiurnas * valorHora * 2.0)
       + (heNocturnas * valorHora * 2.5);
 
-    // Desglose domingo (Fase 2.3 — ahora SÍ suma al total):
-    // base_pay            = TODAS las horas (netas + HE) a tarifa 1.0x
-    // sunday_surcharge    = recargo dominical 75% sobre TODAS las horas (netas + HE)
-    // night_surcharge     = recargo nocturno 35% sobre horas nocturnas netas
-    //                       (la HE nocturna ya lleva su premium 0.75 en overtime, no se le suma 0.35)
-    // overtime_surcharge  = recargo HE (25% diurna, 75% nocturna) — solo el recargo, la base va en base_pay
-    // Suma: base_pay + sunday_surcharge + night_surcharge + overtime_surcharge = total
-    const totalHorasDesg = hoNetas + hnNetas + heDiurnas + heNocturnas;
     return {
-      base_pay: Math.round(totalHorasDesg * valorHora),
+      base_pay: Math.round(hoNetas * valorHora + hnNetas * valorHora),
       night_surcharge: Math.round(hnNetas * valorHora * 0.35),
       overtime_surcharge: Math.round(
         heDiurnas * valorHora * 0.25
         + heNocturnas * valorHora * 0.75
       ),
-      sunday_surcharge: Math.round(totalHorasDesg * valorHora * 0.75),
+      sunday_surcharge: Math.round(totalHoras * valorHora * 0.75),
       total: Math.round(totalReal),
     };
   } else {
@@ -171,12 +163,8 @@ export function calcularCostoTurno(
       + (heDiurnas * valorHora * 1.25)
       + (heNocturnas * valorHora * 1.75);
 
-    // Desglose día normal (Fase 2.3 — ahora SÍ suma al total):
-    // base_pay = TODAS las horas (netas + HE) a tarifa 1.0x (la base de la HE va aquí)
-    // overtime_surcharge = solo el recargo HE (25% diurna, 75% nocturna)
-    const totalHorasDesg = hoNetas + hnNetas + heDiurnas + heNocturnas;
     return {
-      base_pay: Math.round(totalHorasDesg * valorHora),
+      base_pay: Math.round(hoNetas * valorHora + hnNetas * valorHora),
       night_surcharge: Math.round(hnNetas * valorHora * 0.35),
       overtime_surcharge: Math.round(
         heDiurnas * valorHora * 0.25
@@ -186,31 +174,6 @@ export function calcularCostoTurno(
       total: Math.round(totalReal),
     };
   }
-}
-
-/**
- * Tope anti-overflow para salarios sucios (datos importados corruptos).
- * 50M = ~35x SMMLV 2026; cualquier valor mayor se considera inválido.
- */
-export const SALARY_CAP = 50_000_000;
-
-/**
- * Sanitización unificada de salario (Fase 2).
- * Regla única en todo el sistema:
- *   - null / undefined / NaN / <= 0  → fallbackSMMLV (SMMLV 2026 por defecto)
- *   - > SALARY_CAP (50M)             → fallbackSMMLV (dato inválido, no descarta a 0)
- *   - resto                          → valor saneado
- *
- * Usar SIEMPRE este helper en turnos y nómina antes de calcular costos.
- */
-export function sanitizeSalario(
-  raw: number | null | undefined,
-  fallbackSMMLV: number = LEGAL_PARAMS.MIN_SALARY
-): number {
-  const v = Number(raw);
-  if (!Number.isFinite(v) || v <= 0) return fallbackSMMLV;
-  if (v > SALARY_CAP) return fallbackSMMLV;
-  return v;
 }
 
 /**
@@ -225,8 +188,8 @@ export function calcularCostoTurnoEmpresa(
   rawSalario: number | null | undefined,
   esDomingo: boolean = false
 ): ShiftCostEstimate {
-  // Sanitizar salario (helper unificado Fase 2 — misma regla en todo el sistema)
-  const salarioFallback = sanitizeSalario(rawSalario);
+  // Sanitizar salario (misma logica en todo el sistema)
+  const salarioFallback = rawSalario && rawSalario > 50000000 ? 1750905 : (rawSalario || 1750905);
   const costoEmp = calcularCostoEmpresa(salarioFallback);
   const scaleFactor = costoEmp.costoMensualTotal / salarioFallback;
   
@@ -238,6 +201,66 @@ export function calcularCostoTurnoEmpresa(
     overtime_surcharge: Math.round(costo.overtime_surcharge * scaleFactor),
     sunday_surcharge: Math.round(costo.sunday_surcharge * scaleFactor),
     total: Math.round(costo.total * scaleFactor),
+  };
+}
+
+/**
+ * Calcula el costo semanal estimado para un empleado
+ */
+export function calcularCostoSemanal(
+  assignments: { shiftType: ShiftType; esDomingo: boolean }[],
+  salarioMensual: number
+): {
+  totalHoras: number;
+  horasOrdinarias: number;
+  horasNocturnas: number;
+  horasExtra: number;
+  costoTotal: number;
+  tieneDescanso: boolean;
+  desglose: { base: number; recargoNocturno: number; recargoDominical: number; horasExtra: number };
+} {
+  let totalHoras = 0;
+  let horasOrdinarias = 0;
+  let horasNocturnas = 0;
+  let costoTotal = 0;
+  let diasTrabajados = 0;
+  let baseTotal = 0;
+  let recargoNocturno = 0;
+  let recargoDominical = 0;
+  let horasExtraTotal = 0;
+
+  for (const { shiftType, esDomingo } of assignments) {
+    const hours = shiftType.ordinarias + shiftType.nocturnas;
+    totalHoras += hours;
+    horasOrdinarias += shiftType.ordinarias;
+    horasNocturnas += shiftType.nocturnas;
+    diasTrabajados++;
+
+    const costo = calcularCostoTurno(shiftType, salarioMensual, esDomingo);
+    costoTotal += costo.total;
+    baseTotal += costo.base_pay;
+    recargoNocturno += costo.night_surcharge;
+    recargoDominical += costo.sunday_surcharge;
+    horasExtraTotal += costo.overtime_surcharge;
+  }
+
+  // Horas extra semanales = exceso sobre 44h
+  const horasExtra = Math.max(0, totalHoras - LEGAL_PARAMS.MAX_WEEKLY_HOURS);
+  const tieneDescanso = diasTrabajados < 7;
+
+  return {
+    totalHoras,
+    horasOrdinarias,
+    horasNocturnas,
+    horasExtra,
+    costoTotal,
+    tieneDescanso,
+    desglose: {
+      base: Math.round(baseTotal),
+      recargoNocturno: Math.round(recargoNocturno),
+      recargoDominical: Math.round(recargoDominical),
+      horasExtra: Math.round(horasExtraTotal),
+    },
   };
 }
 
@@ -278,7 +301,7 @@ export function calcularCostoEmpresa(salarioMensual: number): {
   valorHoraNocturna: number;
 } {
   const LEGAL_PARAMS_LOCAL = {
-    SMMLV: 1423500,  // Salario mínimo 2026 (correcto)
+    SMMLV: 1750905,
     TRANSPORT_ALLOWANCE: 249095,
     ARL_RATE: 0.00522, // comercio
   };

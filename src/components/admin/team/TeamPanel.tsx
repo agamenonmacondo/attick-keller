@@ -4,14 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { AnimatedCard } from '../shared/AnimatedCard'
 import { StaffList } from './StaffList'
 import { AddStaffForm } from './AddStaffForm'
-import StaffPanel from '../shifts/StaffPanel'
-
-type TeamSubTab = 'accesos' | 'personal'
-
-const TEAM_SUB_TABS: { key: TeamSubTab; label: string }[] = [
-  { key: 'accesos', label: 'Accesos' },
-  { key: 'personal', label: 'Personal (nómina)' },
-]
 
 interface StaffMember {
   id: string
@@ -25,7 +17,6 @@ interface StaffMember {
 }
 
 export function TeamPanel() {
-  const [subTab, setSubTab] = useState<TeamSubTab>('accesos')
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -87,39 +78,17 @@ export function TeamPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2 border-b border-[var(--border-default)]">
-        {TEAM_SUB_TABS.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setSubTab(t.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              subTab === t.key
-                ? 'border-[var(--accent-primary)] text-[var(--accent-primary)]'
-                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <AnimatedCard delay={0}>
+        <AddStaffForm onAdd={handleAddStaff} />
+      </AnimatedCard>
 
-      {subTab === 'accesos' && (
-        <>
-          <AnimatedCard delay={0}>
-            <AddStaffForm onAdd={handleAddStaff} />
-          </AnimatedCard>
-
-          <AnimatedCard delay={0.05}>
-            <StaffList
-              staff={staff}
-              onToggleActive={handleToggleActive}
-              onDelete={handleDelete}
-            />
-          </AnimatedCard>
-        </>
-      )}
-
-      {subTab === 'personal' && <StaffPanel area="" />}
+      <AnimatedCard delay={0.05}>
+        <StaffList
+          staff={staff}
+          onToggleActive={handleToggleActive}
+          onDelete={handleDelete}
+        />
+      </AnimatedCard>
     </div>
   )
 }

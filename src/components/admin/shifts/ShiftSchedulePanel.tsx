@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, ChartBar, ChartLineUp, PencilSimple, Trash, DownloadSimple } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, ChartBar, ChartLineUp, PencilSimple, IdentificationBadge, Trash, DownloadSimple } from '@phosphor-icons/react';
 import { SectionHeading } from '../shared/SectionHeading';
 
 import type { ShiftType, StaffMemberForShift, ShiftAssignment } from '@/lib/types/shifts';
@@ -12,13 +12,14 @@ import { cn } from '@/lib/utils/cn';
 import { useTheme } from '@/lib/ThemeProvider';
 import ShiftGrid from './ShiftGrid';
 import CostEstimationBar from './CostEstimationBar';
+import StaffPanel from './StaffPanel';
 import ShiftTimelineView from './ShiftTimelineView';
 import ShiftTypeModal from './ShiftTypeModal';
 
 import SalesReferenceTab from './SalesReferenceTab';
 
 type Area = 'cocina' | 'barra' | 'servicio' | 'todos';
-type Tab = 'cronograma' | 'costos' | 'referencia' | 'horarios';
+type Tab = 'cronograma' | 'costos' | 'referencia' | 'horarios' | 'personal';
 
 const AREAS: { value: Area; label: string }[] = [
   { value: 'cocina', label: 'Cocina' },
@@ -521,6 +522,7 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
             { id: 'costos' as Tab, icon: <ChartBar size={14} />, label: 'Costos' },
             { id: 'referencia' as Tab, icon: <ChartLineUp size={14} />, label: 'Referencia' },
             { id: 'horarios' as Tab, icon: <PencilSimple size={14} />, label: 'Horarios' },
+            { id: 'personal' as Tab, icon: <IdentificationBadge size={14} />, label: 'Personal' },
           ].filter(t => area === 'todos' ? t.id === 'costos' || t.id === 'referencia' : true).map((t) => (
             <button
               key={t.id}
@@ -706,6 +708,10 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
           onNewShiftType={() => { setEditingShiftType(null); setModalOpen(true); }}
           onEditShiftType={(st) => { setEditingShiftType(st); setModalOpen(true); }}
         />
+      )}
+
+      {tab === 'personal' && (
+        <StaffPanel area={area} />
       )}
 
       {/* Modal para crear/editar turno */}

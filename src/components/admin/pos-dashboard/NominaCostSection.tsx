@@ -59,11 +59,7 @@ function RatioGauge({ label, pct, value, sub, warn = false }: { label: string; p
 }
 
 export function NominaCostSection() {
-  // Dynamic period: current month in "MONTH YEAR" format (e.g. "JUNIO 2026")
-  const now = new Date()
-  const months = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']
-  const currentPeriodo = `${months[now.getMonth()]} ${now.getFullYear()}`
-  const { data, loading, error } = useNominaOpsCosts(currentPeriodo)
+  const { data, loading, error } = useNominaOpsCosts('ABRIL 2026')
 
   if (loading) {
     return (
@@ -89,7 +85,7 @@ export function NominaCostSection() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-base font-bold text-[var(--text-primary)]">Costos Nomina C75</h3>
-          <p className="text-xs text-[var(--text-secondary)]">{currentPeriodo} · Calle 75</p>
+          <p className="text-xs text-[var(--text-secondary)]">Abril 2026 · Calle 75</p>
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-ak-borgona)]/10 text-[var(--color-ak-borgona)]">
           <Users size={14} weight="fill" />

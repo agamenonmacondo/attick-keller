@@ -132,8 +132,8 @@ export async function GET(request: NextRequest) {
   if (action === 'staff_detail') {
     const staffId = qparam(request, 'staff_id')
     if (!staffId) return NextResponse.json({ error: 'staff_id requerido' }, { status: 400 })
-    const from = qparam(request, 'from') || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`
-    const to = qparam(request, 'to') || (() => { const d = new Date(); const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${lastDay}`; })()
+    const from = qparam(request, 'from') || '2026-04-01'
+    const to = qparam(request, 'to') || '2026-04-30'
 
     const [staffMember, staffDays] = await Promise.all([
       sb.from('pos_nomina_staff').select('*').eq('id', staffId).single(),
@@ -270,8 +270,8 @@ export async function GET(request: NextRequest) {
     .select('id, periodo, sede, fecha_inicio, fecha_fin')
     .order('fecha_inicio', { ascending: false })
 
-  const from = qparam(request, 'from') || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`
-  const to = qparam(request, 'to') || (() => { const d = new Date(); const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${lastDay}`; })()
+  const from = qparam(request, 'from') || '2026-04-01'
+  const to = qparam(request, 'to') || '2026-04-30'
 
   const [staff, daily] = await Promise.all([
     sb.from('pos_nomina_staff').select('*').order('nombre_completo'),

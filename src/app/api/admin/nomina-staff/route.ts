@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   let query = sb
     .from('pos_nomina_staff')
-    .select('id, nombre_completo, cargo, area, secondary_areas, salario, sede, cedula, correo, contrato, activo, aplica_propinas, auxilio_no_salarial, modalidad, es_medio_tiempo, fecha_ingreso, is_fixed_cost, costo_fijo_mensual, is_leader, rubro')
+    .select('id, nombre_completo, cargo, area, secondary_areas, salario, sede, cedula, correo, contrato, activo, aplica_propinas, auxilio_no_salarial, modalidad, es_medio_tiempo')
     .eq('sede', 'C75')
     .order('nombre_completo')
 
@@ -36,14 +36,9 @@ export async function GET(request: NextRequest) {
     .select('employee_id, alias')
     .in('employee_id', staffIds)
 
-  // Prefer shorter alias (e.g. "MELLO" over "WALTER") for display
-  const aliasMap = new Map<string, string>()
-  for (const a of (aliases || []) as { employee_id: string; alias: string }[]) {
-    const existing = aliasMap.get(a.employee_id)
-    if (!existing || a.alias.length < existing.length) {
-      aliasMap.set(a.employee_id, a.alias)
-    }
-  }
+  const aliasMap = new Map(
+    (aliases || []).map((a: Record<string, unknown>) => [a.employee_id as string, a.alias as string])
+  )
 
   const enrichedStaff = (staff || []).map((s: Record<string, unknown>) => ({
     id: s.id,
@@ -61,11 +56,6 @@ export async function GET(request: NextRequest) {
     auxilio_no_salarial: s.auxilio_no_salarial || 0,
     modalidad: s.modalidad || 'COMPLETO',
     es_medio_tiempo: s.es_medio_tiempo === true,
-    fecha_ingreso: s.fecha_ingreso || null,
-    is_fixed_cost: s.is_fixed_cost === true,
-    costo_fijo_mensual: Number(s.costo_fijo_mensual) || 0,
-    is_leader: s.is_leader === true,
-    rubro: s.rubro || null,
     alias: aliasMap.get(s.id as string) || (s.nombre_completo as string).split(' ')[0],
   }))
 
@@ -84,11 +74,7 @@ export async function POST(request: NextRequest) {
 
   const sb = getServiceClient()
   const body = await request.json()
-  const {
-    nombre_completo, cargo, area, contrato, cedula, correo, salario_mensual, alias,
-    aplica_propinas, auxilio_no_salarial, modalidad, es_medio_tiempo, fecha_ingreso,
-    is_fixed_cost, costo_fijo_mensual, is_leader, rubro,
-  } = body
+  const { nombre_completo, cargo, area, contrato, cedula, correo, salario_mensual, alias } = body
 
   if (!nombre_completo || !area) {
     return NextResponse.json({ error: 'nombre_completo y area son requeridos' }, { status: 400 })
@@ -107,15 +93,6 @@ export async function POST(request: NextRequest) {
       correo: correo || null,
       contrato: contrato || 'fijo',
       activo: true,
-      aplica_propinas: aplica_propinas !== undefined ? aplica_propinas : true,
-      auxilio_no_salarial: auxilio_no_salarial || 0,
-      modalidad: modalidad || 'COMPLETO',
-      es_medio_tiempo: es_medio_tiempo === true,
-      fecha_ingreso: fecha_ingreso || null,
-      is_fixed_cost: is_fixed_cost === true,
-      costo_fijo_mensual: Number(costo_fijo_mensual) || 0,
-      is_leader: is_leader === true,
-      rubro: rubro || null,
     })
     .select()
     .single()
@@ -147,11 +124,7 @@ export async function PATCH(request: NextRequest) {
 
   const sb = getServiceClient()
   const body = await request.json()
-  const {
-    id, nombre_completo, cargo, area, contrato, cedula, correo, salario_mensual, activo,
-    aplica_propinas, auxilio_no_salarial, modalidad, es_medio_tiempo, fecha_ingreso,
-    is_fixed_cost, costo_fijo_mensual, is_leader, rubro,
-  } = body
+  const { id, nombre_completo, cargo, area, contrato, cedula, correo, salario_mensual, activo } = body
 
   if (!id) {
     return NextResponse.json({ error: 'id es requerido' }, { status: 400 })
@@ -166,15 +139,6 @@ export async function PATCH(request: NextRequest) {
   if (correo !== undefined) updates.correo = correo
   if (salario_mensual !== undefined) updates.salario = salario_mensual
   if (activo !== undefined) updates.activo = activo
-  if (aplica_propinas !== undefined) updates.aplica_propinas = aplica_propinas
-  if (auxilio_no_salarial !== undefined) updates.auxilio_no_salarial = auxilio_no_salarial
-  if (modalidad !== undefined) updates.modalidad = modalidad
-  if (es_medio_tiempo !== undefined) updates.es_medio_tiempo = es_medio_tiempo
-  if (fecha_ingreso !== undefined) updates.fecha_ingreso = fecha_ingreso
-  if (is_fixed_cost !== undefined) updates.is_fixed_cost = is_fixed_cost
-  if (costo_fijo_mensual !== undefined) updates.costo_fijo_mensual = Number(costo_fijo_mensual) || 0
-  if (is_leader !== undefined) updates.is_leader = is_leader
-  if (rubro !== undefined) updates.rubro = rubro
 
   const { data, error } = await sb
     .from('pos_nomina_staff')

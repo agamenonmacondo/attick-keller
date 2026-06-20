@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import type { StaffMemberForShift, ShiftType } from '@/lib/types/shifts';
 import { calcularCostoTurnoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
@@ -22,25 +22,6 @@ export default function CostEstimationBar({
   area,
 }: CostEstimationBarProps) {
   const SUNDAY_DAY_INDEX = 0;
-
-  // Líderes de costo fijo (sin turno) — se suman al total general de la semana
-  const [lideresFijos, setLideresFijos] = useState<{ nombre: string; costo: number }[]>([]);
-  useEffect(() => {
-    const url = area && area !== 'todos'
-      ? `/api/admin/nomina-staff?area=${encodeURIComponent(area)}`
-      : '/api/admin/nomina-staff';
-    fetch(url, { credentials: 'include' })
-      .then(r => r.ok ? r.json() : [])
-      .then((rows: { is_fixed_cost?: boolean; costo_fijo_mensual?: number; nombre_completo?: string; alias?: string }[]) =>
-        (rows || [])
-          .filter(r => r.is_fixed_cost && (Number(r.costo_fijo_mensual) || 0) > 0)
-          .map(r => ({ nombre: r.alias || r.nombre_completo || '—', costo: Math.round((Number(r.costo_fijo_mensual) || 0) / 4.33) }))
-      )
-      .then(setLideresFijos)
-      .catch(() => setLideresFijos([]));
-  }, [area]);
-
-  const lideresFijosTotal = useMemo(() => lideresFijos.reduce((s, l) => s + l.costo, 0), [lideresFijos]);
 
   const employeeCosts = useMemo(() => {
     const results: {
@@ -140,12 +121,6 @@ export default function CostEstimationBar({
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
           <div className="text-xs text-[var(--text-secondary)]">Costo total semana</div>
           <div className="text-lg font-mono font-semibold text-[var(--text-primary)]">{formatCOP(kpis.totalCost)}</div>
-          {lideresFijosTotal > 0 && (
-            <div className="text-[10px] mt-1 space-y-0.5 text-[var(--text-secondary)]">
-              <div className="text-[var(--color-warning)]">+ Líderes fijos: {formatCOP(lideresFijosTotal)}</div>
-              <div className="font-semibold text-[var(--text-primary)]">Total general: {formatCOP(kpis.totalCost + lideresFijosTotal)}</div>
-            </div>
-          )}
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
           <div className="text-xs text-[var(--text-secondary)]">Horas totales</div>

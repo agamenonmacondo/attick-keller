@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStaffOrLeaderUser, getServiceClient } from '@/lib/utils/admin-auth'
 import type { ShiftType } from '@/lib/types/shifts'
-import { calcularCostoTurnoEmpresa, sanitizeSalario } from '@/lib/utils/costCalculator'
+import { calcularCostoTurnoEmpresa } from '@/lib/utils/costCalculator'
 import { sendShiftChangeEmail } from '@/lib/email/send'
 
 // Force dynamic — never cache shift data
@@ -78,8 +78,10 @@ export async function PUT(request: NextRequest) {
 
   const salaryMap = new Map(
     (staffData || []).map((s: Record<string, unknown>) => {
-      // Sanitización unificada (Fase 2): >50M o inválido → SMMLV (no descarta a 0)
-      return [s.id as string, sanitizeSalario(Number(s.salario))]
+      const raw = Number(s.salario) || 0
+      // Sanitize: cap at 50M (5x salario minimo legal) to prevent numeric overflow
+      const sanitized = raw > 50000000 ? 0 : raw
+      return [s.id as string, sanitized]
     })
   )
 

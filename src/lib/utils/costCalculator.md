@@ -5,7 +5,7 @@
   - `calcularCostoTurno(shiftType, salarioMensual, esDomingo)` → `ShiftCostEstimate` con recargos nocturno/dominical/HE. Usa SALARIO BRUTO como base.
   - `calcularCostoTurnoEmpresa(shiftType, rawSalario, esDomingo)` → **Wrapper seguro**: sanitiza salario (cap 50M, fallback SMLV), escala a costo empresa real (×~1.66). **Usar SIEMPRE esta en el sistema de turnos.**
   - `calcularCostoEmpresa(salarioMensual)` → desglose completo: salario + prestaciones (prima 8.33%, cesantias 8.33%, intereses 1%, vacaciones 4.17%) + aportes patronales (salud 8.5%, pension 12%, ARL 0.522%, caja 4%, SENA 2%, ICBF 3%) + auxilio transporte ($249.095 si ≤2 SMLV)
-  - `calcularCostoTurnoEmpresa(shiftType, rawSalario, esDomingo)` → costo empresa (scaleFactor aplicado)
+  - `calcularCostoSemanal(assignments, salarioMensual)` → suma semanal con desglose
   - `calcularHorasSegmento(entrada, salida)` → horas ordinarias/nocturnas para turnos partidos
   - `formatCOP(value)` → formato moneda colombiana sin decimales
   - `getWeekStr(date)`, `getWeekDates(weekStr)`, `dayIndexToDateIndex(dayIndex)`, `dateToDayIndex(date)`, `esDomingo(date)` → utilidades de calendario ISO

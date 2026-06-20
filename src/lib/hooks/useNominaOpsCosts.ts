@@ -85,18 +85,12 @@ export interface OpsCostData {
   }
 }
 
-export function useNominaOpsCosts(periodo?: string, sede = 'C75', enabled = true) {
+export function useNominaOpsCosts(periodo?: string, sede = 'C75') {
   const [data, setData] = useState<OpsCostData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!enabled) {
-      setData(null)
-      setLoading(false)
-      setError(null)
-      return
-    }
     setLoading(true)
     setError(null)
     const params = new URLSearchParams()
@@ -106,7 +100,7 @@ export function useNominaOpsCosts(periodo?: string, sede = 'C75', enabled = true
       .then(r => r.ok ? r.json() : r.json().then(d => { throw new Error(d.error || 'Error cargando datos') }))
       .then(d => { setData(d); setLoading(false) })
       .catch(e => { setError(e.message); setLoading(false) })
-  }, [periodo, sede, enabled])
+  }, [periodo, sede])
 
   return { data, loading, error }
 }

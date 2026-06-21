@@ -37,26 +37,25 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
   useEffect(() => {
     async function fetchAllStaff() {
       try {
-        const areas: ('cocina' | 'barra' | 'servicio')[] = ['cocina', 'barra', 'servicio'];
-        const results = await Promise.all(
-          areas.map(a => fetch(`/api/admin/shift-schedules?area=${a}&week_str=${weekStr}`, { credentials: 'include' }).then(r => r.json()))
-        );
-        const combined = results.flatMap(r => r.staff || []);
-        // Deduplicate by id
-        const seen = new Set<string>();
-        const unique = combined.filter((s: StaffMemberForShift) => {
-          if (seen.has(s.id)) return false;
-          seen.add(s.id);
-          return true;
-        });
-        setAllStaff(unique);
+        const res = await fetch('/api/admin/nomina-staff', { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to fetch staff');
+        const data = await res.json();
+        // nomina-staff returns { staff: [...] } with all active employees
+        const staffList = (data.staff || data || []).filter((s: Record<string, unknown>) => s.activo !== false);
+        setAllStaff(staffList.map((s: Record<string, unknown>) => ({
+          ...s,
+          nombre: (s.nombre_completo as string || '').split(' ')[0],
+          salario_mensual: (s.salario as number) || 0,
+          auxilio_no_salarial: (s.auxilio_no_salarial as number) || 0,
+          alias: '',
+        })));
       } catch {
         // Fallback: use the staff prop (may miss some fijos when filtered by area)
         setAllStaff(staff);
       }
     }
     fetchAllStaff();
-  }, [weekStr]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filter staff by area — used by both nominaByDay and proyección mensual
   const filteredStaff = useMemo(() =>

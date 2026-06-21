@@ -174,7 +174,11 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
   const provisionesMensuales = nominaTotalMensual - salarioBaseConTurno - fijosData.totalMensual;
   const factorReal = (salarioBaseConTurno + fijosData.totalMensual) > 0 ? nominaTotalMensual / (salarioBaseConTurno + fijosData.totalMensual) : 0;
 
-  const nominaVentasMensualPct = nominaTotalMensual > 0 && ventasMensuales > 0
+  const nominaTurnosVentasPct = nominaTurnosMensual > 0 && ventasMensuales > 0
+    ? (nominaTurnosMensual / ventasMensuales) * 100
+    : 0;
+
+  const nominaTotalVentasPct = nominaTotalMensual > 0 && ventasMensuales > 0
     ? (nominaTotalMensual / ventasMensuales) * 100
     : 0;
 
@@ -292,11 +296,18 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <div className="text-[10px] text-[var(--text-secondary)]">Mediana semanal × {WEEKS_PER_MONTH.toFixed(2)}</div>
             </div>
             <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
-              <div className="text-[11px] text-[var(--text-secondary)]">% Nóm/Ventas</div>
-              <div className={`text-sm font-mono font-semibold ${ratioColor(nominaVentasMensualPct)}`}>
-                {nominaVentasMensualPct.toFixed(1)}%
+              <div className="text-[11px] text-[var(--text-secondary)]">% Turnos/Ventas</div>
+              <div className={`text-sm font-mono font-semibold ${ratioColor(nominaTurnosVentasPct)}`}>
+                {nominaTurnosVentasPct.toFixed(1)}%
               </div>
-              <div className="text-[10px] text-[var(--text-secondary)]">{ratioLabel(nominaVentasMensualPct)}</div>
+              <div className="text-[10px] text-[var(--text-secondary)]">{ratioLabel(nominaTurnosVentasPct)} · Sin fijos</div>
+            </div>
+            <div className="bg-[var(--accent-primary)]/10 rounded-lg p-2.5 border border-[var(--accent-primary)]/30">
+              <div className="text-[11px] text-[var(--accent-primary)]">% Total/Ventas</div>
+              <div className={`text-sm font-mono font-bold ${ratioColor(nominaTotalVentasPct)}`}>
+                {nominaTotalVentasPct.toFixed(1)}%
+              </div>
+              <div className="text-[10px] text-[var(--text-secondary)]">{ratioLabel(nominaTotalVentasPct)} · Con fijos</div>
             </div>
             <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
               <div className="text-[11px] text-[var(--text-secondary)]">Provisiones</div>

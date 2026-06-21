@@ -45,7 +45,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
         setAllStaff(staffList.map((s: Record<string, unknown>) => ({
           ...s,
           nombre: (s.nombre_completo as string || '').split(' ')[0],
-          salario_mensual: (s.salario as number) || 0,
+          salario_mensual: (s.salario_mensual as number) || 0,
           auxilio_no_salarial: (s.auxilio_no_salarial as number) || 0,
           alias: '',
         })));

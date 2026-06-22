@@ -218,24 +218,42 @@ export default function StaffPanel({ area }: StaffPanelProps) {
   const valorHENocturna = (m: StaffRow) => Math.round(valorHoraOrd(m) * 1.75);
   const valorHoraNocturna = (m: StaffRow) => Math.round(valorHoraOrd(m) * 1.35);
 
-  // Desglose detalle
+  // Desglose detalle — usa la misma lógica que calcularCostoEmpresa
   const desglose = (m: StaffRow) => {
     const s = m.salario_mensual || 0;
     const aux = m.auxilio_no_salarial || 0;
+    const costo = calcularCostoEmpresa(s, aux);
     return {
-      primaServicios: Math.round(s * 8.33 / 100),
-      cesantias: Math.round(s * 8.33 / 100),
-      interesesCesantias: Math.round(s * 1 / 100),
-      vacaciones: Math.round(s * 4.17 / 100),
-      aporteSalud: Math.round(s * 8.5 / 100),
-      aportePension: Math.round(s * 12 / 100),
-      aporteARL: Math.round(s * 0.522 / 100),
-      aporteCaja: Math.round(s * 4 / 100),
-      aporteSena: Math.round(s * 2 / 100),
-      aporteICBF: Math.round(s * 3 / 100),
-      auxilioTransporte: aux,
+      primaServicios: costo.primaServicios,
+      cesantias: costo.cesantias,
+      interesesCesantias: costo.interesesCesantias,
+      vacaciones: costo.vacaciones,
+      aporteSalud: costo.aporteSalud,
+      aportePension: costo.aportePension,
+      aporteARL: costo.aporteARL,
+      aporteCaja: costo.aporteCaja,
+      aporteSena: costo.aporteSena,
+      aporteICBF: costo.aporteICBF,
+      auxilioTransporte: costo.auxilioTransporte,
     };
   };
+
+  // Desglose global de prestaciones y aportes
+  const totalDesglose = staff.reduce((acc, m) => {
+    const d = desglose(m);
+    return {
+      primaServicios: acc.primaServicios + d.primaServicios,
+      cesantias: acc.cesantias + d.cesantias,
+      interesesCesantias: acc.interesesCesantias + d.interesesCesantias,
+      vacaciones: acc.vacaciones + d.vacaciones,
+      aporteSalud: acc.aporteSalud + d.aporteSalud,
+      aportePension: acc.aportePension + d.aportePension,
+      aporteARL: acc.aporteARL + d.aporteARL,
+      aporteCaja: acc.aporteCaja + d.aporteCaja,
+      aporteSena: acc.aporteSena + d.aporteSena,
+      aporteICBF: acc.aporteICBF + d.aporteICBF,
+    };
+  }, { primaServicios: 0, cesantias: 0, interesesCesantias: 0, vacaciones: 0, aporteSalud: 0, aportePension: 0, aporteARL: 0, aporteCaja: 0, aporteSena: 0, aporteICBF: 0 });
 
   return (
     <div className="space-y-4">
@@ -254,6 +272,28 @@ export default function StaffPanel({ area }: StaffPanelProps) {
           <div className="text-sm font-mono font-bold text-[var(--accent-primary)]">{formatCOP(totalCostoEmpresa)}/mes</div>
         </div>
       </div>
+
+      {/* Desglose de prestaciones y aportes */}
+      <details className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-default)]">
+        <summary className="px-3 py-2 text-xs text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] select-none">
+          Desglose prestaciones y aportes
+        </summary>
+        <div className="px-3 pb-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1">
+          <div className="flex justify-between text-[11px]"><span className="text-[var(--text-secondary)]">Prima servicios (8.33%)</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(totalDesglose.primaServicios)}</span></div>
+          <div className="flex justify-between text-[11px]"><span className="text-[var(--text-secondary)]">Cesantías (8.33%)</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(totalDesglose.cesantias)}</span></div>
+          <div className="flex justify-between text-[11px]"><span className="text-[var(--text-secondary)]">Intereses cesantías (1%)</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(totalDesglose.interesesCesantias)}</span></div>
+          <div className="flex justify-between text-[11px]"><span className="text-[var(--text-secondary)]">Vacaciones (4.17%)</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(totalDesglose.vacaciones)}</span></div>
+          <div className="flex justify-between text-[11px]"><span className="text-[var(--text-secondary)]">EPS Salud (8.5%)</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(totalDesglose.aporteSalud)}</span></div>
+          <div className="flex justify-between text-[11px]"><span className="text-[var(--text-secondary)]">Pensión (12%)</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(totalDesglose.aportePension)}</span></div>
+          <div className="flex justify-between text-[11px]"><span className="text-[var(--text-secondary)]">ARL (0.522%)</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(totalDesglose.aporteARL)}</span></div>
+          <div className="flex justify-between text-[11px]"><span className="text-[var(--text-secondary)]">Caja compensación (4%)</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(totalDesglose.aporteCaja)}</span></div>
+          <div className="flex justify-between text-[11px]"><span className="text-[var(--text-secondary)]">SENA (2%)</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(totalDesglose.aporteSena)}</span></div>
+          <div className="flex justify-between text-[11px]"><span className="text-[var(--text-secondary)]">ICBF (3%)</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(totalDesglose.aporteICBF)}</span></div>
+          <div className="col-span-full border-t border-[var(--border-default)] my-1" />
+          <div className="flex justify-between text-[11px]"><span className="text-[var(--text-secondary)] font-medium">Prestaciones</span><span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(totalDesglose.primaServicios + totalDesglose.cesantias + totalDesglose.interesesCesantias + totalDesglose.vacaciones)}</span></div>
+          <div className="flex justify-between text-[11px]"><span className="text-[var(--text-secondary)] font-medium">Aportes patronales</span><span className="font-mono font-medium text-[var(--text-primary)]">{formatCOP(totalDesglose.aporteSalud + totalDesglose.aportePension + totalDesglose.aporteARL + totalDesglose.aporteCaja + totalDesglose.aporteSena + totalDesglose.aporteICBF)}</span></div>
+        </div>
+      </details>
 
       {/* Header con filtro */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

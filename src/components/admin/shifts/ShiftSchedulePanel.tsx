@@ -53,11 +53,11 @@ interface ShiftSchedulePanelProps {
 
 export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelProps) {
   // If areaFilter is set (lider_area), lock to that area and never allow changes
-  // If no areaFilter (super_admin/store_admin), start on cocina with free area selector
+  // If no areaFilter (super_admin/store_admin), start on "todos" to see all areas
   const [area, setArea] = useState<Area>(() =>
-    areaFilter && AREAS.some(a => a.value === areaFilter) ? (areaFilter as Area) : 'cocina'
+    areaFilter && AREAS.some(a => a.value === areaFilter) ? (areaFilter as Area) : 'todos'
   );
-  const [tab, setTab] = useState<Tab>('cronograma');
+  const [tab, setTab] = useState<Tab>(() => area === 'todos' ? 'costos' : 'cronograma');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingShiftType, setEditingShiftType] = useState<ShiftType | null>(null);
 

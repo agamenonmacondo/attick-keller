@@ -5,7 +5,7 @@ import { CaretLeft, CaretRight, FloppyDisk, PaperPlaneTilt, ClockClockwise, Char
 import { SectionHeading } from '../shared/SectionHeading';
 
 import type { ShiftType, StaffMemberForShift, ShiftAssignment } from '@/lib/types/shifts';
-import { getWeekStr, getWeekDates, dayIndexToDateIndex, calcularCostoTurnoEmpresa, calcularHorasTurno, formatCOP } from '@/lib/utils/costCalculator';
+import { getWeekStr, getWeekDates, dayIndexToDateIndex, calcularCostoTurnoEmpresa, calcularRecargosTurnoEmpresa, calcularHorasTurno, formatCOP } from '@/lib/utils/costCalculator';
 import { DAY_NAMES, LEGAL_PARAMS } from '@/lib/types/shifts';
 import { getLocalDate } from '@/lib/utils/formatDate';
 import { cn } from '@/lib/utils/cn';
@@ -110,18 +110,18 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
       ...dayOrder.map(di => DAY_NAMES[di]),
       ...dayOrder.map(di => `${DAY_NAMES[di]} Horario`),
       'Horas Ordinarias', 'Horas Nocturnas', 'Horas Extra', 'Total Horas',
-      'Costo Base', 'Recargo Nocturno', 'Recargo Dominical', 'Horas Extra $', 'Costo Total',
+      'Recargo Noc', 'Recargo Dom', 'HE$', 'Total Recargos',
       'Dia Descanso', 'Alertas',
     ];
 
     const rows: string[][] = [];
 
     let totalOrd = 0, totalNoc = 0, totalHE = 0, totalHoras = 0;
-    let totalBase = 0, totalRN = 0, totalRD = 0, totalHE$ = 0, totalCosto = 0;
+    let totalRN = 0, totalRD = 0, totalHE$ = 0, totalRecargos = 0;
 
     for (const emp of staff) {
       const empGrid = grid[emp.id] || {};
-      let empOrd = 0, empNoc = 0, empOvertime = 0, empBase = 0, empRN = 0, empRD = 0, empHE$ = 0, empCosto = 0;
+      let empOrd = 0, empNoc = 0, empOvertime = 0, empRN = 0, empRD = 0, empHE$ = 0, empRecargos = 0;
       let diasTrabajados = 0;
       const alerts: string[] = [];
 
@@ -144,12 +144,11 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
         empNoc += horas.nocturnas;
         diasTrabajados++;
 
-        const costo = calcularCostoTurnoEmpresa(st, emp.salario_mensual, isSunday);
-        empBase += costo.base_pay;
-        empRN += costo.night_surcharge;
-        empRD += costo.sunday_surcharge;
-        empHE$ += costo.overtime_surcharge;
-        empCosto += costo.total;
+        const recargos = calcularRecargosTurnoEmpresa(st, emp.salario_mensual, isSunday);
+        empRN += recargos.night_surcharge;
+        empRD += recargos.sunday_surcharge;
+        empHE$ += recargos.overtime_surcharge;
+        empRecargos += recargos.total_recargos;
 
         // Extra diario si > 8h
         if (horas.total > LEGAL_PARAMS.MAX_DAILY_HOURS) {
@@ -170,11 +169,10 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
       totalNoc += empNoc;
       totalHE += empWeeklyOvertime;
       totalHoras += empOrd + empNoc;
-      totalBase += empBase;
       totalRN += empRN;
       totalRD += empRD;
       totalHE$ += empHE$;
-      totalCosto += empCosto;
+      totalRecargos += empRecargos;
 
       rows.push([
         escapeCSV(emp.alias),
@@ -186,11 +184,10 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
         empNoc.toFixed(1),
         empWeeklyOvertime.toFixed(1),
         (empOrd + empNoc).toFixed(1),
-        String(Math.round(empBase)),
         String(Math.round(empRN)),
         String(Math.round(empRD)),
         String(Math.round(empHE$)),
-        String(Math.round(empCosto)),
+        String(Math.round(empRecargos)),
         diasTrabajados < 7 ? 'Si' : 'No',
         escapeCSV(alerts.join('; ')),
       ]);
@@ -207,11 +204,10 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
       totalNoc.toFixed(1),
       totalHE.toFixed(1),
       totalHoras.toFixed(1),
-      String(Math.round(totalBase)),
       String(Math.round(totalRN)),
       String(Math.round(totalRD)),
       String(Math.round(totalHE$)),
-      String(Math.round(totalCosto)),
+      String(Math.round(totalRecargos)),
       '',
       '',
     ]);
@@ -389,7 +385,7 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
       }
 
       // Guardar asignaciones
-      const payload: { employee_id: string; day_index: number; shift_code: string; estimated_hours: number | null; estimated_cost: number | null }[] = [];
+      const payload: { employee_id: string; day_index: number; shift_code: string; estimated_hours: number | null; estimated_cost: number | null; estimated_recargos: number | null }[] = [];
 
       for (const [empId, days] of Object.entries(grid)) {
         for (const [dayIdx, code] of Object.entries(days)) {
@@ -401,6 +397,7 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
           const hours = st.ordinarias + st.nocturnas;
           const isSunday = Number(dayIdx) === 0;
           const cost = calcularCostoTurnoEmpresa(st, emp.salario_mensual, isSunday);
+          const recargos = calcularRecargosTurnoEmpresa(st, emp.salario_mensual, isSunday);
 
           payload.push({
             employee_id: empId,
@@ -408,6 +405,7 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
             shift_code: code,
             estimated_hours: hours,
             estimated_cost: cost.total,
+            estimated_recargos: recargos.total_recargos,
           });
         }
       }

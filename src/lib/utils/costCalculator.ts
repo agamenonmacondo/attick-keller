@@ -1,4 +1,4 @@
-import { LEGAL_PARAMS, ShiftType, ShiftTypeSegment, ShiftCostEstimate } from '@/lib/types/shifts';
+import { LEGAL_PARAMS, ShiftType, ShiftTypeSegment, ShiftCostEstimate, ShiftRecargoEstimate } from '@/lib/types/shifts';
 
 /**
  * Calcula horas ordinarias y nocturnas de un segmento de horario (entrada → salida)
@@ -205,6 +205,39 @@ export function calcularCostoTurnoEmpresa(
 }
 
 /**
+ * Calcula SOLO los recargos de un turno para la EMPRESA (sin base_pay).
+ * El salario base es fijo mensual — lo que varia son los recargos:
+ * nocturno (35%), dominical (75%), horas extra (25%/75%).
+ * 
+ * Usa el mismo scaleFactor que calcularCostoTurnoEmpresa para incluir
+ * prestaciones y aportes sobre los recargos.
+ */
+export function calcularRecargosTurnoEmpresa(
+  shiftType: ShiftType,
+  rawSalario: number | null | undefined,
+  esDomingo: boolean = false
+): ShiftRecargoEstimate {
+  // Sanitizar salario (misma logica en todo el sistema)
+  const salarioFallback = rawSalario && rawSalario > 50000000 ? 1750905 : (rawSalario || 1750905);
+  const costoEmp = calcularCostoEmpresa(salarioFallback);
+  const scaleFactor = costoEmp.costoMensualTotal / salarioFallback;
+  
+  const costo = calcularCostoTurno(shiftType, salarioFallback, esDomingo);
+  
+  const night_surcharge = Math.round(costo.night_surcharge * scaleFactor);
+  const sunday_surcharge = Math.round(costo.sunday_surcharge * scaleFactor);
+  const overtime_surcharge = Math.round(costo.overtime_surcharge * scaleFactor);
+  const total_recargos = night_surcharge + sunday_surcharge + overtime_surcharge;
+  
+  return {
+    night_surcharge,
+    sunday_surcharge,
+    overtime_surcharge,
+    total_recargos,
+  };
+}
+
+/**
  * Calcula el costo semanal estimado para un empleado
  */
 export function calcularCostoSemanal(
@@ -257,6 +290,62 @@ export function calcularCostoSemanal(
     tieneDescanso,
     desglose: {
       base: Math.round(baseTotal),
+      recargoNocturno: Math.round(recargoNocturno),
+      recargoDominical: Math.round(recargoDominical),
+      horasExtra: Math.round(horasExtraTotal),
+    },
+  };
+}
+
+/**
+ * Calcula los recargos semanales estimados para un empleado (sin base_pay).
+ * Similar a calcularCostoSemanal pero retorna solo recargos escalados por factor empresa.
+ */
+export function calcularRecargosSemanal(
+  assignments: { shiftType: ShiftType; esDomingo: boolean }[],
+  rawSalario: number | null | undefined
+): {
+  totalHoras: number;
+  horasOrdinarias: number;
+  horasNocturnas: number;
+  horasExtra: number;
+  totalRecargos: number;
+  tieneDescanso: boolean;
+  desglose: { recargoNocturno: number; recargoDominical: number; horasExtra: number };
+} {
+  let totalHoras = 0;
+  let horasOrdinarias = 0;
+  let horasNocturnas = 0;
+  let diasTrabajados = 0;
+  let recargoNocturno = 0;
+  let recargoDominical = 0;
+  let horasExtraTotal = 0;
+
+  for (const { shiftType, esDomingo } of assignments) {
+    const hours = shiftType.ordinarias + shiftType.nocturnas;
+    totalHoras += hours;
+    horasOrdinarias += shiftType.ordinarias;
+    horasNocturnas += shiftType.nocturnas;
+    diasTrabajados++;
+
+    const recargos = calcularRecargosTurnoEmpresa(shiftType, rawSalario, esDomingo);
+    recargoNocturno += recargos.night_surcharge;
+    recargoDominical += recargos.sunday_surcharge;
+    horasExtraTotal += recargos.overtime_surcharge;
+  }
+
+  // Horas extra semanales = exceso sobre 44h
+  const horasExtra = Math.max(0, totalHoras - LEGAL_PARAMS.MAX_WEEKLY_HOURS);
+  const tieneDescanso = diasTrabajados < 7;
+
+  return {
+    totalHoras,
+    horasOrdinarias,
+    horasNocturnas,
+    horasExtra,
+    totalRecargos: Math.round(recargoNocturno + recargoDominical + horasExtraTotal),
+    tieneDescanso,
+    desglose: {
       recargoNocturno: Math.round(recargoNocturno),
       recargoDominical: Math.round(recargoDominical),
       horasExtra: Math.round(horasExtraTotal),

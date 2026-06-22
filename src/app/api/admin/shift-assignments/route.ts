@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStaffOrLeaderUser, getServiceClient } from '@/lib/utils/admin-auth'
 import type { ShiftType } from '@/lib/types/shifts'
-import { calcularCostoTurnoEmpresa } from '@/lib/utils/costCalculator'
+import { calcularCostoTurnoEmpresa, calcularRecargosTurnoEmpresa } from '@/lib/utils/costCalculator'
 import { sendShiftChangeEmail } from '@/lib/email/send'
 
 // Force dynamic — never cache shift data
@@ -97,12 +97,14 @@ export async function PUT(request: NextRequest) {
 
     let estimated_hours = null
     let estimated_cost = null
+    let estimated_recargos = null
     let is_overtime = false
 
     if (shiftType) {
       estimated_hours = shiftType.ordinarias + shiftType.nocturnas
       is_overtime = estimated_hours > 8
       estimated_cost = calcularCostoTurnoEmpresa(shiftType, salario, isSunday).total
+      estimated_recargos = calcularRecargosTurnoEmpresa(shiftType, salario, isSunday).total_recargos
     }
 
     return {
@@ -117,6 +119,7 @@ export async function PUT(request: NextRequest) {
       is_overtime,
       estimated_hours,
       estimated_cost,
+      estimated_recargos,
     }
   })
 
@@ -143,9 +146,10 @@ export async function PUT(request: NextRequest) {
 
   // Calcular costo total del cronograma
   const totalCost = (data || []).reduce((sum: number, a: Record<string, unknown>) => sum + (Number(a.estimated_cost) || 0), 0)
+  const totalRecargos = (data || []).reduce((sum: number, a: Record<string, unknown>) => sum + (Number(a.estimated_recargos) || 0), 0)
   await sb
     .from('shift_schedules')
-    .update({ total_estimated_cost: totalCost, updated_at: new Date().toISOString() })
+    .update({ total_estimated_cost: totalCost, total_estimated_recargos: totalRecargos, updated_at: new Date().toISOString() })
     .eq('id', schedule_id)
 
   // Determinar empleados afectados por cambios (solo si published)
@@ -194,7 +198,7 @@ export async function PUT(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ assignments: data, total_estimated_cost: totalCost })
+  return NextResponse.json({ assignments: data, total_estimated_cost: totalCost, total_estimated_recargos: totalRecargos })
 }
 
 // Notificar empleados afectados por cambios en su horario

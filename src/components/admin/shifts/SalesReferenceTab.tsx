@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect, useState } from 'react';
 import type { StaffMemberForShift, ShiftType } from '@/lib/types/shifts';
-import { calcularCostoTurnoEmpresa, calcularCostoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
+import { calcularRecargosTurnoEmpresa, calcularCostoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
 import { useSalesAverages } from '@/lib/hooks/useSalesAverages';
 
 interface SalesReferenceTabProps {
@@ -97,7 +97,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
     return { items, totalMensual };
   }, [fijos]);
 
-  // Calculate nomina per day and total — CON TURNO only (fijos shown separately)
+  // Calculate nomina (recargos) per day and total — CON TURNO only (fijos shown separately)
   const nominaByDay = useMemo(() => {
     const dayData: Record<number, { personas: number; costoNomina: number }> = {};
     for (let i = 0; i < 7; i++) {
@@ -118,10 +118,10 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
         if (!st) continue;
 
         const isSunday = dayIdx === SUNDAY_DAY_INDEX;
-        const costo = calcularCostoTurnoEmpresa(st, emp.salario_mensual, isSunday);
+        const recargos = calcularRecargosTurnoEmpresa(st, emp.salario_mensual, isSunday);
 
         dayData[dayIdx].personas += 1;
-        dayData[dayIdx].costoNomina += costo.total;
+        dayData[dayIdx].costoNomina += recargos.total_recargos;
       }
     }
 
@@ -212,12 +212,12 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           </div>
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
-          <div className="text-xs text-[var(--text-secondary)]">Nómina total semana</div>
+          <div className="text-xs text-[var(--text-secondary)]">Recargos turnos semana</div>
           <div className="text-lg font-mono font-semibold text-[var(--text-primary)]">
             {totalSemanal > 0 ? formatCOP(Math.round(totalSemanal)) : '-'}
           </div>
           <div className="text-[10px] text-[var(--text-secondary)]">
-            {weeklyNomina.totalPersonas} turnos + {fijosData.items.length} fijos · Prestaciones + aportes
+            {weeklyNomina.totalPersonas} turnos + {fijosData.items.length} fijos · Recargos + costo fijo
           </div>
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
@@ -268,7 +268,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
-              <div className="text-[11px] text-[var(--text-secondary)]">Nómina turnos</div>
+              <div className="text-[11px] text-[var(--text-secondary)]">Recargos turnos</div>
               <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">
                 {formatCOP(nominaTurnosMensual)}
               </div>
@@ -296,7 +296,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <div className="text-[10px] text-[var(--text-secondary)]">Mediana semanal × {WEEKS_PER_MONTH.toFixed(2)}</div>
             </div>
             <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
-              <div className="text-[11px] text-[var(--text-secondary)]">% Turnos/Ventas</div>
+              <div className="text-[11px] text-[var(--text-secondary)]">% Recargos/Ventas</div>
               <div className={`text-sm font-mono font-semibold ${ratioColor(nominaTurnosVentasPct)}`}>
                 {nominaTurnosVentasPct.toFixed(1)}%
               </div>
@@ -338,7 +338,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <th className="text-right p-2 text-[var(--text-secondary)]">Rango Sup (Q3)</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Tx/dia</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Personas</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">Costo Turnos</th>
+              <th className="text-right p-2 text-[var(--text-secondary)]">Recargos Turnos</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">+ Fijos/dia</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">% Nóm/Ventas</th>
             </tr>
@@ -442,7 +442,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                 <div className="text-right font-mono text-[var(--text-primary)]">{salesDay.tx_avg}</div>
                 <div className="text-[var(--text-secondary)]">Personas</div>
                 <div className="text-right font-mono text-[var(--text-primary)]">{nomDay.personas}</div>
-                <div className="text-[var(--text-secondary)]">Costo turnos</div>
+                <div className="text-[var(--text-secondary)]">Recargos turnos</div>
                 <div className="text-right font-mono text-[var(--text-primary)]">
                   {nomDay.costoNomina > 0 ? formatCOP(Math.round(nomDay.costoNomina)) : '-'}
                 </div>

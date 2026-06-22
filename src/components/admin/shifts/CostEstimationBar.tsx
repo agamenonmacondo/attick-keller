@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import type { StaffMemberForShift, ShiftType } from '@/lib/types/shifts';
-import { calcularCostoTurnoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
+import { calcularRecargosTurnoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
 import { LEGAL_PARAMS } from '@/lib/types/shifts';
 
 interface CostEstimationBarProps {
@@ -26,14 +26,14 @@ export default function CostEstimationBar({
   const employeeCosts = useMemo(() => {
     const results: {
       id: string; alias: string; area: string; totalHours: number;
-      ho: number; hn: number; he: number; base: number;
-      recargoNocturno: number; recargoDominical: number; horasExtra: number; total: number;
+      ho: number; hn: number; he: number;
+      recargoNocturno: number; recargoDominical: number; horasExtra: number; totalRecargos: number;
     }[] = [];
 
     for (const emp of staff) {
       const empGrid = grid[emp.id] || {};
       let totalHours = 0, ho = 0, hn = 0, he = 0;
-      let base = 0, rn = 0, rd = 0, heTotal = 0, total = 0;
+      let rn = 0, rd = 0, heTotal = 0, totalRecargos = 0;
 
       for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
         const code = empGrid[dayIdx];
@@ -46,45 +46,42 @@ export default function CostEstimationBar({
         if (hours > LEGAL_PARAMS.MAX_DAILY_HOURS) he += hours - LEGAL_PARAMS.MAX_DAILY_HOURS;
         totalHours += hours;
         const isSunday = dayIdx === SUNDAY_DAY_INDEX;
-        const costo = calcularCostoTurnoEmpresa(st, emp.salario_mensual, isSunday);
-        base += costo.base_pay;
-        rn += costo.night_surcharge;
-        rd += costo.sunday_surcharge;
-        heTotal += costo.overtime_surcharge;
-        total += costo.total;
+        const recargos = calcularRecargosTurnoEmpresa(st, emp.salario_mensual, isSunday);
+        rn += recargos.night_surcharge;
+        rd += recargos.sunday_surcharge;
+        heTotal += recargos.overtime_surcharge;
+        totalRecargos += recargos.total_recargos;
       }
 
       results.push({
         id: emp.id, alias: emp.alias, area: emp.area, totalHours,
-        ho, hn, he, base: Math.round(base),
+        ho, hn, he,
         recargoNocturno: Math.round(rn), recargoDominical: Math.round(rd),
-        horasExtra: Math.round(heTotal), total: Math.round(total),
+        horasExtra: Math.round(heTotal), totalRecargos: Math.round(totalRecargos),
       });
     }
     return results;
   }, [staff, shiftTypes, grid]);
 
   const kpis = useMemo(() => {
-    const totalCost = employeeCosts.reduce((s, e) => s + e.total, 0);
+    const totalRecargos = employeeCosts.reduce((s, e) => s + e.totalRecargos, 0);
     const totalHO = employeeCosts.reduce((s, e) => s + e.ho, 0);
     const totalHN = employeeCosts.reduce((s, e) => s + e.hn, 0);
     const totalHE = employeeCosts.reduce((s, e) => s + e.he, 0);
     const totalHours = employeeCosts.reduce((s, e) => s + e.totalHours, 0);
-    const totalBase = employeeCosts.reduce((s, e) => s + e.base, 0);
     const totalRN = employeeCosts.reduce((s, e) => s + e.recargoNocturno, 0);
     const totalRD = employeeCosts.reduce((s, e) => s + e.recargoDominical, 0);
     const totalHECost = employeeCosts.reduce((s, e) => s + e.horasExtra, 0);
     return {
-      totalCost, totalHours, totalHO, totalHN, totalHE,
-      totalBase, totalRN, totalRD, totalHECost,
-      avgPerEmployee: employeeCosts.length > 0 ? totalCost / employeeCosts.length : 0,
+      totalRecargos, totalHours, totalHO, totalHN, totalHE,
+      totalRN, totalRD, totalHECost,
+      avgPerEmployee: employeeCosts.length > 0 ? totalRecargos / employeeCosts.length : 0,
     };
   }, [employeeCosts]);
 
   const chartData = useMemo(() => {
     return employeeCosts.map((e) => ({
       name: e.alias,
-      Base: e.base,
       'R. Nocturno': e.recargoNocturno,
       'R. Dominical': e.recargoDominical,
       'HE/Extra': e.horasExtra,
@@ -94,15 +91,14 @@ export default function CostEstimationBar({
   // Agrupacion por area para modo consolidado
   const areaGroups = useMemo(() => {
     if (area !== 'todos') return null;
-    const groups: Record<string, { label: string; employees: typeof employeeCosts; totalCost: number; totalHours: number; totalBase: number; totalRN: number; totalRD: number; totalHE: number }> = {};
+    const groups: Record<string, { label: string; employees: typeof employeeCosts; totalRecargos: number; totalHours: number; totalRN: number; totalRD: number; totalHE: number }> = {};
     const areaLabels: Record<string, string> = { cocina: 'Cocina', barra: 'Barra', servicio: 'Servicio' };
     for (const emp of employeeCosts) {
       const a = emp.area || 'otro';
-      if (!groups[a]) groups[a] = { label: areaLabels[a] || a, employees: [], totalCost: 0, totalHours: 0, totalBase: 0, totalRN: 0, totalRD: 0, totalHE: 0 };
+      if (!groups[a]) groups[a] = { label: areaLabels[a] || a, employees: [], totalRecargos: 0, totalHours: 0, totalRN: 0, totalRD: 0, totalHE: 0 };
       groups[a].employees.push(emp);
-      groups[a].totalCost += emp.total;
+      groups[a].totalRecargos += emp.totalRecargos;
       groups[a].totalHours += emp.totalHours;
-      groups[a].totalBase += emp.base;
       groups[a].totalRN += emp.recargoNocturno;
       groups[a].totalRD += emp.recargoDominical;
       groups[a].totalHE += emp.horasExtra;
@@ -119,8 +115,8 @@ export default function CostEstimationBar({
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
-          <div className="text-xs text-[var(--text-secondary)]">Costo total semana</div>
-          <div className="text-lg font-mono font-semibold text-[var(--text-primary)]">{formatCOP(kpis.totalCost)}</div>
+          <div className="text-xs text-[var(--text-secondary)]">Recargos semanales</div>
+          <div className="text-lg font-mono font-semibold text-[var(--text-primary)]">{formatCOP(kpis.totalRecargos)}</div>
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
           <div className="text-xs text-[var(--text-secondary)]">Horas totales</div>
@@ -134,9 +130,8 @@ export default function CostEstimationBar({
           <div className="text-lg font-mono font-semibold text-[var(--text-primary)]">{formatCOP(kpis.avgPerEmployee)}</div>
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
-          <div className="text-xs text-[var(--text-secondary)]">Desglose</div>
+          <div className="text-xs text-[var(--text-secondary)]">Desglose recargos</div>
           <div className="text-xs space-y-0.5">
-            <div className="text-[var(--text-primary)]">Base: {formatCOP(kpis.totalBase)}</div>
             {kpis.totalRN > 0 && <div className="text-[var(--color-warning)]">R.Noc: {formatCOP(kpis.totalRN)}</div>}
             {kpis.totalRD > 0 && <div className="text-[var(--color-danger)]">R.Dom: {formatCOP(kpis.totalRD)}</div>}
             {kpis.totalHECost > 0 && <div className="text-blue-400">HE: {formatCOP(kpis.totalHECost)}</div>}
@@ -159,10 +154,6 @@ export default function CostEstimationBar({
                   <span className="text-[var(--text-secondary)]">Horas</span>
                   <span className="font-mono text-[var(--text-primary)]">{group.totalHours.toFixed(1)}h</span>
                 </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-[var(--text-secondary)]">Base</span>
-                  <span className="font-mono text-[var(--text-primary)]">{formatCOP(group.totalBase)}</span>
-                </div>
                 {group.totalRN > 0 && (
                   <div className="flex justify-between text-xs">
                     <span className="text-[var(--text-secondary)]">R.Noc</span>
@@ -182,8 +173,8 @@ export default function CostEstimationBar({
                   </div>
                 )}
                 <div className="border-t border-[var(--border-default)] pt-1 flex justify-between text-xs font-semibold">
-                  <span className="text-[var(--text-primary)]">Total</span>
-                  <span className="font-mono text-[var(--text-primary)]">{formatCOP(group.totalCost)}</span>
+                  <span className="text-[var(--text-primary)]">Total recargos</span>
+                  <span className="font-mono text-[var(--text-primary)]">{formatCOP(group.totalRecargos)}</span>
                 </div>
               </div>
             </div>
@@ -193,7 +184,7 @@ export default function CostEstimationBar({
 
       {/* Chart */}
       <div className="bg-[var(--bg-card)] rounded-lg p-4">
-        <div className="text-sm font-medium text-[var(--text-primary)] mb-3">Costo por empleado</div>
+        <div className="text-sm font-medium text-[var(--text-primary)] mb-3">Recargos por empleado</div>
         <ResponsiveContainer width="100%" height={250}>
           <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
             <XAxis
@@ -217,10 +208,9 @@ export default function CostEstimationBar({
               formatter={(value: any) => formatCOP(Number(value))}
             />
             <Legend iconType="circle" iconSize={8} />
-            <Bar dataKey="Base" stackId="cost" fill="#4ade80" />
-            <Bar dataKey="R. Nocturno" stackId="cost" fill="#fbbf24" />
-            <Bar dataKey="R. Dominical" stackId="cost" fill="#f87171" />
-            <Bar dataKey="HE/Extra" stackId="cost" fill="#60a5fa" />
+            <Bar dataKey="R. Nocturno" stackId="recargos" fill="#fbbf24" />
+            <Bar dataKey="R. Dominical" stackId="recargos" fill="#f87171" />
+            <Bar dataKey="HE/Extra" stackId="recargos" fill="#60a5fa" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -237,11 +227,10 @@ export default function CostEstimationBar({
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-mono font-semibold text-[var(--text-primary)]">{formatCOP(e.total)}</div>
+                <div className="font-mono font-semibold text-[var(--text-primary)]">{formatCOP(e.totalRecargos)}</div>
               </div>
             </div>
             <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--text-secondary)]">
-              <span>Base: {formatCOP(e.base)}</span>
               {e.recargoNocturno > 0 && <span className="text-[var(--color-warning)]">RN: {formatCOP(e.recargoNocturno)}</span>}
               {e.recargoDominical > 0 && <span className="text-[var(--color-danger)]">RD: {formatCOP(e.recargoDominical)}</span>}
               {e.horasExtra > 0 && <span className="text-blue-400">HE: {formatCOP(e.horasExtra)}</span>}
@@ -254,7 +243,7 @@ export default function CostEstimationBar({
             <span className="text-[var(--text-primary)]">TOTAL</span>
             <div className="text-right">
               <div className="font-mono text-[var(--text-primary)]">{kpis.totalHours}h</div>
-              <div className="font-mono font-bold text-[var(--text-primary)]">{formatCOP(kpis.totalCost)}</div>
+              <div className="font-mono font-bold text-[var(--text-primary)]">{formatCOP(kpis.totalRecargos)}</div>
             </div>
           </div>
         </div>
@@ -269,12 +258,10 @@ export default function CostEstimationBar({
               <th className="text-right p-2 text-[var(--text-secondary)]">HO</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">HN</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">HE</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">Total</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">Base</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">R.Noc</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">R.Dom</th>
+              <th className="text-right p-2 text-[var(--color-warning)]">R.Noc</th>
+              <th className="text-right p-2 text-[var(--color-danger)]">R.Dom</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">HE$</th>
-              <th className="text-right p-2 text-[var(--text-secondary)] font-medium">Costo Est.</th>
+              <th className="text-right p-2 text-[var(--text-secondary)] font-medium">Total Recargos</th>
             </tr>
           </thead>
           <tbody>
@@ -284,12 +271,10 @@ export default function CostEstimationBar({
                 <td className="p-2 text-right font-mono text-[var(--text-primary)]">{e.ho.toFixed(1)}</td>
                 <td className="p-2 text-right font-mono text-[var(--text-primary)]">{e.hn.toFixed(1)}</td>
                 <td className="p-2 text-right font-mono text-[var(--text-primary)]">{e.he.toFixed(1)}</td>
-                <td className="p-2 text-right font-mono text-[var(--text-primary)]">{e.totalHours}h</td>
-                <td className="p-2 text-right font-mono">{formatCOP(e.base)}</td>
                 <td className="p-2 text-right font-mono text-[var(--color-warning)]">{e.recargoNocturno > 0 ? formatCOP(e.recargoNocturno) : '-'}</td>
                 <td className="p-2 text-right font-mono text-[var(--color-danger)]">{e.recargoDominical > 0 ? formatCOP(e.recargoDominical) : '-'}</td>
                 <td className="p-2 text-right font-mono text-blue-400">{e.horasExtra > 0 ? formatCOP(e.horasExtra) : '-'}</td>
-                <td className="p-2 text-right font-mono font-semibold text-[var(--text-primary)]">{formatCOP(e.total)}</td>
+                <td className="p-2 text-right font-mono font-semibold text-[var(--text-primary)]">{formatCOP(e.totalRecargos)}</td>
               </tr>
             ))}
           </tbody>
@@ -299,12 +284,10 @@ export default function CostEstimationBar({
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">{kpis.totalHO.toFixed(1)}</td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">{kpis.totalHN.toFixed(1)}</td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">{kpis.totalHE.toFixed(1)}</td>
-              <td className="p-2 text-right font-mono text-[var(--text-primary)]">{kpis.totalHours}h</td>
-              <td className="p-2 text-right font-mono">{formatCOP(kpis.totalBase)}</td>
               <td className="p-2 text-right font-mono text-[var(--color-warning)]">{formatCOP(kpis.totalRN)}</td>
               <td className="p-2 text-right font-mono text-[var(--color-danger)]">{formatCOP(kpis.totalRD)}</td>
               <td className="p-2 text-right font-mono text-blue-400">{formatCOP(kpis.totalHECost)}</td>
-              <td className="p-2 text-right font-mono font-bold text-[var(--text-primary)]">{formatCOP(kpis.totalCost)}</td>
+              <td className="p-2 text-right font-mono font-bold text-[var(--text-primary)]">{formatCOP(kpis.totalRecargos)}</td>
             </tr>
           </tfoot>
         </table>

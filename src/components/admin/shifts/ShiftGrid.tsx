@@ -3,7 +3,7 @@
 import { useMemo, useCallback } from 'react';
 import { Warning, ClockAfternoon, Coffee, ArrowsLeftRight } from '@phosphor-icons/react';
 import type { ShiftType, StaffMemberForShift, ShiftAssignment, ShiftAlert } from '@/lib/types/shifts';
-import { calcularCostoTurnoEmpresa, formatCOP, getWeekDates, dayIndexToDateIndex, dateToDayIndex } from '@/lib/utils/costCalculator';
+import { calcularRecargosTurnoEmpresa, formatCOP, getWeekDates, dayIndexToDateIndex, dateToDayIndex } from '@/lib/utils/costCalculator';
 import { LEGAL_PARAMS, DAY_NAMES } from '@/lib/types/shifts';
 
 interface ShiftGridProps {
@@ -49,18 +49,18 @@ export default function ShiftGrid({
     const stats: Record<string, {
       totalHours: number;
       dailyHours: Record<number, number>;
-      cost: number;
+      recargos: number;
       alerts: ShiftAlert[];
       hasRest: boolean;
-      desglose: { base: number; recargoNocturno: number; recargoDominical: number; horasExtra: number };
+      desglose: { recargoNocturno: number; recargoDominical: number; horasExtra: number };
     }> = {};
 
     for (const emp of staff) {
       const empGrid = grid[emp.id] || {};
       let totalHours = 0;
       const dailyHours: Record<number, number> = {};
-      let cost = 0;
-      let baseTotal = 0, rnTotal = 0, rdTotal = 0, heTotal = 0;
+      let recargos = 0;
+      let rnTotal = 0, rdTotal = 0, heTotal = 0;
       const alerts: ShiftAlert[] = [];
       let diasTrabajados = 0;
 
@@ -79,12 +79,11 @@ export default function ShiftGrid({
         diasTrabajados++;
 
         const isSunday = dayIdx === 0;
-        const costo = calcularCostoTurnoEmpresa(st, emp.salario_mensual, isSunday);
-        cost += costo.total;
-        baseTotal += costo.base_pay;
-        rnTotal += costo.night_surcharge;
-        rdTotal += costo.sunday_surcharge;
-        heTotal += costo.overtime_surcharge;
+        const rec = calcularRecargosTurnoEmpresa(st, emp.salario_mensual, isSunday);
+        recargos += rec.total_recargos;
+        rnTotal += rec.night_surcharge;
+        rdTotal += rec.sunday_surcharge;
+        heTotal += rec.overtime_surcharge;
 
         // Alertas
         if (hours > LEGAL_PARAMS.MAX_DAILY_HOURS) {
@@ -111,11 +110,10 @@ export default function ShiftGrid({
       stats[emp.id] = {
         totalHours,
         dailyHours,
-        cost,
+        recargos,
         alerts,
         hasRest: diasTrabajados < 7,
         desglose: {
-          base: Math.round(baseTotal),
           recargoNocturno: Math.round(rnTotal),
           recargoDominical: Math.round(rdTotal),
           horasExtra: Math.round(heTotal),
@@ -127,19 +125,18 @@ export default function ShiftGrid({
 
   // Totales del area
   const areaTotals = useMemo(() => {
-    let totalHours = 0, totalCost = 0, totalBase = 0, totalRN = 0, totalRD = 0, totalHE = 0;
+    let totalHours = 0, totalRecargos = 0, totalRN = 0, totalRD = 0, totalHE = 0;
     for (const emp of staff) {
       const s = employeeStats[emp.id];
       if (s) {
         totalHours += s.totalHours;
-        totalCost += s.cost;
-        totalBase += s.desglose.base;
+        totalRecargos += s.recargos;
         totalRN += s.desglose.recargoNocturno;
         totalRD += s.desglose.recargoDominical;
         totalHE += s.desglose.horasExtra;
       }
     }
-    return { totalHours, totalCost, totalBase, totalRN, totalRD, totalHE };
+    return { totalHours, totalRecargos, totalRN, totalRD, totalHE };
   }, [employeeStats, staff]);
 
   const handleCellChange = useCallback(
@@ -238,7 +235,7 @@ export default function ShiftGrid({
                     {stats?.totalHours || 0}h
                   </div>
                   <div className="font-mono text-xs text-[var(--text-primary)]">
-                    {formatCOP(stats?.cost || 0)}
+                    {formatCOP(stats?.recargos || 0)}
                   </div>
                 </div>
               </div>
@@ -307,10 +304,9 @@ export default function ShiftGrid({
                 })}
               </div>
 
-              {/* Desglose costo */}
-              {stats && stats.cost > 0 && (
+              {/* Desglose recargos */}
+              {stats && stats.recargos > 0 && (
                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-[var(--text-secondary)]">
-                  {stats.desglose.base > 0 && <span>B:{formatCOP(stats.desglose.base)}</span>}
                   {stats.desglose.recargoNocturno > 0 && <span className="text-[var(--color-warning)]">RN:{formatCOP(stats.desglose.recargoNocturno)}</span>}
                   {stats.desglose.recargoDominical > 0 && <span className="text-[var(--color-danger)]">RD:{formatCOP(stats.desglose.recargoDominical)}</span>}
                   {stats.desglose.horasExtra > 0 && <span className="text-blue-400">HE:{formatCOP(stats.desglose.horasExtra)}</span>}
@@ -325,7 +321,7 @@ export default function ShiftGrid({
           <span className="text-[var(--text-primary)]">TOTAL AREA</span>
           <div className="text-right">
             <div className="font-mono text-sm text-[var(--text-primary)]">{areaTotals.totalHours}h</div>
-            <div className="font-mono text-xs text-[var(--text-primary)]">{formatCOP(areaTotals.totalCost)}</div>
+            <div className="font-mono text-xs text-[var(--text-primary)]">{formatCOP(areaTotals.totalRecargos)}</div>
           </div>
         </div>
       </div>
@@ -357,7 +353,7 @@ export default function ShiftGrid({
                 Horas
               </th>
               <th className="text-right p-2 text-[var(--text-secondary)] font-medium min-w-[110px]">
-                Costo est.
+                Recargos
               </th>
             </tr>
           </thead>
@@ -445,14 +441,13 @@ export default function ShiftGrid({
                     )}
                   </td>
 
-                  {/* Costo estimado */}
+                  {/* Recargos estimados */}
                   <td className="p-2 text-right">
                     <div className="font-mono text-sm font-medium text-[var(--text-primary)]">
-                      {formatCOP(stats?.cost || 0)}
+                      {formatCOP(stats?.recargos || 0)}
                     </div>
-                    {stats && stats.cost > 0 && (
+                    {stats && stats.recargos > 0 && (
                       <div className="text-xs text-[var(--text-secondary)] leading-tight">
-                        {stats.desglose.base > 0 && <div>B:{formatCOP(stats.desglose.base)}</div>}
                         {stats.desglose.recargoNocturno > 0 && <div>RN:{formatCOP(stats.desglose.recargoNocturno)}</div>}
                         {stats.desglose.recargoDominical > 0 && <div>RD:{formatCOP(stats.desglose.recargoDominical)}</div>}
                         {stats.desglose.horasExtra > 0 && <div>HE:{formatCOP(stats.desglose.horasExtra)}</div>}
@@ -478,10 +473,9 @@ export default function ShiftGrid({
                 {areaTotals.totalHours}h
               </td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">
-                <div className="text-sm">{formatCOP(areaTotals.totalCost)}</div>
+                <div className="text-sm">{formatCOP(areaTotals.totalRecargos)}</div>
                 <div className="text-xs text-[var(--text-secondary)] leading-tight">
-                  <span>B:{formatCOP(areaTotals.totalBase)}</span>
-                  {areaTotals.totalRN > 0 && <span> RN:{formatCOP(areaTotals.totalRN)}</span>}
+                  {areaTotals.totalRN > 0 && <span>RN:{formatCOP(areaTotals.totalRN)}</span>}
                   {areaTotals.totalRD > 0 && <span> RD:{formatCOP(areaTotals.totalRD)}</span>}
                   {areaTotals.totalHE > 0 && <span> HE:{formatCOP(areaTotals.totalHE)}</span>}
                 </div>

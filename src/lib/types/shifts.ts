@@ -62,6 +62,7 @@ export interface ShiftSchedule {
   status: ShiftStatus;
   version: number;
   total_estimated_cost: number | null;
+  total_estimated_recargos: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -79,6 +80,7 @@ export interface ShiftAssignment {
   is_overtime: boolean;
   estimated_hours: number | null;
   estimated_cost: number | null;
+  estimated_recargos: number | null;
   checkin_at: string | null;
   checkout_at: string | null;
   checkin_location: { lat: number; lng: number; accuracy: number } | null;
@@ -130,6 +132,14 @@ export interface ShiftCostEstimate {
   overtime_surcharge: number;
   sunday_surcharge: number;
   total: number;
+}
+
+// Resultado de calculo de recargos por turno (sin base_pay)
+export interface ShiftRecargoEstimate {
+  night_surcharge: number;
+  sunday_surcharge: number;
+  overtime_surcharge: number;
+  total_recargos: number;
 }
 
 // Grilla semanal — estructura para el frontend

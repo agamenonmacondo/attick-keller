@@ -690,6 +690,7 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
 
       {tab === 'referencia' && (
         <SalesReferenceTab
+          key={weekStr}
           staff={staff}
           shiftTypes={shiftTypes}
           grid={grid}

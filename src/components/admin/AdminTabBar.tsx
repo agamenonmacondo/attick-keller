@@ -1,9 +1,9 @@
 'use client'
 
 import { cn } from '@/lib/utils/cn'
-import { CalendarDots, Table, ChartBar, ChartPieSlice, Users, ForkKnife, IdentificationBadge, Coffee, MapTrifold, Buildings, ClockClockwise, Lightning, UserCircle } from '@phosphor-icons/react'
+import { CalendarDots, Table, ChartBar, ChartPieSlice, Users, ForkKnife, IdentificationBadge, Coffee, MapTrifold, Buildings, ClockClockwise, Lightning, UserCircle, CashRegister } from '@phosphor-icons/react'
 
-export type AdminTab = 'reservas' | 'ocupacion' | 'mesas' | 'plano' | 'metricas' | 'operacion' | 'clientes' | 'menu' | 'equipo' | 'turnos' | 'app-rodri' | 'informes' | 'mi-turno'
+export type AdminTab = 'reservas' | 'ocupacion' | 'mesas' | 'plano' | 'metricas' | 'operacion' | 'clientes' | 'menu' | 'equipo' | 'turnos' | 'nomina' | 'app-rodri' | 'informes' | 'mi-turno'
 
 const TABS: { key: AdminTab; label: string; icon: React.ReactNode }[] = [
   { key: 'reservas', label: 'Reservas', icon: <CalendarDots size={18} weight="regular" /> },
@@ -16,6 +16,7 @@ const TABS: { key: AdminTab; label: string; icon: React.ReactNode }[] = [
   { key: 'menu', label: 'Menu', icon: <ForkKnife size={18} weight="regular" /> },
   { key: 'equipo', label: 'Equipo', icon: <IdentificationBadge size={18} weight="regular" /> },
   { key: 'turnos', label: 'Turnos', icon: <ClockClockwise size={18} weight="regular" /> },
+  { key: 'nomina', label: 'Nomina', icon: <CashRegister size={18} weight="regular" /> },
   { key: 'app-rodri', label: 'App Rodri', icon: <Buildings size={18} weight="regular" /> },
   { key: 'informes', label: 'Informes', icon: <Lightning size={18} weight="fill" /> },
   { key: 'mi-turno', label: 'Mi Turno', icon: <UserCircle size={18} weight="regular" /> },

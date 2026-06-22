@@ -57,14 +57,14 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
   const [area, setArea] = useState<Area>(() =>
     areaFilter && AREAS.some(a => a.value === areaFilter) ? (areaFilter as Area) : 'todos'
   );
-  const [tab, setTab] = useState<Tab>(() => area === 'todos' ? 'costos' : 'cronograma');
+  const [tab, setTab] = useState<Tab>(() => area === 'todos' ? 'personal' : 'cronograma');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingShiftType, setEditingShiftType] = useState<ShiftType | null>(null);
 
-  // Cuando se cambia a "todos", forzar tab de costos
+  // Cuando se cambia a "todos", forzar tab de personal (super_admin)
   // Si areaFilter está activo, nunca puede llegar a "todos"
   useEffect(() => {
-    if (area === 'todos' && tab !== 'costos') setTab('costos');
+    if (area === 'todos' && tab !== 'personal') setTab('personal');
   }, [area]);
   const [weekStr, setWeekStr] = useState(() => getWeekStr(new Date()));
   const [shiftTypes, setShiftTypes] = useState<ShiftType[]>([]);

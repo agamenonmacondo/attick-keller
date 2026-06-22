@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   let query = sb
     .from('pos_nomina_staff')
     .select('id, nombre_completo, cargo, area, secondary_areas, salario, sede, cedula, correo, contrato, activo, aplica_propinas, auxilio_no_salarial, modalidad, es_medio_tiempo')
-    .eq('sede', 'C75')
+    .in('sede', ['C75', 'C85', 'KINDER', 'ADMIN'])
     .order('nombre_completo')
 
   if (area) {

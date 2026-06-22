@@ -159,13 +159,27 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
     [conTurno]
   );
 
+  // Nómina semanal con-turno: salario semanal + recargos
+  const salarioSemanalConTurno = Math.round(salarioBaseConTurno / WEEKS_PER_MONTH);
+  const nominaSemanalConTurno = salarioSemanalConTurno + weeklyNomina.totalNomina;
+
+  // Nómina semanal total: con-turno + fijos
+  const nominaSemanalFijos = Math.round(fijosData.totalMensual / WEEKS_PER_MONTH);
+  const nominaSemanalTotal = nominaSemanalConTurno + nominaSemanalFijos;
+
+  // % Nómina/Ventas semanal (el dato real)
+  const nominaSemanalVentasPct = nominaSemanalTotal > 0 && salesData && (salesData.weekly_total.median_per_week || 0) > 0
+    ? (nominaSemanalTotal / salesData.weekly_total.median_per_week) * 100
+    : 0;
+
   const nominaTurnosMensual = weeklyNomina.totalNomina > 0
     ? Math.round(weeklyNomina.totalNomina * WEEKS_PER_MONTH)
     : 0;
 
   const nominaFijosMensual = Math.round(fijosData.totalMensual);
 
-  const nominaTotalMensual = nominaTurnosMensual + nominaFijosMensual;
+  const salarioConTurnoMensual = Math.round(salarioBaseConTurno);
+  const nominaTotalMensual = Math.round(salarioConTurnoMensual + nominaTurnosMensual + nominaFijosMensual);
 
   const ventasMensuales = salesData && (salesData.weekly_total.median_per_week || 0) > 0
     ? Math.round(salesData.weekly_total.median_per_week * WEEKS_PER_MONTH)
@@ -212,22 +226,22 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           </div>
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
-          <div className="text-xs text-[var(--text-secondary)]">Recargos turnos semana</div>
+          <div className="text-xs text-[var(--text-secondary)]">Nómina semanal</div>
           <div className="text-lg font-mono font-semibold text-[var(--text-primary)]">
-            {totalSemanal > 0 ? formatCOP(Math.round(totalSemanal)) : '-'}
+            {nominaSemanalTotal > 0 ? formatCOP(nominaSemanalTotal) : '-'}
           </div>
           <div className="text-[10px] text-[var(--text-secondary)]">
-            {weeklyNomina.totalPersonas} turnos + {fijosData.items.length} fijos · Recargos + costo fijo
+            {conTurno.length} con turno + {fijosData.items.length} fijos
           </div>
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3">
           <div className="text-xs text-[var(--text-secondary)]">Nómina / Ventas</div>
-          <div className={`text-lg font-mono font-semibold ${totalSemanal > 0 ? ratioColor(weeklyPct) : 'text-[var(--text-secondary)]'}`}>
-            {totalSemanal > 0 ? `${weeklyPct.toFixed(1)}%` : 'Sin datos'}
+          <div className={`text-lg font-mono font-semibold ${nominaSemanalVentasPct > 0 ? ratioColor(nominaSemanalVentasPct) : 'text-[var(--text-secondary)]'}`}>
+            {nominaSemanalVentasPct > 0 ? `${nominaSemanalVentasPct.toFixed(1)}%` : 'Sin datos'}
           </div>
-          {totalSemanal > 0 && (
+          {nominaSemanalVentasPct > 0 && (
             <div className="text-[10px] text-[var(--text-secondary)]">
-              {ratioLabel(weeklyPct)} · Ley: 20-30% es saludable
+              {ratioLabel(nominaSemanalVentasPct)} · Ley: 20-30% saludable
             </div>
           )}
         </div>
@@ -268,6 +282,13 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
+              <div className="text-[11px] text-[var(--text-secondary)]">Salarios con turno</div>
+              <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">
+                {formatCOP(salarioConTurnoMensual)}
+              </div>
+              <div className="text-[10px] text-[var(--text-secondary)]">{conTurno.length} personas</div>
+            </div>
+            <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
               <div className="text-[11px] text-[var(--text-secondary)]">Recargos turnos</div>
               <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">
                 {formatCOP(nominaTurnosMensual)}
@@ -286,7 +307,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <div className="text-sm font-mono font-bold text-[var(--accent-primary)]">
                 {formatCOP(nominaTotalMensual)}
               </div>
-              <div className="text-[10px] text-[var(--text-secondary)]">Turnos + Fijos</div>
+              <div className="text-[10px] text-[var(--text-secondary)]">Salarios + Recargos + Fijos</div>
             </div>
             <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
               <div className="text-[11px] text-[var(--text-secondary)]">Ventas mensuales</div>
@@ -300,14 +321,14 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <div className={`text-sm font-mono font-semibold ${ratioColor(nominaTurnosVentasPct)}`}>
                 {nominaTurnosVentasPct.toFixed(1)}%
               </div>
-              <div className="text-[10px] text-[var(--text-secondary)]">{ratioLabel(nominaTurnosVentasPct)} · Sin fijos</div>
+              <div className="text-[10px] text-[var(--text-secondary)]">{ratioLabel(nominaTurnosVentasPct)} · Solo recargos</div>
             </div>
             <div className="bg-[var(--accent-primary)]/10 rounded-lg p-2.5 border border-[var(--accent-primary)]/30">
-              <div className="text-[11px] text-[var(--accent-primary)]">% Total/Ventas</div>
+              <div className="text-[11px] text-[var(--accent-primary)]">% Nómina/Ventas</div>
               <div className={`text-sm font-mono font-bold ${ratioColor(nominaTotalVentasPct)}`}>
                 {nominaTotalVentasPct.toFixed(1)}%
               </div>
-              <div className="text-[10px] text-[var(--text-secondary)]">{ratioLabel(nominaTotalVentasPct)} · Con fijos</div>
+              <div className="text-[10px] text-[var(--text-secondary)]">{ratioLabel(nominaTotalVentasPct)} · Salarios + Recargos + Fijos</div>
             </div>
             <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
               <div className="text-[11px] text-[var(--text-secondary)]">Provisiones</div>
@@ -338,8 +359,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <th className="text-right p-2 text-[var(--text-secondary)]">Rango Sup (Q3)</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Tx/dia</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Personas</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">Recargos Turnos</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">+ Fijos/dia</th>
+              <th className="text-right p-2 text-[var(--text-secondary)]">Nómina/dia</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">% Nóm/Ventas</th>
             </tr>
           </thead>
@@ -348,10 +368,12 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               const salesDay = salesData.days.find(d => d.day_index === dayIndex);
               if (!salesDay) return null;
               const nomDay = nominaByDay[dayIndex];
+              // Nómina por día = salario con-turno/30 + recargos del día + fijos/30
+              const salarioPerDay = salarioBaseConTurno / 30;
               const fijosPerDay = fijosData.totalMensual / 30;
-              const totalDayCost = nomDay.costoNomina + fijosPerDay;
-              const pct = salesDay.median > 0 && totalDayCost > 0
-                ? (totalDayCost / salesDay.median) * 100
+              const totalDayNomina = salarioPerDay + nomDay.costoNomina + fijosPerDay;
+              const pct = salesDay.median > 0 && totalDayNomina > 0
+                ? (totalDayNomina / salesDay.median) * 100
                 : 0;
 
               return (
@@ -375,13 +397,10 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                     {nomDay.personas}
                   </td>
                   <td className="p-2 text-right font-mono text-[var(--text-primary)]">
-                    {nomDay.costoNomina > 0 ? formatCOP(Math.round(nomDay.costoNomina)) : '-'}
+                    {formatCOP(Math.round(totalDayNomina))}
                   </td>
-                  <td className="p-2 text-right font-mono text-[var(--text-secondary)]">
-                    {formatCOP(Math.round(fijosPerDay))}
-                  </td>
-                  <td className={`p-2 text-right font-mono font-semibold ${totalDayCost > 0 && salesDay.median > 0 ? ratioColor(pct) : 'text-[var(--text-secondary)]'}`}>
-                    {totalDayCost > 0 && salesDay.median > 0 ? `${pct.toFixed(1)}%` : '-'}
+                  <td className={`p-2 text-right font-mono font-semibold ${totalDayNomina > 0 && salesDay.median > 0 ? ratioColor(pct) : 'text-[var(--text-secondary)]'}`}>
+                    {totalDayNomina > 0 && salesDay.median > 0 ? `${pct.toFixed(1)}%` : '-'}
                   </td>
                 </tr>
               );
@@ -400,13 +419,10 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                 {weeklyNomina.totalPersonas}
               </td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">
-                {weeklyNomina.totalNomina > 0 ? formatCOP(weeklyNomina.totalNomina) : '-'}
+                {nominaSemanalTotal > 0 ? formatCOP(nominaSemanalTotal) : '-'}
               </td>
-              <td className="p-2 text-right font-mono text-[var(--text-secondary)]">
-                {formatCOP(Math.round(fijosData.totalMensual / 30 * 7))}
-              </td>
-              <td className={`p-2 text-right font-mono font-bold ${totalSemanal > 0 ? ratioColor(totalRowPct) : 'text-[var(--text-secondary)]'}`}>
-                {totalSemanal > 0 ? `${totalRowPct.toFixed(1)}%` : '-'}
+              <td className={`p-2 text-right font-mono font-bold ${nominaSemanalTotal > 0 ? ratioColor(nominaSemanalVentasPct) : 'text-[var(--text-secondary)]'}`}>
+                {nominaSemanalTotal > 0 ? `${nominaSemanalVentasPct.toFixed(1)}%` : '-'}
               </td>
             </tr>
           </tfoot>
@@ -419,18 +435,19 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           const salesDay = salesData.days.find(d => d.day_index === dayIndex);
           if (!salesDay) return null;
           const nomDay = nominaByDay[dayIndex];
+          const salarioPerDay = salarioBaseConTurno / 30;
           const fijosPerDay = fijosData.totalMensual / 30;
-          const totalDayCost = nomDay.costoNomina + fijosPerDay;
-          const pct = salesDay.median > 0 && totalDayCost > 0
-            ? (totalDayCost / salesDay.median) * 100
+          const totalDayNomina = salarioPerDay + nomDay.costoNomina + fijosPerDay;
+          const pct = salesDay.median > 0 && totalDayNomina > 0
+            ? (totalDayNomina / salesDay.median) * 100
             : 0;
 
           return (
             <div key={dayIndex} className="bg-[var(--bg-card)] rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="font-semibold text-[var(--text-primary)] text-sm">{salesDay.day_name}</div>
-                <div className={`font-mono font-semibold text-sm ${totalDayCost > 0 && salesDay.median > 0 ? ratioColor(pct) : ''}`}>
-                  {totalDayCost > 0 && salesDay.median > 0 ? `${pct.toFixed(1)}%` : '-'}
+                <div className={`font-mono font-semibold text-sm ${totalDayNomina > 0 && salesDay.median > 0 ? ratioColor(pct) : ''}`}>
+                  {totalDayNomina > 0 && salesDay.median > 0 ? `${pct.toFixed(1)}%` : '-'}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
@@ -442,13 +459,9 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                 <div className="text-right font-mono text-[var(--text-primary)]">{salesDay.tx_avg}</div>
                 <div className="text-[var(--text-secondary)]">Personas</div>
                 <div className="text-right font-mono text-[var(--text-primary)]">{nomDay.personas}</div>
-                <div className="text-[var(--text-secondary)]">Recargos turnos</div>
+                <div className="text-[var(--text-secondary)]">Nómina/dia</div>
                 <div className="text-right font-mono text-[var(--text-primary)]">
-                  {nomDay.costoNomina > 0 ? formatCOP(Math.round(nomDay.costoNomina)) : '-'}
-                </div>
-                <div className="text-[var(--text-secondary)]">+ Fijos/dia</div>
-                <div className="text-right font-mono text-[var(--text-secondary)]">
-                  {formatCOP(Math.round(fijosPerDay))}
+                  {formatCOP(Math.round(totalDayNomina))}
                 </div>
               </div>
             </div>
@@ -461,8 +474,8 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
             <span className="text-[var(--text-primary)]">TOTAL SEMANA</span>
             <div className="text-right">
               <div className="font-mono text-[var(--text-primary)]">{formatCOP(sumOfMedians)}</div>
-              <div className={`font-mono font-bold ${totalSemanal > 0 ? ratioColor(totalRowPct) : 'text-[var(--text-secondary)]'}`}>
-                {totalSemanal > 0 ? `Nóm/Ventas: ${totalRowPct.toFixed(1)}%` : 'Sin nomina'}
+              <div className={`font-mono font-bold ${nominaSemanalTotal > 0 ? ratioColor(nominaSemanalVentasPct) : 'text-[var(--text-secondary)]'}`}>
+                {nominaSemanalTotal > 0 ? `Nóm/Ventas: ${nominaSemanalVentasPct.toFixed(1)}%` : 'Sin nomina'}
               </div>
             </div>
           </div>

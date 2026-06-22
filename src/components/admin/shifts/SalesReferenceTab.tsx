@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect, useState } from 'react';
 import type { StaffMemberForShift, ShiftType } from '@/lib/types/shifts';
-import { calcularRecargosTurnoEmpresa, calcularCostoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
+import { calcularRecargosPuros, calcularCostoEmpresa, formatCOP } from '@/lib/utils/costCalculator';
 import { useSalesAverages } from '@/lib/hooks/useSalesAverages';
 
 interface SalesReferenceTabProps {
@@ -118,7 +118,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
         if (!st) continue;
 
         const isSunday = dayIdx === SUNDAY_DAY_INDEX;
-        const recargos = calcularRecargosTurnoEmpresa(st, emp.salario_mensual, isSunday);
+        const recargos = calcularRecargosPuros(st, emp.salario_mensual, isSunday);
 
         dayData[dayIdx].personas += 1;
         dayData[dayIdx].costoNomina += recargos.total_recargos;

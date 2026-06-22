@@ -238,6 +238,32 @@ export function calcularRecargosTurnoEmpresa(
 }
 
 /**
+ * Calcula SOLO los recargos LEGALES puros (sin escalar por factor empresa).
+ * Usa esto para el tab de Referencia Ventas donde el costo empresa ya se muestra por separado.
+ * Escalar los recargos por factor empresa causaría doble contabilidad.
+ */
+export function calcularRecargosPuros(
+  shiftType: ShiftType,
+  rawSalario: number | null | undefined,
+  esDomingo: boolean = false
+): ShiftRecargoEstimate {
+  const salarioFallback = rawSalario && rawSalario > 50000000 ? 1750905 : (rawSalario || 1750905);
+  const costo = calcularCostoTurno(shiftType, salarioFallback, esDomingo);
+  
+  const night_surcharge = Math.round(costo.night_surcharge);
+  const sunday_surcharge = Math.round(costo.sunday_surcharge);
+  const overtime_surcharge = Math.round(costo.overtime_surcharge);
+  const total_recargos = night_surcharge + sunday_surcharge + overtime_surcharge;
+  
+  return {
+    night_surcharge,
+    sunday_surcharge,
+    overtime_surcharge,
+    total_recargos,
+  };
+}
+
+/**
  * Calcula el costo semanal estimado para un empleado
  */
 export function calcularCostoSemanal(

@@ -84,17 +84,17 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
 
   // Costo fijo mensual for leaders + apoyo
   const fijosData = useMemo(() => {
-    const items: { nombre: string; cargo: string; costoMensual: number }[] = [];
+    const items: { nombre: string; cargo: string; costoMensual: number; salarioBase: number }[] = [];
     let totalMensual = 0;
+    let totalSalarioBase = 0;
     for (const s of fijos) {
-      const costo = calcularCostoEmpresa(s.salario_mensual);
-      // Costo empresa SIN auxilio transporte (auxilio se paga al empleado, no es costo operacional)
-      // Auxilio personalizado (Walter $1M, Verónica $1.05M) NO se usa como base de prima/cesantías
-      const costoSinAuxilio = costo.costoMensualTotal - costo.auxilioTransporte;
-      totalMensual += costoSinAuxilio;
-      items.push({ nombre: s.nombre_completo || s.nombre, cargo: s.cargo || '', costoMensual: costoSinAuxilio });
+      const costo = calcularCostoEmpresa(s.salario_mensual, s.auxilio_no_salarial);
+      // Costo empresa TOTAL (incluye auxilio transporte — es costo real del negocio)
+      totalMensual += costo.costoMensualTotal;
+      totalSalarioBase += s.salario_mensual || 0;
+      items.push({ nombre: s.nombre_completo || s.nombre, cargo: s.cargo || '', costoMensual: costo.costoMensualTotal, salarioBase: s.salario_mensual || 0 });
     }
-    return { items, totalMensual };
+    return { items, totalMensual, totalSalarioBase };
   }, [fijos]);
 
   // Calculate nomina (recargos) per day and total — CON TURNO only (fijos shown separately)
@@ -141,27 +141,26 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
   // Display order: Lun(1), Mar(2), Mie(3), Jue(4), Vie(5), Sab(6), Dom(0)
   const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
-  // Total semanal = turnos + fijos
-  const totalSemanal = weeklyNomina.totalNomina + (fijosData.totalMensual / WEEKS_PER_MONTH);
-
-  const weeklyPct = totalSemanal > 0 && salesData && (salesData.weekly_total.median_per_week || 0) > 0
-    ? (totalSemanal / salesData.weekly_total.median_per_week) * 100
-    : 0;
-
-  const sumOfMedians = salesData?.weekly_total?.sum_of_medians || 0;
-  const totalRowPct = totalSemanal > 0 && sumOfMedians > 0
-    ? (totalSemanal / sumOfMedians) * 100
-    : 0;
-
   // === PROYECCIÓN MENSUAL ===
+  // Salario base crudo (para desglose y referencia)
   const salarioBaseConTurno = useMemo(() =>
     conTurno.reduce((s, e) => s + (e.salario_mensual || 0), 0),
     [conTurno]
   );
 
-  // Nómina semanal con-turno: salario semanal + recargos
-  const salarioSemanalConTurno = Math.round(salarioBaseConTurno / WEEKS_PER_MONTH);
-  const nominaSemanalConTurno = salarioSemanalConTurno + weeklyNomina.totalNomina;
+  // Costo empresa con-turno (salario + auxilio + prestaciones + aportes) — costo total real
+  const costoEmpresaConTurno = useMemo(() => {
+    let total = 0;
+    for (const emp of conTurno) {
+      const costo = calcularCostoEmpresa(emp.salario_mensual || 0, emp.auxilio_no_salarial);
+      total += costo.costoMensualTotal;
+    }
+    return total;
+  }, [conTurno]);
+
+  // Nómina semanal con-turno: costo empresa semanal + recargos
+  const costoEmpresaSemanalConTurno = Math.round(costoEmpresaConTurno / WEEKS_PER_MONTH);
+  const nominaSemanalConTurno = costoEmpresaSemanalConTurno + weeklyNomina.totalNomina;
 
   // Nómina semanal total: con-turno + fijos
   const nominaSemanalFijos = Math.round(fijosData.totalMensual / WEEKS_PER_MONTH);
@@ -178,15 +177,22 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
 
   const nominaFijosMensual = Math.round(fijosData.totalMensual);
 
-  const salarioConTurnoMensual = Math.round(salarioBaseConTurno);
-  const nominaTotalMensual = Math.round(salarioConTurnoMensual + nominaTurnosMensual + nominaFijosMensual);
+  const costoEmpresaConTurnoMensual = Math.round(costoEmpresaConTurno);
+  const nominaTotalMensual = Math.round(costoEmpresaConTurnoMensual + nominaTurnosMensual + nominaFijosMensual);
 
   const ventasMensuales = salesData && (salesData.weekly_total.median_per_week || 0) > 0
     ? Math.round(salesData.weekly_total.median_per_week * WEEKS_PER_MONTH)
     : 0;
 
-  const provisionesMensuales = nominaTotalMensual - salarioBaseConTurno - fijosData.totalMensual;
-  const factorReal = (salarioBaseConTurno + fijosData.totalMensual) > 0 ? nominaTotalMensual / (salarioBaseConTurno + fijosData.totalMensual) : 0;
+  // Provisiones = (costo empresa con-turno - salario base con-turno) + (costo empresa fijos - salario base fijos)
+  // = everything above raw base salaries (prestaciones + aportes patronales)
+  const provisionesConTurno = costoEmpresaConTurno - salarioBaseConTurno;
+  const provisionesFijos = fijosData.totalMensual - fijosData.totalSalarioBase;
+  const provisionesMensuales = Math.round(provisionesConTurno + provisionesFijos);
+
+  // Factor real = costo empresa total / salario base total (raw, para todos)
+  const totalSalarioBase = salarioBaseConTurno + fijosData.totalSalarioBase;
+  const factorReal = totalSalarioBase > 0 ? nominaTotalMensual / totalSalarioBase : 0;
 
   const nominaTurnosVentasPct = nominaTurnosMensual > 0 && ventasMensuales > 0
     ? (nominaTurnosMensual / ventasMensuales) * 100
@@ -195,6 +201,8 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
   const nominaTotalVentasPct = nominaTotalMensual > 0 && ventasMensuales > 0
     ? (nominaTotalMensual / ventasMensuales) * 100
     : 0;
+
+  const sumOfMedians = salesData?.weekly_total?.sum_of_medians || 0;
 
   if (salesLoading) {
     return (
@@ -282,9 +290,9 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
-              <div className="text-[11px] text-[var(--text-secondary)]">Salarios con turno</div>
+              <div className="text-[11px] text-[var(--text-secondary)]">Costo empresa con turno</div>
               <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">
-                {formatCOP(salarioConTurnoMensual)}
+                {formatCOP(costoEmpresaConTurnoMensual)}
               </div>
               <div className="text-[10px] text-[var(--text-secondary)]">{conTurno.length} personas</div>
             </div>
@@ -307,7 +315,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <div className="text-sm font-mono font-bold text-[var(--accent-primary)]">
                 {formatCOP(nominaTotalMensual)}
               </div>
-              <div className="text-[10px] text-[var(--text-secondary)]">Salarios + Recargos + Fijos</div>
+              <div className="text-[10px] text-[var(--text-secondary)]">Costo empresa + Recargos + Fijos</div>
             </div>
             <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
               <div className="text-[11px] text-[var(--text-secondary)]">Ventas mensuales</div>
@@ -328,7 +336,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <div className={`text-sm font-mono font-bold ${ratioColor(nominaTotalVentasPct)}`}>
                 {nominaTotalVentasPct.toFixed(1)}%
               </div>
-              <div className="text-[10px] text-[var(--text-secondary)]">{ratioLabel(nominaTotalVentasPct)} · Salarios + Recargos + Fijos</div>
+              <div className="text-[10px] text-[var(--text-secondary)]">{ratioLabel(nominaTotalVentasPct)} · Costo empresa + Recargos + Fijos</div>
             </div>
             <div className="bg-[var(--bg-card)] rounded-lg p-2.5 border border-[var(--border-default)]">
               <div className="text-[11px] text-[var(--text-secondary)]">Provisiones</div>
@@ -342,7 +350,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <div className="text-sm font-mono font-bold text-[var(--accent-primary)]">
                 {factorReal.toFixed(2)}×
               </div>
-              <div className="text-[10px] text-[var(--text-secondary)]">Nómina ÷ salario base</div>
+              <div className="text-[10px] text-[var(--text-secondary)]">Costo empresa ÷ salario base</div>
             </div>
           </div>
         </div>
@@ -368,10 +376,10 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               const salesDay = salesData.days.find(d => d.day_index === dayIndex);
               if (!salesDay) return null;
               const nomDay = nominaByDay[dayIndex];
-              // Nómina por día = salario con-turno/30 + recargos del día + fijos/30
-              const salarioPerDay = salarioBaseConTurno / 30;
+              // Nómina por día = costo empresa con-turno/30 + recargos del día + fijos/30
+              const costoEmpresaPerDay = costoEmpresaConTurno / 30;
               const fijosPerDay = fijosData.totalMensual / 30;
-              const totalDayNomina = salarioPerDay + nomDay.costoNomina + fijosPerDay;
+              const totalDayNomina = costoEmpresaPerDay + nomDay.costoNomina + fijosPerDay;
               const pct = salesDay.median > 0 && totalDayNomina > 0
                 ? (totalDayNomina / salesDay.median) * 100
                 : 0;
@@ -435,9 +443,9 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
           const salesDay = salesData.days.find(d => d.day_index === dayIndex);
           if (!salesDay) return null;
           const nomDay = nominaByDay[dayIndex];
-          const salarioPerDay = salarioBaseConTurno / 30;
+          const costoEmpresaPerDay = costoEmpresaConTurno / 30;
           const fijosPerDay = fijosData.totalMensual / 30;
-          const totalDayNomina = salarioPerDay + nomDay.costoNomina + fijosPerDay;
+          const totalDayNomina = costoEmpresaPerDay + nomDay.costoNomina + fijosPerDay;
           const pct = salesDay.median > 0 && totalDayNomina > 0
             ? (totalDayNomina / salesDay.median) * 100
             : 0;

@@ -19,10 +19,10 @@ export function ReservasConversionTable({ data }: ReservasConversionTableProps) 
   const { rows, summary } = useMemo(() => {
     const rows = (data?.data ?? []).map((r: any) => ({
       ...r,
-      _revPerPerson: Number(r.total_pax ?? 0) > 0
-        ? Number(r.revenue ?? 0) / Number(r.total_pax ?? 0)
+      _revPerPerson: Number(r.total_pax_reservado ?? 0) > 0
+        ? Number(r.revenue_dia ?? 0) / Number(r.total_pax_reservado ?? 0)
         : 0,
-      _isEventoGrande: Number(r.total_pax ?? 0) >= 15,
+      _isEventoGrande: Number(r.total_pax_reservado ?? 0) >= 15,
     }))
     return { rows, summary: data?.summary }
   }, [data])
@@ -75,7 +75,7 @@ export function ReservasConversionTable({ data }: ReservasConversionTableProps) 
             >
               <td className="py-2 pr-3 font-medium text-[var(--text-primary)]">{r.fecha ?? '—'}</td>
               <td className="py-2 px-2 text-right text-[var(--text-primary)]">{fmtNum(Number(r.num_reservas ?? 0))}</td>
-              <td className="py-2 px-2 text-right text-[var(--text-primary)]">{fmtNum(Number(r.total_pax ?? 0))}</td>
+              <td className="py-2 px-2 text-right text-[var(--text-primary)]">{fmtNum(Number(r.total_pax_reservado ?? 0))}</td>
               <td className="py-2 px-2 text-center">
                 {r._isEventoGrande ? (
                   <Sparkle size={14} weight="fill" className="text-[var(--color-ak-dorado)] inline" />
@@ -83,7 +83,7 @@ export function ReservasConversionTable({ data }: ReservasConversionTableProps) 
                   <span className="text-[var(--text-muted)]">—</span>
                 )}
               </td>
-              <td className="py-2 px-2 text-right text-[var(--color-ak-dorado)]">{fmtCOP.format(Number(r.revenue ?? 0))}</td>
+              <td className="py-2 px-2 text-right text-[var(--color-ak-dorado)]">{fmtCOP.format(Number(r.revenue_dia ?? 0))}</td>
               <td className="py-2 px-2 text-right text-[var(--text-secondary)]">{fmtNum(Number(r.staff_asignado ?? 0))}</td>
               <td className="py-2 pl-2 text-right font-semibold text-[var(--text-primary)]">
                 {r._revPerPerson > 0 ? fmtCOP.format(r._revPerPerson) : '—'}

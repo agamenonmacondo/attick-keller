@@ -16,9 +16,9 @@ export async function GET(request: NextRequest) {
   const { data, error } = await sb
     .from('v_productividad_area')
     .select('*')
-    .gte('fecha', from)
-    .lte('fecha', to)
-    .order('fecha', { ascending: false })
+    .gte('dia', from)
+    .lte('dia', to)
+    .order('dia', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

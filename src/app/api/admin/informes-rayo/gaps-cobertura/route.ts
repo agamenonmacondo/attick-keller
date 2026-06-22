@@ -16,22 +16,20 @@ export async function GET(request: NextRequest) {
   const { data, error } = await sb
     .from('v_gaps_cobertura')
     .select('*')
-    .gte('fecha', from)
-    .lte('fecha', to)
     .neq('tipo_alerta', 'NORMAL')
-    .order('fecha', { ascending: false })
+    .order('hora', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const rows = data || []
   const totalGaps = rows.filter((r: any) => r.tipo_alerta === 'GAP_COCINA').length
   const totalSobras = rows.filter((r: any) => r.tipo_alerta === 'SOBRA').length
-  const areas = new Set(rows.map((r: any) => r.area).filter(Boolean))
+  const areas = Array.from(new Set(rows.map((r: any) => r.area).filter(Boolean)))
 
   const summary = {
     total_gaps: totalGaps,
     total_sobras: totalSobras,
-    areas_afectadas: Array.from(areas),
+    areas_afectadas: areas,
   }
 
   return NextResponse.json({ data: rows, summary })

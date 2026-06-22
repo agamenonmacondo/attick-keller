@@ -87,7 +87,7 @@ export function GapsCoberturaAlerts({ data }: GapsCoberturaAlertsProps) {
           const Icon = cfg.Icon
           return (
             <div
-              key={`${r.fecha}-${r.hora}-${r.area}-${i}`}
+              key={`${r.hora}-${i}`}
               className="rounded-lg border p-3"
               style={{ background: cfg.bg, borderColor: cfg.border }}
             >
@@ -105,20 +105,20 @@ export function GapsCoberturaAlerts({ data }: GapsCoberturaAlertsProps) {
               </div>
 
               <div className="text-xs font-semibold text-[var(--text-primary)] mb-1">
-                {r.area ?? '—'}
+                Hora {r.hora != null ? `${r.hora}:00` : '—'}
               </div>
 
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-[var(--text-muted)]">
-                  {Number(r.personas_en_turno ?? 0)} personas
+                  {Number(r.personas ?? 0)} personas
                 </span>
                 <span className="font-medium text-[var(--color-ak-dorado)]">
                   {fmtCOP.format(Number(r.revenue ?? 0))}
                 </span>
               </div>
 
-              {r.fecha && (
-                <div className="text-[10px] text-[var(--text-muted)] mt-1">{r.fecha}</div>
+              {r.revenue_por_persona != null && Number(r.revenue_por_persona) > 0 && (
+                <div className="text-[10px] text-[var(--text-muted)] mt-1">{fmtCOP.format(Number(r.revenue_por_persona))}/persona</div>
               )}
             </div>
           )

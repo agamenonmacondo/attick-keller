@@ -35,8 +35,8 @@ export function OperacionHoraChart({ data }: OperacionHoraChartProps) {
       const h = Number(r.hora)
       if (Number.isNaN(h)) continue
       const cur = map.get(h) ?? { revenue: 0, personas: 0, estado: undefined }
-      cur.revenue += Number(r.revenue ?? 0)
-      cur.personas += Number(r.personas_en_turno ?? 0)
+      cur.revenue += Number(r.total_revenue ?? 0)
+      cur.personas += Number(r.personas_trabajando ?? 0)
       if (r.estado) cur.estado = r.estado
       map.set(h, cur)
     }

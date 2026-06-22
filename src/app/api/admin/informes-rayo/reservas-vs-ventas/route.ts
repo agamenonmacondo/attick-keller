@@ -24,9 +24,9 @@ export async function GET(request: NextRequest) {
 
   const rows = data || []
   const totalReservas = rows.reduce((s: number, r: any) => s + Number(r.num_reservas ?? 0), 0)
-  const totalPax = rows.reduce((s: number, r: any) => s + Number(r.total_pax ?? 0), 0)
-  const totalRevenue = rows.reduce((s: number, r: any) => s + Number(r.revenue ?? 0), 0)
-  const eventosGrandes = rows.filter((r: any) => Number(r.total_pax ?? 0) >= 15).length
+  const totalPax = rows.reduce((s: number, r: any) => s + Number(r.total_pax_reservado ?? 0), 0)
+  const totalRevenue = rows.reduce((s: number, r: any) => s + Number(r.revenue_dia ?? 0), 0)
+  const eventosGrandes = rows.filter((r: any) => Number(r.total_pax_reservado ?? 0) >= 15).length
 
   const summary = {
     total_reservas: totalReservas,

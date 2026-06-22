@@ -35,10 +35,10 @@ export function RecargosNominaGrid({ dataHorasExtra, dataHorasNocturnas }: Recar
 
     // Index by empleado (pos_staff_id + fecha para no cruzar empleados distintos)
     for (const r of heRows) {
-      const key = `${r.pos_staff_id ?? r.nombre ?? ''}|${r.fecha ?? ''}`
+      const key = `${r.empleado_nombre ?? ''}|${r.dia ?? r.semana ?? ''}`
       const cur = map.get(key) ?? {
         key,
-        nombre: r.nombre ?? 'Sin nombre',
+        nombre: r.empleado_nombre ?? 'Sin nombre',
         area: r.area ?? '—',
         he: 0,
         costoHE: 0,
@@ -46,15 +46,15 @@ export function RecargosNominaGrid({ dataHorasExtra, dataHorasNocturnas }: Recar
         recargoNocturno: 0,
       }
       cur.he += Number(r.horas_extra ?? 0)
-      cur.costoHE += Number(r.costo_extra ?? 0)
+      cur.costoHE += Number(r.costo_he ?? 0)
       map.set(key, cur)
     }
 
     for (const r of noctRows) {
-      const key = `${r.pos_staff_id ?? r.nombre ?? ''}|${r.fecha ?? ''}`
+      const key = `${r.empleado_nombre ?? ''}|${r.dia ?? r.semana ?? ''}`
       const cur = map.get(key) ?? {
         key,
-        nombre: r.nombre ?? 'Sin nombre',
+        nombre: r.empleado_nombre ?? 'Sin nombre',
         area: r.area ?? '—',
         he: 0,
         costoHE: 0,
@@ -62,7 +62,7 @@ export function RecargosNominaGrid({ dataHorasExtra, dataHorasNocturnas }: Recar
         recargoNocturno: 0,
       }
       cur.nocturnas += Number(r.horas_nocturnas ?? 0)
-      cur.recargoNocturno += Number(r.recargo_nocturno ?? 0)
+      cur.recargoNocturno += Number(r.recargo_35pct ?? 0)
       map.set(key, cur)
     }
 

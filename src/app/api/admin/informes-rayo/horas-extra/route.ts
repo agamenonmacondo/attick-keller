@@ -16,16 +16,16 @@ export async function GET(request: NextRequest) {
   const { data, error } = await sb
     .from('v_horas_extra')
     .select('*')
-    .gte('fecha', from)
-    .lte('fecha', to)
-    .order('fecha', { ascending: false })
+    .gte('dia', from)
+    .lte('dia', to)
+    .order('dia', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const rows = data || []
   const totalHE = rows.reduce((s: number, r: any) => s + Number(r.horas_extra ?? 0), 0)
-  const totalCosto = rows.reduce((s: number, r: any) => s + Number(r.costo_extra ?? 0), 0)
-  const empleados = new Set(rows.map((r: any) => r.pos_staff_id)).size
+  const totalCosto = rows.reduce((s: number, r: any) => s + Number(r.costo_he ?? 0), 0)
+  const empleados = new Set(rows.map((r: any) => r.empleado_nombre)).size
 
   const summary = {
     total_he: totalHE,

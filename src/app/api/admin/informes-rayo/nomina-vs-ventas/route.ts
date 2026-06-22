@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   const rows = data || []
   const summary = {
     nomina_total: rows.reduce((s: number, r: any) => s + Number(r.nomina_total ?? 0), 0),
-    ventas_total: rows.reduce((s: number, r: any) => s + Number(r.ventas_total ?? 0), 0),
+    ventas_total: rows.reduce((s: number, r: any) => s + Number(r.total_ventas ?? 0), 0),
     dias: rows.length,
   }
 

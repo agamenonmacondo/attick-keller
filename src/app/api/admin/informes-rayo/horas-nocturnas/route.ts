@@ -16,17 +16,14 @@ export async function GET(request: NextRequest) {
   const { data, error } = await sb
     .from('v_horas_nocturnas')
     .select('*')
-    .gte('fecha', from)
-    .lte('fecha', to)
-    .order('fecha', { ascending: false })
+    .order('dia_semana', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const rows = data || []
   const totalNocturnas = rows.reduce((s: number, r: any) => s + Number(r.horas_nocturnas ?? 0), 0)
-  const totalRecargo = rows.reduce((s: number, r: any) => s + Number(r.recargo_nocturno ?? 0), 0)
+  const totalRecargo = rows.reduce((s: number, r: any) => s + Number(r.recargo_35pct ?? 0), 0)
 
-  // Área con más horas nocturnas
   const porArea = new Map<string, number>()
   for (const r of rows) {
     const a = r.area ?? 'Sin área'

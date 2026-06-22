@@ -29,9 +29,9 @@ export function ProductividadAreaRadar({ data }: ProductividadAreaRadarProps) {
     for (const r of raw) {
       const a = r.area ?? 'Sin área'
       const cur = map.get(a) ?? { revenue: 0, horas: 0, costo: 0, n: 0 }
-      cur.revenue += Number(r.revenue ?? 0)
-      cur.horas += Number(r.horas_turno ?? 0)
-      cur.costo += Number(r.costo_turnos ?? 0)
+      cur.revenue += Number(r.revenue_del_area ?? 0)
+      cur.horas += Number(r.horas_trabajadas ?? 0)
+      cur.costo += Number(r.costo_nomina ?? 0)
       cur.n += 1
       map.set(a, cur)
     }

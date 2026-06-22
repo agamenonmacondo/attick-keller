@@ -13,13 +13,12 @@ export async function GET(request: NextRequest) {
   }
 
   const sb = getServiceClient()
-  // v_productividad_area has 'dia' (text date like '2026-06-19')
+  // v_productividad_area has dia_semana (int 0-6), not a date string
+  // Return all rows — the component aggregates by area
   const { data, error } = await sb
     .from('v_productividad_area')
     .select('*')
-    .gte('dia', from)
-    .lte('dia', to)
-    .order('dia', { ascending: false })
+    .order('area', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

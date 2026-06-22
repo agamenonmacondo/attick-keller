@@ -53,7 +53,7 @@ export function OperacionHoraChart({ data }: OperacionHoraChartProps) {
     return { byHour: hours, maxRevenue, maxPersonas }
   }, [data])
 
-  const visibleHours = byHour.filter(h => h.revenue > 0 || h.personas > 0)
+  const visibleHours = byHour.filter(h => h.revenue > 0)
   const hours = visibleHours.length > 0 ? visibleHours : byHour.filter(h => h.hora >= 12 && h.hora <= 23)
 
   return (

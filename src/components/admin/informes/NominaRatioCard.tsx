@@ -47,7 +47,7 @@ function estadoConfig(estado: Estado) {
 export function NominaRatioCard({ data }: NominaRatioCardProps) {
   const { latest, rows } = useMemo(() => {
     const rows = data?.data ?? []
-    const latest = rows[0] ?? null
+    const latest = rows.find((r: any) => Number(r.total_ventas ?? 0) > 0) ?? rows[0] ?? null
     return { latest, rows }
   }, [data])
 

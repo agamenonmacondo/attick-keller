@@ -33,12 +33,12 @@ export function RecargosNominaGrid({ dataHorasExtra, dataHorasNocturnas }: Recar
 
     const map = new Map<string, Row>()
 
-    // Index by empleado (pos_staff_id + fecha para no cruzar empleados distintos)
+    // Index by empleado_nombre only (merge across days)
     for (const r of heRows) {
-      const key = `${r.empleado_nombre ?? ''}|${r.dia ?? r.semana ?? ''}`
+      const key = r.empleado_nombre ?? 'Sin nombre'
       const cur = map.get(key) ?? {
         key,
-        nombre: r.empleado_nombre ?? 'Sin nombre',
+        nombre: key,
         area: r.area ?? '—',
         he: 0,
         costoHE: 0,
@@ -51,10 +51,10 @@ export function RecargosNominaGrid({ dataHorasExtra, dataHorasNocturnas }: Recar
     }
 
     for (const r of noctRows) {
-      const key = `${r.empleado_nombre ?? ''}|${r.dia ?? r.semana ?? ''}`
+      const key = r.empleado_nombre ?? 'Sin nombre'
       const cur = map.get(key) ?? {
         key,
-        nombre: r.empleado_nombre ?? 'Sin nombre',
+        nombre: key,
         area: r.area ?? '—',
         he: 0,
         costoHE: 0,

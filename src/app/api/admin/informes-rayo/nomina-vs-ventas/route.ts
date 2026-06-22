@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
     .gte('fecha', from)
     .lte('fecha', to)
     .order('fecha', { ascending: false })
+    .limit(60)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

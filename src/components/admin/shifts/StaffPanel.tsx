@@ -25,10 +25,8 @@ const CONTRACT_LABELS: Record<string, { label: string; className: string }> = {
 // Costo para empresa segun ley colombiana (prestaciones + aportes patronales)
 // Wrapper de calcularCostoEmpresa() que respeta el auxilio_no_salarial de la BD
 function costoEmpresaMensual(salario: number, auxilioNoSalarial: number): number {
-  const base = calcularCostoEmpresa(salario);
-  // Si la BD tiene un auxilio diferente al estandar del SMLV, ajustar
-  const ajusteAuxilio = auxilioNoSalarial - base.auxilioTransporte;
-  return base.costoMensualTotal + ajusteAuxilio;
+  const costo = calcularCostoEmpresa(salario, auxilioNoSalarial);
+  return costo.costoMensualTotal;
 }
 
 interface StaffPanelProps {

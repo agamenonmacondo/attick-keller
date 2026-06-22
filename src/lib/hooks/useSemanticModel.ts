@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 export interface SemanticSummary {
   [key: string]: any
@@ -28,16 +28,6 @@ const EMPTY: Omit<SemanticModelState, 'loading' | 'error'> = {
   reservasVsVentas: null,
 }
 
-async function fetchOne(base: string, from: string, to: string) {
-  const params = new URLSearchParams({ from, to })
-  const res = await fetch(`${base}?${params}`, { credentials: 'include' })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Error cargando datos' }))
-    throw new Error(err.error || 'Error cargando datos')
-  }
-  return res.json()
-}
-
 export function useSemanticModel() {
   const [state, setState] = useState<SemanticModelState>({
     ...EMPTY,
@@ -45,9 +35,14 @@ export function useSemanticModel() {
     error: null,
   })
 
+  const fetchingRef = useRef(false)
+
   const fetchAll = useCallback(async (from: string, to: string) => {
-    setLoading(true)
-    setError(null)
+    if (fetchingRef.current) return
+    fetchingRef.current = true
+
+    setState(s => ({ ...s, loading: true, error: null }))
+
     const root = '/api/admin/informes-rayo'
     const endpoints = [
       ['nominaVsVentas', `${root}/nomina-vs-ventas`],
@@ -59,28 +54,39 @@ export function useSemanticModel() {
       ['reservasVsVentas', `${root}/reservas-vs-ventas`],
     ] as const
 
-    const results = await Promise.allSettled(
-      endpoints.map(([, url]) => fetchOne(url, from, to)),
-    )
+    try {
+      const results = await Promise.allSettled(
+        endpoints.map(([, url]) => {
+          const params = new URLSearchParams({ from, to })
+          return fetch(`${url}?${params}`, { credentials: 'include' })
+            .then(async res => {
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+                throw new Error(err.error || `HTTP ${res.status}`)
+              }
+              return res.json()
+            })
+        }),
+      )
 
-    const next = { ...EMPTY, loading: false, error: null } as SemanticModelState
-    let firstError: string | null = null
-    results.forEach((r, i) => {
-      const key = endpoints[i][0]
-      if (r.status === 'fulfilled') {
-        ;(next as any)[key] = { data: r.value.data || [], summary: r.value.summary || {} }
-      } else if (!firstError) {
-        firstError = (r.reason as Error)?.message || 'Error cargando datos'
-      }
-    })
-    next.error = firstError
-    setState(next)
+      const next = { ...EMPTY, loading: false, error: null } as SemanticModelState
+      let firstError: string | null = null
 
-    function setLoading(v: boolean) {
-      setState(s => ({ ...s, loading: v }))
-    }
-    function setError(e: string | null) {
-      setState(s => ({ ...s, error: e }))
+      results.forEach((r, i) => {
+        const key = endpoints[i][0]
+        if (r.status === 'fulfilled') {
+          ;(next as any)[key] = { data: r.value.data || [], summary: r.value.summary || {} }
+        } else if (!firstError) {
+          firstError = (r.reason as Error)?.message || 'Error cargando datos'
+        }
+      })
+
+      next.error = firstError
+      setState(next)
+    } catch (err) {
+      setState(s => ({ ...s, loading: false, error: (err as Error)?.message || 'Error' }))
+    } finally {
+      fetchingRef.current = false
     }
   }, [])
 

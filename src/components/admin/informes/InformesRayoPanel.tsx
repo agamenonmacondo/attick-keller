@@ -4,14 +4,21 @@ import { useState, useEffect, useMemo } from 'react'
 import { useInformesRayo } from '@/lib/hooks/useInformesRayo'
 import { useProductoHourly } from '@/lib/hooks/useProductoHourly'
 import { useProductMargins } from '@/lib/hooks/useProductMargins'
+import { useSemanticModel } from '@/lib/hooks/useSemanticModel'
 import { MetricasClave } from './MetricasClave'
 import { RentabilidadPanel } from './RentabilidadPanel'
 import { WhatsAppExportButton } from './WhatsAppExportButton'
 import { InformesDashboard } from './InformesDashboard'
 import { ProductoDesgloseTable } from './ProductoDesgloseTable'
+import { NominaRatioCard } from './NominaRatioCard'
+import { RecargosNominaGrid } from './RecargosNominaGrid'
+import { OperacionHoraChart } from './OperacionHoraChart'
+import { GapsCoberturaAlerts } from './GapsCoberturaAlerts'
+import { ProductividadAreaRadar } from './ProductividadAreaRadar'
+import { ReservasConversionTable } from './ReservasConversionTable'
 import {
   Lightning, CaretLeft, CaretRight, Spinner, Warning,
-  ClipboardText, HandCoins, FileText
+  ClipboardText, HandCoins, FileText, ChartLineUp
 } from '@phosphor-icons/react'
 
 type PeriodPreset = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'custom'
@@ -131,6 +138,9 @@ export function InformesRayoPanel() {
   // Márgenes para alimentar el análisis LLM
   const { data: marginsData } = useProductMargins(from, to, '')
 
+  // Modelo semántico (views materializadas) — opcional, no bloquea el informe principal
+  const semantic = useSemanticModel()
+
   useEffect(() => {
     fetchReport(from, to, zone, compareFrom, compareTo)
     setFetched(true)
@@ -147,6 +157,12 @@ export function InformesRayoPanel() {
   useEffect(() => {
     if (fetched) fetchProductos(from, to, zone)
   }, [from, to, zone, fetched])
+
+  // Fetch del modelo semántico cuando cambia el período (opcional)
+  useEffect(() => {
+    if (fetched) semantic.fetchAll(from, to)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [from, to, fetched])
 
   const periodLabel = useMemo(() => {
     const f = new Date(from + 'T00:00:00')
@@ -295,6 +311,40 @@ export function InformesRayoPanel() {
         from={from}
         to={to}
       />
+
+      {/* ── Modelo Semántico (views materializadas) ── */}
+      {fetched && (
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center gap-2">
+            <ChartLineUp size={18} weight="fill" className="text-[var(--color-ak-dorado)]" />
+            <h3 className="text-sm font-bold text-[var(--text-primary)]">Modelo Semántico</h3>
+            {semantic.loading && (
+              <Spinner size={14} className="animate-spin text-[var(--color-ak-borgona)]" />
+            )}
+          </div>
+
+          {semantic.error && (
+            <div className="rounded-xl p-3 flex items-center gap-2 text-xs" style={{ background: 'rgba(196,77,99,0.10)', border: '1px solid rgba(196,77,99,0.4)', color: 'rgb(196,77,99)' }}>
+              <Warning size={14} />
+              {semantic.error}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <NominaRatioCard data={semantic.nominaVsVentas} />
+            <OperacionHoraChart data={semantic.revenueVsTurnos} />
+          </div>
+
+          <RecargosNominaGrid
+            dataHorasExtra={semantic.horasExtra}
+            dataHorasNocturnas={semantic.horasNocturnas}
+          />
+
+          <ProductividadAreaRadar data={semantic.productividadArea} />
+          <GapsCoberturaAlerts data={semantic.gapsCobertura} />
+          <ReservasConversionTable data={semantic.reservasVsVentas} />
+        </div>
+      )}
 
       {/* ── Junta Summary ── */}
       {data && data.kpis && !loading && (() => {

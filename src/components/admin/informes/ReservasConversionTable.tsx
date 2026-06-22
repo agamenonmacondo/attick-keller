@@ -42,6 +42,9 @@ export function ReservasConversionTable({ data }: ReservasConversionTableProps) 
           <CalendarCheck size={16} weight="fill" />
           Reservas vs Ventas vs Staff
         </h3>
+        <span className="text-[10px] text-[var(--text-muted)]" title="Compara reservas/PAX con revenue real del día y staff asignado · Evento grande = 15+ PAX · $/Persona = revenue dividido entre PAX reservados">
+          ¿Qué es esto?
+        </span>
         {summary && (
           <div className="flex flex-wrap gap-3 text-[10px] text-[var(--text-muted)]">
             <span>Reservas: <strong className="text-[var(--text-primary)]">{summary.total_reservas ?? 0}</strong></span>

@@ -63,6 +63,9 @@ export function OperacionHoraChart({ data }: OperacionHoraChartProps) {
           <ChartBar size={16} weight="fill" />
           Operación por Hora
         </h3>
+        <span className="text-[10px] text-[var(--text-muted)]" title="PICO = alta demanda vs personal · GAP = falta personal (cocina) · SOBRANDO = sobra personal para el revenue generado · Barras doradas = revenue total · Barras burgundy = personas en turno">
+          ¿Qué es esto?
+        </span>
         <div className="flex items-center gap-3 text-[10px] text-[var(--text-muted)]">
           <span className="flex items-center gap-1">
             <span className="inline-block w-3 h-2 rounded-sm" style={{ background: 'var(--color-ak-dorado)' }} />

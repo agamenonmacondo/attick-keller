@@ -61,6 +61,9 @@ export function ProductividadAreaRadar({ data }: ProductividadAreaRadarProps) {
           <ChartLineUp size={16} weight="fill" />
           Productividad por Área
         </h3>
+        <span className="text-[10px] text-[var(--text-muted)]" title="ROI = revenue del área / costo de nómina del área · Verde >3x (muy rentable) · Amarillo 1-3x · Rojo <1x (pérdida) · Mide cuánto genera cada peso invertido en personal">
+          ¿Qué es esto?
+        </span>
         {summary && (
           <div className="flex flex-wrap gap-3 text-[10px] text-[var(--text-muted)]">
             <span className="flex items-center gap-1">

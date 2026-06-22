@@ -93,10 +93,13 @@ export function RecargosNominaGrid({ dataHorasExtra, dataHorasNocturnas }: Recar
 
   return (
     <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4 overflow-x-auto">
-      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2 text-[var(--color-ak-dorado)]">
+      <h3 className="text-sm font-semibold mb-1 flex items-center gap-2 text-[var(--color-ak-dorado)]">
         <ClockAfternoon size={16} weight="fill" />
         Recargos de Nómina
       </h3>
+      <p className="text-[10px] text-[var(--text-muted)] mb-3">
+        HE = horas extra (recargo 25%/75%/100% según día y hora) · Nocturnas = horas 21:00-06:00 (recargo 35%) · Total = costo HE + recargo nocturno
+      </p>
 
       <table className="w-full text-xs min-w-[680px]">
         <thead>

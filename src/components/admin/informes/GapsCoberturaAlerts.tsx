@@ -72,6 +72,9 @@ export function GapsCoberturaAlerts({ data }: GapsCoberturaAlertsProps) {
           <Warning size={16} weight="fill" />
           Alertas de Cobertura
         </h3>
+        <span className="text-[10px] text-[var(--text-muted)]" title="GAP_COCINA = hora con revenue pero sin personal de cocina asignado · SOBRA = más personal del necesario para el revenue · DESFASE = desproporción entre personal y revenue">
+          ¿Qué es esto?
+        </span>
         {summary && (
           <div className="flex flex-wrap gap-3 text-[10px] text-[var(--text-muted)]">
             <span>Gaps cocina: <strong className="text-[var(--color-ak-borgona)]">{summary.total_gaps ?? 0}</strong></span>

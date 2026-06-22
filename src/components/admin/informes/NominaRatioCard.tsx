@@ -83,6 +83,9 @@ export function NominaRatioCard({ data }: NominaRatioCardProps) {
           <h3 className="text-sm font-semibold text-[var(--text-primary)]">
             Ratio Nómina / Ventas
           </h3>
+          <span className="text-[10px] text-[var(--text-muted)]" title="EFICIENTE <15% · ATENCION 15-20% · CRITICO >20% · Mide qué % de las ventas se va en nómina del día">
+            ¿Qué es esto?
+          </span>
         </div>
         <span
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"

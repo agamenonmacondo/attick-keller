@@ -60,7 +60,7 @@ export function NominaRatioCard({ data }: NominaRatioCardProps) {
   }
 
   const nomina = Number(latest.nomina_total ?? 0)
-  const ventas = Number(latest.ventas_total ?? 0)
+  const ventas = Number(latest.total_ventas ?? 0)
   const ratio = Number(latest.ratio_pct ?? (ventas > 0 ? (nomina / ventas) * 100 : 0))
   const estado = (latest.estado as Estado) || estadoFromRatio(ratio)
   const cfg = estadoConfig(estado)

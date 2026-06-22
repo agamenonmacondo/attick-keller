@@ -13,12 +13,12 @@ export async function GET(request: NextRequest) {
   }
 
   const sb = getServiceClient()
+  // v_horas_extra has 'dia' (int 0-6 = day of week) and 'semana' (string "2026-W26")
+  // Can't filter by date range — return all rows
   const { data, error } = await sb
     .from('v_horas_extra')
     .select('*')
-    .gte('dia', from)
-    .lte('dia', to)
-    .order('dia', { ascending: false })
+    .order('semana', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

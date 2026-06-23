@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   let query = sb
     .from('pos_nomina_staff')
-    .select('id, nombre_completo, cargo, area, secondary_areas, salario, sede, cedula, correo, contrato, activo, aplica_propinas, auxilio_no_salarial, modalidad, es_medio_tiempo')
+    .select('id, nombre_completo, cargo, area, secondary_areas, salario, sede, cedula, correo, contrato, activo, aplica_propinas, auxilio_no_salarial, modalidad, es_medio_tiempo, is_fixed_cost, is_leader, costo_fijo_mensual')
     .eq('sede', 'C75')
     .eq('activo', true)
     .order('nombre_completo')
@@ -57,6 +57,9 @@ export async function GET(request: NextRequest) {
     auxilio_no_salarial: s.auxilio_no_salarial || 0,
     modalidad: s.modalidad || 'COMPLETO',
     es_medio_tiempo: s.es_medio_tiempo === true,
+    is_fixed_cost: s.is_fixed_cost === true,
+    is_leader: s.is_leader === true,
+    costo_fijo_mensual: s.costo_fijo_mensual || 0,
     alias: aliasMap.get(s.id as string) || (s.nombre_completo as string).split(' ')[0],
   }))
 

@@ -408,6 +408,7 @@ export function calcularCostoEmpresa(salarioMensual: number, auxilioNoSalarial?:
   aporteSena: number;
   aporteICBF: number;
   auxilioTransporte: number;
+  auxilioNoSalarial: number;
   costoMensualTotal: number;
   costoDiario: number;
   valorHoraOrdinaria: number;
@@ -421,11 +422,40 @@ export function calcularCostoEmpresa(salarioMensual: number, auxilioNoSalarial?:
     ARL_RATE: 0.00522, // comercio
   };
 
-  // Auxilio transporte: usar el de la BD si se proporciona, si no calcular automáticamente
-  const auxilioTransporte = auxilioNoSalarial !== undefined
-    ? auxilioNoSalarial
-    : (salarioMensual <= LEGAL_PARAMS_LOCAL.SMMLV * 2 ? LEGAL_PARAMS_LOCAL.TRANSPORT_ALLOWANCE : 0);
-  const baseCesantiasPrima = salarioMensual + auxilioTransporte;
+  // Auxilio transporte (legal): $249,095 si gana ≤ 2 SMLV, $0 si gana más
+  const auxilioTransporteLegal = salarioMensual <= LEGAL_PARAMS_LOCAL.SMMLV * 2
+    ? LEGAL_PARAMS_LOCAL.TRANSPORT_ALLOWANCE
+    : 0;
+
+  // Auxilio no salarial (personalizado): lo que viene de la BD menos el transporte legal
+  // Si la BD tiene un valor > 0, lo usamos completo y descontamos el transporte legal
+  // Si la BD tiene 0, el transporte legal se aplica si gana ≤ 2 SMLV
+  let auxilioTransporte: number;
+  let auxilioNoSalarialPersonalizado: number;
+
+  if (auxilioNoSalarial !== undefined && auxilioNoSalarial > 0) {
+    // La BD tiene auxilio — separar transporte legal del personalizado
+    if (auxilioNoSalarial > auxilioTransporteLegal && auxilioTransporteLegal > 0) {
+      // Gana ≤ 2 SMLV: transporte legal + exceso personalizado
+      auxilioTransporte = auxilioTransporteLegal;
+      auxilioNoSalarialPersonalizado = auxilioNoSalarial - auxilioTransporteLegal;
+    } else if (auxilioTransporteLegal === 0) {
+      // Gana > 2 SMLV: todo es auxilio no salarial personalizado
+      auxilioTransporte = 0;
+      auxilioNoSalarialPersonalizado = auxilioNoSalarial;
+    } else {
+      // Gana ≤ 2 SMLV y el BD tiene ≤ transporte legal: es solo transporte
+      auxilioTransporte = auxilioNoSalarial;
+      auxilioNoSalarialPersonalizado = 0;
+    }
+  } else {
+    // Sin auxilio en BD: transporte legal si gana ≤ 2 SMLV
+    auxilioTransporte = auxilioTransporteLegal;
+    auxilioNoSalarialPersonalizado = 0;
+  }
+
+  const totalAuxilio = auxilioTransporte + auxilioNoSalarialPersonalizado;
+  const baseCesantiasPrima = salarioMensual + totalAuxilio;
 
   // Prima de servicios: 1 mes/12 = 8.33% sobre (salario + auxilio transporte)
   const primaServicios = baseCesantiasPrima * 8.33 / 100;
@@ -449,7 +479,7 @@ export function calcularCostoEmpresa(salarioMensual: number, auxilioNoSalarial?:
 
   const prestaciones = primaServicios + cesantias + interesesCesantias + vacaciones;
   const aportesPatronales = aporteSalud + aportePension + aporteARL + aporteCaja + aporteSena + aporteICBF;
-  const costoMensualTotal = salarioMensual + auxilioTransporte + prestaciones + aportesPatronales;
+  const costoMensualTotal = salarioMensual + totalAuxilio + prestaciones + aportesPatronales;
 
   const valorHoraOrdinaria = costoMensualTotal / 30 / 8;
   const valorHoraExtraDiurna = valorHoraOrdinaria * 1.25;
@@ -469,6 +499,7 @@ export function calcularCostoEmpresa(salarioMensual: number, auxilioNoSalarial?:
     aporteSena: Math.round(aporteSena),
     aporteICBF: Math.round(aporteICBF),
     auxilioTransporte,
+    auxilioNoSalarial: auxilioNoSalarialPersonalizado,
     costoMensualTotal: Math.round(costoMensualTotal),
     costoDiario: Math.round(costoMensualTotal / 30),
     valorHoraOrdinaria: Math.round(valorHoraOrdinaria),

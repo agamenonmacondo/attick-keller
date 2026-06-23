@@ -207,7 +207,8 @@ export default function StaffPanel({ area }: StaffPanelProps) {
 
   // Totales
   const totalSalarios = staff.reduce((s, m) => s + (m.salario_mensual || 0), 0);
-  const totalAuxilios = staff.reduce((s, m) => s + (m.auxilio_no_salarial || 0), 0);
+  const totalAuxiliosTransporte = staff.reduce((s, m) => s + (calcularCostoEmpresa(m.salario_mensual || 0, m.auxilio_no_salarial || 0).auxilioTransporte), 0);
+  const totalAuxiliosNoSalarial = staff.reduce((s, m) => s + (calcularCostoEmpresa(m.salario_mensual || 0, m.auxilio_no_salarial || 0).auxilioNoSalarial), 0);
   const totalCostoEmpresa = staff.reduce((s, m) => s + costoEmpresaMensual(m.salario_mensual || 0, m.auxilio_no_salarial || 0), 0);
 
   // Valor hora por persona (costo empresa / 30 / 8)
@@ -233,6 +234,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
       aporteSena: costo.aporteSena,
       aporteICBF: costo.aporteICBF,
       auxilioTransporte: costo.auxilioTransporte,
+      auxilioNoSalarial: costo.auxilioNoSalarial,
     };
   };
 
@@ -256,15 +258,21 @@ export default function StaffPanel({ area }: StaffPanelProps) {
   return (
     <div className="space-y-4">
       {/* Resumen */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-[var(--bg-card)] rounded-lg p-3 border border-[var(--border-default)]">
           <div className="text-xs text-[var(--text-secondary)]">Total salarios</div>
           <div className="text-sm font-mono font-semibold text-[var(--text-primary)]">{formatCOP(totalSalarios)}/mes</div>
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3 border border-[var(--border-default)]">
-          <div className="text-xs text-[var(--text-secondary)]">Auxilios transporte</div>
-          <div className="text-sm font-mono text-[var(--text-secondary)]">{formatCOP(totalAuxilios)}/mes</div>
+          <div className="text-xs text-[var(--text-secondary)]">Auxilio transporte</div>
+          <div className="text-sm font-mono text-[var(--text-secondary)]">{formatCOP(totalAuxiliosTransporte)}/mes</div>
         </div>
+        {totalAuxiliosNoSalarial > 0 && (
+        <div className="bg-[var(--bg-card)] rounded-lg p-3 border border-[var(--border-default)]">
+          <div className="text-xs text-[var(--text-secondary)]">Auxilio no salarial</div>
+          <div className="text-sm font-mono text-[var(--text-secondary)]">{formatCOP(totalAuxiliosNoSalarial)}/mes</div>
+        </div>
+        )}
         <div className="bg-[var(--bg-card)] rounded-lg p-3 border border-[var(--accent-primary)]/30">
           <div className="text-xs text-[var(--accent-primary)]">Costo total empresa</div>
           <div className="text-sm font-mono font-bold text-[var(--accent-primary)]">{formatCOP(totalCostoEmpresa)}/mes</div>
@@ -520,6 +528,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                               <div><span className="text-[var(--text-secondary)]">SENA (2%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteSena)}/mes</div></div>
                               <div><span className="text-[var(--text-secondary)]">ICBF (3%)</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteICBF)}/mes</div></div>
                               <div><span className="text-[var(--text-secondary)]">Auxilio transporte</span><div className="font-mono text-[var(--text-primary)]">{d.auxilioTransporte > 0 ? formatCOP(d.auxilioTransporte) : '-'} /mes</div></div>
+                              {d.auxilioNoSalarial > 0 && <div><span className="text-[var(--text-secondary)]">Auxilio no salarial</span><div className="font-mono text-[var(--text-primary)]">{formatCOP(d.auxilioNoSalarial)} /mes</div></div>}
                               <div><span className="text-[var(--text-secondary)]">Propinas</span><div className="font-mono text-[var(--text-primary)]">{member.aplica_propinas ? 'Si' : 'No'}</div></div>
                             </div>
                           </td>

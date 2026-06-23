@@ -257,6 +257,11 @@ export default function StaffPanel({ area }: StaffPanelProps) {
               <option value="PASANTE LECTIVA">Pasante lectiva</option>
               <option value="PASANTE PRODUCTIVA">Pasante productiva</option>
             </select>
+            <select value={addForm.contrato} onChange={e => setAddForm(f => ({ ...f, contrato: e.target.value as 'fijo' | 'turnante' }))}
+              className="h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm">
+              <option value="fijo">Contrato fijo</option>
+              <option value="turnante">Turnante</option>
+            </select>
             <input type="text" placeholder="Alias" value={addForm.alias} onChange={e => setAddForm(f => ({ ...f, alias: e.target.value }))}
               className="h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" />
           </div>

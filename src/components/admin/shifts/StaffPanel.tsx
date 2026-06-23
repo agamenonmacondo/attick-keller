@@ -30,9 +30,9 @@ function costoEmpresaMensual(salario: number, auxilioNoSalarial: number, sinAuxi
   return costo.costoMensualTotal;
 }
 
-// Helper: es pasante (cargo incluye "PASANTE") o salario placeholder
+// Helper: sin auxilio transporte si es pasante sin auxilio en BD o salario placeholder
 const esSinAuxTransporte = (m: StaffRow) => 
-  (m.cargo?.toUpperCase().includes('PASANTE') ?? false) || (m.salario_mensual <= 1);
+  ((m.cargo?.toUpperCase().includes('PASANTE') ?? false) && (m.auxilio_no_salarial || 0) === 0) || (m.salario_mensual <= 1);
 
 interface StaffPanelProps {
   area: string;

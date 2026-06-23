@@ -88,7 +88,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
     let totalMensual = 0;
     let totalSalarioBase = 0;
     for (const s of fijos) {
-      const sinAux = (s.cargo?.toUpperCase().includes('PASANTE') ?? false) || (s.salario_mensual <= 1);
+      const sinAux = ((s.cargo?.toUpperCase().includes('PASANTE') ?? false) && (s.auxilio_no_salarial || 0) === 0) || (s.salario_mensual <= 1);
       const costo = calcularCostoEmpresa(s.salario_mensual, s.auxilio_no_salarial, sinAux);
       // Costo empresa TOTAL (incluye auxilio transporte — es costo real del negocio)
       totalMensual += costo.costoMensualTotal;
@@ -153,7 +153,7 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
   const costoEmpresaConTurno = useMemo(() => {
     let total = 0;
     for (const emp of conTurno) {
-      const sinAux = (emp.cargo?.toUpperCase().includes('PASANTE') ?? false) || (emp.salario_mensual <= 1);
+      const sinAux = ((emp.cargo?.toUpperCase().includes('PASANTE') ?? false) && (emp.auxilio_no_salarial || 0) === 0) || (emp.salario_mensual <= 1);
       const costo = calcularCostoEmpresa(emp.salario_mensual || 0, emp.auxilio_no_salarial, sinAux);
       total += costo.costoMensualTotal;
     }

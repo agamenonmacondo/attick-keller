@@ -434,10 +434,15 @@ export function calcularCostoEmpresa(salarioMensual: number, auxilioNoSalarial?:
   // Auxilio no salarial (personalizado): lo que viene de la BD menos el transporte legal
   // Si la BD tiene un valor > 0, lo usamos completo y descontamos el transporte legal
   // Si la BD tiene 0, el transporte legal se aplica si gana ≤ 2 SMLV
+  // Placeholder salary ($1 = Agamenon) → no recibe ningún auxilio
   let auxilioTransporte: number;
   let auxilioNoSalarialPersonalizado: number;
 
-  if (auxilioNoSalarial !== undefined && auxilioNoSalarial > 0) {
+  if (salarioPlaceholder) {
+    // Placeholder salary — no auxilio at all
+    auxilioTransporte = 0;
+    auxilioNoSalarialPersonalizado = 0;
+  } else if (auxilioNoSalarial !== undefined && auxilioNoSalarial > 0) {
     // La BD tiene auxilio — separar transporte legal del personalizado
     if (auxilioNoSalarial > auxilioTransporteLegal && auxilioTransporteLegal > 0) {
       // Gana ≤ 2 SMLV: transporte legal + exceso personalizado

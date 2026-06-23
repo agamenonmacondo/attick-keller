@@ -146,6 +146,12 @@ export async function PATCH(request: NextRequest) {
   if (salario_mensual !== undefined) updates.salario = salario_mensual
   if (activo !== undefined) updates.activo = activo
   if (body.auxilio_no_salarial !== undefined) updates.auxilio_no_salarial = body.auxilio_no_salarial
+  if (body.is_fixed_cost !== undefined) updates.is_fixed_cost = body.is_fixed_cost
+  if (body.is_leader !== undefined) updates.is_leader = body.is_leader
+  if (body.modalidad !== undefined) updates.modalidad = body.modalidad
+  if (body.aplica_propinas !== undefined) updates.aplica_propinas = body.aplica_propinas
+  if (body.es_medio_tiempo !== undefined) updates.es_medio_tiempo = body.es_medio_tiempo
+  if (body.costo_fijo_mensual !== undefined) updates.costo_fijo_mensual = body.costo_fijo_mensual
 
   const { data, error } = await sb
     .from('pos_nomina_staff')

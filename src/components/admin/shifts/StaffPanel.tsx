@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, PencilSimple, Check, X, CaretDown, CaretRight, Prohibit, SignIn, Trash, MagnifyingGlass, Users, ChevronDown, ChevronUp } from '@phosphor-icons/react';
+import { Plus, PencilSimple, Check, X, CaretDown, CaretRight, Prohibit, SignIn, Trash, MagnifyingGlass, Users, CaretUp } from '@phosphor-icons/react';
 import { formatCOP, calcularCostoEmpresa } from '@/lib/utils/costCalculator';
 
 const SMMLV = 1750905;
@@ -475,7 +475,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                                 <div className="font-mono text-[10px] text-[var(--text-secondary)]">Sal: {formatCOP(member.salario_mensual || 0)}</div>
                               </div>
                               <div className="flex-shrink-0 text-[var(--text-secondary)]">
-                                {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                {isExpanded ? <CaretUp size={14} /> : <CaretDown size={14} />}
                               </div>
                               <div className="flex gap-0.5" onClick={e => e.stopPropagation()}>
                                 <button onClick={() => startEdit(member)} className="p-2 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)]" title="Editar"><PencilSimple size={14} /></button>

@@ -84,6 +84,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'nombre_completo y area son requeridos' }, { status: 400 })
   }
 
+  const modalidad = body.modalidad || 'COMPLETO'
+  const es_medio_tiempo = body.es_medio_tiempo ?? (modalidad === 'MEDIO_TIEMPO')
+  const aplica_propinas = body.aplica_propinas ?? !(modalidad?.toUpperCase().includes('PASANTE'))
+
+  // Auxilio no salarial: si el frontend envía valor explícito, usarlo. Si no, calcular:
+  // - Pasantes sin auxilio (modalidad PASANTE LECTIVA sin auxilio personalizado) → 0
+  // - Salario ≤ 2 SMLV → auxilio transporte legal ($249,095)
+  // - Salario > 2 SMLV → auxilio no salarial personalizado del body
+  const SMMLV = 1750905
+  const AUXILIO_TRANSPORTE = 249095
+  let auxilio_no_salarial = body.auxilio_no_salarial
+  if (auxilio_no_salarial === undefined || auxilio_no_salarial === null) {
+    const salario = salario_mensual || 0
+    if (salario > 0 && salario <= SMMLV * 2) {
+      auxilio_no_salarial = AUXILIO_TRANSPORTE
+    } else {
+      auxilio_no_salarial = 0
+    }
+  }
+
   const { data: staff, error } = await sb
     .from('pos_nomina_staff')
     .insert({
@@ -92,12 +112,16 @@ export async function POST(request: NextRequest) {
       area,
       secondary_areas: [],
       salario: salario_mensual || 0,
-      auxilio_no_salarial: body.auxilio_no_salarial ?? 0,
-      aplica_propinas: body.aplica_propinas ?? true,
+      auxilio_no_salarial,
+      aplica_propinas,
       sede: 'C75',
       cedula: cedula || null,
       correo: correo || null,
       contrato: contrato || 'fijo',
+      modalidad,
+      es_medio_tiempo,
+      is_fixed_cost: body.is_fixed_cost ?? false,
+      is_leader: body.is_leader ?? false,
       activo: true,
     })
     .select()

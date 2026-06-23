@@ -55,6 +55,8 @@ export default function StaffPanel({ area }: StaffPanelProps) {
   const [addForm, setAddForm] = useState({
     nombre_completo: '', cargo: '', area: area || 'cocina', contrato: 'fijo' as 'fijo' | 'turnante',
     cedula: '', correo: '', salario_mensual: 0, alias: '',
+    modalidad: 'COMPLETO', aplica_propinas: true, is_fixed_cost: false, is_leader: false,
+    auxilio_no_salarial: 0, es_medio_tiempo: false,
   });
 
   const fetchStaff = useCallback(async () => {
@@ -155,12 +157,18 @@ export default function StaffPanel({ area }: StaffPanelProps) {
       const res = await fetch('/api/admin/nomina-staff', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...addForm, alias: addForm.alias || null,
-          auxilio_no_salarial: addForm.salario_mensual > 0 && addForm.salario_mensual <= SMMLV * 2 ? AUXILIO_TRANSPORTE : 0,
+          ...addForm,
+          alias: addForm.alias || null,
+          auxilio_no_salarial: addForm.auxilio_no_salarial,
+          aplica_propinas: addForm.aplica_propinas,
+          modalidad: addForm.modalidad,
+          es_medio_tiempo: addForm.es_medio_tiempo,
+          is_fixed_cost: addForm.is_fixed_cost,
+          is_leader: addForm.is_leader,
         }),
       });
       if (!res.ok) throw new Error('Error creando empleado');
-      setAddForm({ nombre_completo: '', cargo: '', area: area || 'cocina', contrato: 'fijo', cedula: '', correo: '', salario_mensual: 0, alias: '' });
+      setAddForm({ nombre_completo: '', cargo: '', area: area || 'cocina', contrato: 'fijo', cedula: '', correo: '', salario_mensual: 0, alias: '', modalidad: 'COMPLETO', aplica_propinas: true, is_fixed_cost: false, is_leader: false, auxilio_no_salarial: 0, es_medio_tiempo: false });
       setShowAddForm(false); fetchStaff();
     } catch (err) { console.error('Error creating staff:', err); }
     finally { setSaving(false); }
@@ -217,7 +225,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
           )}
         </div>
         <span className="text-[10px] text-[var(--text-secondary)] tabular-nums whitespace-nowrap"><Users size={12} className="inline mr-0.5" />{staff.filter(m => m.activo).length}</span>
-        <button onClick={() => { setAddForm({ nombre_completo: '', cargo: '', area: area || 'cocina', contrato: 'fijo', cedula: '', correo: '', salario_mensual: 0, alias: '' }); setShowAddForm(true); }}
+        <button onClick={() => { setAddForm({ nombre_completo: '', cargo: '', area: area || 'cocina', contrato: 'fijo', cedula: '', correo: '', salario_mensual: 0, alias: '', modalidad: 'COMPLETO', aplica_propinas: true, is_fixed_cost: false, is_leader: false, auxilio_no_salarial: 0, es_medio_tiempo: false }); setShowAddForm(true); }}
           className="h-9 px-3 rounded-md text-xs font-medium bg-[var(--accent-primary)] text-white hover:opacity-90 flex items-center gap-1">
           <Plus size={14} />Agregar
         </button>
@@ -235,10 +243,27 @@ export default function StaffPanel({ area }: StaffPanelProps) {
               className="h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm">
               {AREAS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
             </select>
-            <input type="number" placeholder="Salario" value={addForm.salario_mensual || ''} onChange={e => setAddForm(f => ({ ...f, salario_mensual: Number(e.target.value) || 0 }))}
+            <input type="number" placeholder="Salario mensual" value={addForm.salario_mensual || ''} onChange={e => setAddForm(f => ({ ...f, salario_mensual: Number(e.target.value) || 0 }))}
               className="h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm font-mono" />
+            <input type="number" placeholder="Auxilio no salarial" value={addForm.auxilio_no_salarial || ''} onChange={e => setAddForm(f => ({ ...f, auxilio_no_salarial: Number(e.target.value) || 0 }))}
+              className="h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm font-mono" />
+            <select value={addForm.modalidad} onChange={e => {
+              const mod = e.target.value;
+              setAddForm(f => ({ ...f, modalidad: mod, aplica_propinas: !mod.toUpperCase().includes('PASANTE'), es_medio_tiempo: mod === 'MEDIO_TIEMPO' }));
+            }}
+              className="h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm">
+              <option value="COMPLETO">Completo</option>
+              <option value="MEDIO_TIEMPO">Medio tiempo</option>
+              <option value="PASANTE LECTIVA">Pasante lectiva</option>
+              <option value="PASANTE PRODUCTIVA">Pasante productiva</option>
+            </select>
             <input type="text" placeholder="Alias" value={addForm.alias} onChange={e => setAddForm(f => ({ ...f, alias: e.target.value }))}
               className="h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" />
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <label className="flex items-center gap-1.5 text-xs text-[var(--text-primary)] cursor-pointer"><input type="checkbox" checked={addForm.aplica_propinas} onChange={e => setAddForm(f => ({ ...f, aplica_propinas: e.target.checked }))} className="rounded w-3.5 h-3.5" />Propinas</label>
+            <label className="flex items-center gap-1.5 text-xs text-[var(--text-primary)] cursor-pointer"><input type="checkbox" checked={addForm.is_fixed_cost} onChange={e => setAddForm(f => ({ ...f, is_fixed_cost: e.target.checked }))} className="rounded w-3.5 h-3.5" />Costo fijo</label>
+            <label className="flex items-center gap-1.5 text-xs text-[var(--text-primary)] cursor-pointer"><input type="checkbox" checked={addForm.is_leader} onChange={e => setAddForm(f => ({ ...f, is_leader: e.target.checked }))} className="rounded w-3.5 h-3.5" />Lider</label>
           </div>
           <div className="flex justify-end gap-2">
             <button onClick={() => setShowAddForm(false)} className="h-8 px-3 rounded text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]">Cancelar</button>
@@ -265,7 +290,13 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                   <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Salario mensual</label><input type="number" value={editForm.salario_mensual || ''} onChange={e => ef('salario_mensual', Number(e.target.value) || 0)} className="w-full h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm font-mono" /></div>
                   <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Auxilio no salarial</label><input type="number" value={editForm.auxilio_no_salarial || ''} onChange={e => ef('auxilio_no_salarial', Number(e.target.value) || 0)} className="w-full h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm font-mono" /></div>
                   <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Contrato</label><select value={editForm.contrato} onChange={e => ef('contrato', e.target.value)} className="w-full h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm"><option value="fijo">Fijo</option><option value="turnante">Turnante</option></select></div>
-                  <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Modalidad</label><select value={editForm.modalidad} onChange={e => ef('modalidad', e.target.value)} className="w-full h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm"><option value="COMPLETO">Completo</option><option value="MEDIO_TIEMPO">Medio tiempo</option></select></div>
+                  <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Modalidad</label><select value={editForm.modalidad} onChange={e => {
+                    const mod = e.target.value;
+                    ef('modalidad', mod);
+                    if (mod.toUpperCase().includes('PASANTE')) ef('aplica_propinas', false);
+                    if (mod === 'MEDIO_TIEMPO') ef('es_medio_tiempo', true);
+                    else if (mod === 'COMPLETO') ef('es_medio_tiempo', false);
+                  }} className="w-full h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm"><option value="COMPLETO">Completo</option><option value="MEDIO_TIEMPO">Medio tiempo</option><option value="PASANTE LECTIVA">Pasante lectiva</option><option value="PASANTE PRODUCTIVA">Pasante productiva</option></select></div>
                   <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Cedula</label><input type="text" value={editForm.cedula} onChange={e => ef('cedula', e.target.value)} className="w-full h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
                   <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Correo</label><input type="email" value={editForm.correo} onChange={e => ef('correo', e.target.value)} className="w-full h-9 px-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
                 </div>

@@ -66,12 +66,11 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
   );
 
   // FIJOS: siempre se muestran, sin importar el filtro de área
-  const FIJO_NAMES = ['WALTER VILLAMOROS', 'ESNEIDER BLANCO', 'VERONICA FRANCHESKA'];
+  // Usa is_fixed_cost de la BD + líderes de área (Walter, Esneider, Verónica, Rodrigo)
   const fijos = useMemo(() =>
     allStaff.filter(s => {
       const a = s.area || '';
-      const name = (s.nombre_completo || s.nombre || '').toUpperCase();
-      return a === 'apoyo' || a === 'admin' || FIJO_NAMES.some(n => name.includes(n));
+      return s.is_fixed_cost === true || a === 'apoyo' || a === 'admin';
     }),
     [allStaff]
   );

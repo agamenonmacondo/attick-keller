@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, PencilSimple, Check, X, CaretDown, CaretRight, Prohibit, SignIn, Trash, MagnifyingGlass, Users } from '@phosphor-icons/react';
+import { Plus, PencilSimple, Check, X, CaretDown, CaretRight, Prohibit, SignIn, Trash, MagnifyingGlass, Users, ChevronDown, ChevronUp } from '@phosphor-icons/react';
 import { formatCOP, calcularCostoEmpresa } from '@/lib/utils/costCalculator';
 
 const SMMLV = 1750905;
@@ -17,14 +17,18 @@ const AREAS: { value: string; label: string; color: string }[] = [
 
 const AREA_ORDER = ['cocina', 'barra', 'servicio', 'apoyo', 'admin'];
 
-const CONTRACT_LABELS: Record<string, { label: string; className: string }> = {
-  fijo: { label: 'Fijo', className: 'bg-[var(--color-success)]/15 text-[var(--color-success)] border-emerald-500/30' },
-  turnante: { label: 'Turnante', className: 'bg-[var(--color-warning)]/15 text-[var(--color-warning)] border-amber-500/30' },
+const CONTRACT_LABELS: Record<string, { label: string; short: string; className: string }> = {
+  fijo: { label: 'Fijo', short: 'F', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+  turnante: { label: 'Turnante', short: 'T', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+};
+
+const MODALIDAD_LABELS: Record<string, string> = {
+  COMPLETO: 'Completo',
+  MEDIO_TIEMPO: 'Medio tiempo',
 };
 
 function costoEmpresaMensual(salario: number, auxilioNoSalarial: number, sinAuxilioTransporte?: boolean): number {
-  const costo = calcularCostoEmpresa(salario, auxilioNoSalarial, sinAuxilioTransporte);
-  return costo.costoMensualTotal;
+  return calcularCostoEmpresa(salario, auxilioNoSalarial, sinAuxilioTransporte).costoMensualTotal;
 }
 
 const esSinAuxTransporte = (m: StaffRow) =>
@@ -57,6 +61,23 @@ interface StaffRow {
   fecha_ingreso: string | null;
 }
 
+interface EditFormData {
+  nombre_completo: string;
+  cargo: string;
+  area: string;
+  contrato: string;
+  cedula: string;
+  correo: string;
+  salario_mensual: number;
+  auxilio_no_salarial: number;
+  modalidad: string;
+  aplica_propinas: boolean;
+  es_medio_tiempo: boolean;
+  is_fixed_cost: boolean;
+  is_leader: boolean;
+  alias: string;
+}
+
 export default function StaffPanel({ area }: StaffPanelProps) {
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,22 +85,8 @@ export default function StaffPanel({ area }: StaffPanelProps) {
   const [collapsedAreas, setCollapsedAreas] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [editForm, setEditForm] = useState<Record<string, {
-    nombre_completo: string;
-    cargo: string;
-    area: string;
-    contrato: string;
-    cedula: string;
-    correo: string;
-    salario_mensual: number;
-    auxilio_no_salarial: number;
-    modalidad: string;
-    aplica_propinas: boolean;
-    es_medio_tiempo: boolean;
-    is_fixed_cost: boolean;
-    is_leader: boolean;
-    alias: string;
-  }>>({});
+  const [editForm, setEditForm] = useState<EditFormData | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState({
     nombre_completo: '',
@@ -97,8 +104,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
     try {
       const res = await fetch('/api/admin/nomina-staff');
       if (!res.ok) throw new Error('Error cargando personal');
-      const data = await res.json();
-      setStaff(data);
+      setStaff(await res.json());
     } catch (err) {
       console.error('Error fetching staff:', err);
     } finally {
@@ -108,7 +114,6 @@ export default function StaffPanel({ area }: StaffPanelProps) {
 
   useEffect(() => { fetchStaff(); }, [fetchStaff]);
 
-  // Group staff by area
   const staffByArea = useMemo(() => {
     const groups: Record<string, StaffRow[]> = {};
     for (const a of AREA_ORDER) groups[a] = [];
@@ -120,7 +125,6 @@ export default function StaffPanel({ area }: StaffPanelProps) {
     return groups;
   }, [staff]);
 
-  // Filter by search
   const filteredStaff = useMemo(() => {
     if (!searchQuery.trim()) return staff;
     const q = searchQuery.toLowerCase();
@@ -142,7 +146,6 @@ export default function StaffPanel({ area }: StaffPanelProps) {
     return groups;
   }, [filteredStaff]);
 
-  // Area totals
   const areaTotals = useMemo(() => {
     const totals: Record<string, { count: number; salarios: number; costoEmpresa: number; auxTransporte: number; auxNoSalarial: number }> = {};
     for (const a of AREA_ORDER) {
@@ -172,63 +175,65 @@ export default function StaffPanel({ area }: StaffPanelProps) {
   };
 
   const startEdit = (m: StaffRow) => {
-    setEditForm(prev => ({
-      ...prev,
-      [m.id]: {
-        nombre_completo: m.nombre_completo,
-        cargo: m.cargo || '',
-        area: m.area || 'cocina',
-        contrato: m.contrato,
-        cedula: m.cedula || '',
-        correo: m.correo || '',
-        salario_mensual: m.salario_mensual || 0,
-        auxilio_no_salarial: m.auxilio_no_salarial || 0,
-        modalidad: m.modalidad || 'COMPLETO',
-        aplica_propinas: m.aplica_propinas,
-        es_medio_tiempo: m.es_medio_tiempo,
-        is_fixed_cost: m.is_fixed_cost,
-        is_leader: m.is_leader,
-        alias: m.alias || '',
-      },
-    }));
+    setEditForm({
+      nombre_completo: m.nombre_completo,
+      cargo: m.cargo || '',
+      area: m.area || 'cocina',
+      contrato: m.contrato,
+      cedula: m.cedula || '',
+      correo: m.correo || '',
+      salario_mensual: m.salario_mensual || 0,
+      auxilio_no_salarial: m.auxilio_no_salarial || 0,
+      modalidad: m.modalidad || 'COMPLETO',
+      aplica_propinas: m.aplica_propinas,
+      es_medio_tiempo: m.es_medio_tiempo,
+      is_fixed_cost: m.is_fixed_cost,
+      is_leader: m.is_leader,
+      alias: m.alias || '',
+    });
     setEditingId(m.id);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditForm({});
+    setEditForm(null);
   };
 
-  const handleUpdate = async (id: string) => {
-    const f = editForm[id];
-    if (!f) return;
+  const handleUpdate = async () => {
+    if (!editingId || !editForm) return;
     setSaving(true);
     try {
       const res = await fetch('/api/admin/nomina-staff', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id,
-          nombre_completo: f.nombre_completo,
-          cargo: f.cargo,
-          area: f.area,
-          contrato: f.contrato,
-          cedula: f.cedula || null,
-          correo: f.correo || null,
-          salario_mensual: f.salario_mensual,
-          auxilio_no_salarial: f.auxilio_no_salarial,
-          modalidad: f.modalidad,
-          aplica_propinas: f.aplica_propinas,
-          es_medio_tiempo: f.es_medio_tiempo,
-          is_fixed_cost: f.is_fixed_cost,
-          is_leader: f.is_leader,
+          id: editingId,
+          nombre_completo: editForm.nombre_completo,
+          cargo: editForm.cargo,
+          area: editForm.area,
+          contrato: editForm.contrato,
+          cedula: editForm.cedula || null,
+          correo: editForm.correo || null,
+          salario_mensual: editForm.salario_mensual,
+          auxilio_no_salarial: editForm.auxilio_no_salarial,
+          modalidad: editForm.modalidad,
+          aplica_propinas: editForm.aplica_propinas,
+          es_medio_tiempo: editForm.es_medio_tiempo,
+          is_fixed_cost: editForm.is_fixed_cost,
+          is_leader: editForm.is_leader,
         }),
       });
-      if (!res.ok) throw new Error('Error actualizando');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('Error updating:', err);
+        alert('Error al actualizar. Intenta de nuevo.');
+        return;
+      }
       cancelEdit();
       fetchStaff();
     } catch (err) {
       console.error('Error updating staff:', err);
+      alert('Error de conexión. Intenta de nuevo.');
     } finally {
       setSaving(false);
     }
@@ -291,16 +296,15 @@ export default function StaffPanel({ area }: StaffPanelProps) {
     }
   };
 
-  const desglose = (m: StaffRow) => {
-    const costo = calcularCostoEmpresa(m.salario_mensual || 0, m.auxilio_no_salarial || 0, esSinAuxTransporte(m));
-    return costo;
-  };
-
-  const upEF = (id: string, field: string, value: string | number | boolean) =>
-    setEditForm(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+  const desglose = (m: StaffRow) => calcularCostoEmpresa(m.salario_mensual || 0, m.auxilio_no_salarial || 0, esSinAuxTransporte(m));
 
   const areaLabel = (a: string) => AREAS.find(ar => ar.value === a)?.label || a;
   const areaColor = (a: string) => AREAS.find(ar => ar.value === a)?.color || '#64748b';
+
+  const ef = (field: keyof EditFormData, value: string | number | boolean) => {
+    if (!editForm) return;
+    setEditForm(prev => prev ? { ...prev, [field]: value } : null);
+  };
 
   return (
     <div className="space-y-4">
@@ -335,15 +339,15 @@ export default function StaffPanel({ area }: StaffPanelProps) {
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Buscar colaborador..."
-            className="w-full min-h-[44px] pl-9 pr-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] text-sm placeholder:text-[var(--text-secondary)]"
+            className="w-full min-h-[44px] pl-9 pr-9 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-primary)] text-sm placeholder:text-[var(--text-secondary)]"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
               <X size={14} />
             </button>
           )}
         </div>
-        <span className="text-xs text-[var(--text-secondary)] flex items-center gap-1"><Users size={14} /> {staff.filter(m => m.activo).length} activos / {staff.length} total</span>
+        <span className="text-xs text-[var(--text-secondary)] flex items-center gap-1"><Users size={14} /> {staff.filter(m => m.activo).length} activos</span>
         <button onClick={() => { setAddForm({ nombre_completo: '', cargo: '', area: area || 'cocina', contrato: 'fijo', cedula: '', correo: '', salario_mensual: 0, alias: '' }); setShowAddForm(true); }} className="flex items-center justify-center gap-1.5 min-h-[44px] px-4 rounded-lg text-sm font-medium bg-[var(--accent-primary)] text-white hover:opacity-90">
           <Plus size={14} /> Agregar
         </button>
@@ -351,14 +355,13 @@ export default function StaffPanel({ area }: StaffPanelProps) {
 
       {/* FORMULARIO AGREGAR */}
       {showAddForm && (
-        <div className="bg-[var(--bg-card)] rounded-xl p-4 space-y-3 border border-[var(--border-default)]">
+        <div className="bg-[var(--bg-card)] rounded-xl p-4 space-y-3 border border-[var(--accent-primary)]/30">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Nuevo colaborador</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Nombre completo *</label><input type="text" value={addForm.nombre_completo} onChange={e => setAddForm(f => ({ ...f, nombre_completo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
             <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cargo</label><input type="text" value={addForm.cargo} onChange={e => setAddForm(f => ({ ...f, cargo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
             <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Area</label><select value={addForm.area} onChange={e => setAddForm(f => ({ ...f, area: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm">{AREAS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}</select></div>
             <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Contrato</label><select value={addForm.contrato} onChange={e => setAddForm(f => ({ ...f, contrato: e.target.value as 'fijo' | 'turnante' }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm"><option value="fijo">Fijo</option><option value="turnante">Turnante</option></select></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cedula</label><input type="text" value={addForm.cedula} onChange={e => setAddForm(f => ({ ...f, cedula: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
-            <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Correo</label><input type="email" value={addForm.correo} onChange={e => setAddForm(f => ({ ...f, correo: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
             <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Salario mensual</label><input type="number" value={addForm.salario_mensual || ''} onChange={e => setAddForm(f => ({ ...f, salario_mensual: Number(e.target.value) || 0 }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
             <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Alias</label><input type="text" value={addForm.alias} onChange={e => setAddForm(f => ({ ...f, alias: e.target.value }))} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
           </div>
@@ -368,6 +371,43 @@ export default function StaffPanel({ area }: StaffPanelProps) {
           </div>
         </div>
       )}
+
+      {/* EDITOR MODAL */}
+      {editingId && editForm && (() => {
+        return (
+          <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] bg-black/60" onClick={cancelEdit}>
+            <div className="bg-[var(--bg-card)] rounded-xl shadow-2xl border border-[var(--border-default)] w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-4 border-b border-[var(--border-default)]">
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">Editar {editForm.alias || editForm.nombre_completo}</h3>
+                <button onClick={cancelEdit} className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><X size={18} /></button>
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Nombre completo</label><input type="text" value={editForm.nombre_completo} onChange={e => ef('nombre_completo', e.target.value)} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
+                  <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Alias</label><input type="text" value={editForm.alias} onChange={e => ef('alias', e.target.value)} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
+                  <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cargo</label><input type="text" value={editForm.cargo} onChange={e => ef('cargo', e.target.value)} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
+                  <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Area</label><select value={editForm.area} onChange={e => ef('area', e.target.value)} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm">{AREAS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}</select></div>
+                  <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Salario mensual</label><input type="number" value={editForm.salario_mensual || ''} onChange={e => ef('salario_mensual', Number(e.target.value) || 0)} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm font-mono" /></div>
+                  <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Auxilio no salarial</label><input type="number" value={editForm.auxilio_no_salarial || ''} onChange={e => ef('auxilio_no_salarial', Number(e.target.value) || 0)} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm font-mono" /></div>
+                  <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Contrato</label><select value={editForm.contrato} onChange={e => ef('contrato', e.target.value)} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm"><option value="fijo">Fijo</option><option value="turnante">Turnante</option></select></div>
+                  <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Modalidad</label><select value={editForm.modalidad} onChange={e => ef('modalidad', e.target.value)} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm"><option value="COMPLETO">Completo</option><option value="MEDIO_TIEMPO">Medio tiempo</option></select></div>
+                  <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Cedula</label><input type="text" value={editForm.cedula} onChange={e => ef('cedula', e.target.value)} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
+                  <div><label className="block text-xs text-[var(--text-secondary)] mb-1">Correo</label><input type="email" value={editForm.correo} onChange={e => ef('correo', e.target.value)} className="w-full min-h-[44px] px-3 py-2 rounded border border-[var(--border-default)] bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
+                </div>
+                <div className="flex flex-wrap gap-4 pt-1">
+                  <label className="flex items-center gap-2 text-sm text-[var(--text-primary)] cursor-pointer"><input type="checkbox" checked={editForm.aplica_propinas} onChange={e => ef('aplica_propinas', e.target.checked)} className="rounded border-[var(--border-default)] w-4 h-4" />Propinas</label>
+                  <label className="flex items-center gap-2 text-sm text-[var(--text-primary)] cursor-pointer"><input type="checkbox" checked={editForm.is_fixed_cost} onChange={e => ef('is_fixed_cost', e.target.checked)} className="rounded border-[var(--border-default)] w-4 h-4" />Costo fijo</label>
+                  <label className="flex items-center gap-2 text-sm text-[var(--text-primary)] cursor-pointer"><input type="checkbox" checked={editForm.is_leader} onChange={e => ef('is_leader', e.target.checked)} className="rounded border-[var(--border-default)] w-4 h-4" />Líder</label>
+                </div>
+              </div>
+              <div className="flex gap-2 p-4 border-t border-[var(--border-default)]">
+                <button onClick={cancelEdit} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[44px] border border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><X size={14} /> Cancelar</button>
+                <button onClick={handleUpdate} disabled={saving} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[44px] bg-[var(--accent-primary)] text-white hover:opacity-90 disabled:opacity-50"><Check size={14} /> {saving ? 'Guardando...' : 'Guardar'}</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* LISTADO POR ÁREA */}
       {loading ? (
@@ -383,7 +423,6 @@ export default function StaffPanel({ area }: StaffPanelProps) {
 
             return (
               <div key={aKey} className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-default)] overflow-hidden">
-                {/* HEADER DE ÁREA — clic para colapsar/expandir */}
                 <button
                   onClick={() => toggleArea(aKey)}
                   className="w-full flex items-center justify-between px-4 py-3 hover:bg-[var(--bg-hover)]/50 transition-colors"
@@ -401,100 +440,76 @@ export default function StaffPanel({ area }: StaffPanelProps) {
                   </div>
                 </button>
 
-                {/* FILAS DE PERSONAS — solo visible si no está colapsado */}
                 {!isCollapsed && (
                   <div className="border-t border-[var(--border-default)]">
-                    {/* Desktop header */}
-                    <div className="hidden md:grid grid-cols-[2rem_1fr_1fr_1fr_0.8fr_0.8fr_0.8fr_auto] gap-1 px-4 py-2 text-[10px] text-[var(--text-secondary)] uppercase tracking-wider border-b border-[var(--border-default)]">
-                      <div></div>
-                      <div>Nombre</div>
-                      <div>Cargo</div>
-                      <div>Salario</div>
-                      <div>Aux. No Sal.</div>
-                      <div>Costo Empresa</div>
-                      <div>Modalidad</div>
-                      <div>Acciones</div>
-                    </div>
                     {members.map(member => {
-                      const isEditing = editingId === member.id;
-                      const ef = editForm[member.id];
                       const costoEmp = costoEmpresaMensual(member.salario_mensual || 0, member.auxilio_no_salarial || 0, esSinAuxTransporte(member));
                       const d = desglose(member);
+                      const isExpanded = expandedId === member.id;
 
-                      if (isEditing && ef) {
-                        return (
-                          <div key={member.id} className="bg-[var(--accent-primary)]/5 ring-1 ring-[var(--accent-primary)]/20 px-4 py-3">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                              <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Nombre</label><input type="text" value={ef.nombre_completo} onChange={e => upEF(member.id, 'nombre_completo', e.target.value)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
-                              <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Alias</label><input type="text" value={ef.alias} onChange={e => upEF(member.id, 'alias', e.target.value)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
-                              <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Cargo</label><input type="text" value={ef.cargo} onChange={e => upEF(member.id, 'cargo', e.target.value)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-input)] text-[var(--text-primary)] text-sm" /></div>
-                              <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Area</label><select value={ef.area} onChange={e => upEF(member.id, 'area', e.target.value)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-input)] text-[var(--text-primary)] text-sm">{AREAS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}</select></div>
-                              <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Salario</label><input type="number" value={ef.salario_mensual || ''} onChange={e => upEF(member.id, 'salario_mensual', Number(e.target.value) || 0)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-input)] text-[var(--text-primary)] text-sm font-mono" /></div>
-                              <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Auxilio no salarial</label><input type="number" value={ef.auxilio_no_salarial || ''} onChange={e => upEF(member.id, 'auxilio_no_salarial', Number(e.target.value) || 0)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-input)] text-[var(--text-primary)] text-sm font-mono" /></div>
-                              <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Contrato</label><select value={ef.contrato} onChange={e => upEF(member.id, 'contrato', e.target.value)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-input)] text-[var(--text-primary)] text-sm"><option value="fijo">Fijo</option><option value="turnante">Turnante</option></select></div>
-                              <div><label className="block text-[10px] text-[var(--text-secondary)] mb-0.5">Modalidad</label><select value={ef.modalidad} onChange={e => upEF(member.id, 'modalidad', e.target.value)} className="w-full min-h-[36px] px-2 py-1 rounded border border-[var(--accent-primary)]/50 bg-[var(--bg-input)] text-[var(--text-primary)] text-sm"><option value="COMPLETO">Completo</option><option value="MEDIO_TIEMPO">Medio tiempo</option></select></div>
-                              <div className="flex items-center gap-3">
-                                <label className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] cursor-pointer"><input type="checkbox" checked={ef.aplica_propinas} onChange={e => upEF(member.id, 'aplica_propinas', e.target.checked)} className="rounded border-[var(--border-default)]" />Propinas</label>
-                                <label className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] cursor-pointer"><input type="checkbox" checked={ef.is_fixed_cost} onChange={e => upEF(member.id, 'is_fixed_cost', e.target.checked)} className="rounded border-[var(--border-default)]" />Costo fijo</label>
-                                <label className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] cursor-pointer"><input type="checkbox" checked={ef.is_leader} onChange={e => upEF(member.id, 'is_leader', e.target.checked)} className="rounded border-[var(--border-default)]" />Líder</label>
-                              </div>
-                            </div>
-                            <div className="flex justify-end gap-2 mt-2">
-                              <button onClick={cancelEdit} className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[36px] border border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><X size={14} /> Cancelar</button>
-                              <button onClick={() => handleUpdate(member.id)} disabled={saving} className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm min-h-[36px] bg-[var(--accent-primary)] text-white hover:opacity-90 disabled:opacity-50"><Check size={14} /> {saving ? 'Guardando...' : 'Guardar'}</button>
-                            </div>
-                          </div>
-                        );
-                      }
-
-                      // NON-EDITING ROW
                       return (
-                        <div key={member.id} className={`grid grid-cols-1 md:grid-cols-[2rem_1fr_1fr_0.8fr_0.8fr_0.8fr_auto] gap-1 px-4 py-2.5 border-b border-[var(--border-default)]/50 hover:bg-[var(--bg-hover)]/30 transition-colors items-center ${!member.activo ? 'opacity-50' : ''}`}>
-                          {/* Desktop layout */}
-                          <div className="hidden md:contents">
-                            <div className="text-[var(--text-secondary)] flex items-center justify-center">
-                              {member.is_leader && <span className="text-[10px] px-1 py-0.5 rounded bg-[var(--accent-primary)]/20 text-[var(--accent-primary)]">★</span>}
-                              {member.is_fixed_cost && !member.is_leader && <span className="text-[10px] px-1 py-0.5 rounded bg-[var(--color-warning)]/20 text-[var(--color-warning)]">F</span>}
+                        <div key={member.id} className={`border-b border-[var(--border-default)]/50 ${!member.activo ? 'opacity-50' : ''}`}>
+                          {/* FILA PRINCIPAL — click para expandir detalle */}
+                          <div
+                            className="flex items-center justify-between gap-2 px-4 py-2.5 hover:bg-[var(--bg-hover)]/30 transition-colors cursor-pointer"
+                            onClick={() => setExpandedId(isExpanded ? null : member.id)}
+                          >
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <div className="flex flex-col items-center gap-0.5 w-5 flex-shrink-0">
+                                {member.is_leader && <span className="text-[10px] leading-none text-[var(--accent-primary)]">★</span>}
+                                {member.is_fixed_cost && !member.is_leader && <span className="text-[10px] leading-none text-[var(--color-warning)]">F</span>}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-semibold text-[var(--text-primary)] text-sm">{member.alias || member.nombre_completo}</span>
+                                  {!member.activo && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-danger)]/15 text-[var(--color-danger)]">Inactivo</span>}
+                                </div>
+                                <div className="text-xs text-[var(--text-secondary)] truncate">
+                                  {member.cargo || '-'} · <span className={`border px-1 py-0.5 rounded text-[10px] ${CONTRACT_LABELS[member.contrato]?.className || ''}`}>{CONTRACT_LABELS[member.contrato]?.label || member.contrato}</span> · {MODALIDAD_LABELS[member.modalidad || 'COMPLETO'] || member.modalidad}{member.aplica_propinas ? ' +Prop' : ''}
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <span className="font-semibold text-[var(--text-primary)] text-sm">{member.alias}</span>
-                              <span className="text-xs text-[var(--text-secondary)] ml-1">{member.nombre_completo}</span>
-                              {!member.activo && <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-danger)]/15 text-[var(--color-danger)] border border-[var(--color-danger)]/30">Inactivo</span>}
-                            </div>
-                            <div className="text-xs text-[var(--text-secondary)]">{member.cargo || '-'}</div>
-                            <div className="font-mono text-xs text-[var(--text-secondary)]">{formatCOP(member.salario_mensual || 0)}</div>
-                            <div className="font-mono text-xs text-[var(--text-secondary)]">{member.auxilio_no_salarial > 0 ? formatCOP(member.auxilio_no_salarial) : '-'}</div>
-                            <div className="font-mono text-xs font-semibold text-[var(--accent-primary)]">{formatCOP(costoEmp)}</div>
-                            <div className="flex items-center gap-1 text-xs text-[var(--text-secondary)]">
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] border ${CONTRACT_LABELS[member.contrato]?.className || ''}`}>{CONTRACT_LABELS[member.contrato]?.label || member.contrato}</span>
-                              <span className="text-[10px]">{member.modalidad || 'COMPLETO'}</span>
-                              {member.aplica_propinas && <span className="text-[10px] text-[var(--color-warning)]">+Prop</span>}
-                            </div>
-                            <div className="flex gap-1 justify-end">
-                              <button onClick={() => startEdit(member)} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] min-h-[36px] min-w-[36px]"><PencilSimple size={14} /></button>
-                              <button onClick={() => toggleActivo(member)} className={`p-1.5 rounded hover:bg-[var(--bg-hover)] min-h-[36px] min-w-[36px] ${member.activo ? 'text-[var(--color-danger)]' : 'text-[var(--color-success)]'}`} title={member.activo ? 'Desactivar' : 'Reactivar'}>{member.activo ? <Prohibit size={14} /> : <SignIn size={14} />}</button>
-                              <button onClick={() => deleteMember(member)} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--color-danger)] min-h-[36px] min-w-[36px]" title="Eliminar"><Trash size={14} /></button>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <div className="text-right">
+                                <div className="font-mono text-xs font-semibold text-[var(--accent-primary)]">{formatCOP(costoEmp)}</div>
+                                <div className="font-mono text-[10px] text-[var(--text-secondary)]">Sal: {formatCOP(member.salario_mensual || 0)}</div>
+                              </div>
+                              <div className="flex-shrink-0 text-[var(--text-secondary)]">
+                                {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                              </div>
+                              <div className="flex gap-0.5" onClick={e => e.stopPropagation()}>
+                                <button onClick={() => startEdit(member)} className="p-2 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)]" title="Editar"><PencilSimple size={14} /></button>
+                                <button onClick={() => toggleActivo(member)} className={`p-2 rounded hover:bg-[var(--bg-hover)] ${member.activo ? 'text-[var(--color-danger)]' : 'text-[var(--color-success)]'}`} title={member.activo ? 'Desactivar' : 'Reactivar'}>{member.activo ? <Prohibit size={14} /> : <SignIn size={14} />}</button>
+                              </div>
                             </div>
                           </div>
 
-                          {/* Mobile layout */}
-                          <div className="md:hidden">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <span className="font-semibold text-[var(--text-primary)] text-sm">{member.alias}</span>
-                                {!member.activo && <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-danger)]/15 text-[var(--color-danger)]">Inactivo</span>}
-                                <div className="text-xs text-[var(--text-secondary)]">{member.cargo || '-'} · {member.modalidad || 'COMPLETO'}{member.aplica_propinas ? ' +Prop' : ''}</div>
-                              </div>
-                              <div className="text-right">
-                                <div className="font-mono text-sm font-semibold text-[var(--accent-primary)]">{formatCOP(costoEmp)}</div>
-                                <div className="font-mono text-xs text-[var(--text-secondary)]">Sal: {formatCOP(member.salario_mensual || 0)}</div>
+                          {/* DETALLE EXPANDIDO — desglose de sueldo */}
+                          {isExpanded && (
+                            <div className="px-4 pb-3 pt-1 bg-[var(--bg-hover)]/20 border-t border-[var(--border-default)]/30">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs">
+                                <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Salario</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.salarioMensual)}</span></div>
+                                {d.auxilioTransporte > 0 && <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Aux. transporte</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.auxilioTransporte)}</span></div>}
+                                {d.auxilioNoSalarial > 0 && <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Aux. no salarial</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.auxilioNoSalarial)}</span></div>}
+                                <div className="flex justify-between col-span-2 sm:col-span-3"><span className="text-[var(--text-secondary)]">── Prestaciones ──</span></div>
+                                <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Prima servicios</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.primaServicios)}</span></div>
+                                <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Cesantías</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.cesantias)}</span></div>
+                                <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Intereses cesantías</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.interesesCesantias)}</span></div>
+                                <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Vacaciones</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.vacaciones)}</span></div>
+                                <div className="flex justify-between col-span-2 sm:col-span-3"><span className="text-[var(--text-secondary)]">── Aportes patronales ──</span></div>
+                                {d.aporteSalud > 0 && <div className="flex justify-between"><span className="text-[var(--text-secondary)]">EPS patronal</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteSalud)}</span></div>}
+                                <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Pensión patronal</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.aportePension)}</span></div>
+                                <div className="flex justify-between"><span className="text-[var(--text-secondary)]">ARL</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteARL)}</span></div>
+                                {d.aporteCaja > 0 && <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Caja compensación</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteCaja)}</span></div>}
+                                {d.aporteSena > 0 && <div className="flex justify-between"><span className="text-[var(--text-secondary)]">SENA</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteSena)}</span></div>}
+                                {d.aporteICBF > 0 && <div className="flex justify-between"><span className="text-[var(--text-secondary)]">ICBF</span><span className="font-mono text-[var(--text-primary)]">{formatCOP(d.aporteICBF)}</span></div>}
+                                <div className="flex justify-between col-span-2 sm:col-span-3 pt-1 border-t border-[var(--border-default)]/50">
+                                  <span className="font-semibold text-[var(--accent-primary)]">Costo total empresa</span>
+                                  <span className="font-mono font-bold text-[var(--accent-primary)]">{formatCOP(d.costoMensualTotal)}</span>
+                                </div>
                               </div>
                             </div>
-                            <div className="flex gap-1 mt-1">
-                              <button onClick={() => startEdit(member)} className="p-1.5 rounded text-[var(--accent-primary)] text-xs"><PencilSimple size={14} /></button>
-                              <button onClick={() => toggleActivo(member)} className={`p-1.5 rounded text-xs ${member.activo ? 'text-[var(--color-danger)]' : 'text-[var(--color-success)]'}`}>{member.activo ? <Prohibit size={14} /> : <SignIn size={14} />}</button>
-                            </div>
-                          </div>
+                          )}
                         </div>
                       );
                     })}

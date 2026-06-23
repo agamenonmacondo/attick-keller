@@ -464,27 +464,29 @@ export function calcularCostoEmpresa(salarioMensual: number, auxilioNoSalarial?:
   }
 
   const totalAuxilio = auxilioTransporte + auxilioNoSalarialPersonalizado;
+  // IBC = Ingreso Base de Cotización = salario + auxilio transporte (salarial)
+  // Para costo empresa real, usamos baseCesantiasPrima = salario + totalAuxilio
+  // que incluye auxilio no salarial personalizado como parte del costo
   const baseCesantiasPrima = salarioMensual + totalAuxilio;
 
-  // Prima de servicios: 1 mes/12 = 8.33% sobre (salario + auxilio transporte)
+  // Prima de servicios: 1 mes/12 = 8.33% sobre IBC
   const primaServicios = baseCesantiasPrima * 8.33 / 100;
-  // Cesantías: 1 mes/12 = 8.33% sobre (salario + auxilio transporte)
+  // Cesantías: 1 mes/12 = 8.33% sobre IBC
   const cesantias = baseCesantiasPrima * 8.33 / 100;
-  // Intereses sobre cesantías: 12% anual = 1% mensual sobre (salario + auxilio transporte)
+  // Intereses sobre cesantías: 12% anual = 1% mensual sobre IBC
   const interesesCesantias = baseCesantiasPrima * 1 / 100;
-  // Vacaciones: 15 días/12 = 4.17% sobre salario (NO incluye auxilio transporte)
-  const vacaciones = salarioMensual * 4.17 / 100;
+  // Vacaciones: 15 días/12 = 4.17% sobre IBC
+  const vacaciones = baseCesantiasPrima * 4.17 / 100;
 
-  // Aportes patronales — exoneración art. 114-1 ET para empresas <47 trabajadores
-  // Si exonerado: EPS empleador = 0%, SENA = 0%, ICBF = 0%, Caja = 0%
-  // Solo pagan Pensión (12%) y ARL
-  const EXONERADO_114_1 = true; // A&K tiene <47 empleados
-  const aporteSalud = EXONERADO_114_1 ? 0 : salarioMensual * 8.5 / 100;
-  const aportePension = salarioMensual * 12 / 100;
-  const aporteARL = salarioMensual * LEGAL_PARAMS_LOCAL.ARL_RATE;
-  const aporteCaja = EXONERADO_114_1 ? 0 : salarioMensual * 4 / 100;
-  const aporteSena = EXONERADO_114_1 ? 0 : salarioMensual * 2 / 100;
-  const aporteICBF = EXONERADO_114_1 ? 0 : salarioMensual * 3 / 100;
+  // Aportes patronales — se incluyen TODOS para costo empresa real
+  // (La exoneración art. 114-1 aplica solo al pago efectivo, no al costo de referencia)
+  // Base para aportes = IBC (salario + auxilio transporte salarial)
+  const aporteSalud = baseCesantiasPrima * 8.5 / 100;
+  const aportePension = baseCesantiasPrima * 12 / 100;
+  const aporteARL = baseCesantiasPrima * LEGAL_PARAMS_LOCAL.ARL_RATE;
+  const aporteCaja = baseCesantiasPrima * 4 / 100;
+  const aporteSena = baseCesantiasPrima * 2 / 100;
+  const aporteICBF = baseCesantiasPrima * 3 / 100;
 
   const prestaciones = primaServicios + cesantias + interesesCesantias + vacaciones;
   const aportesPatronales = aporteSalud + aportePension + aporteARL + aporteCaja + aporteSena + aporteICBF;

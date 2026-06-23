@@ -24,10 +24,15 @@ const CONTRACT_LABELS: Record<string, { label: string; className: string }> = {
 
 // Costo para empresa segun ley colombiana (prestaciones + aportes patronales)
 // Wrapper de calcularCostoEmpresa() que respeta el auxilio_no_salarial de la BD
-function costoEmpresaMensual(salario: number, auxilioNoSalarial: number): number {
-  const costo = calcularCostoEmpresa(salario, auxilioNoSalarial);
+// y excluye pasantes del auxilio transporte
+function costoEmpresaMensual(salario: number, auxilioNoSalarial: number, sinAuxilioTransporte?: boolean): number {
+  const costo = calcularCostoEmpresa(salario, auxilioNoSalarial, sinAuxilioTransporte);
   return costo.costoMensualTotal;
 }
+
+// Helper: es pasante (cargo incluye "PASANTE") o salario placeholder
+const esSinAuxTransporte = (m: StaffRow) => 
+  (m.cargo?.toUpperCase().includes('PASANTE') ?? false) || (m.salario_mensual <= 1);
 
 interface StaffPanelProps {
   area: string;
@@ -207,12 +212,12 @@ export default function StaffPanel({ area }: StaffPanelProps) {
 
   // Totales
   const totalSalarios = staff.reduce((s, m) => s + (m.salario_mensual || 0), 0);
-  const totalAuxiliosTransporte = staff.reduce((s, m) => s + (calcularCostoEmpresa(m.salario_mensual || 0, m.auxilio_no_salarial || 0).auxilioTransporte), 0);
-  const totalAuxiliosNoSalarial = staff.reduce((s, m) => s + (calcularCostoEmpresa(m.salario_mensual || 0, m.auxilio_no_salarial || 0).auxilioNoSalarial), 0);
-  const totalCostoEmpresa = staff.reduce((s, m) => s + costoEmpresaMensual(m.salario_mensual || 0, m.auxilio_no_salarial || 0), 0);
+  const totalAuxiliosTransporte = staff.reduce((s, m) => s + (calcularCostoEmpresa(m.salario_mensual || 0, m.auxilio_no_salarial || 0, esSinAuxTransporte(m)).auxilioTransporte), 0);
+  const totalAuxiliosNoSalarial = staff.reduce((s, m) => s + (calcularCostoEmpresa(m.salario_mensual || 0, m.auxilio_no_salarial || 0, esSinAuxTransporte(m)).auxilioNoSalarial), 0);
+  const totalCostoEmpresa = staff.reduce((s, m) => s + costoEmpresaMensual(m.salario_mensual || 0, m.auxilio_no_salarial || 0, esSinAuxTransporte(m)), 0);
 
   // Valor hora por persona (costo empresa / 30 / 8)
-  const valorHoraOrd = (m: StaffRow) => Math.round(costoEmpresaMensual(m.salario_mensual || 0, m.auxilio_no_salarial || 0) / 30 / 8);
+  const valorHoraOrd = (m: StaffRow) => Math.round(costoEmpresaMensual(m.salario_mensual || 0, m.auxilio_no_salarial || 0, esSinAuxTransporte(m)) / 30 / 8);
   const valorHEDiurna = (m: StaffRow) => Math.round(valorHoraOrd(m) * 1.25);
   const valorHENocturna = (m: StaffRow) => Math.round(valorHoraOrd(m) * 1.75);
   const valorHoraNocturna = (m: StaffRow) => Math.round(valorHoraOrd(m) * 1.35);
@@ -221,7 +226,7 @@ export default function StaffPanel({ area }: StaffPanelProps) {
   const desglose = (m: StaffRow) => {
     const s = m.salario_mensual || 0;
     const aux = m.auxilio_no_salarial || 0;
-    const costo = calcularCostoEmpresa(s, aux);
+    const costo = calcularCostoEmpresa(s, aux, esSinAuxTransporte(m));
     return {
       primaServicios: costo.primaServicios,
       cesantias: costo.cesantias,

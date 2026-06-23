@@ -395,7 +395,7 @@ export function calcularRecargosSemanal(
  *   - ICBF: 3%
  *   - Auxilio de transporte: solo si gana <= 2 SMLV
  */
-export function calcularCostoEmpresa(salarioMensual: number, auxilioNoSalarial?: number): {
+export function calcularCostoEmpresa(salarioMensual: number, auxilioNoSalarial?: number, sinAuxilioTransporte?: boolean): {
   salarioMensual: number;
   primaServicios: number;
   cesantias: number;
@@ -423,9 +423,13 @@ export function calcularCostoEmpresa(salarioMensual: number, auxilioNoSalarial?:
   };
 
   // Auxilio transporte (legal): $249,095 si gana ≤ 2 SMLV, $0 si gana más
-  const auxilioTransporteLegal = salarioMensual <= LEGAL_PARAMS_LOCAL.SMMLV * 2
-    ? LEGAL_PARAMS_LOCAL.TRANSPORT_ALLOWANCE
-    : 0;
+  // Pasantes (sinAuxilioTransporte=true) y salario placeholder ($1) NO reciben auxilio transporte
+  const salarioPlaceholder = salarioMensual <= 1;
+  const auxilioTransporteLegal = (sinAuxilioTransporte || salarioPlaceholder)
+    ? 0
+    : salarioMensual <= LEGAL_PARAMS_LOCAL.SMMLV * 2
+      ? LEGAL_PARAMS_LOCAL.TRANSPORT_ALLOWANCE
+      : 0;
 
   // Auxilio no salarial (personalizado): lo que viene de la BD menos el transporte legal
   // Si la BD tiene un valor > 0, lo usamos completo y descontamos el transporte legal

@@ -521,7 +521,13 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
             { id: 'referencia' as Tab, icon: <ChartLineUp size={14} />, label: 'Referencia' },
             { id: 'horarios' as Tab, icon: <PencilSimple size={14} />, label: 'Horarios' },
             { id: 'personal' as Tab, icon: <IdentificationBadge size={14} />, label: 'Personal' },
-          ].filter(t => area === 'todos' ? t.id === 'costos' || t.id === 'referencia' || t.id === 'personal' : true).map((t) => (
+          ].filter(t => {
+            // Modo consolidado: solo costos y referencia
+            if (area === 'todos') return t.id === 'costos' || t.id === 'referencia';
+            // Líder de área (areaFilter): solo cronograma, horarios y personal
+            if (areaFilter) return t.id === 'cronograma' || t.id === 'horarios' || t.id === 'personal';
+            return true;
+          }).map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}

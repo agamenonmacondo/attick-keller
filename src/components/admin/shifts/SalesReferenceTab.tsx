@@ -199,6 +199,9 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
     ? (nominaTurnosMensual / ventasMensuales) * 100
     : 0;
 
+  // Fijo diario total (costo empresa con-turno + fijos) / 30
+  const fijoDiarioTotal = (costoEmpresaConTurno + fijosData.totalMensual) / 30;
+
   const nominaTotalVentasPct = nominaTotalMensual > 0 && ventasMensuales > 0
     ? (nominaTotalMensual / ventasMensuales) * 100
     : 0;
@@ -364,14 +367,14 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
             <tr className="border-b border-[var(--border-default)]">
               <th className="text-left p-2 text-[var(--text-secondary)]">Dia</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Ventas Mediana</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">Rango Inf (Q1)</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">Rango Sup (Q3)</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Tx/dia</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Personas</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Fijo diario</th>
+              <th className="text-right p-2 text-[var(--text-secondary)]">% Fijo</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">+ Recargos</th>
+              <th className="text-right p-2 text-[var(--text-secondary)]">% Rec</th>
               <th className="text-right p-2 text-[var(--text-secondary)] font-medium">Nómina/día</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">% Nóm/Ventas</th>
+              <th className="text-right p-2 text-[var(--text-secondary)] font-medium">% Total</th>
             </tr>
           </thead>
           <tbody>
@@ -382,7 +385,11 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               // Nómina por día = costo empresa con-turno/30 + recargos del día + fijos/30
               const costoEmpresaPerDay = costoEmpresaConTurno / 30;
               const fijosPerDay = fijosData.totalMensual / 30;
-              const totalDayNomina = costoEmpresaPerDay + nomDay.costoNomina + fijosPerDay;
+              const fijoDiario = costoEmpresaPerDay + fijosPerDay;
+              const recargosDia = nomDay.costoNomina;
+              const totalDayNomina = fijoDiario + recargosDia;
+              const pctFijo = salesDay.median > 0 ? (fijoDiario / salesDay.median) * 100 : 0;
+              const pctRecargos = salesDay.median > 0 && recargosDia > 0 ? (recargosDia / salesDay.median) * 100 : 0;
               const pct = salesDay.median > 0 && totalDayNomina > 0
                 ? (totalDayNomina / salesDay.median) * 100
                 : 0;
@@ -395,12 +402,6 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                   <td className="p-2 text-right font-mono text-[var(--text-primary)]">
                     {formatCOP(salesDay.median)}
                   </td>
-                  <td className="p-2 text-right font-mono text-[var(--text-secondary)]">
-                    {formatCOP(salesDay.q1)}
-                  </td>
-                  <td className="p-2 text-right font-mono text-[var(--text-secondary)]">
-                    {formatCOP(salesDay.q3)}
-                  </td>
                   <td className="p-2 text-right font-mono text-[var(--text-primary)]">
                     {salesDay.tx_avg}
                   </td>
@@ -408,10 +409,16 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                     {nomDay.personas}
                   </td>
                   <td className="p-2 text-right font-mono text-[var(--text-secondary)]">
-                    {formatCOP(Math.round(costoEmpresaPerDay + fijosPerDay))}
+                    {formatCOP(Math.round(fijoDiario))}
+                  </td>
+                  <td className="p-2 text-right font-mono text-[var(--text-secondary)]">
+                    {pctFijo > 0 ? `${pctFijo.toFixed(1)}%` : '-'}
                   </td>
                   <td className="p-2 text-right font-mono text-blue-400">
-                    {nomDay.costoNomina > 0 ? formatCOP(Math.round(nomDay.costoNomina)) : '-'}
+                    {recargosDia > 0 ? formatCOP(Math.round(recargosDia)) : '-'}
+                  </td>
+                  <td className="p-2 text-right font-mono text-blue-400">
+                    {pctRecargos > 0 ? `${pctRecargos.toFixed(1)}%` : '-'}
                   </td>
                   <td className="p-2 text-right font-mono font-medium text-[var(--text-primary)]">
                     {formatCOP(Math.round(totalDayNomina))}
@@ -429,17 +436,21 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">
                 {formatCOP(sumOfMedians)}
               </td>
-              <td className="p-2 text-right font-mono text-[var(--text-secondary)]">-</td>
-              <td className="p-2 text-right font-mono text-[var(--text-secondary)]">-</td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">-</td>
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">
                 {weeklyNomina.totalPersonas}
               </td>
               <td className="p-2 text-right font-mono text-[var(--text-secondary)]">
-                {formatCOP(Math.round((costoEmpresaConTurno / 30 + fijosData.totalMensual / 30) * 7))}
+                {formatCOP(Math.round(fijoDiarioTotal * 7))}
+              </td>
+              <td className="p-2 text-right font-mono text-[var(--text-secondary)]">
+                {sumOfMedians > 0 ? `${((fijoDiarioTotal * 7) / sumOfMedians * 100).toFixed(1)}%` : '-'}
               </td>
               <td className="p-2 text-right font-mono text-blue-400">
                 {formatCOP(Math.round(weeklyNomina.totalNomina))}
+              </td>
+              <td className="p-2 text-right font-mono text-blue-400">
+                {sumOfMedians > 0 && weeklyNomina.totalNomina > 0 ? `${(weeklyNomina.totalNomina / sumOfMedians * 100).toFixed(1)}%` : '-'}
               </td>
               <td className="p-2 text-right font-mono font-medium text-[var(--text-primary)]">
                 {nominaSemanalTotal > 0 ? formatCOP(nominaSemanalTotal) : '-'}

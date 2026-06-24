@@ -28,12 +28,14 @@ export default function CostEstimationBar({
       id: string; alias: string; area: string; totalHours: number;
       ho: number; hn: number; he: number;
       recargoNocturno: number; recargoDominical: number; horasExtra: number; totalRecargos: number;
+      shiftCodes: string[];
     }[] = [];
 
     for (const emp of staff) {
       const empGrid = grid[emp.id] || {};
       let totalHours = 0, ho = 0, hn = 0, he = 0;
       let rn = 0, rd = 0, heTotal = 0, totalRecargos = 0;
+      const shiftCodes: string[] = [];
 
       for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
         const code = empGrid[dayIdx];
@@ -51,6 +53,7 @@ export default function CostEstimationBar({
         rd += recargos.sunday_surcharge;
         heTotal += recargos.overtime_surcharge;
         totalRecargos += recargos.total_recargos;
+        if (!shiftCodes.includes(code)) shiftCodes.push(code);
       }
 
       results.push({
@@ -58,6 +61,7 @@ export default function CostEstimationBar({
         ho, hn, he,
         recargoNocturno: Math.round(rn), recargoDominical: Math.round(rd),
         horasExtra: Math.round(heTotal), totalRecargos: Math.round(totalRecargos),
+        shiftCodes,
       });
     }
     return results;
@@ -91,17 +95,18 @@ export default function CostEstimationBar({
   // Agrupacion por area para modo consolidado
   const areaGroups = useMemo(() => {
     if (area !== 'todos') return null;
-    const groups: Record<string, { label: string; employees: typeof employeeCosts; totalRecargos: number; totalHours: number; totalRN: number; totalRD: number; totalHE: number }> = {};
+    const groups: Record<string, { label: string; employees: typeof employeeCosts; totalRecargos: number; totalHours: number; totalRN: number; totalRD: number; totalHEHours: number; totalHECost: number }> = {};
     const areaLabels: Record<string, string> = { cocina: 'Cocina', barra: 'Barra', servicio: 'Servicio' };
     for (const emp of employeeCosts) {
       const a = emp.area || 'otro';
-      if (!groups[a]) groups[a] = { label: areaLabels[a] || a, employees: [], totalRecargos: 0, totalHours: 0, totalRN: 0, totalRD: 0, totalHE: 0 };
+      if (!groups[a]) groups[a] = { label: areaLabels[a] || a, employees: [], totalRecargos: 0, totalHours: 0, totalRN: 0, totalRD: 0, totalHEHours: 0, totalHECost: 0 };
       groups[a].employees.push(emp);
       groups[a].totalRecargos += emp.totalRecargos;
       groups[a].totalHours += emp.totalHours;
       groups[a].totalRN += emp.recargoNocturno;
       groups[a].totalRD += emp.recargoDominical;
-      groups[a].totalHE += emp.horasExtra;
+      groups[a].totalHEHours += emp.he;
+      groups[a].totalHECost += emp.horasExtra;
     }
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
   }, [employeeCosts, area]);
@@ -166,10 +171,16 @@ export default function CostEstimationBar({
                     <span className="font-mono text-[var(--color-danger)]">{formatCOP(group.totalRD)}</span>
                   </div>
                 )}
-                {group.totalHE > 0 && (
+                {group.totalHEHours > 0 && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-[var(--text-secondary)]">HE</span>
-                    <span className="font-mono text-blue-400">{formatCOP(group.totalHE)}</span>
+                    <span className="text-[var(--text-secondary)]">HE (horas)</span>
+                    <span className="font-mono text-blue-400">{group.totalHEHours.toFixed(1)}h</span>
+                  </div>
+                )}
+                {group.totalHECost > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[var(--text-secondary)]">HE$</span>
+                    <span className="font-mono text-blue-400">{formatCOP(group.totalHECost)}</span>
                   </div>
                 )}
                 <div className="border-t border-[var(--border-default)] pt-1 flex justify-between text-xs font-semibold">
@@ -222,6 +233,9 @@ export default function CostEstimationBar({
             <div className="flex items-center justify-between mb-2">
               <div>
                 <div className="font-medium text-[var(--text-primary)] text-sm">{e.alias}</div>
+                <div className="text-[10px] font-mono text-[var(--accent-primary)]">
+                  {e.shiftCodes.join(' · ')}
+                </div>
                 <div className="text-xs text-[var(--text-secondary)]">
                   HO:{e.ho.toFixed(1)} | HN:{e.hn.toFixed(1)} | HE:{e.he.toFixed(1)} | Total: {e.totalHours}h
                 </div>
@@ -255,6 +269,7 @@ export default function CostEstimationBar({
           <thead>
             <tr className="border-b border-[var(--border-default)]">
               <th className="text-left p-2 text-[var(--text-secondary)] sticky left-0 bg-[var(--bg-primary)] z-10 min-w-[100px]">Colaborador</th>
+              <th className="text-left p-2 text-[var(--text-secondary)]">Turnos</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">HO</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">HN</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">HE</th>
@@ -268,6 +283,7 @@ export default function CostEstimationBar({
             {employeeCosts.map((e) => (
               <tr key={e.id} className="border-b border-[var(--border-default)]/50">
                 <td className="p-2 font-medium text-[var(--text-primary)] sticky left-0 bg-[var(--bg-primary)] z-10">{e.alias}</td>
+                <td className="p-2 text-[var(--text-secondary)] font-mono text-[10px] leading-tight">{e.shiftCodes.join(', ')}</td>
                 <td className="p-2 text-right font-mono text-[var(--text-primary)]">{e.ho.toFixed(1)}</td>
                 <td className="p-2 text-right font-mono text-[var(--text-primary)]">{e.hn.toFixed(1)}</td>
                 <td className="p-2 text-right font-mono text-[var(--text-primary)]">{e.he.toFixed(1)}</td>

@@ -368,7 +368,9 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <th className="text-right p-2 text-[var(--text-secondary)]">Rango Sup (Q3)</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Tx/dia</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Personas</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">Nómina/dia</th>
+              <th className="text-right p-2 text-[var(--text-secondary)]">Fijo diario</th>
+              <th className="text-right p-2 text-[var(--text-secondary)]">+ Recargos</th>
+              <th className="text-right p-2 text-[var(--text-secondary)] font-medium">Nómina/día</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">% Nóm/Ventas</th>
             </tr>
           </thead>
@@ -402,10 +404,16 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                   <td className="p-2 text-right font-mono text-[var(--text-primary)]">
                     {salesDay.tx_avg}
                   </td>
-                  <td className="p-2 text-right font-mono text-[var(--text-primary)]">
+                  <td className="p-2 text-right font-mono text-[var(--text-secondary)]">
                     {nomDay.personas}
                   </td>
-                  <td className="p-2 text-right font-mono text-[var(--text-primary)]">
+                  <td className="p-2 text-right font-mono text-[var(--text-secondary)]">
+                    {formatCOP(Math.round(costoEmpresaPerDay + fijosPerDay))}
+                  </td>
+                  <td className="p-2 text-right font-mono text-blue-400">
+                    {nomDay.costoNomina > 0 ? formatCOP(Math.round(nomDay.costoNomina)) : '-'}
+                  </td>
+                  <td className="p-2 text-right font-mono font-medium text-[var(--text-primary)]">
                     {formatCOP(Math.round(totalDayNomina))}
                   </td>
                   <td className={`p-2 text-right font-mono font-semibold ${totalDayNomina > 0 && salesDay.median > 0 ? ratioColor(pct) : 'text-[var(--text-secondary)]'}`}>
@@ -427,7 +435,13 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <td className="p-2 text-right font-mono text-[var(--text-primary)]">
                 {weeklyNomina.totalPersonas}
               </td>
-              <td className="p-2 text-right font-mono text-[var(--text-primary)]">
+              <td className="p-2 text-right font-mono text-[var(--text-secondary)]">
+                {formatCOP(Math.round((costoEmpresaConTurno / 30 + fijosData.totalMensual / 30) * 7))}
+              </td>
+              <td className="p-2 text-right font-mono text-blue-400">
+                {formatCOP(Math.round(weeklyNomina.totalNomina))}
+              </td>
+              <td className="p-2 text-right font-mono font-medium text-[var(--text-primary)]">
                 {nominaSemanalTotal > 0 ? formatCOP(nominaSemanalTotal) : '-'}
               </td>
               <td className={`p-2 text-right font-mono font-bold ${nominaSemanalTotal > 0 ? ratioColor(nominaSemanalVentasPct) : 'text-[var(--text-secondary)]'}`}>
@@ -468,8 +482,12 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                 <div className="text-right font-mono text-[var(--text-primary)]">{salesDay.tx_avg}</div>
                 <div className="text-[var(--text-secondary)]">Personas</div>
                 <div className="text-right font-mono text-[var(--text-primary)]">{nomDay.personas}</div>
-                <div className="text-[var(--text-secondary)]">Nómina/dia</div>
-                <div className="text-right font-mono text-[var(--text-primary)]">
+                <div className="text-[var(--text-secondary)]">Fijo diario</div>
+                <div className="text-right font-mono text-[var(--text-secondary)]">{formatCOP(Math.round(costoEmpresaPerDay + fijosPerDay))}</div>
+                <div className="text-[var(--text-secondary)]">+ Recargos</div>
+                <div className="text-right font-mono text-blue-400">{nomDay.costoNomina > 0 ? formatCOP(Math.round(nomDay.costoNomina)) : '-'}</div>
+                <div className="font-medium text-[var(--text-primary)]">Nómina/día</div>
+                <div className="text-right font-mono font-medium text-[var(--text-primary)]">
                   {formatCOP(Math.round(totalDayNomina))}
                 </div>
               </div>

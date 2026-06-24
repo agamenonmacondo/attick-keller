@@ -99,9 +99,15 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
 
   // Calculate nomina (recargos) per day and total — CON TURNO only (fijos shown separately)
   const nominaByDay = useMemo(() => {
-    const dayData: Record<number, { personas: number; costoNomina: number }> = {};
+    const dayData: Record<number, {
+      personas: number;
+      costoNomina: number;
+      nightSurcharge: number;
+      sundaySurcharge: number;
+      overtimeSurcharge: number;
+    }> = {};
     for (let i = 0; i < 7; i++) {
-      dayData[i] = { personas: 0, costoNomina: 0 };
+      dayData[i] = { personas: 0, costoNomina: 0, nightSurcharge: 0, sundaySurcharge: 0, overtimeSurcharge: 0 };
     }
 
     const SUNDAY_DAY_INDEX = 0;
@@ -122,6 +128,9 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
 
         dayData[dayIdx].personas += 1;
         dayData[dayIdx].costoNomina += recargos.total_recargos;
+        dayData[dayIdx].nightSurcharge += recargos.night_surcharge;
+        dayData[dayIdx].sundaySurcharge += recargos.sunday_surcharge;
+        dayData[dayIdx].overtimeSurcharge += recargos.overtime_surcharge;
       }
     }
 
@@ -131,11 +140,23 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
   const weeklyNomina = useMemo(() => {
     let totalNomina = 0;
     let totalPersonas = 0;
+    let totalNight = 0;
+    let totalSunday = 0;
+    let totalOvertime = 0;
     for (let i = 0; i < 7; i++) {
       totalNomina += nominaByDay[i].costoNomina;
       totalPersonas += nominaByDay[i].personas;
+      totalNight += nominaByDay[i].nightSurcharge;
+      totalSunday += nominaByDay[i].sundaySurcharge;
+      totalOvertime += nominaByDay[i].overtimeSurcharge;
     }
-    return { totalNomina: Math.round(totalNomina), totalPersonas };
+    return {
+      totalNomina: Math.round(totalNomina),
+      totalPersonas,
+      totalNight: Math.round(totalNight),
+      totalSunday: Math.round(totalSunday),
+      totalOvertime: Math.round(totalOvertime),
+    };
   }, [nominaByDay]);
 
   // Display order: Lun(1), Mar(2), Mie(3), Jue(4), Vie(5), Sab(6), Dom(0)
@@ -371,8 +392,9 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
               <th className="text-right p-2 text-[var(--text-secondary)]">Personas</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">Fijo diario</th>
               <th className="text-right p-2 text-[var(--text-secondary)]">% Fijo</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">+ Recargos</th>
-              <th className="text-right p-2 text-[var(--text-secondary)]">% Rec</th>
+              <th className="text-right p-2 text-[var(--text-secondary)]">R.Noc</th>
+              <th className="text-right p-2 text-[var(--text-secondary)]">R.Dom</th>
+              <th className="text-right p-2 text-[var(--text-secondary)]">HE$</th>
               <th className="text-right p-2 text-[var(--text-secondary)] font-medium">Nómina/día</th>
               <th className="text-right p-2 text-[var(--text-secondary)] font-medium">% Total</th>
             </tr>
@@ -415,10 +437,13 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                     {pctFijo > 0 ? `${pctFijo.toFixed(1)}%` : '-'}
                   </td>
                   <td className="p-2 text-right font-mono text-blue-400">
-                    {recargosDia > 0 ? formatCOP(Math.round(recargosDia)) : '-'}
+                    {nomDay.nightSurcharge > 0 ? formatCOP(Math.round(nomDay.nightSurcharge)) : '-'}
                   </td>
-                  <td className="p-2 text-right font-mono text-blue-400">
-                    {pctRecargos > 0 ? `${pctRecargos.toFixed(1)}%` : '-'}
+                  <td className="p-2 text-right font-mono text-amber-400">
+                    {nomDay.sundaySurcharge > 0 ? formatCOP(Math.round(nomDay.sundaySurcharge)) : '-'}
+                  </td>
+                  <td className="p-2 text-right font-mono text-red-400">
+                    {nomDay.overtimeSurcharge > 0 ? formatCOP(Math.round(nomDay.overtimeSurcharge)) : '-'}
                   </td>
                   <td className="p-2 text-right font-mono font-medium text-[var(--text-primary)]">
                     {formatCOP(Math.round(totalDayNomina))}
@@ -447,10 +472,13 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                 {sumOfMedians > 0 ? `${((fijoDiarioTotal * 7) / sumOfMedians * 100).toFixed(1)}%` : '-'}
               </td>
               <td className="p-2 text-right font-mono text-blue-400">
-                {formatCOP(Math.round(weeklyNomina.totalNomina))}
+                {weeklyNomina.totalNight > 0 ? formatCOP(weeklyNomina.totalNight) : '-'}
               </td>
-              <td className="p-2 text-right font-mono text-blue-400">
-                {sumOfMedians > 0 && weeklyNomina.totalNomina > 0 ? `${(weeklyNomina.totalNomina / sumOfMedians * 100).toFixed(1)}%` : '-'}
+              <td className="p-2 text-right font-mono text-amber-400">
+                {weeklyNomina.totalSunday > 0 ? formatCOP(weeklyNomina.totalSunday) : '-'}
+              </td>
+              <td className="p-2 text-right font-mono text-red-400">
+                {weeklyNomina.totalOvertime > 0 ? formatCOP(weeklyNomina.totalOvertime) : '-'}
               </td>
               <td className="p-2 text-right font-mono font-medium text-[var(--text-primary)]">
                 {nominaSemanalTotal > 0 ? formatCOP(nominaSemanalTotal) : '-'}
@@ -495,8 +523,9 @@ export default function SalesReferenceTab({ staff, shiftTypes, grid, weekStr, ar
                 <div className="text-right font-mono text-[var(--text-primary)]">{nomDay.personas}</div>
                 <div className="text-[var(--text-secondary)]">Fijo diario</div>
                 <div className="text-right font-mono text-[var(--text-secondary)]">{formatCOP(Math.round(costoEmpresaPerDay + fijosPerDay))}</div>
-                <div className="text-[var(--text-secondary)]">+ Recargos</div>
-                <div className="text-right font-mono text-blue-400">{nomDay.costoNomina > 0 ? formatCOP(Math.round(nomDay.costoNomina)) : '-'}</div>
+                {nomDay.nightSurcharge > 0 && (<><div className="text-[var(--text-secondary)]">R.Nocturno</div><div className="text-right font-mono text-blue-400">{formatCOP(Math.round(nomDay.nightSurcharge))}</div></>)}
+                {nomDay.sundaySurcharge > 0 && (<><div className="text-[var(--text-secondary)]">R.Dominical</div><div className="text-right font-mono text-amber-400">{formatCOP(Math.round(nomDay.sundaySurcharge))}</div></>)}
+                {nomDay.overtimeSurcharge > 0 && (<><div className="text-[var(--text-secondary)]">Horas Extra$</div><div className="text-right font-mono text-red-400">{formatCOP(Math.round(nomDay.overtimeSurcharge))}</div></>)}
                 <div className="font-medium text-[var(--text-primary)]">Nómina/día</div>
                 <div className="text-right font-mono font-medium text-[var(--text-primary)]">
                   {formatCOP(Math.round(totalDayNomina))}

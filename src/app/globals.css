@@ -22,10 +22,8 @@
   --color-ak-oliva-light: #7BA86A;
   --color-ak-ambar-light: #E8A840;
 
-  /* Fonts — A&K brand kit */
-  --font-display: var(--font-smithy-heavy), 'SmithyXT', 'Impact', sans-serif;
-  --font-display-heavy: var(--font-smithy-vheavy), 'SmithyXT', 'Impact', sans-serif;
-  --font-brand-decorative: var(--font-old-press), 'Old Press', serif;
+  /* Fonts */
+  --font-display: var(--font-playfair), 'Playfair Display', serif;
   --font-body: var(--font-dm), 'DM Sans', sans-serif;
   --font-accent: var(--font-caveat), 'Caveat', cursive;
 }

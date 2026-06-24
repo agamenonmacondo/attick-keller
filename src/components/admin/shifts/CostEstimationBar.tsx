@@ -266,10 +266,24 @@ export default function CostEstimationBar({
     const totalRN = activeEmployees.reduce((s, e) => s + e.recargoNocturno, 0);
     const totalRD = activeEmployees.reduce((s, e) => s + e.recargoDominical, 0);
     const totalHECost = activeEmployees.reduce((s, e) => s + e.horasExtra, 0);
+
+    // Contar días con turnos (no OFF) y calcular promedio diario
+    const daysWithShifts = new Set<number>();
+    for (const emp of activeEmployees) {
+      for (const d of emp.dayDetails) {
+        daysWithShifts.add(d.dayIndex);
+      }
+    }
+    const numDaysWithShifts = daysWithShifts.size || 1;
+    const avgPerDay = totalRecargos / numDaysWithShifts;
+    const avgPerEmployee = activeEmployees.length > 0 ? totalRecargos / activeEmployees.length : 0;
+
     return {
       totalRecargos, totalHours, totalHO, totalHN, totalHE,
       totalRN, totalRD, totalHECost,
-      avgPerEmployee: activeEmployees.length > 0 ? totalRecargos / activeEmployees.length : 0,
+      avgPerEmployee,
+      avgPerDay,
+      numDaysWithShifts,
     };
   }, [activeEmployees]);
 
@@ -384,6 +398,13 @@ export default function CostEstimationBar({
           <div className="text-lg font-mono font-semibold text-[var(--text-primary)]">{formatCOP(kpis.avgPerEmployee)}</div>
           <div className="text-[10px] text-[var(--text-secondary)]">
             {activeEmployees.length} colaborador{activeEmployees.length !== 1 ? 'es' : ''} con turno
+          </div>
+        </div>
+        <div className="bg-[var(--bg-card)] rounded-lg p-3">
+          <div className="text-xs text-[var(--text-secondary)]">Promedio diario</div>
+          <div className="text-lg font-mono font-semibold text-[var(--text-primary)]">{formatCOP(kpis.avgPerDay)}</div>
+          <div className="text-[10px] text-[var(--text-secondary)]">
+            {kpis.numDaysWithShifts} día{kpis.numDaysWithShifts !== 1 ? 's' : ''} con turnos
           </div>
         </div>
         <div className="bg-[var(--bg-card)] rounded-lg p-3">

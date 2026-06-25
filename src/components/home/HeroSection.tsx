@@ -32,11 +32,11 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4 }}
-          className="font-[family-name:var(--font-heading)] text-6xl md:text-8xl font-bold text-[var(--color-ak-cal)] mb-6"
+          className="font-[family-name:var(--font-heading)] text-6xl md:text-8xl text-[var(--color-ak-cal)] mb-6"
         >
-          <span style={{ opacity: 0.6, letterSpacing: '0.08em' }}>ATTIC</span>{' '}
+          <span className="font-bold" style={{ opacity: 0.6, letterSpacing: '0.08em' }}>ATTIC</span>{' '}
           <span style={{ color: 'var(--color-ak-dorado)' }}>◆</span>{' '}
-          <span>KELLER</span>
+          <span className="font-black">KELLER</span>
         </motion.h1>
 
         <motion.p

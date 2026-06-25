@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm">
         {/* Logo / info */}
         <div>
-          <h3 className="font-[family-name:var(--font-display)] text-xl font-bold mb-2">
+          <h3 className="font-[family-name:var(--font-heading)] text-xl font-bold mb-2">
             Attick &amp; Keller
           </h3>
           <p className="text-[var(--color-ak-dorado)]">Bogotá, Colombia</p>

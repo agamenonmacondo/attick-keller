@@ -171,7 +171,7 @@ export function ReassignModal({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ArrowsLeftRight size={18} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
-              <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--text-primary)]">
+              <h2 className="font-[family-name:var(--font-heading)] text-lg font-bold text-[var(--text-primary)]">
                 Reasignar Reserva
               </h2>
             </div>

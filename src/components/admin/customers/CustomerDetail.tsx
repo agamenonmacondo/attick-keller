@@ -132,11 +132,11 @@ export function CustomerDetail({ data, onClose, onRefresh }: CustomerDetailProps
               type="text"
               value={form.full_name}
               onChange={(e) => setForm(f => ({ ...f, full_name: e.target.value }))}
-              className="w-full font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)] bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg px-3 py-1 focus:border-[var(--color-ak-borgona)] focus:outline-none"
+              className="w-full font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--text-primary)] bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg px-3 py-1 focus:border-[var(--color-ak-borgona)] focus:outline-none"
               placeholder="Nombre completo"
             />
           ) : (
-            <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">
+            <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--text-primary)]">
               {customer.full_name || 'Cliente'}
             </h2>
           )}

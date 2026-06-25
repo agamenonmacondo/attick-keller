@@ -178,7 +178,7 @@ export function AssignTablePopup({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--text-primary)]">Asignar Mesa</h2>
+            <h2 className="font-[family-name:var(--font-heading)] text-xl font-bold text-[var(--text-primary)]">Asignar Mesa</h2>
             <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               {customerName} · {partySize}p · {timeStart} – {timeEnd}
             </p>

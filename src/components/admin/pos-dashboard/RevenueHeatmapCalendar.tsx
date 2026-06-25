@@ -253,7 +253,7 @@ export function RevenueHeatmapCalendar({
         </button>
 
         <div className="flex items-center gap-3">
-          <span className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
+          <span className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--text-primary)]">
             {MONTH_NAMES[vm]} {vy}
           </span>
           <button

@@ -682,7 +682,7 @@ function TimelinePopover({
       <div className="flex items-center justify-between mb-3 pr-6">
         <div className="flex items-center gap-2">
           <Armchair size={16} className="text-[var(--color-ak-borgona)] dark:text-[var(--color-ak-borgona-light)]" />
-          <span className="font-bold text-base text-[var(--text-primary)] font-[family-name:var(--font-display)]">
+          <span className="font-bold text-base text-[var(--text-primary)] font-[family-name:var(--font-heading)]">
             {table.name_attick || `Mesa ${table.number}`}
           </span>
           {table.zone_name && (

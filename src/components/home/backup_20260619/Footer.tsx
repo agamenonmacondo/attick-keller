@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="bg-[var(--color-ak-madera)] text-[var(--color-ak-cal)] py-12 px-6">
       <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 text-sm">
         <div>
-          <h3 className="font-[family-name:var(--font-display)] text-xl font-bold mb-2">Attick &amp; Keller</h3>
+          <h3 className="font-[family-name:var(--font-heading)] text-xl font-bold mb-2">Attick &amp; Keller</h3>
           <p className="text-[var(--color-ak-dorado)]">Bogotá, Colombia</p>
         </div>
         <div>

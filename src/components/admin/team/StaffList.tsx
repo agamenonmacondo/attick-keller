@@ -57,7 +57,7 @@ export function StaffList({ staff, onToggleActive, onDelete }: StaffListProps) {
   return (
     <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] overflow-hidden">
       <div className="px-6 py-4 border-b border-[var(--border-default)]">
-        <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--text-primary)]">
+        <h2 className="font-[family-name:var(--font-heading)] text-xl font-bold text-[var(--text-primary)]">
           Equipo ({staff.length})
         </h2>
       </div>

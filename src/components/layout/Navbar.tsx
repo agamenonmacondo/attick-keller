@@ -37,7 +37,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link
           href="/"
-          className="font-[family-name:var(--font-display)] text-xl md:text-2xl font-bold text-white transition-opacity duration-200 hover:opacity-80"
+          className="font-[family-name:var(--font-heading)] text-xl md:text-2xl font-bold text-white transition-opacity duration-200 hover:opacity-80"
         >
           Attick &amp; Keller
         </Link>
@@ -143,7 +143,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
           <div className="flex items-center gap-3">
             <span
               className="text-xl font-bold"
-              style={{ fontFamily: "var(--font-display)", color: 'var(--color-ak-cal)' }}
+              style={{ fontFamily: "var(--font-heading)", color: 'var(--color-ak-cal)' }}
             >
               Attick &amp; Keller
             </span>

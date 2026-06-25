@@ -230,7 +230,7 @@ export function ReservationForm({ selectedDate, onClose, onCreated }: Reservatio
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--border-default)] px-5 py-4">
-          <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">Nueva Reserva</h2>
+          <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--text-primary)]">Nueva Reserva</h2>
           <button
             type="button"
             onClick={onClose}

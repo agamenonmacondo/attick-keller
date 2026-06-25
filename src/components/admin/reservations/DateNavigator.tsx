@@ -53,7 +53,7 @@ export function DateNavigator({
           Hoy
         </button>
 
-        <span className="flex-1 text-center text-lg font-semibold text-[var(--text-primary)] font-[family-name:var(--font-display)]">
+        <span className="flex-1 text-center text-lg font-semibold text-[var(--text-primary)] font-[family-name:var(--font-heading)]">
           {formatDate(selectedDate, 'weekday')}
         </span>
 

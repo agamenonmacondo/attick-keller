@@ -29,7 +29,7 @@ export function ReactivationCard({ dormantClients, reachableWhatsApp, reachableE
         </div>
 
         <div className="mb-4">
-          <div className="text-3xl font-bold text-[var(--text-primary)] font-[family-name:var(--font-display)]">
+          <div className="text-3xl font-bold text-[var(--text-primary)] font-[family-name:var(--font-heading)]">
             {dormantClients.toLocaleString()}
           </div>
           <div className="text-sm text-[var(--text-secondary)] mt-1">
@@ -136,7 +136,7 @@ function CampaignModal({
     <div className="fixed inset-0 bg-[var(--color-ak-madera)]/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-[var(--bg-primary)] rounded-xl shadow-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto border border-[var(--border-default)]" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-[var(--text-primary)] font-[family-name:var(--font-display)]">Crear Campana</h2>
+          <h2 className="text-lg font-bold text-[var(--text-primary)] font-[family-name:var(--font-heading)]">Crear Campana</h2>
           <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
             <X size={20} />
           </button>

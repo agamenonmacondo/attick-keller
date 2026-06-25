@@ -467,7 +467,7 @@ export function MenuPanel() {
                 >
                   <div className="flex items-center gap-2">
                     {isExpanded ? <CaretDown size={16} className="text-[var(--text-secondary)]" /> : <CaretRight size={16} className="text-[var(--text-secondary)]" />}
-                    <h3 className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
+                    <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--text-primary)]">
                       {cat.name}
                     </h3>
                     <span className="text-xs text-[var(--text-secondary)]">({categoryItems.length} platos)</span>
@@ -642,7 +642,7 @@ export function MenuPanel() {
                 return (
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">
+                      <h3 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--text-primary)]">
                         {group?.name || 'Sin grupo'}
                       </h3>
                       <span className="text-xs text-[var(--text-secondary)]">
@@ -712,7 +712,7 @@ export function MenuPanel() {
                     onClick={() => setSelectedPosGroup(groupId)}
                     className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 text-center hover:border-[var(--color-ak-borgona)]/40 hover:bg-[var(--color-ak-borgona)]/5 active:scale-[0.98] transition-all duration-200"
                   >
-                    <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--color-ak-borgona)]">
+                    <span className="font-[family-name:var(--font-heading)] text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--color-ak-borgona)]">
                       {group?.name || 'Sin grupo'}
                     </span>
                     <span className="text-[11px] text-[var(--text-secondary)]">
@@ -877,7 +877,7 @@ export function MenuPanel() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setAddModalProduct(null)}>
           <div className="w-full max-w-sm rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-default)] shadow-xl p-5" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">
+              <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--text-primary)]">
                 Agregar al Menu
               </h2>
               <button type="button" onClick={() => setAddModalProduct(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50">
@@ -945,7 +945,7 @@ export function MenuPanel() {
             className="fixed right-0 top-0 bottom-0 z-40 w-full max-w-md bg-[var(--bg-primary)] border-l border-[var(--border-default)] shadow-2xl overflow-y-auto"
           >
             <div className="sticky top-0 bg-[var(--bg-primary)] border-b border-[var(--border-default)] px-5 py-4 flex items-center justify-between z-10">
-              <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">
+              <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--text-primary)]">
                 Receta
               </h2>
               <button
@@ -965,7 +965,7 @@ export function MenuPanel() {
               <div className="p-5 space-y-5">
                 {/* Menu item info */}
                 <div>
-                  <h3 className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
+                  <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--text-primary)]">
                     {recipeData.menuItem.name}
                   </h3>
                   {recipeData.posProduct && (
@@ -1056,7 +1056,7 @@ export function MenuPanel() {
             className="fixed right-0 top-0 bottom-0 z-40 w-full max-w-md bg-[var(--bg-primary)] border-l border-[var(--border-default)] shadow-2xl overflow-y-auto"
           >
             <div className="sticky top-0 bg-[var(--bg-primary)] border-b border-[var(--border-default)] px-5 py-4 flex items-center justify-between z-10">
-              <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">
+              <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--text-primary)]">
                 Detalle del producto
               </h2>
               <button
@@ -1076,7 +1076,7 @@ export function MenuPanel() {
               <div className="p-5 space-y-5">
                 {/* Product info */}
                 <div>
-                  <h3 className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
+                  <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--text-primary)]">
                     {posRecipeData.posProduct.name}
                   </h3>
                   <p className="text-xs text-[var(--text-secondary)] mt-1">

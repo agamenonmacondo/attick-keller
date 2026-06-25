@@ -33,7 +33,7 @@ export default function Navbar() {
       scrolled ? 'bg-[var(--color-ak-madera)] shadow-lg' : 'bg-transparent'
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link href="/" className="font-[family-name:var(--font-display)] text-xl md:text-2xl font-bold text-white">
+        <Link href="/" className="font-[family-name:var(--font-heading)] text-xl md:text-2xl font-bold text-white">
           Attick &amp; Keller
         </Link>
 

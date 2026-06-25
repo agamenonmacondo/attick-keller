@@ -341,7 +341,7 @@ function TableDetailContent({
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: zoneColor }} />
           <div>
-            <h3 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--text-primary)]">
+            <h3 className="font-[family-name:var(--font-heading)] text-lg font-bold text-[var(--text-primary)]">
               {tableLabel(table)}
             </h3>
             <p className="text-xs text-[var(--text-secondary)]">Zona · Capacidad: {table.capacity} personas</p>

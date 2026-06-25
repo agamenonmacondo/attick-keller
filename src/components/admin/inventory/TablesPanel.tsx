@@ -201,7 +201,7 @@ export function TablesPanel() {
             >
               <div className="flex items-center gap-2">
                 {isExpanded ? <CaretDown size={16} className="text-[var(--text-secondary)]" /> : <CaretRight size={16} className="text-[var(--text-secondary)]" />}
-                <h3 className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
+                <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--text-primary)]">
                   {zone.name}
                 </h3>
                 <span className="text-xs text-[var(--text-secondary)]">({zoneTables.length} {zoneTables.length === 1 ? 'mesa' : 'mesas'})</span>
@@ -307,7 +307,7 @@ export function TablesPanel() {
           >
             <div className="flex items-center gap-2">
               {expandedCombos ? <CaretDown size={16} className="text-[var(--text-secondary)]" /> : <CaretRight size={16} className="text-[var(--text-secondary)]" />}
-              <h3 className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
+              <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--text-primary)]">
                 Combinaciones
               </h3>
               <span className="text-xs text-[var(--text-secondary)]">({combinations.length})</span>

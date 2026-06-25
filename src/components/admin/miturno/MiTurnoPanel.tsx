@@ -122,7 +122,7 @@ export function MiTurnoPanel() {
       <div className="bg-[var(--bg-card)] rounded-xl p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-[var(--text-primary)]">Mi Turno</h2>
+            <h2 className="font-[family-name:var(--font-heading)] text-xl font-semibold text-[var(--text-primary)]">Mi Turno</h2>
             <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               {weekData?.employee
                 ? `${weekData.employee.alias} · ${weekData.employee.cargo} · ${weekData.employee.area}`

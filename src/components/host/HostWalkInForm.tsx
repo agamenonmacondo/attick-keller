@@ -175,7 +175,7 @@ export function HostWalkInForm({ zones, onClose, onCreated }: HostWalkInFormProp
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--text-primary)]">Walk-in</h2>
+          <h2 className="font-[family-name:var(--font-heading)] text-xl font-bold text-[var(--text-primary)]">Walk-in</h2>
           <button
             onClick={onClose}
             className="-mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors rounded-lg"

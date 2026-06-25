@@ -371,7 +371,7 @@ export default function PerfilPage() {
                   <WarningCircle size={20} weight="fill" className="text-[var(--color-ak-borgona)]" />
                 </div>
                 <div>
-                  <h3 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--color-ak-madera)]">
+                  <h3 className="font-[family-name:var(--font-heading)] text-lg font-bold text-[var(--color-ak-madera)]">
                     Confirmar accion
                   </h3>
                   <p className="text-sm text-[var(--text-secondary)] mt-1">
@@ -421,7 +421,7 @@ export default function PerfilPage() {
             <House size={18} weight="fill" />
             <span className="hidden sm:inline">Inicio</span>
           </Link>
-          <span className="font-[family-name:var(--font-display)] text-base font-bold text-[var(--color-ak-madera)]">
+          <span className="font-[family-name:var(--font-heading)] text-base font-bold text-[var(--color-ak-madera)]">
             {pageTitle}
           </span>
           <button
@@ -460,7 +460,7 @@ export default function PerfilPage() {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h1 className="font-[family-name:var(--font-display)] text-2xl md:text-3xl font-bold text-[var(--color-ak-madera)] leading-tight">
+                  <h1 className="font-[family-name:var(--font-heading)] text-2xl md:text-3xl font-bold text-[var(--color-ak-madera)] leading-tight">
                     {user.user_metadata?.full_name || pageTitle}
                   </h1>
                   <div className="flex items-center gap-1.5 mt-1">
@@ -550,7 +550,7 @@ export default function PerfilPage() {
                     <ComputerTower size={28} weight="fill" className="text-[var(--color-ak-dorado)]" />
                   </div>
                   <div>
-                    <h2 className="font-[family-name:var(--font-display)] text-xl md:text-2xl font-bold text-[var(--bg-primary)]">
+                    <h2 className="font-[family-name:var(--font-heading)] text-xl md:text-2xl font-bold text-[var(--bg-primary)]">
                       Portal de Host
                     </h2>
                     <p className="text-sm text-[var(--border-default)]/80 mt-0.5 max-w-[260px]">
@@ -577,19 +577,19 @@ export default function PerfilPage() {
             <AnimatedCard delay={0.07} hover={false} className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-default)]/60 p-4 md:p-5">
               <div className="grid grid-cols-4 gap-3 text-center">
                 <div>
-                  <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--color-ak-madera)]">{reservationStats.total}</p>
+                  <p className="font-[family-name:var(--font-heading)] text-xl font-bold text-[var(--color-ak-madera)]">{reservationStats.total}</p>
                   <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium mt-0.5">Total</p>
                 </div>
                 <div>
-                  <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--color-ak-ambar)]">{reservationStats.pending}</p>
+                  <p className="font-[family-name:var(--font-heading)] text-xl font-bold text-[var(--color-ak-ambar)]">{reservationStats.pending}</p>
                   <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium mt-0.5">Pendientes</p>
                 </div>
                 <div>
-                  <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--color-ak-oliva)]">{reservationStats.confirmed}</p>
+                  <p className="font-[family-name:var(--font-heading)] text-xl font-bold text-[var(--color-ak-oliva)]">{reservationStats.confirmed}</p>
                   <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium mt-0.5">Confirmadas</p>
                 </div>
                 <div>
-                  <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--text-secondary)]">{reservationStats.completed + reservationStats.cancelled}</p>
+                  <p className="font-[family-name:var(--font-heading)] text-xl font-bold text-[var(--text-secondary)]">{reservationStats.completed + reservationStats.cancelled}</p>
                   <p className="text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-medium mt-0.5">Pasadas</p>
                 </div>
               </div>
@@ -768,7 +768,7 @@ export default function PerfilPage() {
                                 <div className="flex items-start justify-between gap-4" onClick={undefined}>
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2 mb-1">
-                                      <p className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--color-ak-madera)] capitalize">
+                                      <p className="font-[family-name:var(--font-heading)] text-lg font-bold text-[var(--color-ak-madera)] capitalize">
                                         {formatDate(r.date)}
                                       </p>
                                       <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider', status.bg, status.text)}>

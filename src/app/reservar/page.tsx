@@ -183,7 +183,7 @@ export default function ReservarPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--color-ak-borgona)]/10 mb-4">
             <ForkKnife size={32} weight="duotone" className="text-[var(--color-ak-borgona)]" />
           </div>
-          <h1 className="font-[family-name:var(--font-display)] text-4xl font-bold text-[var(--color-ak-madera)] mb-1">
+          <h1 className="font-[family-name:var(--font-heading)] text-4xl font-bold text-[var(--color-ak-madera)] mb-1">
             Reservar Mesa
           </h1>
           <p className="text-sm text-[var(--text-secondary)]">
@@ -240,7 +240,7 @@ export default function ReservarPage() {
           <div className="bg-[var(--bg-card)] rounded-2xl shadow-xl border border-[var(--border-default)] overflow-hidden">
             {/* Card header */}
             <div className="bg-[var(--color-ak-borgona)]/5 border-b border-[var(--border-default)] px-6 py-4">
-              <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--color-ak-madera)]">
+              <h2 className="font-[family-name:var(--font-heading)] text-xl font-bold text-[var(--color-ak-madera)]">
                 ¿Cuándo y cuántos?
               </h2>
               <p className="text-xs text-[var(--text-secondary)] mt-1">
@@ -290,7 +290,7 @@ export default function ReservarPage() {
                     <CaretLeft size={16} weight="bold" />
                   </button>
                   <div className="flex-1 text-center">
-                    <span className="font-[family-name:var(--font-display)] text-3xl font-bold text-[var(--color-ak-madera)]">
+                    <span className="font-[family-name:var(--font-heading)] text-3xl font-bold text-[var(--color-ak-madera)]">
                       {partySize}
                     </span>
                     <span className="block text-xs text-[var(--text-secondary)] mt-0.5">
@@ -367,7 +367,7 @@ export default function ReservarPage() {
           <div className="bg-[var(--bg-card)] rounded-2xl shadow-xl border border-[var(--border-default)] overflow-hidden">
             {/* Card header */}
             <div className="bg-[var(--color-ak-borgona)]/5 border-b border-[var(--border-default)] px-6 py-4">
-              <h2 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--color-ak-madera)]">
+              <h2 className="font-[family-name:var(--font-heading)] text-xl font-bold text-[var(--color-ak-madera)]">
                 Confirmar reserva
               </h2>
               <p className="text-xs text-[var(--text-secondary)] mt-1">

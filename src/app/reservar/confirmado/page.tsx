@@ -66,7 +66,7 @@ function ConfirmadoContent() {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[var(--color-success)]/10 mb-5">
             <SealCheck size={44} weight="fill" className="text-[var(--color-success)]" />
           </div>
-          <h1 className="font-[family-name:var(--font-display)] text-4xl font-bold text-[var(--color-ak-madera)] mb-2">
+          <h1 className="font-[family-name:var(--font-heading)] text-4xl font-bold text-[var(--color-ak-madera)] mb-2">
             Reserva Confirmada
           </h1>
           <p className="text-[var(--text-secondary)] text-lg">
@@ -81,7 +81,7 @@ function ConfirmadoContent() {
           <div className="bg-[var(--bg-card)] rounded-2xl shadow-[var(--shadow-md)] p-6 mb-6 animate-fade-up" style={{ animationDelay: '0.15s' }}>
             <div className="flex items-center gap-2 mb-4">
               <ListBullets size={18} weight="bold" className="text-[var(--color-ak-borgona)]" />
-              <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--color-ak-madera)]">
+              <h2 className="font-[family-name:var(--font-heading)] text-lg font-bold text-[var(--color-ak-madera)]">
                 Detalles de la Reserva
               </h2>
             </div>

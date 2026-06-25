@@ -175,7 +175,7 @@ export function ReservationDetail({
         {/* Header */}
         <div className="flex items-start justify-between px-5 py-4">
           <div>
-            <h2 className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--text-primary)]">
+            <h2 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--text-primary)]">
               {reservation.customers?.full_name || 'Cliente'}
             </h2>
             <StatusBadge status={reservation.status} size="md" className="mt-1" />

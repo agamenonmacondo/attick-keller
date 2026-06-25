@@ -44,22 +44,31 @@ export default function PhotoCTA() {
           transition={{ duration: 0.8, delay: 0.5, ease: [0.23, 1, 0.32, 1] }}
           className="text-center px-6"
         >
-          <p className="font-[family-name:var(--font-accent)] text-[var(--color-ak-dorado)] text-3xl md:text-4xl mb-4">
+          <p className="font-[family-name:var(--font-accent)] text-[var(--color-ak-ambar)] text-3xl md:text-4xl mb-4">
             Vive la experiencia
           </p>
           <h2 className="font-[family-name:var(--font-heading)] text-5xl md:text-7xl lg:text-8xl font-bold text-[var(--color-ak-cal)] tracking-tighter leading-[0.9] mb-6">
             Cada visita,<br />una historia
           </h2>
-          <p className="text-[var(--border-light)] text-base md:text-lg max-w-md mx-auto mb-10">
+          <p className="text-[var(--color-ak-cal)]/70 text-base md:text-lg max-w-md mx-auto mb-6 font-[family-name:var(--font-body)]">
             Cocina de autor, cócteles únicos y un ambiente que te hace quedar.
           </p>
+          {/* ◆ ornament before CTA */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mb-8"
+          >
+            <span style={{ color: 'var(--color-ak-dorado)', fontSize: '0.75rem', letterSpacing: '0.3em' }}>◆</span>
+          </motion.div>
           <Link
             href="/reservar"
-            className="inline-block bg-[var(--color-ak-borgona)] text-[var(--color-ak-cal)] px-12 py-5 rounded-full font-[family-name:var(--font-heading)] text-xl font-bold tracking-tight hover:bg-[var(--color-ak-borgona)]/90 hover:scale-[1.02] shadow-xl shadow-black/30 transition-all duration-300 active:scale-[0.97]"
+            className="inline-block bg-[var(--color-ak-rust)] text-[var(--color-ak-cal)] px-12 py-5 rounded-lg font-[family-name:var(--font-heading)] text-xl font-bold tracking-tight hover:bg-[var(--color-ak-rust-light)] hover:scale-[1.02] shadow-xl shadow-black/30 transition-all duration-300 active:scale-[0.97]"
           >
             Reservar Mesa
           </Link>
-          <p className="text-[var(--text-secondary)] text-sm mt-6">
+          <p className="text-[var(--color-ak-cal)]/50 text-sm mt-6 font-[family-name:var(--font-body)]">
             Carrera 13 #75-51, Bogotá
           </p>
         </motion.div>
@@ -70,7 +79,7 @@ export default function PhotoCTA() {
         initial={{ scaleX: 0 }}
         animate={isInView ? { scaleX: 1 } : {}}
         transition={{ duration: 1.2, delay: 0.8, ease: [0.23, 1, 0.32, 1] }}
-        className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-ak-dorado)]/60 to-transparent"
+        className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-ak-dorado)]/40 to-transparent"
       />
     </section>
   )

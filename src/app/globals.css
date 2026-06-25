@@ -282,8 +282,6 @@
 .animate-float-orb-2 { animation: float-orb-2 10s ease-in-out infinite; }
 .animate-float-orb-3 { animation: float-orb-3 12s ease-in-out infinite; }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
-  background-size: 200% 100%;
   animation: shimmer 3s ease-in-out infinite;
 }
 .animate-fade-up { animation: fade-up 0.8s ease-out forwards; }

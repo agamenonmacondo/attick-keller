@@ -37,15 +37,17 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link
           href="/"
-          className="font-[family-name:var(--font-heading)] text-xl md:text-2xl font-bold text-white transition-opacity duration-200 hover:opacity-80"
+          className="font-[family-name:var(--font-heading)] text-xl md:text-2xl font-bold text-[var(--color-ak-madera)] dark:text-[var(--color-ak-cal)] transition-opacity duration-200 hover:opacity-80"
         >
-          ATTIC &amp; KELLER
+          ATTIC &amp;{' '}
+          <span style={{ color: 'var(--color-ak-dorado)' }}>◆</span>{' '}
+          KELLER
         </Link>
 
         <div className="flex items-center gap-3 md:gap-4">
           <Link
             href="/reservar"
-            className="hidden sm:inline-flex px-5 py-2 bg-[var(--color-ak-borgona)] text-white rounded-full font-semibold hover:bg-[var(--color-ak-ladrillo)] active:scale-[0.97] transition-all duration-200 text-sm"
+            className="hidden sm:inline-flex px-5 py-2 bg-[var(--color-ak-rust)] text-white rounded-full font-semibold hover:bg-[var(--color-ak-rust-light)] active:scale-[0.97] transition-all duration-200 text-sm"
           >
             Reservar Mesa
           </Link>
@@ -75,7 +77,7 @@ function ProfileLink({ className }: { className?: string }) {
   if (loading) return null
 
   const base =
-    'group relative text-white dark:text-[var(--color-ak-cal)] hover:text-[var(--color-ak-dorado)] transition-colors duration-200 text-sm font-medium'
+    'group relative text-white dark:text-[var(--color-ak-cal)] hover:text-[var(--color-ak-ambar)] transition-colors duration-200 text-sm font-medium'
 
   if (user) {
     return (
@@ -120,7 +122,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
         className="fixed inset-0 z-[60] md:hidden backdrop-blur-md"
-        style={{ backgroundColor: 'rgba(62,39,35,0.6)' }}
+        style={{ backgroundColor: 'rgba(13,16,21,0.7)' }}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -178,7 +180,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                   className="block w-full text-center px-5 py-3.5 rounded-xl font-semibold transition-all duration-200 active:scale-[0.97]"
                   style={{
                     fontFamily: "'Inter', sans-serif",
-                    backgroundColor: 'var(--color-ak-borgona)',
+                    backgroundColor: 'var(--color-ak-rust)',
                     color: 'white',
                     minHeight: '48px',
                   }}

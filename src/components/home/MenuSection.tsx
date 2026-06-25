@@ -196,6 +196,17 @@ export default function MenuSection() {
             >
               Descubre
             </motion.p>
+            <motion.span
+              initial={{ opacity: 0, scale: 0.6 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={viewOptions}
+              transition={{ duration: 0.5, delay: 0.05, ease: EASE_OUT }}
+              className="block mb-1"
+              style={{ color: 'var(--color-ak-dorado)' }}
+              aria-hidden="true"
+            >
+              ◆
+            </motion.span>
             <motion.h2
               initial={{ opacity: 0, transform: 'translateY(40px)' }}
               whileInView={{ opacity: 1, transform: 'translateY(0px)' }}
@@ -229,7 +240,7 @@ export default function MenuSection() {
               className="w-full flex items-center justify-between gap-3 px-5 py-3.5 rounded-xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-colors duration-200"
               style={{
                 fontFamily: "'Inter', sans-serif",
-                backgroundColor: 'var(--color-ak-borgona)',
+                backgroundColor: 'var(--color-ak-rust)',
                 color: 'var(--color-ak-cal)',
                 minHeight: '48px',
                 border: mobileMenuOpen
@@ -297,14 +308,14 @@ export default function MenuSection() {
                       fontFamily: "'Inter', sans-serif",
                       color: isActive ? 'var(--color-ak-cal)' : 'var(--color-ak-madera)',
                       letterSpacing: '0.02em',
-                      borderBottom: isActive ? '2px solid transparent' : '1px solid rgba(13,16,21,0.12)',
+                      borderBottom: isActive ? '2px solid transparent' : '1px solid rgba(140,68,52,0.2)',
                     }}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="activeTabBg"
                         className="absolute inset-0 rounded-full"
-                        style={{ backgroundColor: 'var(--color-ak-borgona)' }}
+                        style={{ backgroundColor: 'var(--color-ak-rust)' }}
                         transition={{ type: 'spring', duration: 0.45, bounce: 0.18 }}
                       />
                     )}
@@ -383,7 +394,7 @@ export default function MenuSection() {
                           />
                           <span
                             className="dish-price font-bold text-base md:text-lg whitespace-nowrap shrink-0 transition-colors duration-200 ease-out"
-                            style={{ fontFamily: "'Inter', sans-serif", color: 'var(--color-ak-borgona)' }}
+                            style={{ fontFamily: "'Inter', sans-serif", color: 'var(--color-ak-rust-light)' }}
                           >
                             {formatPrice(item.price)}
                           </span>

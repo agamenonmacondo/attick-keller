@@ -39,7 +39,7 @@ export default function Navbar() {
           href="/"
           className="font-[family-name:var(--font-heading)] text-xl md:text-2xl font-bold text-white transition-opacity duration-200 hover:opacity-80"
         >
-          Attick &amp; Keller
+          ATTIC &amp; KELLER
         </Link>
 
         <div className="flex items-center gap-3 md:gap-4">
@@ -145,7 +145,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
               className="text-xl font-bold"
               style={{ fontFamily: "var(--font-heading)", color: 'var(--color-ak-cal)' }}
             >
-              Attick &amp; Keller
+              ATTIC &amp; KELLER
             </span>
           </div>
           <button

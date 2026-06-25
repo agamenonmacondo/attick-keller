@@ -7,7 +7,7 @@ export default function Footer() {
         {/* Logo / info */}
         <div>
           <h3 className="font-[family-name:var(--font-heading)] text-xl font-bold mb-2">
-            Attick &amp; Keller
+            ATTIC &amp; KELLER
           </h3>
           <p className="text-[var(--color-ak-dorado)]">Bogotá, Colombia</p>
           <p className="mt-3 text-[var(--color-ak-cal)]/70 leading-relaxed">

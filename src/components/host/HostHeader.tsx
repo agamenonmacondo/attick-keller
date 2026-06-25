@@ -23,7 +23,7 @@ export function HostHeader() {
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold text-[var(--text-primary)]">ATTIC &amp; KELLER</h1>
-          <span className="text-[10px] text-[var(--color-ak-cal)] bg-[var(--color-ak-rust)] px-2 py-0.5 rounded font-medium uppercase tracking-wider">
+          <span className="text-[10px] text-[#34495E] bg-[#F7F3E9] px-2 py-0.5 rounded font-medium uppercase tracking-wider dark:text-[#F4ECE4] dark:bg-[var(--color-ak-rust)]">
             Host
           </span>
           {isAdmin && (

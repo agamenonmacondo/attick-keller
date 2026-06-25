@@ -64,7 +64,7 @@ export default function PhotoCTA() {
           </motion.div>
           <Link
             href="/reservar"
-            className="inline-block bg-[#8C4434] text-[#F4ECE4] px-12 py-5 rounded-lg font-[family-name:var(--font-heading)] text-xl font-bold tracking-tight hover:bg-[#A05840] hover:scale-[1.02] shadow-xl shadow-black/30 transition-all duration-300 active:scale-[0.97]"
+            className="inline-block bg-[var(--color-ak-rust)] text-white px-12 py-5 rounded-lg font-[family-name:var(--font-heading)] text-xl font-bold tracking-tight hover:bg-[var(--color-ak-rust-light)] hover:scale-[1.02] shadow-xl shadow-black/10 transition-all duration-300 active:scale-[0.97]"
           >
             Reservar Mesa
           </Link>

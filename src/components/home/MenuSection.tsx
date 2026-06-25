@@ -306,9 +306,9 @@ export default function MenuSection() {
                     )}
                     style={{
                       fontFamily: "'Inter', sans-serif",
-                      color: isActive ? '#F4ECE4' : 'var(--color-ak-madera)',
+                      color: isActive ? '#F4ECE4' : 'var(--color-ak-night-text)',
                       letterSpacing: '0.02em',
-                      borderBottom: isActive ? '2px solid transparent' : '1px solid var(--color-ak-rust-light)',
+                      borderBottom: isActive ? '2px solid transparent' : '1px solid var(--color-ak-night-border)',
                     }}
                   >
                     {isActive && (

@@ -22,11 +22,7 @@ export function HostHeader() {
     <header className="sticky top-0 z-20 bg-white/95 dark:bg-[var(--color-ak-night)]/95 backdrop-blur-sm border-b border-[var(--border-default)]">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="font-[family-name:var(--font-heading)] text-xl">
-            <span style={{ fontWeight: 700, opacity: 0.6, letterSpacing: '0.08em', color: 'var(--color-ak-rust)' }}>ATTIC</span>{' '}
-            <span style={{ color: 'var(--color-ak-dorado)' }}>◆</span>{' '}
-            <span style={{ fontWeight: 900, color: 'var(--color-ak-rust)' }}>KELLER</span>
-          </h1>
+          <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold">ATTIC &amp; KELLER</h1>
           <span className="text-[10px] text-[var(--color-ak-cal)] bg-[var(--color-ak-rust)] px-2 py-0.5 rounded font-medium uppercase tracking-wider">
             Host
           </span>

@@ -6,10 +6,8 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm">
         {/* Logo / info */}
         <div>
-          <h3 className="font-[family-name:var(--font-heading)] text-xl mb-2">
-            <span style={{ fontWeight: 700, opacity: 0.6, letterSpacing: '0.08em' }}>ATTIC</span>{' '}
-            <span style={{ color: 'var(--color-ak-dorado)' }}>◆</span>{' '}
-            <span style={{ fontWeight: 900 }}>KELLER</span>
+          <h3 className="font-[family-name:var(--font-heading)] text-xl font-bold mb-2">
+            ATTIC &amp; KELLER
           </h3>
           <p className="text-[var(--color-ak-rust-light)]">Bogotá, Colombia</p>
           <p className="mt-3 text-[var(--color-ak-cal)]/70 leading-relaxed">

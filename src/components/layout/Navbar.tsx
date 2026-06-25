@@ -33,13 +33,13 @@ export default function Navbar() {
     <nav className={cn(
       'fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-4 md:px-6 py-4',
       scrolled
-        ? 'bg-[var(--bg-primary)]/95 shadow-lg backdrop-blur-sm'
-        : 'bg-transparent'
+        ? 'bg-[var(--bg-primary)]/95 shadow-lg backdrop-blur-sm text-[var(--text-primary)]'
+        : 'bg-transparent text-[#F4ECE4]'
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link
           href="/"
-          className="font-[family-name:var(--font-heading)] text-xl md:text-2xl text-[var(--color-ak-cal)] transition-opacity duration-200 hover:opacity-80"
+          className="font-[family-name:var(--font-heading)] text-xl md:text-2xl transition-opacity duration-200 hover:opacity-80"
         >
           ATTIC &amp; KELLER
         </Link>
@@ -47,7 +47,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3 md:gap-4">
           <Link
             href="/reservar"
-            className="hidden sm:inline-flex px-5 py-2 bg-[var(--color-ak-rust)] text-white dark:text-white rounded-full font-semibold hover:bg-[var(--color-ak-rust-light)] active:scale-[0.97] transition-all duration-200 text-sm"
+            className="hidden sm:inline-flex px-5 py-2 bg-[var(--color-ak-rust)] text-white rounded-full font-semibold hover:bg-[var(--color-ak-rust-light)] active:scale-[0.97] transition-all duration-200 text-sm"
           >
             Reservar Mesa
           </Link>
@@ -77,7 +77,7 @@ function ProfileLink({ className }: { className?: string }) {
   if (loading) return null
 
   const base =
-    'group relative text-white dark:text-[var(--color-ak-cal)] hover:text-[var(--color-ak-ambar)] transition-colors duration-200 text-sm font-medium'
+    'group relative hover:text-[var(--color-ak-ambar)] transition-colors duration-200 text-sm font-medium'
 
   if (user) {
     return (

@@ -5,16 +5,16 @@ import Link from 'next/link'
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[var(--color-ak-night)] transition-colors duration-300">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0D1015] dark:bg-[#0D1015] transition-colors duration-300">
       {/* Gradient overlay — subtle rust wash */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-[var(--color-ak-rust)]/10 to-transparent" />
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-[#8C4434]/10 to-transparent dark:via-[#8C4434]/10" />
 
-      {/* Floating orbs */}
+      {/* Floating orbs — always dark-themed for drama */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-[15%] left-[10%] w-72 h-72 bg-[var(--color-ak-rust)]/20 rounded-full blur-3xl animate-float-orb-1 will-change-transform" />
-        <div className="absolute top-[40%] right-[15%] w-96 h-96 bg-[var(--color-ak-dorado)]/12 rounded-full blur-3xl animate-float-orb-2 will-change-transform" />
-        <div className="absolute bottom-[20%] left-[30%] w-64 h-64 bg-[var(--color-ak-ambar)]/15 rounded-full blur-3xl animate-float-orb-3 will-change-transform" />
-        <div className="absolute top-[60%] right-[35%] w-40 h-40 bg-[var(--color-ak-ambar)]/15 rounded-full blur-2xl animate-float-orb-2 will-change-transform" />
+        <div className="absolute top-[15%] left-[10%] w-72 h-72 bg-[#8C4434]/20 rounded-full blur-3xl animate-float-orb-1 will-change-transform" />
+        <div className="absolute top-[40%] right-[15%] w-96 h-96 bg-[#FCCC04]/12 rounded-full blur-3xl animate-float-orb-2 will-change-transform" />
+        <div className="absolute bottom-[20%] left-[30%] w-64 h-64 bg-[#E48C04]/15 rounded-full blur-3xl animate-float-orb-3 will-change-transform" />
+        <div className="absolute top-[60%] right-[35%] w-40 h-40 bg-[#E48C04]/15 rounded-full blur-2xl animate-float-orb-2 will-change-transform" />
       </div>
 
       {/* Content */}
@@ -23,7 +23,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="font-[family-name:var(--font-accent)] text-[var(--color-ak-ambar)] text-2xl md:text-3xl mb-4"
+          className="font-[family-name:var(--font-accent)] text-[#E48C04] text-2xl md:text-3xl mb-4"
         >
           Bogotá
         </motion.p>
@@ -32,7 +32,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4 }}
-          className="font-[family-name:var(--font-heading)] text-6xl md:text-8xl text-[var(--color-ak-cal)] mb-6"
+          className="font-[family-name:var(--font-heading)] text-6xl md:text-8xl text-[#F4ECE4] mb-6"
         >
           ATTIC &amp; KELLER
         </motion.h1>
@@ -41,7 +41,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.8 }}
-          className="font-[family-name:var(--font-body)] text-[var(--color-ak-cal)]/80 text-lg md:text-xl max-w-xl mx-auto mb-8"
+          className="font-[family-name:var(--font-body)] text-[#F4ECE4]/80 text-lg md:text-xl max-w-xl mx-auto mb-8"
         >
           Cocina de autor en el corazón de Bogotá
         </motion.p>
@@ -52,7 +52,7 @@ export default function HeroSection() {
           transition={{ duration: 0.6, delay: 1 }}
           className="mb-10"
         >
-          <span style={{ color: 'var(--color-ak-dorado)' }}>◆</span>
+          <span style={{ color: '#FCCC04' }}>◆</span>
         </motion.div>
 
         <motion.div
@@ -62,7 +62,7 @@ export default function HeroSection() {
         >
           <Link
             href="/reservar"
-            className="relative inline-block px-10 py-4 bg-[var(--color-ak-rust)] text-[var(--color-ak-cal)] rounded-lg text-lg font-semibold hover:bg-[var(--color-ak-rust-light)] active:scale-[0.97] transition-all duration-300 overflow-hidden shadow-lg shadow-[var(--color-ak-night)]/20"
+            className="relative inline-block px-10 py-4 bg-[#8C4434] text-[#F4ECE4] rounded-lg text-lg font-semibold hover:bg-[#A05840] active:scale-[0.97] transition-all duration-300 overflow-hidden shadow-lg shadow-black/20"
           >
             <span className="relative z-10">Reservar Mesa</span>
             <div
@@ -84,11 +84,11 @@ export default function HeroSection() {
         transition={{ delay: 2 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
       >
-        <div className="w-5 h-8 border border-[var(--color-ak-ambar)]/40 rounded-full flex justify-center pt-1.5">
+        <div className="w-5 h-8 border border-[#E48C04]/40 rounded-full flex justify-center pt-1.5">
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-1 h-1 bg-[var(--color-ak-ambar)] rounded-full"
+            className="w-1 h-1 bg-[#E48C04] rounded-full"
           />
         </div>
       </motion.div>

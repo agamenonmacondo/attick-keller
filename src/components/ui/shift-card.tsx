@@ -79,7 +79,7 @@ const ShiftCard = React.forwardRef<HTMLDivElement, ShiftCardProps>(
           "min-h-[300px] w-[280px]  md:w-[300px]",
           " group relative flex flex-col items-center justify-between overflow-hidden rounded-xl  p-3 text-sm ",
           " hover:cursor-pointer bg-card  ",
-          "shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05),0px_1px_1px_0px_rgba(255,252,240,0.5)_inset,0px_0px_0px_1px_hsla(0,0%,100%,0.1)_inset,0px_0px_1px_0px_rgba(28,27,26,0.5)]",
+          "shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05),0px_1px_1px_0px_rgba(240,243,247,0.5)_inset,0px_0px_0px_1px_hsla(0,0%,100%,0.1)_inset,0px_0px_1px_0px_rgba(28,27,26,0.5)]",
           /* 
           Applies a multi-layer shadow effect in dark mode:
           1. Two subtle white inset shadows: one horizontal at 1px height, and one around the entire border at 1px width, both with a very light opacity of 0.03, creating a slight inner glow.

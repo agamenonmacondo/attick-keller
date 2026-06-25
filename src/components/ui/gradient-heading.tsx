@@ -10,11 +10,11 @@ const headingVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-gradient-to-t from-neutral-700 to-neutral-800 dark:from-stone-200 dark:to-neutral-200",
-        pink: "bg-gradient-to-t from-accent to-accent/90 dark:from-stone-200 dark:to-neutral-200",
-        light: "bg-gradient-to-t from-neutral-200 to-neutral-300",
+          "bg-gradient-to-t from-[var(--text-secondary)] to-[var(--text-primary)] dark:from-[var(--text-primary)] dark:to-[var(--text-secondary)]",
+        pink: "bg-gradient-to-t from-accent to-accent/90 dark:from-[var(--text-primary)] dark:to-[var(--text-primary)]",
+        light: "bg-gradient-to-t from-[var(--text-muted)] to-[var(--text-secondary)]",
         secondary:
-          "bg-gradient-to-t from-neutral-500 to-neutral-600 dark:from-stone-200 dark:to-neutral-200",
+          "bg-gradient-to-t from-[var(--text-muted)] to-[var(--text-secondary)] dark:from-[var(--text-primary)] dark:to-[var(--text-primary)]",
       },
       size: {
         default: "text-2xl sm:text-3xl lg:text-4xl",

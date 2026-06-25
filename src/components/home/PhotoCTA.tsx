@@ -31,7 +31,7 @@ export default function PhotoCTA() {
               style={{ backgroundImage: `url(${photo.src})`, backgroundPosition: photo.position }}
             />
             {/* Dark gradient — intensified for legibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-ak-madera)]/90 via-[var(--color-ak-madera)]/40 to-[var(--color-ak-madera)]/10 dark:from-black/90 dark:via-black/55 dark:to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/20" />
           </motion.div>
         ))}
       </div>

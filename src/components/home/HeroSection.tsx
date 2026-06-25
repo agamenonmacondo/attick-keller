@@ -5,9 +5,9 @@ import Link from 'next/link'
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[var(--color-ak-cal)] dark:bg-[var(--color-ak-night)] transition-colors duration-300">
-      {/* Gradient overlay — subtle rust wash in dark mode */}
-      <div className="absolute inset-0 pointer-events-none dark:bg-gradient-to-b dark:from-transparent dark:via-[var(--color-ak-rust)]/10 dark:to-transparent transition-colors duration-300" />
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[var(--color-ak-night)] transition-colors duration-300">
+      {/* Gradient overlay — subtle rust wash */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-[var(--color-ak-rust)]/10 to-transparent" />
 
       {/* Floating orbs */}
       <div className="absolute inset-0 overflow-hidden">
@@ -32,7 +32,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4 }}
-          className="font-[family-name:var(--font-heading)] text-6xl md:text-8xl font-bold text-[var(--color-ak-madera)] dark:text-[var(--color-ak-cal)] mb-6"
+          className="font-[family-name:var(--font-heading)] text-6xl md:text-8xl font-bold text-[var(--color-ak-cal)] mb-6"
         >
           <span style={{ opacity: 0.6, letterSpacing: '0.08em' }}>ATTIC</span>{' '}
           <span style={{ color: 'var(--color-ak-dorado)' }}>◆</span>{' '}
@@ -43,7 +43,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.8 }}
-          className="font-[family-name:var(--font-body)] text-[var(--color-ak-madera)]/70 dark:text-[var(--color-ak-cal)]/80 text-lg md:text-xl max-w-xl mx-auto mb-8"
+          className="font-[family-name:var(--font-body)] text-[var(--color-ak-cal)]/80 text-lg md:text-xl max-w-xl mx-auto mb-8"
         >
           Cocina de autor en el corazón de Bogotá
         </motion.p>

@@ -31,17 +31,17 @@ export default function Navbar() {
     <nav className={cn(
       'fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-4 md:px-6 py-4',
       scrolled
-        ? 'bg-[var(--color-ak-madera)]/95 dark:bg-[var(--color-ak-night)]/95 shadow-lg backdrop-blur-sm'
+        ? 'bg-[var(--color-ak-night)]/95 shadow-lg backdrop-blur-sm'
         : 'bg-transparent'
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link
           href="/"
-          className="font-[family-name:var(--font-heading)] text-xl md:text-2xl font-bold text-[var(--color-ak-madera)] dark:text-[var(--color-ak-cal)] transition-opacity duration-200 hover:opacity-80"
+          className="font-[family-name:var(--font-heading)] text-xl md:text-2xl font-bold text-[var(--color-ak-cal)] transition-opacity duration-200 hover:opacity-80"
         >
-          ATTIC &amp;{' '}
+          <span style={{ opacity: 0.6, letterSpacing: '0.08em' }}>ATTIC</span>{' '}
           <span style={{ color: 'var(--color-ak-dorado)' }}>◆</span>{' '}
-          KELLER
+          <span>KELLER</span>
         </Link>
 
         <div className="flex items-center gap-3 md:gap-4">

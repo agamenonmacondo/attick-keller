@@ -6,12 +6,12 @@ import Footer from '@/components/layout/Footer'
 
 export default function Home() {
   return (
-    <>
+    <div className="dark">
       <Navbar />
       <HeroSection />
       <MenuSection />
       <PhotoCTA />
       <Footer />
-    </>
+    </div>
   )
 }

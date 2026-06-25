@@ -53,7 +53,7 @@ export async function GET(
   const tags = (data || []).map((row: Record<string, unknown>) => {
     const ctArr = row.customer_tags as unknown as Array<{ id: string; name: string; color: string }> | null
     const ct = Array.isArray(ctArr) ? ctArr[0] : null
-    return ct || { id: row.tag_id, name: 'Desconocida', color: '#6B2737' }
+    return ct || { id: row.tag_id, name: 'Desconocida', color: 'var(--color-ak-borgona)' }
   })
 
   return NextResponse.json({ tags })

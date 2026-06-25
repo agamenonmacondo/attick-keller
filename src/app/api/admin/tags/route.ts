@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     .insert({
       restaurant_id: RESTAURANT_ID,
       name: name.trim(),
-      color: color || '#6B2737',
+      color: color || 'var(--color-ak-borgona)',
       description: description || null,
     })
     .select('id, name, color, description, sort_order, created_at')

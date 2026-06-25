@@ -125,7 +125,7 @@ export function AnalisisIA({ data, from, to, margins, onAnalysis }: AnalisisIAPr
             </h3>
             {source && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={
-                source === 'ai' ? { background: 'rgba(201,169,78,0.1)', color: 'var(--color-ak-dorado)' } :
+                source === 'ai' ? { background: 'rgba(252,204,4,0.1)', color: 'var(--color-ak-dorado)' } :
                 source === 'rules' ? { background: 'rgba(var(--text-secondary-rgb,156,163,175),0.1)', color: 'var(--text-secondary)' } :
                 { background: 'rgba(239,68,68,0.1)', color: 'var(--color-danger)' }
               }>

@@ -207,7 +207,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
 
         {/* Bottom section */}
         <div className="px-5 pt-4">
-          <div className="h-px mb-4" style={{ background: 'linear-gradient(to right, transparent, rgba(201,169,78,0.3), transparent)' }} />
+          <div className="h-px mb-4" style={{ background: 'linear-gradient(to right, transparent, rgba(252,204,4,0.3), transparent)' }} />
           <p
             className="text-xs text-center"
             style={{ fontFamily: "'Caveat', cursive", color: 'var(--color-ak-ambar)', opacity: 0.7 }}

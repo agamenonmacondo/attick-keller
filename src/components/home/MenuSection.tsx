@@ -103,7 +103,7 @@ export default function MenuSection() {
       <section className="py-20 px-6 bg-[var(--color-ak-cal)] dark:bg-[var(--color-ak-night)] transition-colors duration-300">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 space-y-4">
-            <div className="h-6 w-24 mx-auto rounded animate-pulse" style={{ backgroundColor: 'rgba(201,169,78,0.2)' }} />
+            <div className="h-6 w-24 mx-auto rounded animate-pulse" style={{ backgroundColor: 'rgba(252,204,4,0.2)' }} />
             <div className="h-10 w-48 mx-auto rounded animate-pulse" style={{ backgroundColor: 'rgba(13,16,21,0.1)' }} />
           </div>
           <div className="flex gap-3 overflow-hidden mb-10">
@@ -141,7 +141,7 @@ export default function MenuSection() {
             viewport={viewOptions}
             transition={{ duration: 0.6, delay: 0.15, ease: EASE_OUT }}
             className="mx-auto mb-5 w-12 h-12 rounded-full flex items-center justify-center"
-            style={{ border: '1px solid rgba(201,169,78,0.35)' }}
+            style={{ border: '1px solid rgba(252,204,4,0.35)' }}
             aria-hidden="true"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--color-ak-dorado)' }}>
@@ -233,8 +233,8 @@ export default function MenuSection() {
                 color: 'var(--color-ak-cal)',
                 minHeight: '48px',
                 border: mobileMenuOpen
-                  ? '1px solid rgba(201,169,78,0.4)'
-                  : '1px solid rgba(201,169,78,0.18)',
+                  ? '1px solid rgba(252,204,4,0.4)'
+                  : '1px solid rgba(252,204,4,0.18)',
               }}
               aria-haspopup="listbox"
               aria-expanded={mobileMenuOpen}
@@ -335,14 +335,14 @@ export default function MenuSection() {
                   transition={{ duration: 0.3, delay: 0.08, ease: EASE_OUT }}
                   className="flex items-center gap-4 mb-8"
                 >
-                  <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, transparent, rgba(201,169,78,0.5), transparent)' }} />
+                  <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, transparent, rgba(252,204,4,0.5), transparent)' }} />
                   <h3
                     className="text-2xl md:text-3xl font-bold text-center"
                     style={{ fontFamily: "var(--font-heading)", color: 'var(--color-ak-madera)' }}
                   >
                     {activeCategory.name}
                   </h3>
-                  <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, transparent, rgba(201,169,78,0.5), transparent)' }} />
+                  <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, transparent, rgba(252,204,4,0.5), transparent)' }} />
                 </motion.div>
 
                 {activeItems.length === 0 ? (
@@ -472,7 +472,7 @@ export default function MenuSection() {
               </div>
 
               {/* Divider */}
-              <div className="mx-5 h-px" style={{ background: 'linear-gradient(to right, transparent, rgba(201,169,78,0.4), transparent)' }} />
+              <div className="mx-5 h-px" style={{ background: 'linear-gradient(to right, transparent, rgba(252,204,4,0.4), transparent)' }} />
 
               {/* Category grid */}
               <div

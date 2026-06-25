@@ -57,7 +57,7 @@ export default function HeroSection() {
               className="absolute inset-0 animate-shimmer"
               style={{
                 background:
-                  'linear-gradient(90deg, transparent 0%, rgba(201,169,78,0.45) 50%, transparent 100%)',
+                  'linear-gradient(90deg, transparent 0%, rgba(252,204,4,0.45) 50%, transparent 100%)',
                 backgroundSize: '200% 100%',
               }}
             />

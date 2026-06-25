@@ -229,7 +229,7 @@ export function RentabilidadPanel({ from, to }: Props) {
                   key={i}
                   onClick={() => setCategoryFilter(cat.categoria)}
                   className={`border-b border-[var(--border-light)] last:border-0 cursor-pointer hover:bg-[rgba(255,255,255,0.02)] ${
-                    categoryFilter === cat.categoria ? 'bg-[rgba(201,169,78,0.05)]' : ''
+                    categoryFilter === cat.categoria ? 'bg-[rgba(252,204,4,0.05)]' : ''
                   }`}
                 >
                   <td className="p-2.5 text-[var(--text-primary)] font-medium">

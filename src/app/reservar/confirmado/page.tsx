@@ -133,7 +133,7 @@ function ConfirmadoContent() {
         <div className="flex flex-col sm:flex-row gap-3 animate-fade-up" style={{ animationDelay: '0.4s' }}>
           <Link
             href="/perfil"
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-[var(--color-ak-borgona)] text-[var(--color-ak-cal)] rounded-full font-semibold hover:opacity-90 transition-opacity"
+            className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-[var(--color-ak-borgona)] text-white rounded-full font-semibold hover:opacity-90 transition-opacity"
           >
             <ListBullets size={18} />
             Ver Mis Reservas

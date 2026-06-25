@@ -241,7 +241,7 @@ export default function MenuSection() {
               style={{
                 fontFamily: "'Inter', sans-serif",
                 backgroundColor: 'var(--color-ak-rust)',
-                color: 'var(--color-ak-cal)',
+                color: '#F4ECE4',
                 minHeight: '48px',
                 border: mobileMenuOpen
                   ? '1px solid rgba(252,204,4,0.4)'
@@ -306,9 +306,9 @@ export default function MenuSection() {
                     )}
                     style={{
                       fontFamily: "'Inter', sans-serif",
-                      color: isActive ? 'var(--color-ak-cal)' : 'var(--color-ak-madera)',
+                      color: isActive ? '#F4ECE4' : 'var(--color-ak-madera)',
                       letterSpacing: '0.02em',
-                      borderBottom: isActive ? '2px solid transparent' : '1px solid rgba(140,68,52,0.2)',
+                      borderBottom: isActive ? '2px solid transparent' : '1px solid var(--color-ak-rust-light)',
                     }}
                   >
                     {isActive && (

@@ -497,7 +497,7 @@ function OperativoTab() {
                 <div className="flex-1 h-5 bg-[var(--bg-secondary)] rounded overflow-hidden">
                   <div
                     className="h-full rounded flex items-center pl-1.5 text-[10px] font-medium text-white"
-                    style={{ width: `${Math.max(barP, 12)}%`, backgroundColor: isMin ? 'var(--color-danger)' : 'var(--color-ak-borgona)', transition: 'width 0.5s' }}
+                    style={{ width: `${Math.max(barP, 12)}%`, background: isMin ? 'var(--color-danger)' : 'linear-gradient(90deg, var(--color-ak-borgona), var(--color-ak-ambar))', transition: 'width 0.5s' }}
                   >
                     {w.avgPersonas}
                   </div>

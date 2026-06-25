@@ -14,7 +14,7 @@ export function KPIStatsBarWithActions({ overview, loading }: KPIStatsBarProps) 
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-[var(--bg-primary)] rounded-xl shadow-[var(--shadow-sm)] border border-[var(--border-default)] p-4 animate-pulse">
+          <div key={i} className="bg-[var(--bg-primary)] rounded-xl shadow-[var(--shadow-card)] border border-[var(--border-default)] p-4 animate-pulse">
             <div className="h-3 bg-[var(--border-default)] rounded w-2/3 mb-2"></div>
             <div className="h-6 bg-[var(--border-default)] rounded w-1/2"></div>
           </div>

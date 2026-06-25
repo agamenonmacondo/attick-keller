@@ -185,7 +185,7 @@ export function InformesRayoPanel() {
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]" style={{ boxShadow: '0 2px 8px rgba(93,21,40,0.3)' }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--color-ak-borgona)] dark:bg-[var(--color-ak-borgona-light)]" style={{ boxShadow: 'var(--shadow-card)' }}>
             <Lightning size={22} weight="fill" className="text-[var(--color-ak-dorado)]" />
           </div>
           <div>

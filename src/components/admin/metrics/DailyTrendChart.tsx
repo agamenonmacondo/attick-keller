@@ -29,7 +29,7 @@ export function DailyTrendChart({ trend }: DailyTrendChartProps) {
               <div className="w-full flex flex-col justify-end" style={{ height: 100 }}>
                 <div className="w-full rounded-t" style={{
                   height: `${heightPct}%`,
-                  backgroundColor: isToday ? 'var(--color-ak-dorado)' : 'var(--color-ak-borgona)',
+                  background: isToday ? 'linear-gradient(90deg, var(--color-ak-gold-dim), var(--color-ak-dorado))' : 'linear-gradient(90deg, var(--color-ak-borgona), var(--color-ak-ambar))',
                   transition: 'height 500ms cubic-bezier(0.23, 1, 0.32, 1)',
                   minHeight: total > 0 ? 4 : 0,
                   position: 'relative',

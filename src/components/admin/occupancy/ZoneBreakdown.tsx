@@ -28,7 +28,7 @@ export function ZoneBreakdown({ zones }: ZoneBreakdownProps) {
             <div className="h-2 bg-[var(--border-default)]/50 rounded-full overflow-hidden">
               <div className="h-full rounded-full" style={{
                 width: `${pct}%`,
-                backgroundColor: pct > 80 ? 'var(--color-ak-borgona)' : pct > 50 ? 'var(--color-ak-ambar)' : 'var(--color-ak-oliva)',
+                background: pct > 80 ? 'linear-gradient(90deg, var(--color-ak-borgona), var(--color-ak-ambar))' : pct > 50 ? 'linear-gradient(90deg, var(--color-ak-ambar), var(--color-ak-gold-dim))' : 'var(--color-ak-oliva)',
                 transition: 'width 500ms cubic-bezier(0.23, 1, 0.32, 1)',
               }} />
             </div>

@@ -21,7 +21,7 @@ export function renderZonas(
   doc.rect(0, 0, pageW, pageH, 'F');
 
   // Header
-  let y = drawHeader(doc, 'RENDIMIENTO POR ZONA', `${data.zones?.length || 0} zonas activas`, pageW, margin);
+  let y = drawHeader(doc, 'RENDIMIENTO POR ZONA', `${data.zones?.length || 0} zonas activas`, null, pageW, margin, 24);
   y += 8;
 
   if (!data.zones || data.zones.length === 0) {

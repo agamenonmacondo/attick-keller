@@ -19,7 +19,7 @@ export function renderComposicion(
   doc.setFillColor(COLORS.crema);
   doc.rect(0, 0, pageW, pageH, 'F');
 
-  let y = drawHeader(doc, 'COMPOSICIÓN POR CATEGORÍA', '', pageW, margin);
+  let y = drawHeader(doc, 'COMPOSICIÓN POR CATEGORÍA', '', null, pageW, margin, 24);
   y += 10;
 
   if (!data.categories || data.categories.length === 0) {

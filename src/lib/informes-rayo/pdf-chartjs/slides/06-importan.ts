@@ -19,7 +19,7 @@ export function renderImportan(
   doc.setFillColor(COLORS.crema);
   doc.rect(0, 0, pageW, pageH, 'F');
 
-  let y = drawHeader(doc, 'LO QUE IMPORTA', 'Top 7 por rentabilidad', pageW, margin);
+  let y = drawHeader(doc, 'LO QUE IMPORTA', 'Top 7 por rentabilidad', null, pageW, margin, 24);
   y += 10;
 
   if (!data.importan || data.importan.length === 0) {

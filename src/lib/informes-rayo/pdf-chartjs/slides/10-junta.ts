@@ -18,7 +18,7 @@ export function renderJunta(
   doc.setFillColor(COLORS.crema);
   doc.rect(0, 0, pageW, pageH, 'F');
 
-  let y = drawHeader(doc, 'PARA LA JUNTA', '3 acciones concretas', pageW, margin);
+  let y = drawHeader(doc, 'PARA LA JUNTA', '3 acciones concretas', null, pageW, margin, 24);
   y += 10;
 
   const cardW = pageW - margin * 2;

@@ -21,7 +21,7 @@ export function renderPagos(
   doc.setFillColor(COLORS.crema);
   doc.rect(0, 0, pageW, pageH, 'F');
 
-  let y = drawHeader(doc, 'COMPOSICIÓN DE PAGOS', '', pageW, margin);
+  let y = drawHeader(doc, 'COMPOSICIÓN DE PAGOS', '', null, pageW, margin, 24);
   y += 6;
 
   if (!data.payments || data.payments.length === 0) {

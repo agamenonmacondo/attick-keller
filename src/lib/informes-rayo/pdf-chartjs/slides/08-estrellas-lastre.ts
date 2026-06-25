@@ -19,7 +19,7 @@ export function renderEstrellasLastre(
   doc.setFillColor(COLORS.crema);
   doc.rect(0, 0, pageW, pageH, 'F');
 
-  let y = drawHeader(doc, 'ANÁLISIS DE RENTABILIDAD', '', pageW, margin);
+  let y = drawHeader(doc, 'ANÁLISIS DE RENTABILIDAD', '', null, pageW, margin, 24);
   y += 10;
 
   const colW = (pageW - margin * 2 - 8) / 2;

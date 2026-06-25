@@ -24,7 +24,7 @@ export function renderInsights(
   // Build bullets: IA first, then data fallback
   const bullets: string[] = []
   if (data.analysis?.slide_7_insights?.length) {
-    data.analysis.slide_7_insights.forEach(b => bullets.push(b.body))
+    data.analysis.slide_7_insights.forEach((b: string) => bullets.push(b))
   } else if (data.analysis?.slide_7_bullets?.length) {
     data.analysis.slide_7_bullets.forEach(b => bullets.push(b.body))
   }

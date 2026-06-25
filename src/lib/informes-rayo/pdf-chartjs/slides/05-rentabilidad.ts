@@ -19,7 +19,7 @@ export function renderRentabilidad(
   doc.rect(0, 0, pageW, pageH, 'F');
 
   const headerSub = data.marginKPIs ? `MARGEN ${fmtPct(data.marginKPIs.margin_pct)}` : '';
-  let y = drawHeader(doc, 'RENTABILIDAD', headerSub, pageW, margin);
+  let y = drawHeader(doc, 'RENTABILIDAD', headerSub, null, pageW, margin, 24);
   y += 6;
 
   // 3 tarjetas en fila

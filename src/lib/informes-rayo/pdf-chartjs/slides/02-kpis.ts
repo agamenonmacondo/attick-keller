@@ -21,7 +21,7 @@ export async function renderKPIs(
   doc.rect(0, 0, pageW, pageH, 'F');
 
   // Header
-  let y = drawHeader(doc, 'INDICADORES CLAVE', '', pageW, margin);
+  let y = drawHeader(doc, 'INDICADORES CLAVE', '', null, pageW, margin, 24);
   y += 6;
 
   // 3 tarjetas blancas

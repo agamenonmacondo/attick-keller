@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATTIC ◆ KELLER — Bogotá</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --night: #0D1015;
+  --night-card: #161B22;
+  --night-input: #1E2733;
+  --night-border: #2D3748;
+  --night-text: #F4ECE4;
+  --night-muted: #9BA8B7;
+  --rust: #8C4434;
+  --rust-light: #A05840;
+  --amber: #E48C04;
+  --amber-light: #F0A030;
+  --gold: #FCCC04;
+  --borgona: #B24D42;
+  --oliva: #5C7A4D;
+  --cream: #F4ECE4;
+  --steel: #3C4C5C;
+
+  --font-heading: 'Oswald', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-accent: 'Caveat', cursive;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--night);
+  color: var(--night-text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== GRUNGE TEXTURE OVERLAY ===== */
+.grunge-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  z-index: 1000;
+  padding: 1.25rem 2rem;
+  transition: background 0.4s ease, box-shadow 0.4s ease, padding 0.4s ease;
+  background: transparent;
+}
+
+.navbar.scrolled {
+  background: rgba(13, 16, 21, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 24px rgba(140, 68, 52, 0.08);
+  padding: 0.75rem 2rem;
+}
+
+.navbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.navbar-logo .attic {
+  color: var(--night-text);
+  opacity: 0.6;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  transition: opacity 0.3s;
+}
+
+.navbar-logo .diamond {
+  color: var(--gold);
+  font-size: 0.85rem;
+  margin: 0 0.15rem;
+  vertical-align: middle;
+}
+
+.navbar-logo .keller {
+  color: var(--night-text);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.navbar-logo:hover .attic { opacity: 0.8; }
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+}
+
+.navbar-links a {
+  color: var(--night-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.3s;
+  position: relative;
+}
+
+.navbar-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 0;
+  width: 0; height: 1px;
+  background: var(--rust);
+  transition: width 0.3s ease;
+}
+
+.navbar-links a:hover { color: var(--night-text); }
+.navbar-links a:hover::after { width: 100%; }
+
+.btn-reservar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--rust);
+  color: var(--cream);
+  border: none;
+  padding: 0.6rem 1.5rem;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-reservar:hover {
+  background: var(--rust-light);
+  transform: translateY(-1px);
+}
+
+/* Shimmer effect on CTA */
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(252, 204, 4, 0.25), transparent);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { left: -100%; }
+  50% { left: 100%; }
+}
+
+/* Mobile hamburger */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  z-index: 1001;
+}
+
+.hamburger span {
+  display: block;
+  width: 26px;
+  height: 2px;
+  background: var(--night-text);
+  transition: all 0.3s ease;
+  border-radius: 1px;
+}
+
+.hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.hamburger.active span:nth-child(2) { opacity: 0; }
+.hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+/* Mobile drawer */
+.mobile-drawer {
+  position: fixed;
+  top: 0; right: -100%;
+  width: 80%;
+  max-width: 360px;
+  height: 100vh;
+  background: var(--night-card);
+  z-index: 999;
+  padding: 6rem 2rem 2rem;
+  transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 1px solid var(--night-border);
+}
+
+.mobile-drawer.open { right: 0; }
+
+.mobile-drawer a {
+  display: block;
+  color: var(--night-text);
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(140, 68, 52, 0.15);
+  transition: color 0.3s;
+}
+
+.mobile-drawer a:hover { color: var(--amber); }
+
+.mobile-drawer .btn-reservar-mobile {
+  display: block;
+  text-align: center;
+  margin-top: 2rem;
+  background: var(--rust);
+  color: var(--cream);
+  padding: 0.85rem 2rem;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+.mobile-drawer .btn-reservar-mobile:hover { background: var(--rust-light); }
+
+.drawer-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(13, 16, 21, 0.7);
+  z-index: 998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.drawer-overlay.open { opacity: 1; pointer-events: all; }
+
+/* ===== HERO SECTION ===== */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  background: var(--night);
+}
+
+.hero-gradient {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(140, 68, 52, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 30%, rgba(228, 140, 4, 0.06) 0%, transparent 50%),
+    linear-gradient(180deg, var(--night) 0%, rgba(22, 27, 34, 0.8) 50%, var(--night) 100%);
+  z-index: 1;
+}
+
+/* Floating orbs */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: 1;
+}
+
+.orb-1 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(140, 68, 52, 0.15), transparent 70%);
+  top: 15%; left: 10%;
+  animation: float1 8s ease-in-out infinite;
+}
+
+.orb-2 {
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, rgba(228, 140, 4, 0.1), transparent 70%);
+  top: 55%; right: 10%;
+  animation: float2 10s ease-in-out infinite;
+}
+
+.orb-3 {
+  width: 250px; height: 250px;
+  background: radial-gradient(circle, rgba(252, 204, 4, 0.06), transparent 70%);
+  bottom: 10%; left: 35%;
+  animation: float3 12s ease-in-out infinite;
+}
+
+@keyframes float1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+@keyframes float2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-25px, 30px) scale(0.95); }
+  66% { transform: translate(35px, -20px) scale(1.05); }
+}
+
+@keyframes float3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(20px, -30px) scale(1.08); }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 10;
+  padding: 0 1.5rem;
+  max-width: 800px;
+}
+
+.hero-location {
+  font-family: var(--font-accent);
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--amber);
+  margin-bottom: 1rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.2s;
+}
+
+.hero-heading {
+  font-family: var(--font-heading);
+  font-size: clamp(3rem, 10vw, 7rem);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.4s;
+}
+
+.hero-heading .attic {
+  display: inline;
+  color: var(--night-text);
+  opacity: 0.6;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+}
+
+.hero-heading .diamond {
+  color: var(--gold);
+  font-size: 0.55em;
+  margin: 0 0.15em;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+.hero-heading .keller {
+  display: inline;
+  color: var(--night-text);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.hero-subtitle {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  font-weight: 300;
+  color: var(--night-muted);
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.6s;
+}
+
+.hero-ornament {
+  font-size: 1.2rem;
+  color: var(--gold);
+  margin-bottom: 2rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.7s;
+}
+
+.hero-cta {
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.9s;
+}
+
+.hero-cta .btn-reservar {
+  font-size: 0.95rem;
+  padding: 0.85rem 2.5rem;
+  letter-spacing: 0.14em;
+}
+
+/* Scroll indicator */
+.scroll-indicator {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 1.2s;
+}
+
+.scroll-indicator span {
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--night-muted);
+}
+
+.scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(180deg, var(--rust), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.4; transform: scaleY(0.6); }
+  50% { opacity: 1; transform: scaleY(1); }
+}
+
+/* ===== MENU SECTION ===== */
+.menu-section {
+  position: relative;
+  padding: 6rem 1.5rem;
+  background: var(--night);
+}
+
+.menu-section-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.menu-header {
+  text-align: center;
+  margin-bottom: 3.5rem;
+}
+
+.menu-header .accent-label {
+  font-family: var(--font-accent);
+  font-size: 1.4rem;
+  color: var(--amber);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.menu-header h2 {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  color: var(--night-text);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  line-height: 1.1;
+}
+
+.menu-header .diamond-ornament {
+  color: var(--gold);
+  font-size: 1rem;
+  display: block;
+  margin-top: 1rem;
+}
+
+/* Category pills */
+.menu-categories {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 3rem;
+}
+
+.menu-cat-pill {
+  background: transparent;
+  border: 1px solid var(--night-border);
+  color: var(--night-muted);
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.menu-cat-pill:hover {
+  border-color: var(--rust);
+  color: var(--night-text);
+}
+
+.menu-cat-pill.active {
+  background: var(--rust);
+  border-color: var(--rust);
+  color: var(--cream);
+}
+
+/* Menu grid */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.menu-card {
+  background: var(--night-card);
+  border: 1px solid rgba(140, 68, 52, 0.2);
+  border-radius: 10px;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+  box-shadow: 0 2px 12px rgba(140, 68, 52, 0.06), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.menu-card:hover {
+  border-color: rgba(140, 68, 52, 0.45);
+  box-shadow: 0 4px 20px rgba(140, 68, 52, 0.12), 0 2px 6px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+.menu-card-name {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--night-text);
+  line-height: 1.3;
+}
+
+.menu-card-price {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--rust-light);
+  white-space: nowrap;
+  margin-left: 1rem;
+}
+
+/* ===== PHOTO CTA SECTION ===== */
+.photo-cta {
+  position: relative;
+  padding: 6rem 1.5rem;
+  background: var(--night);
+}
+
+.photo-cta-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 3.5rem;
+}
+
+.photo-card {
+  position: relative;
+  aspect-ratio: 3/4;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.photo-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.photo-card:hover img { transform: scale(1.05); }
+
+.photo-card .overlay {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%; height: 55%;
+  background: linear-gradient(0deg, rgba(13, 16, 21, 0.85) 0%, rgba(13, 16, 21, 0.2) 60%, transparent 100%);
+  z-index: 2;
+}
+
+.photo-card .photo-label {
+  position: absolute;
+  bottom: 1.25rem; left: 1.25rem;
+  z-index: 3;
+}
+
+.photo-card .photo-label span {
+  display: block;
+  font-family: var(--font-accent);
+  font-size: 1rem;
+  color: var(--amber);
+}
+
+.photo-card .photo-label strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--cream);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+}
+
+.photo-cta-content {
+  text-align: center;
+}
+
+.photo-cta-content .accent-label {
+  font-family: var(--font-accent);
+  font-size: 1.4rem;
+  color: var(--amber);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.photo-cta-content h2 {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 700;
+  color: var(--cream);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  margin-bottom: 1rem;
+}
+
+.photo-cta-content .diamond-ornament {
+  color: var(--gold);
+  font-size: 1rem;
+  display: block;
+  margin-bottom: 2rem;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  position: relative;
+  background: var(--night);
+  border-top: 1px solid rgba(140, 68, 52, 0.15);
+  padding: 4rem 1.5rem 2rem;
+}
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.footer-brand .footer-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.footer-brand .footer-logo .attic {
+  opacity: 0.6;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--night-text);
+}
+
+.footer-brand .footer-logo .diamond {
+  color: var(--gold);
+  font-size: 0.75rem;
+  vertical-align: middle;
+}
+
+.footer-brand .footer-logo .keller {
+  font-weight: 700;
+  color: var(--night-text);
+  letter-spacing: 0.04em;
+}
+
+.footer-brand p {
+  color: var(--night-muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.footer-brand .location {
+  color: var(--rust-light);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.footer-col h4 {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--night-text);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 1.25rem;
+}
+
+.footer-col a,
+.footer-col p {
+  display: block;
+  color: var(--night-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  transition: color 0.3s;
+}
+
+.footer-col a:hover { color: var(--night-text); }
+
+.footer-col .social-link {
+  color: var(--amber);
+  font-weight: 500;
+}
+
+.footer-col .social-link:hover { color: var(--amber-light); }
+
+.footer-bottom {
+  border-top: 1px solid rgba(140, 68, 52, 0.12);
+  padding-top: 1.5rem;
+  text-align: center;
+  color: var(--night-muted);
+  font-size: 0.8rem;
+}
+
+.footer-bottom .diamond-sep {
+  color: var(--gold);
+  margin-right: 0.5rem;
+  font-size: 0.65rem;
+}
+
+/* ===== SECTION DIVIDERS ===== */
+.section-divider {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--rust), transparent);
+  margin: 0 auto;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .navbar-links { display: none; }
+  .hamburger { display: flex; }
+
+  .hero-heading {
+    font-size: clamp(2.4rem, 12vw, 4rem);
+  }
+
+  .hero-subtitle { font-size: 0.95rem; }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .photo-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .photo-card { aspect-ratio: 4/3; }
+
+  .footer-top {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .menu-categories {
+    gap: 0.35rem;
+  }
+
+  .menu-cat-pill {
+    font-size: 0.65rem;
+    padding: 0.4rem 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar { padding: 1rem; }
+  .navbar.scrolled { padding: 0.6rem 1rem; }
+  .hero-content { padding: 0 1rem; }
+  .menu-section { padding: 4rem 1rem; }
+  .photo-cta { padding: 4rem 1rem; }
+}
+
+/* ===== SCROLL REVEAL ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== SELECTION ===== */
+::selection {
+  background: rgba(140, 68, 52, 0.4);
+  color: var(--cream);
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--night); }
+::-webkit-scrollbar-thumb { background: var(--night-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--steel); }
+</style>
+</head>
+<body>
+
+<!-- Grunge Texture Overlay -->
+<svg class="grunge-overlay" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+  <filter id="grunge">
+    <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="4" stitchTiles="stitch" result="noise"/>
+    <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
+    <feBlend in="SourceGraphic" in2="grayNoise" mode="overlay"/>
+  </filter>
+  <rect width="100%" height="100%" filter="url(#grunge)"/>
+</svg>
+
+<!-- Mobile Drawer Overlay -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<!-- Mobile Drawer -->
+<nav class="mobile-drawer" id="mobileDrawer">
+  <a href="#hero" onclick="closeDrawer()">Inicio</a>
+  <a href="#menu" onclick="closeDrawer()">Carta</a>
+  <a href="#experiencia" onclick="closeDrawer()">Experiencia</a>
+  <a href="#contacto" onclick="closeDrawer()">Contacto</a>
+  <a href="#reservar" class="btn-reservar-mobile" onclick="closeDrawer()">Reservar Mesa</a>
+</nav>
+
+<!-- Navbar -->
+<header class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="#hero" class="navbar-logo">
+      <span class="attic">ATTIC</span>
+      <span class="diamond">◆</span>
+      <span class="keller">KELLER</span>
+    </a>
+    <ul class="navbar-links">
+      <li><a href="#hero">Inicio</a></li>
+      <li><a href="#menu">Carta</a></li>
+      <li><a href="#experiencia">Experiencia</a></li>
+      <li><a href="#contacto">Contacto</a></li>
+      <li><a href="#reservar" class="btn-reservar btn-shimmer">Reservar Mesa</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger" aria-label="Menú">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+</header>
+
+<!-- Hero Section -->
+<section class="hero" id="hero">
+  <div class="hero-gradient"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="hero-content">
+    <span class="hero-location">Bogotá</span>
+    <h1 class="hero-heading">
+      <span class="attic">ATTIC</span> <span class="diamond">◆</span> <span class="keller">KELLER</span>
+    </h1>
+    <p class="hero-subtitle">Cocina artesanal & coctelería de autor en el corazón de Bogotá</p>
+    <div class="hero-ornament">◆</div>
+    <div class="hero-cta">
+      <a href="#reservar" class="btn-reservar btn-shimmer">Reservar Mesa</a>
+    </div>
+  </div>
+
+  <div class="scroll-indicator">
+    <span>Explorar</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- Menu Section -->
+<section class="menu-section" id="menu">
+  <div class="menu-section-inner">
+    <div class="menu-header reveal">
+      <span class="accent-label">Descubre</span>
+      <h2>Nuestra Carta</h2>
+      <span class="diamond-ornament">◆</span>
+    </div>
+
+    <div class="menu-categories reveal" id="menuCategories">
+      <!-- Generated by JS -->
+    </div>
+
+    <div class="menu-grid" id="menuGrid">
+      <!-- Generated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- Photo CTA Section -->
+<section class="photo-cta" id="experiencia">
+  <div class="photo-cta-inner">
+    <div class="photo-grid reveal">
+      <div class="photo-card">
+        <img src="/ak_photo_01.jpg" alt="Interior cálido de ATTIC ◆ KELLER" loading="lazy">
+        <div class="overlay"></div>
+        <div class="photo-label">
+          <span>Ambiente</span>
+          <strong>Interior cálido</strong>
+        </div>
+      </div>
+      <div class="photo-card">
+        <img src="/ak_photo_05.jpg" alt="Platos artesanales de ATTIC ◆ KELLER" loading="lazy">
+        <div class="overlay"></div>
+        <div class="photo-label">
+          <span>Sabores</span>
+          <strong>Platos artesanales</strong>
+        </div>
+      </div>
+      <div class="photo-card">
+        <img src="/ak_photo_08.jpg" alt="Barra principal de ATTIC ◆ KELLER" loading="lazy">
+        <div class="overlay"></div>
+        <div class="photo-label">
+          <span>Coctelería</span>
+          <strong>Barra principal</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="photo-cta-content reveal">
+      <span class="accent-label">Vive la experiencia</span>
+      <h2>Cada visita, una historia</h2>
+      <span class="diamond-ornament">◆</span>
+      <a href="#reservar" class="btn-reservar btn-shimmer">Reservar Mesa</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer" id="contacto">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <span class="attic">ATTIC</span>
+          <span class="diamond">◆</span>
+          <span class="keller">KELLER</span>
+        </div>
+        <p>Cocina artesanal & coctelería de autor.<br>Una experiencia que combina lo rústico y lo refinado.</p>
+        <p class="location">📍 Bogotá, Colombia</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Navegación</h4>
+        <a href="#hero">Inicio</a>
+        <a href="#menu">Carta</a>
+        <a href="#experiencia">Experiencia</a>
+        <a href="#reservar">Reservaciones</a>
+      </div>
+
+      <div class="footer-col">
+        <h4>Síguenos</h4>
+        <a href="https://instagram.com/attickeller" target="_blank" class="social-link">Instagram ↗</a>
+        <p style="margin-top: 1rem; font-size: 0.8rem; color: var(--night-muted);">
+          Horario<br>
+          Lun–Jue: 12:00 – 23:00<br>
+          Vie–Sáb: 12:00 – 01:00<br>
+          Dom: 12:00 – 22:00
+        </p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span class="diamond-sep">◆</span>Attick & Keller — Todos los derechos reservados © 2025
+    </div>
+  </div>
+</footer>
+
+<script>
+// ===== MENU DATA =====
+const menuData = {
+  'Pizzas': [
+    { name: 'Alcachofa', price: '$38.000' },
+    { name: 'Setas', price: '$36.000' },
+    { name: 'Pepperoni', price: '$34.000' },
+    { name: 'Blanca', price: '$32.000' },
+    { name: 'Hawaiana', price: '$35.000' },
+    { name: 'Jamón Serrano', price: '$42.000' },
+    { name: 'Margarita', price: '$30.000' },
+  ],
+  'Antipastos': [
+    { name: 'Bruschetta Clásica', price: '$22.000' },
+    { name: 'Prosciutto e Melone', price: '$28.000' },
+    { name: 'Burrata con Tomate', price: '$32.000' },
+    { name: 'Aceitunas Marinadas', price: '$18.000' },
+  ],
+  'Pastas': [
+    { name: 'Tagliatelle al Ragu', price: '$34.000' },
+    { name: 'Pappardelle Funghi', price: '$36.000' },
+    { name: 'Cacio e Pepe', price: '$30.000' },
+    { name: 'Linguine Vongole', price: '$38.000' },
+  ],
+  'Principales': [
+    { name: 'Costilla de Cerdo Glaseada', price: '$45.000' },
+    { name: 'Salmón a la Plancha', price: '$48.000' },
+    { name: 'Lomo de Res con Hierbas', price: '$52.000' },
+  ],
+  'Para Compartir': [
+    { name: 'Tabla de Quesos Artesanales', price: '$36.000' },
+    { name: 'Tabla de Embutidos', price: '$34.000' },
+    { name: 'Nachos con Guacamole', price: '$28.000' },
+  ],
+  'Sánduches': [
+    { name: 'Sánduche de Lomo', price: '$26.000' },
+    { name: 'Panini de Pollo & Pesto', price: '$24.000' },
+    { name: 'Club House', price: '$28.000' },
+  ],
+  'Postres': [
+    { name: 'Tiramisú Clásico', price: '$22.000' },
+    { name: 'Panna Cotta de Frutos Rojos', price: '$20.000' },
+    { name: 'Cannoli Siciliano', price: '$18.000' },
+  ],
+  'Vinos': [
+    { name: 'Copa Vino Tinto', price: '$16.000' },
+    { name: 'Copa Vino Blanco', price: '$16.000' },
+    { name: 'Botella Casa', price: '$65.000' },
+  ],
+  'Cocteles': [
+    { name: 'Negroni Clásico', price: '$28.000' },
+    { name: 'Old Fashioned', price: '$30.000' },
+    { name: 'Aperol Spritz', price: '$26.000' },
+    { name: 'Espresso Martini', price: '$28.000' },
+  ],
+  'Cervezas': [
+    { name: 'Artesanal Lager', price: '$12.000' },
+    { name: 'IPA Local', price: '$14.000' },
+    { name: 'Stout de la Casa', price: '$15.000' },
+  ],
+  'Licores': [
+    { name: 'Whisky Premium', price: '$35.000' },
+    { name: 'Ron Añejo', price: '$28.000' },
+    { name: 'Gin & Tonic Especial', price: '$30.000' },
+  ],
+  'Bebidas': [
+    { name: 'Limonada de la Casa', price: '$10.000' },
+    { name: 'Agua Mineral', price: '$5.000' },
+    { name: 'Café Espresso', price: '$6.000' },
+  ],
+  'Shots': [
+    { name: 'Tequila Reposado', price: '$14.000' },
+    { name: 'Jägermeister', price: '$12.000' },
+    { name: 'Shot de la Casa', price: '$16.000' },
+  ],
+  'Brunch': [
+    { name: 'Huevos Benedictinos', price: '$28.000' },
+    { name: 'Pancakes con Frutos', price: '$24.000' },
+    { name: 'Avocado Toast', price: '$22.000' },
+  ],
+  'Adiciones': [
+    { name: 'Queso Extra', price: '$4.000' },
+    { name: 'Tocineta', price: '$5.000' },
+    { name: 'Huevo', price: '$3.000' },
+  ],
+  'Bandejas': [
+    { name: 'Bandeja Italiana', price: '$55.000' },
+    { name: 'Bandeja Degustación', price: '$68.000' },
+  ],
+  'Tienda': [
+    { name: 'Salsa de la Casa 250ml', price: '$18.000' },
+    { name: 'Pan Artesanal', price: '$8.000' },
+  ],
+  'Promociones': [
+    { name: '2x1 Cocteles (Lun–Mié)', price: '$28.000' },
+    { name: 'Happy Hour Cervezas', price: '$10.000' },
+  ],
+  'Combos': [
+    { name: 'Pizza + Cerveza', price: '$38.000' },
+    { name: 'Pasta + Vino', price: '$42.000' },
+    { name: 'Brunch + Mimosa', price: '$45.000' },
+  ],
+};
+
+const categories = Object.keys(menuData);
+let activeCategory = 'Pizzas';
+
+// ===== RENDER MENU CATEGORIES =====
+function renderCategories() {
+  const container = document.getElementById('menuCategories');
+  container.innerHTML = categories.map(cat =>
+    `<button class="menu-cat-pill${cat === activeCategory ? ' active' : ''}" data-cat="${cat}">${cat}</button>`
+  ).join('');
+
+  container.querySelectorAll('.menu-cat-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeCategory = btn.dataset.cat;
+      renderCategories();
+      renderMenu();
+    });
+  });
+}
+
+// ===== RENDER MENU ITEMS =====
+function renderMenu() {
+  const grid = document.getElementById('menuGrid');
+  const items = menuData[activeCategory];
+  grid.innerHTML = items.map(item =>
+    `<div class="menu-card">
+      <span class="menu-card-name">${item.name}</span>
+      <span class="menu-card-price">${item.price}</span>
+    </div>`
+  ).join('');
+}
+
+// ===== NAVBAR SCROLL EFFECT =====
+function handleScroll() {
+  const navbar = document.getElementById('navbar');
+  if (window.scrollY > 60) {
+    navbar.classList.add('scrolled');
+  } else {
+    navbar.classList.remove('scrolled');
+  }
+}
+
+// ===== MOBILE DRAWER =====
+const hamburger = document.getElementById('hamburger');
+const mobileDrawer = document.getElementById('mobileDrawer');
+const drawerOverlay = document.getElementById('drawerOverlay');
+
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('active');
+  mobileDrawer.classList.toggle('open');
+  drawerOverlay.classList.toggle('open');
+  document.body.style.overflow = mobileDrawer.classList.contains('open') ? 'hidden' : '';
+});
+
+drawerOverlay.addEventListener('click', closeDrawer);
+
+function closeDrawer() {
+  hamburger.classList.remove('active');
+  mobileDrawer.classList.remove('open');
+  drawerOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ===== SCROLL REVEAL =====
+function setupReveal() {
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  reveals.forEach(el => observer.observe(el));
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  renderCategories();
+  renderMenu();
+  setupReveal();
+});
+
+window.addEventListener('scroll', handleScroll, { passive: true });
+handleScroll();
+</script>
+</body>
+</html>

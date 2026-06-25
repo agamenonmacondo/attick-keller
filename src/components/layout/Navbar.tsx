@@ -39,9 +39,9 @@ export default function Navbar() {
           href="/"
           className="font-[family-name:var(--font-heading)] text-xl md:text-2xl text-[var(--color-ak-cal)] transition-opacity duration-200 hover:opacity-80"
         >
-          <span className="font-bold" style={{ opacity: 0.6, letterSpacing: '0.08em' }}>ATTIC</span>{' '}
+          <span style={{ fontWeight: 700, opacity: 0.6, letterSpacing: '0.08em' }}>ATTIC</span>{' '}
           <span style={{ color: 'var(--color-ak-dorado)' }}>◆</span>{' '}
-          <span className="font-black">KELLER</span>
+          <span style={{ fontWeight: 900 }}>KELLER</span>
         </Link>
 
         <div className="flex items-center gap-3 md:gap-4">

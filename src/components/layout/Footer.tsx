@@ -7,9 +7,9 @@ export default function Footer() {
         {/* Logo / info */}
         <div>
           <h3 className="font-[family-name:var(--font-heading)] text-xl mb-2">
-            <span className="font-bold" style={{ opacity: 0.6, letterSpacing: '0.08em' }}>ATTIC</span>{' '}
+            <span style={{ fontWeight: 700, opacity: 0.6, letterSpacing: '0.08em' }}>ATTIC</span>{' '}
             <span style={{ color: 'var(--color-ak-dorado)' }}>◆</span>{' '}
-            <span className="font-black">KELLER</span>
+            <span style={{ fontWeight: 900 }}>KELLER</span>
           </h3>
           <p className="text-[var(--color-ak-rust-light)]">Bogotá, Colombia</p>
           <p className="mt-3 text-[var(--color-ak-cal)]/70 leading-relaxed">

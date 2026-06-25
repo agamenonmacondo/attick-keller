@@ -79,19 +79,19 @@ const statusConfig: Record<string, {
 function buildHtml(data: EmailData, status: string): string {
   const config = statusConfig[status] || statusConfig.pending
   const specialRequestsBlock = data.specialRequests
-    ? '<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:#EFEBE9;border-radius:12px;overflow:hidden;">'
+    ? '<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:#F2EBE1;border-radius:12px;overflow:hidden;">'
       + '<tr><td style="padding:16px 24px;">'
-      + '<p style="color:#8D6E63;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px 0;">Peticiones Especiales</p>'
-      + '<p style="color:#3E2723;font-size:15px;margin:0;">' + data.specialRequests + '</p>'
+      + '<p style="color:#9BA8B7;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px 0;">Peticiones Especiales</p>'
+      + '<p style="color:#0D1015;font-size:15px;margin:0;">' + data.specialRequests + '</p>'
       + '</td></tr></table>'
     : ''
   const ctaBlock = config.ctaUrl
     ? '<div style="text-align:center;margin-top:32px;">'
-      + '<a href="' + config.ctaUrl + '" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">' + config.ctaText + '</a>'
+      + '<a href="' + config.ctaUrl + '" style="display:inline-block;background:#8C4434;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">' + config.ctaText + '</a>'
       + '</div>'
     : ''
 
-  return '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F5EDE0;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#3E2723;padding:32px 40px;text-align:center;">\n        <h1 style="color:#C9A94E;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;text-align:center;background:' + config.statusBgColor + ';">\n        <h2 style="color:' + config.statusTextColor + ';font-size:20px;margin:0;">' + config.statusTitle + '</h2>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#3E2723;font-size:16px;margin:0 0 24px 0;">Hola ' + data.customerName + ',</p>\n        <p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">' + config.statusMessage + '</p>\n        <table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">\n          <tr><td style="padding:20px 24px;">\n            <table width="100%" cellpadding="0" cellspacing="0">\n              <tr>\n                <td style="color:#8D6E63;font-size:12px;text-transform:uppercase;letter-spacing:1px;padding-bottom:4px;">Fecha</td>\n                <td style="color:#8D6E63;font-size:12px;text-transform:uppercase;letter-spacing:1px;padding-bottom:4px;">Hora</td>\n              </tr>\n              <tr>\n                <td style="color:#3E2723;font-size:18px;font-weight:bold;padding-bottom:12px;">' + data.date + '</td>\n                <td style="color:#3E2723;font-size:18px;font-weight:bold;padding-bottom:12px;">' + data.timeStart + ' - ' + data.timeEnd + '</td>\n              </tr>\n              <tr>\n                <td style="color:#8D6E63;font-size:12px;text-transform:uppercase;letter-spacing:1px;padding-bottom:4px;">Personas</td>\n                <td style="color:#8D6E63;font-size:12px;text-transform:uppercase;letter-spacing:1px;padding-bottom:4px;">Zona</td>\n              </tr>\n              <tr>\n                <td style="color:#3E2723;font-size:18px;font-weight:bold;">' + data.partySize + '</td>\n                <td style="color:#3E2723;font-size:18px;font-weight:bold;">' + data.zoneName + '</td>\n              </tr>\n            </table>\n          </td></tr>\n        </table>\n        ' + specialRequestsBlock + '\n        ' + ctaBlock + '\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#3E2723;text-align:center;">\n        <p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#8D6E63;font-size:12px;margin:0 0 4px 0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; &#x1F4F7; @attic_keller</p>\n        <p style="color:#5D4037;font-size:11px;margin:12px 0 0 0;">Este correo fue enviado automaticamente. No respondas a este mensaje.</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
+  return '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F4ECE4;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#0D1015;padding:32px 40px;text-align:center;">\n        <h1 style="color:#FCCC04;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#2D3748;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;text-align:center;background:' + config.statusBgColor + ';">\n        <h2 style="color:' + config.statusTextColor + ';font-size:20px;margin:0;">' + config.statusTitle + '</h2>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#0D1015;font-size:16px;margin:0 0 24px 0;">Hola ' + data.customerName + ',</p>\n        <p style="color:#0D1015;font-size:15px;margin:0 0 24px 0;">' + config.statusMessage + '</p>\n        <table width="100%" cellpadding="0" cellspacing="0" style="background:#F2EBE1;border-radius:12px;overflow:hidden;">\n          <tr><td style="padding:20px 24px;">\n            <table width="100%" cellpadding="0" cellspacing="0">\n              <tr>\n                <td style="color:#9BA8B7;font-size:12px;text-transform:uppercase;letter-spacing:1px;padding-bottom:4px;">Fecha</td>\n                <td style="color:#9BA8B7;font-size:12px;text-transform:uppercase;letter-spacing:1px;padding-bottom:4px;">Hora</td>\n              </tr>\n              <tr>\n                <td style="color:#0D1015;font-size:18px;font-weight:bold;padding-bottom:12px;">' + data.date + '</td>\n                <td style="color:#0D1015;font-size:18px;font-weight:bold;padding-bottom:12px;">' + data.timeStart + ' - ' + data.timeEnd + '</td>\n              </tr>\n              <tr>\n                <td style="color:#9BA8B7;font-size:12px;text-transform:uppercase;letter-spacing:1px;padding-bottom:4px;">Personas</td>\n                <td style="color:#9BA8B7;font-size:12px;text-transform:uppercase;letter-spacing:1px;padding-bottom:4px;">Zona</td>\n              </tr>\n              <tr>\n                <td style="color:#0D1015;font-size:18px;font-weight:bold;">' + data.partySize + '</td>\n                <td style="color:#0D1015;font-size:18px;font-weight:bold;">' + data.zoneName + '</td>\n              </tr>\n            </table>\n          </td></tr>\n        </table>\n        ' + specialRequestsBlock + '\n        ' + ctaBlock + '\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#0D1015;text-align:center;">\n        <p style="color:#2D3748;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#9BA8B7;font-size:12px;margin:0 0 4px 0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; &#x1F4F7; @attic_keller</p>\n        <p style="color:#3C4C5C;font-size:11px;margin:12px 0 0 0;">Este correo fue enviado automaticamente. No respondas a este mensaje.</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
 }
 
 const statusSubjects: Record<string, string> = {
@@ -148,7 +148,7 @@ export async function sendWelcomeEmail(to: string, name: string): Promise<{ succ
   const apiKey = RESEND_API_KEY()
   if (!apiKey) return { success: false, error: 'No API key' }
 
-  const html = '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F5EDE0;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#3E2723;padding:32px 40px;text-align:center;">\n        <h1 style="color:#C9A94E;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;text-align:center;background:#E8F5E9;">\n        <h2 style="color:#2E7D32;font-size:20px;margin:0;">Cuenta creada exitosamente</h2>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#3E2723;font-size:16px;margin:0 0 16px 0;">Hola ' + name + ',</p>\n        <p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Tu cuenta ha sido creada exitosamente. Ya puedes hacer reservas en Attick &amp; Keller.</p>\n        <div style="text-align:center;">\n          <a href="' + BASE_URL + '/reservar" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Hacer una Reserva</a>\n        </div>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#3E2723;text-align:center;">\n        <p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
+  const html = '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F4ECE4;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#0D1015;padding:32px 40px;text-align:center;">\n        <h1 style="color:#FCCC04;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#2D3748;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;text-align:center;background:#E8F5E9;">\n        <h2 style="color:#2E7D32;font-size:20px;margin:0;">Cuenta creada exitosamente</h2>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#0D1015;font-size:16px;margin:0 0 16px 0;">Hola ' + name + ',</p>\n        <p style="color:#0D1015;font-size:15px;margin:0 0 24px 0;">Tu cuenta ha sido creada exitosamente. Ya puedes hacer reservas en Attick &amp; Keller.</p>\n        <div style="text-align:center;">\n          <a href="' + BASE_URL + '/reservar" style="display:inline-block;background:#8C4434;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Hacer una Reserva</a>\n        </div>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#0D1015;text-align:center;">\n        <p style="color:#2D3748;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#9BA8B7;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -166,7 +166,7 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
   const apiKey = RESEND_API_KEY()
   if (!apiKey) return { success: false, error: 'No API key' }
 
-  const html = '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F5EDE0;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#3E2723;padding:32px 40px;text-align:center;">\n        <h1 style="color:#C9A94E;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;text-align:center;background:#FFF8E1;">\n        <h2 style="color:#F57F17;font-size:20px;margin:0;">Recuperar contrasena</h2>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Recibimos una solicitud para restablecer tu contrasena. Haz clic en el boton para crear una nueva:</p>\n        <div style="text-align:center;">\n          <a href="' + resetUrl + '" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Restablecer Contrasena</a>\n        </div>\n        <p style="color:#8D6E63;font-size:13px;margin:24px 0 0 0;text-align:center;">Este enlace expira en 24 horas. Si no solicitaste este cambio, ignora este correo.</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#3E2723;text-align:center;">\n        <p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
+  const html = '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F4ECE4;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#0D1015;padding:32px 40px;text-align:center;">\n        <h1 style="color:#FCCC04;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#2D3748;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;text-align:center;background:#FFF8E1;">\n        <h2 style="color:#F57F17;font-size:20px;margin:0;">Recuperar contrasena</h2>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#0D1015;font-size:15px;margin:0 0 24px 0;">Recibimos una solicitud para restablecer tu contrasena. Haz clic en el boton para crear una nueva:</p>\n        <div style="text-align:center;">\n          <a href="' + resetUrl + '" style="display:inline-block;background:#8C4434;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Restablecer Contrasena</a>\n        </div>\n        <p style="color:#9BA8B7;font-size:13px;margin:24px 0 0 0;text-align:center;">Este enlace expira en 24 horas. Si no solicitaste este cambio, ignora este correo.</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#0D1015;text-align:center;">\n        <p style="color:#2D3748;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#9BA8B7;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -184,7 +184,7 @@ export async function sendFirstLoginEmail(to: string, name: string): Promise<{ s
   const apiKey = RESEND_API_KEY()
   if (!apiKey) return { success: false, error: 'No API key' }
 
-  const html = '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F5EDE0;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#3E2723;padding:32px 40px;text-align:center;">\n        <h1 style="color:#C9A94E;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;text-align:center;background:#E8F5E9;">\n        <h2 style="color:#2E7D32;font-size:20px;margin:0;">Bienvenido de vuelta</h2>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#3E2723;font-size:16px;margin:0 0 16px 0;">Hola ' + name + ',</p>\n        <p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Que alegría tenerte de vuelta en Attick &amp; Keller. Tu cuenta esta lista y puedes hacer reservas cuando quieras.</p>\n        <div style="text-align:center;">\n          <a href="' + BASE_URL + '/reservar" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Hacer una Reserva</a>\n        </div>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#3E2723;text-align:center;">\n        <p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
+  const html = '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F4ECE4;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#0D1015;padding:32px 40px;text-align:center;">\n        <h1 style="color:#FCCC04;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#2D3748;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;text-align:center;background:#E8F5E9;">\n        <h2 style="color:#2E7D32;font-size:20px;margin:0;">Bienvenido de vuelta</h2>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#0D1015;font-size:16px;margin:0 0 16px 0;">Hola ' + name + ',</p>\n        <p style="color:#0D1015;font-size:15px;margin:0 0 24px 0;">Que alegría tenerte de vuelta en Attick &amp; Keller. Tu cuenta esta lista y puedes hacer reservas cuando quieras.</p>\n        <div style="text-align:center;">\n          <a href="' + BASE_URL + '/reservar" style="display:inline-block;background:#8C4434;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Hacer una Reserva</a>\n        </div>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#0D1015;text-align:center;">\n        <p style="color:#2D3748;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#9BA8B7;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -217,11 +217,11 @@ function buildCampaignHtml(params: CampaignEmailData): string {
   const tagChips = params.tagNames.length === 0 ? '' :
     '<div style="margin-top:16px;text-align:center;">' +
     params.tagNames.map(function(t) {
-      return '<span style="display:inline-block;background:#EFEBE9;color:#6B2737;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;margin:0 4px;">' + t + '</span>'
+      return '<span style="display:inline-block;background:#F2EBE1;color:#8C4434;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;margin:0 4px;">' + t + '</span>'
     }).join('') +
     '</div>'
 
-  return '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F5EDE0;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#3E2723;padding:32px 40px;text-align:center;">\n        <h1 style="color:#C9A94E;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#3E2723;font-size:16px;margin:0 0 24px 0;">Hola ' + params.customerName + ',</p>\n        <div style="color:#3E2723;font-size:15px;line-height:1.6;">\n' + params.bodyHtml + '\n        </div>\n' + tagChips + '\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#3E2723;text-align:center;">\n        <p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#8D6E63;font-size:12px;margin:0 0 4px 0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; &#x1F4F7; @attic_keller</p>\n        <p style="color:#5D4037;font-size:11px;margin:12px 0 0 0;">Este correo es parte de nuestra comunicacion de fidelizacion.</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
+  return '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body style="margin:0;padding:0;background:#F4ECE4;font-family:&apos;DM Sans&apos;,Arial,sans-serif;">\n  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">\n    <tr>\n      <td style="background:#0D1015;padding:32px 40px;text-align:center;">\n        <h1 style="color:#FCCC04;font-family:&apos;Playfair Display&apos;,Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>\n        <p style="color:#2D3748;font-size:14px;margin:8px 0 0 0;">Bogota</p>\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:32px 40px;">\n        <p style="color:#0D1015;font-size:16px;margin:0 0 24px 0;">Hola ' + params.customerName + ',</p>\n        <div style="color:#0D1015;font-size:15px;line-height:1.6;">\n' + params.bodyHtml + '\n        </div>\n' + tagChips + '\n      </td>\n    </tr>\n    <tr>\n      <td style="padding:24px 40px;background:#0D1015;text-align:center;">\n        <p style="color:#2D3748;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>\n        <p style="color:#9BA8B7;font-size:12px;margin:0 0 4px 0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; &#x1F4F7; @attic_keller</p>\n        <p style="color:#3C4C5C;font-size:11px;margin:12px 0 0 0;">Este correo es parte de nuestra comunicacion de fidelizacion.</p>\n      </td>\n    </tr>\n  </table>\n</body></html>'
 }
 
 export async function sendCampaignEmail(params: CampaignEmailData): Promise<{ success: boolean; error?: string }> {
@@ -376,46 +376,46 @@ interface ShiftScheduleData {
 function buildShiftScheduleHtml(data: ShiftScheduleData, employeeName: string): string {
   const rows = data.assignments.map(a =>
     '<tr>' +
-      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;font-weight:600;">' + a.dayName + ' ' + a.date + '</td>' +
-      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;">' + a.shiftCode + '</td>' +
-      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;">' + a.shiftName + '</td>' +
-      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;">' + a.entrada + ' - ' + a.salida + '</td>' +
-      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#8D6E63;font-size:14px;text-align:right;">' + a.hours + 'h</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #F2EBE1;color:#0D1015;font-size:14px;font-weight:600;">' + a.dayName + ' ' + a.date + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #F2EBE1;color:#0D1015;font-size:14px;">' + a.shiftCode + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #F2EBE1;color:#0D1015;font-size:14px;">' + a.shiftName + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #F2EBE1;color:#0D1015;font-size:14px;">' + a.entrada + ' - ' + a.salida + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #F2EBE1;color:#9BA8B7;font-size:14px;text-align:right;">' + a.hours + 'h</td>' +
     '</tr>'
   ).join('')
 
-  const accentColor: Record<string, string> = { cocina: '#6B2737', barra: '#D4A843', servicio: '#22c55e' }
-  const color = accentColor[data.area] || '#6B2737'
+  const accentColor: Record<string, string> = { cocina: '#8C4434', barra: '#D4A843', servicio: '#22c55e' }
+  const color = accentColor[data.area] || '#8C4434'
 
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
-    '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+    '<body style="margin:0;padding:0;background:#F4ECE4;font-family:\'DM Sans\',Arial,sans-serif;">' +
     '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
-    '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
-    '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
-    '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+    '<tr><td style="background:#0D1015;padding:32px 40px;text-align:center;">' +
+    '<h1 style="color:#FCCC04;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+    '<p style="color:#2D3748;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;text-align:center;background:#E8F5E9;">' +
     '<h2 style="color:#2E7D32;font-size:20px;margin:0;">Tu cronograma esta listo</h2>' +
     '</td></tr>' +
     '<tr><td style="padding:32px 40px;">' +
-    '<p style="color:#3E2723;font-size:16px;margin:0 0 8px 0;">Hola ' + employeeName + ',</p>' +
-    '<p style="color:#3E2723;font-size:15px;margin:0 0 20px 0;">Se ha publicado el cronograma de <strong style="color:' + color + ';">' + data.areaLabel + '</strong> para la semana <strong>' + data.weekStr + '</strong>.</p>' +
-    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
-    '<tr style="background:#3E2723;">' +
-    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Dia</td>' +
-    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Codigo</td>' +
-    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Turno</td>' +
-    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Horario</td>' +
-    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;text-align:right;">Horas</td>' +
+    '<p style="color:#0D1015;font-size:16px;margin:0 0 8px 0;">Hola ' + employeeName + ',</p>' +
+    '<p style="color:#0D1015;font-size:15px;margin:0 0 20px 0;">Se ha publicado el cronograma de <strong style="color:' + color + ';">' + data.areaLabel + '</strong> para la semana <strong>' + data.weekStr + '</strong>.</p>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F2EBE1;border-radius:12px;overflow:hidden;">' +
+    '<tr style="background:#0D1015;">' +
+    '<td style="padding:10px 16px;color:#FCCC04;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Dia</td>' +
+    '<td style="padding:10px 16px;color:#FCCC04;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Codigo</td>' +
+    '<td style="padding:10px 16px;color:#FCCC04;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Turno</td>' +
+    '<td style="padding:10px 16px;color:#FCCC04;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Horario</td>' +
+    '<td style="padding:10px 16px;color:#FCCC04;font-size:11px;text-transform:uppercase;letter-spacing:1px;text-align:right;">Horas</td>' +
     '</tr>' + rows +
     '</table>' +
     '<div style="text-align:center;margin-top:24px;">' +
-    '<a href="' + BASE_URL + '/admin" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
+    '<a href="' + BASE_URL + '/admin" style="display:inline-block;background:#8C4434;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
     '</div>' +
     '</td></tr>' +
-    '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
-    '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
-    '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+    '<tr><td style="padding:24px 40px;background:#0D1015;text-align:center;">' +
+    '<p style="color:#2D3748;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+    '<p style="color:#9BA8B7;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
     '</td></tr>' +
     '</table></body></html>'
 }
@@ -435,32 +435,32 @@ interface ShiftReminderData {
 
 function buildShiftReminderHtml(data: ShiftReminderData): string {
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
-    '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+    '<body style="margin:0;padding:0;background:#F4ECE4;font-family:\'DM Sans\',Arial,sans-serif;">' +
     '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
-    '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
-    '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
-    '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+    '<tr><td style="background:#0D1015;padding:32px 40px;text-align:center;">' +
+    '<h1 style="color:#FCCC04;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+    '<p style="color:#2D3748;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;text-align:center;background:#FFF8E1;">' +
     '<h2 style="color:#F57F17;font-size:20px;margin:0;">Tu turno empieza pronto</h2>' +
     '</td></tr>' +
     '<tr><td style="padding:32px 40px;">' +
-    '<p style="color:#3E2723;font-size:16px;margin:0 0 20px 0;">Hola ' + data.employeeName + ',</p>' +
-    '<p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Tu turno de <strong>' + data.areaLabel + '</strong> esta programado para hoy:</p>' +
-    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
+    '<p style="color:#0D1015;font-size:16px;margin:0 0 20px 0;">Hola ' + data.employeeName + ',</p>' +
+    '<p style="color:#0D1015;font-size:15px;margin:0 0 24px 0;">Tu turno de <strong>' + data.areaLabel + '</strong> esta programado para hoy:</p>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F2EBE1;border-radius:12px;overflow:hidden;">' +
     '<tr><td style="padding:16px 24px;">' +
-    '<p style="color:#3E2723;font-size:20px;font-weight:bold;margin:0 0 8px 0;">' + data.shiftCode + ' — ' + data.shiftName + '</p>' +
-    '<p style="color:#8D6E63;font-size:15px;margin:0 0 4px 0;">' + data.dayName + ' ' + data.date + ' · ' + data.areaLabel + '</p>' +
-    '<p style="color:#3E2723;font-size:16px;margin:0;">' + data.entrada + ' — ' + data.salida + ' <span style="color:#8D6E63;font-size:14px;">(' + data.hours + 'h)</span></p>' +
+    '<p style="color:#0D1015;font-size:20px;font-weight:bold;margin:0 0 8px 0;">' + data.shiftCode + ' — ' + data.shiftName + '</p>' +
+    '<p style="color:#9BA8B7;font-size:15px;margin:0 0 4px 0;">' + data.dayName + ' ' + data.date + ' · ' + data.areaLabel + '</p>' +
+    '<p style="color:#0D1015;font-size:16px;margin:0;">' + data.entrada + ' — ' + data.salida + ' <span style="color:#9BA8B7;font-size:14px;">(' + data.hours + 'h)</span></p>' +
     '</td></tr>' +
     '</table>' +
     '<div style="text-align:center;margin-top:24px;">' +
-    '<a href="' + BASE_URL + '/admin" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Entrada</a>' +
+    '<a href="' + BASE_URL + '/admin" style="display:inline-block;background:#8C4434;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Entrada</a>' +
     '</div>' +
     '</td></tr>' +
-    '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
-    '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
-    '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+    '<tr><td style="padding:24px 40px;background:#0D1015;text-align:center;">' +
+    '<p style="color:#2D3748;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+    '<p style="color:#9BA8B7;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
     '</td></tr>' +
     '</table></body></html>'
 }
@@ -478,32 +478,32 @@ interface ShiftCheckoutData {
 
 function buildShiftCheckoutHtml(data: ShiftCheckoutData): string {
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
-    '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+    '<body style="margin:0;padding:0;background:#F4ECE4;font-family:\'DM Sans\',Arial,sans-serif;">' +
     '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
-    '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
-    '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
-    '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+    '<tr><td style="background:#0D1015;padding:32px 40px;text-align:center;">' +
+    '<h1 style="color:#FCCC04;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+    '<p style="color:#2D3748;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;text-align:center;background:#FFF3E0;">' +
     '<h2 style="color:#E65100;font-size:20px;margin:0;">No olvides registrar tu salida</h2>' +
     '</td></tr>' +
     '<tr><td style="padding:32px 40px;">' +
-    '<p style="color:#3E2723;font-size:16px;margin:0 0 20px 0;">Hola ' + data.employeeName + ',</p>' +
-    '<p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Tu turno de <strong>' + data.areaLabel + '</strong> debio terminar a las <strong>' + data.salida + '</strong>. Registra tu salida:</p>' +
-    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
+    '<p style="color:#0D1015;font-size:16px;margin:0 0 20px 0;">Hola ' + data.employeeName + ',</p>' +
+    '<p style="color:#0D1015;font-size:15px;margin:0 0 24px 0;">Tu turno de <strong>' + data.areaLabel + '</strong> debio terminar a las <strong>' + data.salida + '</strong>. Registra tu salida:</p>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F2EBE1;border-radius:12px;overflow:hidden;">' +
     '<tr><td style="padding:16px 24px;">' +
-    '<p style="color:#3E2723;font-size:20px;font-weight:bold;margin:0 0 8px 0;">' + data.shiftCode + ' — ' + data.shiftName + '</p>' +
-    '<p style="color:#8D6E63;font-size:15px;margin:0 0 4px 0;">' + data.dayName + ' ' + data.date + ' · ' + data.areaLabel + '</p>' +
-    '<p style="color:#3E2723;font-size:16px;margin:0;">Hora de salida programada: <strong>' + data.salida + '</strong></p>' +
+    '<p style="color:#0D1015;font-size:20px;font-weight:bold;margin:0 0 8px 0;">' + data.shiftCode + ' — ' + data.shiftName + '</p>' +
+    '<p style="color:#9BA8B7;font-size:15px;margin:0 0 4px 0;">' + data.dayName + ' ' + data.date + ' · ' + data.areaLabel + '</p>' +
+    '<p style="color:#0D1015;font-size:16px;margin:0;">Hora de salida programada: <strong>' + data.salida + '</strong></p>' +
     '</td></tr>' +
     '</table>' +
     '<div style="text-align:center;margin-top:24px;">' +
-    '<a href="' + BASE_URL + '/admin" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Salida</a>' +
+    '<a href="' + BASE_URL + '/admin" style="display:inline-block;background:#8C4434;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Registrar Salida</a>' +
     '</div>' +
     '</td></tr>' +
-    '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
-    '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
-    '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+    '<tr><td style="padding:24px 40px;background:#0D1015;text-align:center;">' +
+    '<p style="color:#2D3748;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+    '<p style="color:#9BA8B7;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
     '</td></tr>' +
     '</table></body></html>'
 }
@@ -515,46 +515,46 @@ function buildShiftCheckoutHtml(data: ShiftCheckoutData): string {
 function buildShiftChangeHtml(data: ShiftScheduleData, employeeName: string): string {
   const rows = data.assignments.map(a =>
     '<tr>' +
-      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;font-weight:600;">' + a.dayName + ' ' + a.date + '</td>' +
-      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;">' + a.shiftCode + '</td>' +
-      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;">' + a.shiftName + '</td>' +
-      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#3E2723;font-size:14px;">' + a.entrada + ' - ' + a.salida + '</td>' +
-      '<td style="padding:10px 16px;border-bottom:1px solid #EFEBE9;color:#8D6E63;font-size:14px;text-align:right;">' + a.hours + 'h</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #F2EBE1;color:#0D1015;font-size:14px;font-weight:600;">' + a.dayName + ' ' + a.date + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #F2EBE1;color:#0D1015;font-size:14px;">' + a.shiftCode + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #F2EBE1;color:#0D1015;font-size:14px;">' + a.shiftName + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #F2EBE1;color:#0D1015;font-size:14px;">' + a.entrada + ' - ' + a.salida + '</td>' +
+      '<td style="padding:10px 16px;border-bottom:1px solid #F2EBE1;color:#9BA8B7;font-size:14px;text-align:right;">' + a.hours + 'h</td>' +
     '</tr>'
   ).join('')
 
-  const accentColor: Record<string, string> = { cocina: '#6B2737', barra: '#D4A843', servicio: '#22c55e' }
-  const color = accentColor[data.area] || '#6B2737'
+  const accentColor: Record<string, string> = { cocina: '#8C4434', barra: '#D4A843', servicio: '#22c55e' }
+  const color = accentColor[data.area] || '#8C4434'
 
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
-    '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+    '<body style="margin:0;padding:0;background:#F4ECE4;font-family:\'DM Sans\',Arial,sans-serif;">' +
     '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
-    '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
-    '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
-    '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+    '<tr><td style="background:#0D1015;padding:32px 40px;text-align:center;">' +
+    '<h1 style="color:#FCCC04;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+    '<p style="color:#2D3748;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;text-align:center;background:#FFF8E1;">' +
     '<h2 style="color:#F57F17;font-size:20px;margin:0;">Actualizacion de tu cronograma</h2>' +
     '</td></tr>' +
     '<tr><td style="padding:32px 40px;">' +
-    '<p style="color:#3E2723;font-size:16px;margin:0 0 8px 0;">Hola ' + employeeName + ',</p>' +
-    '<p style="color:#3E2723;font-size:15px;margin:0 0 20px 0;">Se ha actualizado el cronograma de <strong style="color:' + color + ';">' + data.areaLabel + '</strong> para la semana <strong>' + data.weekStr + '</strong>.</p>' +
-    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
-    '<tr style="background:#3E2723;">' +
-    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Dia</td>' +
-    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Codigo</td>' +
-    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Turno</td>' +
-    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Horario</td>' +
-    '<td style="padding:10px 16px;color:#C9A94E;font-size:11px;text-transform:uppercase;letter-spacing:1px;text-align:right;">Horas</td>' +
+    '<p style="color:#0D1015;font-size:16px;margin:0 0 8px 0;">Hola ' + employeeName + ',</p>' +
+    '<p style="color:#0D1015;font-size:15px;margin:0 0 20px 0;">Se ha actualizado el cronograma de <strong style="color:' + color + ';">' + data.areaLabel + '</strong> para la semana <strong>' + data.weekStr + '</strong>.</p>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F2EBE1;border-radius:12px;overflow:hidden;">' +
+    '<tr style="background:#0D1015;">' +
+    '<td style="padding:10px 16px;color:#FCCC04;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Dia</td>' +
+    '<td style="padding:10px 16px;color:#FCCC04;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Codigo</td>' +
+    '<td style="padding:10px 16px;color:#FCCC04;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Turno</td>' +
+    '<td style="padding:10px 16px;color:#FCCC04;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Horario</td>' +
+    '<td style="padding:10px 16px;color:#FCCC04;font-size:11px;text-transform:uppercase;letter-spacing:1px;text-align:right;">Horas</td>' +
     '</tr>' + rows +
     '</table>' +
     '<div style="text-align:center;margin-top:24px;">' +
-    '<a href="' + BASE_URL + '/admin" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
+    '<a href="' + BASE_URL + '/admin" style="display:inline-block;background:#8C4434;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Mi Turno</a>' +
     '</div>' +
     '</td></tr>' +
-    '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
-    '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
-    '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+    '<tr><td style="padding:24px 40px;background:#0D1015;text-align:center;">' +
+    '<p style="color:#2D3748;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+    '<p style="color:#9BA8B7;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
     '</td></tr>' +
     '</table></body></html>'
 }
@@ -1088,30 +1088,30 @@ export async function sendShiftCheckinEmail(
 
   const html =
     '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
-    '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+    '<body style="margin:0;padding:0;background:#F4ECE4;font-family:\'DM Sans\',Arial,sans-serif;">' +
     '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
-    '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
-    '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
-    '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+    '<tr><td style="background:#0D1015;padding:32px 40px;text-align:center;">' +
+    '<h1 style="color:#FCCC04;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+    '<p style="color:#2D3748;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;text-align:center;background:#E8F5E9;">' +
     '<h2 style="color:#2E7D32;font-size:20px;margin:0;">Entrada registrada</h2>' +
     '</td></tr>' +
     '<tr><td style="padding:32px 40px;">' +
-    '<p style="color:#3E2723;font-size:16px;margin:0 0 8px 0;">Hola ' + employeeName + ',</p>' +
-    '<p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Tu entrada ha sido registrada correctamente.</p>' +
-    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
+    '<p style="color:#0D1015;font-size:16px;margin:0 0 8px 0;">Hola ' + employeeName + ',</p>' +
+    '<p style="color:#0D1015;font-size:15px;margin:0 0 24px 0;">Tu entrada ha sido registrada correctamente.</p>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F2EBE1;border-radius:12px;overflow:hidden;">' +
     '<tr><td style="padding:16px 24px;">' +
-    '<p style="color:#3E2723;font-size:20px;font-weight:bold;margin:0 0 8px 0;">' + shiftType.code + ' \u2014 ' + shiftType.name + '</p>' +
-    '<p style="color:#8D6E63;font-size:15px;margin:0 0 4px 0;">' + dateStr + ' \u00b7 ' + areaLabel + '</p>' +
-    '<p style="color:#3E2723;font-size:16px;margin:0;">Entrada: <strong>' + shiftType.entrada + '</strong> \u2014 Salida: <strong>' + shiftType.salida + '</strong> <span style="color:#8D6E63;font-size:14px;">(' + hours + 'h)</span></p>' +
+    '<p style="color:#0D1015;font-size:20px;font-weight:bold;margin:0 0 8px 0;">' + shiftType.code + ' \u2014 ' + shiftType.name + '</p>' +
+    '<p style="color:#9BA8B7;font-size:15px;margin:0 0 4px 0;">' + dateStr + ' \u00b7 ' + areaLabel + '</p>' +
+    '<p style="color:#0D1015;font-size:16px;margin:0;">Entrada: <strong>' + shiftType.entrada + '</strong> \u2014 Salida: <strong>' + shiftType.salida + '</strong> <span style="color:#9BA8B7;font-size:14px;">(' + hours + 'h)</span></p>' +
     '<p style="color:#2E7D32;font-size:14px;margin:8px 0 0 0;font-weight:600;">Check-in registrado a las ' + timeStr + '</p>' +
     '</td></tr>' +
     '</table>' +
     '</td></tr>' +
-    '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
-    '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
-    '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+    '<tr><td style="padding:24px 40px;background:#0D1015;text-align:center;">' +
+    '<p style="color:#2D3748;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+    '<p style="color:#9BA8B7;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
     '</td></tr>' +
     '</table></body></html>'
 
@@ -1197,30 +1197,30 @@ export async function sendShiftCheckoutEmail(
 
   const html =
     '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
-    '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+    '<body style="margin:0;padding:0;background:#F4ECE4;font-family:\'DM Sans\',Arial,sans-serif;">' +
     '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
-    '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
-    '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
-    '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+    '<tr><td style="background:#0D1015;padding:32px 40px;text-align:center;">' +
+    '<h1 style="color:#FCCC04;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+    '<p style="color:#2D3748;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
     '</td></tr>' +
     '<tr><td style="padding:24px 40px;text-align:center;background:#E3F2FD;">' +
     '<h2 style="color:#1565C0;font-size:20px;margin:0;">Salida registrada</h2>' +
     '</td></tr>' +
     '<tr><td style="padding:32px 40px;">' +
-    '<p style="color:#3E2723;font-size:16px;margin:0 0 8px 0;">Hola ' + employeeName + ',</p>' +
-    '<p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Tu salida ha sido registrada correctamente.</p>' +
-    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
+    '<p style="color:#0D1015;font-size:16px;margin:0 0 8px 0;">Hola ' + employeeName + ',</p>' +
+    '<p style="color:#0D1015;font-size:15px;margin:0 0 24px 0;">Tu salida ha sido registrada correctamente.</p>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F2EBE1;border-radius:12px;overflow:hidden;">' +
     '<tr><td style="padding:16px 24px;">' +
-    '<p style="color:#3E2723;font-size:20px;font-weight:bold;margin:0 0 8px 0;">' + shiftType.code + ' \u2014 ' + shiftType.name + '</p>' +
-    '<p style="color:#8D6E63;font-size:15px;margin:0 0 4px 0;">' + dateStr + ' \u00b7 ' + areaLabel + '</p>' +
-    '<p style="color:#3E2723;font-size:16px;margin:0;">Entrada: <strong>' + shiftType.entrada + '</strong> \u2014 Salida: <strong>' + shiftType.salida + '</strong> <span style="color:#8D6E63;font-size:14px;">(' + hours + 'h)</span></p>' +
+    '<p style="color:#0D1015;font-size:20px;font-weight:bold;margin:0 0 8px 0;">' + shiftType.code + ' \u2014 ' + shiftType.name + '</p>' +
+    '<p style="color:#9BA8B7;font-size:15px;margin:0 0 4px 0;">' + dateStr + ' \u00b7 ' + areaLabel + '</p>' +
+    '<p style="color:#0D1015;font-size:16px;margin:0;">Entrada: <strong>' + shiftType.entrada + '</strong> \u2014 Salida: <strong>' + shiftType.salida + '</strong> <span style="color:#9BA8B7;font-size:14px;">(' + hours + 'h)</span></p>' +
     '<p style="color:#1565C0;font-size:14px;margin:8px 0 0 0;font-weight:600;">Salida registrada a las ' + timeStr + '</p>' +
     '</td></tr>' +
     '</table>' +
     '</td></tr>' +
-    '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
-    '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
-    '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+    '<tr><td style="padding:24px 40px;background:#0D1015;text-align:center;">' +
+    '<p style="color:#2D3748;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+    '<p style="color:#9BA8B7;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
     '</td></tr>' +
     '</table></body></html>'
 
@@ -1291,37 +1291,37 @@ export async function sendShiftNovedadEmail(
 
     const recipientName = authUser?.user_metadata?.name || authUser?.email?.split('@')[0] || 'Administrador'
 
-    const descHtml = description ? '<p style="color:#3E2723;font-size:14px;margin:8px 0 0 0;font-style:italic;">"' + description + '"</p>' : ''
+    const descHtml = description ? '<p style="color:#0D1015;font-size:14px;margin:8px 0 0 0;font-style:italic;">"' + description + '"</p>' : ''
 
     const html =
       '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
-      '<body style="margin:0;padding:0;background:#F5EDE0;font-family:\'DM Sans\',Arial,sans-serif;">' +
+      '<body style="margin:0;padding:0;background:#F4ECE4;font-family:\'DM Sans\',Arial,sans-serif;">' +
       '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;margin-top:40px;margin-bottom:40px;">' +
-      '<tr><td style="background:#3E2723;padding:32px 40px;text-align:center;">' +
-      '<h1 style="color:#C9A94E;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
-      '<p style="color:#D7CCC8;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
+      '<tr><td style="background:#0D1015;padding:32px 40px;text-align:center;">' +
+      '<h1 style="color:#FCCC04;font-family:\'Playfair Display\',Georgia,serif;font-size:28px;margin:0;">Attick &amp; Keller</h1>' +
+      '<p style="color:#2D3748;font-size:14px;margin:8px 0 0 0;">Bogota</p>' +
       '</td></tr>' +
       '<tr><td style="padding:24px 40px;text-align:center;background:#FFF3E0;">' +
       '<h2 style="color:#E65100;font-size:20px;margin:0;">Novedad reportada</h2>' +
       '</td></tr>' +
       '<tr><td style="padding:32px 40px;">' +
-      '<p style="color:#3E2723;font-size:16px;margin:0 0 8px 0;">Hola ' + recipientName + ',</p>' +
-      '<p style="color:#3E2723;font-size:15px;margin:0 0 24px 0;">Se ha reportado una novedad:</p>' +
-      '<table width="100%" cellpadding="0" cellspacing="0" style="background:#EFEBE9;border-radius:12px;overflow:hidden;">' +
+      '<p style="color:#0D1015;font-size:16px;margin:0 0 8px 0;">Hola ' + recipientName + ',</p>' +
+      '<p style="color:#0D1015;font-size:15px;margin:0 0 24px 0;">Se ha reportado una novedad:</p>' +
+      '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F2EBE1;border-radius:12px;overflow:hidden;">' +
       '<tr><td style="padding:16px 24px;">' +
-      '<p style="color:#3E2723;font-size:18px;font-weight:bold;margin:0 0 8px 0;">' + employeeName + '</p>' +
+      '<p style="color:#0D1015;font-size:18px;font-weight:bold;margin:0 0 8px 0;">' + employeeName + '</p>' +
       '<p style="color:#E65100;font-size:15px;font-weight:600;margin:0 0 4px 0;">' + novedadLabel + '</p>' +
-      '<p style="color:#8D6E63;font-size:15px;margin:0 0 4px 0;">' + dateFormatted + '</p>' +
+      '<p style="color:#9BA8B7;font-size:15px;margin:0 0 4px 0;">' + dateFormatted + '</p>' +
       descHtml +
       '</td></tr>' +
       '</table>' +
       '<div style="text-align:center;margin-top:24px;">' +
-      '<a href="' + BASE_URL + '/admin/turnos" style="display:inline-block;background:#6B2737;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Cronograma</a>' +
+      '<a href="' + BASE_URL + '/admin/turnos" style="display:inline-block;background:#8C4434;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Ver Cronograma</a>' +
       '</div>' +
       '</td></tr>' +
-      '<tr><td style="padding:24px 40px;background:#3E2723;text-align:center;">' +
-      '<p style="color:#D7CCC8;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
-      '<p style="color:#8D6E63;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
+      '<tr><td style="padding:24px 40px;background:#0D1015;text-align:center;">' +
+      '<p style="color:#2D3748;font-size:13px;margin:0 0 8px 0;">Carrera 13 #75-51, Bogota</p>' +
+      '<p style="color:#9BA8B7;font-size:12px;margin:0;">&#x260E; +57 310 577 2708 &nbsp;|&nbsp; @attic_keller</p>' +
       '</td></tr>' +
       '</table></body></html>'
 

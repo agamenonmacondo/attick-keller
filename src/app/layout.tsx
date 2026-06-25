@@ -1,13 +1,12 @@
 import type { Metadata } from "next"
-import { Playfair_Display, DM_Sans, Caveat } from "next/font/google"
+import { Inter, Caveat } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/lib/auth/auth-provider"
 import { ThemeProvider } from "@/lib/ThemeProvider"
 
 export const dynamic = 'force-dynamic'
 
-const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
-const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm" })
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", weight: ["400", "500", "600", "700", "800", "900"] })
 const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat" })
 
 export const metadata: Metadata = {
@@ -17,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${playfair.variable} ${dmSans.variable} ${caveat.variable}`} suppressHydrationWarning>
+    <html lang="es" className={`${inter.variable} ${caveat.variable}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

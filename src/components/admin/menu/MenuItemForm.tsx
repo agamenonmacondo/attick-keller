@@ -214,7 +214,7 @@ export function MenuItemForm({ item, categories, onClose, onSaved }: Props) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-default)] shrink-0">
-          <h2 className="font-[Playfair_Display] text-lg font-semibold text-[var(--text-primary)]">
+          <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]">
             {isEditing ? 'Editar plato' : 'Nuevo plato'}
           </h2>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--border-default)]/50">

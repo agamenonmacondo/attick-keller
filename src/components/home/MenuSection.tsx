@@ -155,7 +155,7 @@ export default function MenuSection() {
             viewport={viewOptions}
             transition={{ duration: 0.6, delay: 0.1, ease: EASE_OUT }}
             className="text-4xl md:text-5xl font-bold tracking-tight leading-none mb-4"
-            style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
+            style={{ fontFamily: "var(--font-display)", color: 'var(--color-ak-madera)' }}
           >
             Nuestro Menú
           </motion.h2>
@@ -202,7 +202,7 @@ export default function MenuSection() {
               viewport={viewOptions}
               transition={{ duration: 0.6, delay: 0.1, ease: EASE_OUT }}
               className="text-4xl md:text-5xl font-bold tracking-tight leading-none mb-3"
-              style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
+              style={{ fontFamily: "var(--font-display)", color: 'var(--color-ak-madera)' }}
             >
               Nuestra Carta
             </motion.h2>
@@ -338,7 +338,7 @@ export default function MenuSection() {
                   <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, transparent, rgba(201,169,78,0.5), transparent)' }} />
                   <h3
                     className="text-2xl md:text-3xl font-bold text-center"
-                    style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
+                    style={{ fontFamily: "var(--font-display)", color: 'var(--color-ak-madera)' }}
                   >
                     {activeCategory.name}
                   </h3>
@@ -373,7 +373,7 @@ export default function MenuSection() {
                         <div className="flex items-baseline justify-between gap-4">
                           <h4
                             className="text-lg md:text-xl font-semibold transition-colors duration-200 ease-out"
-                            style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
+                            style={{ fontFamily: "var(--font-display)", color: 'var(--color-ak-madera)' }}
                           >
                             {item.name}
                           </h4>
@@ -452,7 +452,7 @@ export default function MenuSection() {
               <div className="px-5 pt-2 pb-4 flex items-center justify-between">
                 <h3
                   className="text-lg font-bold"
-                  style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-madera)' }}
+                  style={{ fontFamily: "var(--font-display)", color: 'var(--color-ak-madera)' }}
                 >
                   Categorías
                 </h3>

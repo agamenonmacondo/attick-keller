@@ -143,7 +143,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
           <div className="flex items-center gap-3">
             <span
               className="text-xl font-bold"
-              style={{ fontFamily: "'Playfair Display', serif", color: 'var(--color-ak-cal)' }}
+              style={{ fontFamily: "var(--font-display)", color: 'var(--color-ak-cal)' }}
             >
               Attick &amp; Keller
             </span>

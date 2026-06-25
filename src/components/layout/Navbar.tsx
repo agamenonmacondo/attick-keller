@@ -177,7 +177,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                   onClick={onClose}
                   className="block w-full text-center px-5 py-3.5 rounded-xl font-semibold transition-all duration-200 active:scale-[0.97]"
                   style={{
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Inter', sans-serif",
                     backgroundColor: 'var(--color-ak-borgona)',
                     color: 'white',
                     minHeight: '48px',
@@ -191,7 +191,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                   onClick={onClose}
                   className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl transition-all duration-200 active:scale-[0.98]"
                   style={{
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Inter', sans-serif",
                     color: 'var(--color-ak-cal)',
                     minHeight: '48px',
                     backgroundColor: 'rgba(255,255,255,0.06)',

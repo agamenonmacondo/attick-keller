@@ -104,16 +104,16 @@ export default function MenuSection() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 space-y-4">
             <div className="h-6 w-24 mx-auto rounded animate-pulse" style={{ backgroundColor: 'rgba(201,169,78,0.2)' }} />
-            <div className="h-10 w-48 mx-auto rounded animate-pulse" style={{ backgroundColor: 'rgba(62,39,35,0.1)' }} />
+            <div className="h-10 w-48 mx-auto rounded animate-pulse" style={{ backgroundColor: 'rgba(13,16,21,0.1)' }} />
           </div>
           <div className="flex gap-3 overflow-hidden mb-10">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-12 w-32 rounded-full animate-pulse shrink-0" style={{ backgroundColor: 'rgba(62,39,35,0.06)' }} />
+              <div key={i} className="h-12 w-32 rounded-full animate-pulse shrink-0" style={{ backgroundColor: 'rgba(13,16,21,0.06)' }} />
             ))}
           </div>
           <div className="space-y-4">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-16 rounded-lg animate-pulse" style={{ backgroundColor: 'rgba(62,39,35,0.04)' }} />
+              <div key={i} className="h-16 rounded-lg animate-pulse" style={{ backgroundColor: 'rgba(13,16,21,0.04)' }} />
             ))}
           </div>
         </div>
@@ -167,7 +167,7 @@ export default function MenuSection() {
             className="h-px w-32 mx-auto mb-6"
             style={{ background: 'linear-gradient(to right, transparent, var(--color-ak-dorado), transparent)' }}
           />
-          <p className="text-lg" style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.5)' }}>
+          <p className="text-lg" style={{ fontFamily: "'Inter', sans-serif", color: 'rgba(13,16,21,0.5)' }}>
             Estamos preparando nuestra carta. Vuelve pronto para descubrir nuestras creaciones mediterráneas.
           </p>
         </div>
@@ -228,7 +228,7 @@ export default function MenuSection() {
               onClick={() => setMobileMenuOpen(true)}
               className="w-full flex items-center justify-between gap-3 px-5 py-3.5 rounded-xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-colors duration-200"
               style={{
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 backgroundColor: 'var(--color-ak-borgona)',
                 color: 'var(--color-ak-cal)',
                 minHeight: '48px',
@@ -262,7 +262,7 @@ export default function MenuSection() {
             </button>
             <p
               className="text-xs mt-2 text-center"
-              style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.4)' }}
+              style={{ fontFamily: "'Inter', sans-serif", color: 'rgba(13,16,21,0.4)' }}
             >
               Toca para ver todas las categorías
             </p>
@@ -294,10 +294,10 @@ export default function MenuSection() {
                       'active:scale-[0.97]'
                     )}
                     style={{
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "'Inter', sans-serif",
                       color: isActive ? 'var(--color-ak-cal)' : 'var(--color-ak-madera)',
                       letterSpacing: '0.02em',
-                      borderBottom: isActive ? '2px solid transparent' : '1px solid rgba(62,39,35,0.12)',
+                      borderBottom: isActive ? '2px solid transparent' : '1px solid rgba(13,16,21,0.12)',
                     }}
                   >
                     {isActive && (
@@ -351,7 +351,7 @@ export default function MenuSection() {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.3, ease: EASE_OUT }}
                     className="text-center py-8 text-base italic"
-                    style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.4)' }}
+                    style={{ fontFamily: "'Inter', sans-serif", color: 'rgba(13,16,21,0.4)' }}
                   >
                     No hay platos disponibles en esta categoría por el momento.
                   </motion.p>
@@ -368,7 +368,7 @@ export default function MenuSection() {
                           ease: EASE_OUT,
                         }}
                         className="group dish-row py-4 md:py-5 cursor-default will-change-transform"
-                        style={{ borderBottom: '1px solid rgba(62,39,35,0.08)' }}
+                        style={{ borderBottom: '1px solid rgba(13,16,21,0.08)' }}
                       >
                         <div className="flex items-baseline justify-between gap-4">
                           <h4
@@ -379,11 +379,11 @@ export default function MenuSection() {
                           </h4>
                           <div
                             className="flex-1 border-b border-dashed mx-2 hidden md:block transition-opacity duration-200 ease-out opacity-50 group-hover:opacity-80"
-                            style={{ borderColor: 'rgba(62,39,35,0.25)', transform: 'translateY(-4px)' }}
+                            style={{ borderColor: 'rgba(13,16,21,0.25)', transform: 'translateY(-4px)' }}
                           />
                           <span
                             className="dish-price font-bold text-base md:text-lg whitespace-nowrap shrink-0 transition-colors duration-200 ease-out"
-                            style={{ fontFamily: "'DM Sans', sans-serif", color: 'var(--color-ak-borgona)' }}
+                            style={{ fontFamily: "'Inter', sans-serif", color: 'var(--color-ak-borgona)' }}
                           >
                             {formatPrice(item.price)}
                           </span>
@@ -391,7 +391,7 @@ export default function MenuSection() {
                         {item.description && (
                           <p
                             className="text-sm mt-1.5 leading-relaxed max-w-2xl transition-colors duration-200 ease-out"
-                            style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(62,39,35,0.55)' }}
+                            style={{ fontFamily: "'Inter', sans-serif", color: 'rgba(13,16,21,0.55)' }}
                           >
                             {item.description}
                           </p>
@@ -418,7 +418,7 @@ export default function MenuSection() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               className="fixed inset-0 z-40 md:hidden"
-              style={{ backgroundColor: 'rgba(62,39,35,0.55)' }}
+              style={{ backgroundColor: 'rgba(13,16,21,0.55)' }}
               onClick={() => setMobileMenuOpen(false)}
               aria-hidden="true"
             />
@@ -444,7 +444,7 @@ export default function MenuSection() {
               <div className="flex justify-center pt-3 pb-1">
                 <div
                   className="w-10 h-1 rounded-full"
-                  style={{ backgroundColor: 'rgba(62,39,35,0.15)' }}
+                  style={{ backgroundColor: 'rgba(13,16,21,0.15)' }}
                 />
               </div>
 
@@ -460,7 +460,7 @@ export default function MenuSection() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-10 h-10 flex items-center justify-center rounded-full cursor-pointer focus:outline-none focus-visible:ring-2"
                   style={{
-                    backgroundColor: 'rgba(62,39,35,0.06)',
+                    backgroundColor: 'rgba(13,16,21,0.06)',
                     color: 'var(--color-ak-madera)',
                   }}
                   aria-label="Cerrar categorías"
@@ -491,11 +491,11 @@ export default function MenuSection() {
                           'focus:outline-none focus-visible:ring-2 transition-transform duration-100 active:scale-[0.97]'
                         )}
                         style={{
-                          fontFamily: "'DM Sans', sans-serif",
+                          fontFamily: "'Inter', sans-serif",
                           minHeight: '48px',
-                          backgroundColor: isActive ? 'var(--color-ak-borgona)' : 'rgba(62,39,35,0.05)',
+                          backgroundColor: isActive ? 'var(--color-ak-borgona)' : 'rgba(13,16,21,0.05)',
                           color: isActive ? 'var(--color-ak-cal)' : 'var(--color-ak-madera)',
-                          border: isActive ? '2px solid var(--color-ak-borgona)' : '2px solid rgba(62,39,35,0.08)',
+                          border: isActive ? '2px solid var(--color-ak-borgona)' : '2px solid rgba(13,16,21,0.08)',
                           letterSpacing: '0.01em',
                         }}
                         role="option"

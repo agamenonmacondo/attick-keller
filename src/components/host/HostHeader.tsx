@@ -19,17 +19,21 @@ export function HostHeader() {
   const timeStr = time.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <header className="sticky top-0 z-20 bg-[var(--color-ak-madera)]/95 dark:bg-[var(--color-ak-madera-light)]/30 backdrop-blur-sm border-b border-[var(--border-default)]">
+    <header className="sticky top-0 z-20 bg-white/95 dark:bg-[var(--color-ak-night)]/95 backdrop-blur-sm border-b border-[var(--border-default)]">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold text-[var(--color-ak-madera)] dark:text-[var(--color-ak-cal)]">ATTIC & KELLER</h1>
-          <span className="text-[10px] text-[var(--color-ak-cal)] dark:text-[var(--text-primary)] bg-[var(--color-ak-madera)]/60 dark:bg-[var(--color-ak-madera-light)]/20 px-2 py-0.5 rounded font-medium uppercase tracking-wider">
+          <h1 className="font-[family-name:var(--font-heading)] text-xl">
+            <span style={{ fontWeight: 700, opacity: 0.6, letterSpacing: '0.08em', color: 'var(--color-ak-rust)' }}>ATTIC</span>{' '}
+            <span style={{ color: 'var(--color-ak-dorado)' }}>◆</span>{' '}
+            <span style={{ fontWeight: 900, color: 'var(--color-ak-rust)' }}>KELLER</span>
+          </h1>
+          <span className="text-[10px] text-[var(--color-ak-cal)] bg-[var(--color-ak-rust)] px-2 py-0.5 rounded font-medium uppercase tracking-wider">
             Host
           </span>
           {isAdmin && (
             <Link
               href="/admin"
-              className="inline-flex items-center gap-1 text-xs text-[var(--color-ak-cal)]/70 dark:text-[var(--text-muted)] hover:text-[var(--color-ak-cal)] dark:hover:text-[var(--text-primary)] transition-colors duration-200"
+              className="inline-flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--color-ak-rust)] transition-colors duration-200"
             >
               <Gear size={16} className="sm:hidden" />
               <span className="hidden sm:inline">Panel</span>
@@ -39,19 +43,19 @@ export function HostHeader() {
         <div className="flex items-center gap-3">
           <button
             onClick={toggleTheme}
-            className="p-1.5 rounded-lg text-[var(--color-ak-cal)]/80 dark:text-[var(--text-secondary)] hover:text-[var(--color-ak-dorado)] dark:hover:text-[var(--color-ak-dorado)] hover:bg-[var(--bg-hover)] transition-all duration-200 active:scale-[0.95]"
+            className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--color-ak-dorado)] hover:bg-[var(--bg-hover)] transition-all duration-200 active:scale-[0.95]"
             aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
             title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
           >
             {theme === 'dark' ? <Sun size={18} weight="duotone" /> : <Moon size={18} weight="duotone" />}
           </button>
-          <div className="flex items-center gap-2 text-[var(--color-ak-cal)]/80 dark:text-[var(--text-secondary)]">
+          <div className="flex items-center gap-2 text-[var(--text-secondary)]">
             <Clock size={16} />
             <span className="font-mono text-sm font-bold text-[var(--color-ak-dorado)]">{timeStr}</span>
           </div>
           <button
             onClick={signOut}
-            className="flex items-center gap-1.5 text-sm text-[var(--color-ak-cal)]/80 dark:text-[var(--text-secondary)] hover:text-[var(--color-ak-cal)] dark:hover:text-[var(--text-primary)] transition-colors active:scale-[0.97]"
+            className="flex items-center gap-1.5 text-sm text-[var(--text-secondary)] hover:text-[var(--color-ak-rust)] transition-colors active:scale-[0.97]"
             style={{ transition: 'transform 160ms ease-out, color 200ms ease-out' }}
           >
             <SignOut size={16} />

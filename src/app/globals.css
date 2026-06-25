@@ -25,14 +25,15 @@
 
 @theme inline {
   /* Colors — Dark Premium Grunge (DESIGN.md v2.0, Flyer palette) */
-  --color-ak-madera: #0D1015;
-  --color-ak-borgona: #8C4434;
-  --color-ak-cal: #F4ECE4;
+  /* In light mode, some tokens swap to logo palette colors */
+  --color-ak-madera: #34495E;
+  --color-ak-borgona: #9A4335;
+  --color-ak-cal: #34495E;
   --color-ak-oliva: #5C7A4D;
   --color-ak-ambar: #E48C04;
   --color-ak-dorado: #FCCC04;
-  --color-ak-carbon: #0D1015;
-  --color-ak-ladrillo: #A0522D;
+  --color-ak-carbon: #34495E;
+  --color-ak-ladrillo: #A65D4A;
 
   /* Flyer palette tokens (from pixel analysis of 4 production flyers) */
   --color-ak-rust: #8C4434;
@@ -80,28 +81,29 @@
 
 :root {
   color-scheme: light;
-  --bg-primary: #F4ECE4;
-  --bg-card: #F7F3E9;
+  /* Light theme — Logo palette: white bg, slate-blue text, rust accents */
+  --bg-primary: #F7F3E9;
+  --bg-card: #FFFFFF;
   --bg-input: #F2EBE1;
-  --bg-hover: rgba(244,236,228,0.08);
-  --text-primary: #0D1015;
-  --text-secondary: #3C4C5C;
-  --text-muted: #546275;
-  --border-default: rgba(160,82,45,0.2);
-  --border-light: rgba(60,76,92,0.15);
-  --shadow-sm: 0 2px 12px rgba(0,0,0,0.4);
-  --shadow-md: 0 8px 32px rgba(0,0,0,0.6);
-  --accent-primary: #8C4434;
-  --color-accent: #8C4434;
+  --bg-hover: rgba(44,67,91,0.06);
+  --text-primary: #34495E;
+  --text-secondary: #4A6274;
+  --text-muted: #6B7B8D;
+  --border-default: rgba(154,67,53,0.2);
+  --border-light: rgba(44,67,91,0.12);
+  --shadow-sm: 0 2px 12px rgba(52,73,94,0.08);
+  --shadow-md: 0 8px 32px rgba(52,73,94,0.16);
+  --accent-primary: #9A4335;
+  --color-accent: #9A4335;
   --color-success: #5C7A4D;
   --color-warning: #E48C04;
-  --color-danger: #B24D42;
+  --color-danger: #B2473D;
   --color-info: #2C435B;
-  --badge-bg: rgba(140,68,52,0.15);
-  --chart-grid: #3C4C5C;
+  --badge-bg: rgba(154,67,53,0.12);
+  --chart-grid: #4A6274;
   --chart-text: #6B7B8D;
-  --chart-tooltip-bg: #F7F3E9;
-  --chart-tooltip-border: rgba(160,82,45,0.2);
+  --chart-tooltip-bg: #FFFFFF;
+  --chart-tooltip-border: rgba(154,67,53,0.2);
 }
 
 .dark {
@@ -136,6 +138,7 @@
   --color-ak-ambar: #E48C04;
   --color-ak-ladrillo: #A0522D;
   --color-ak-cal: #F4ECE4;
+  --color-ak-carbon: #0D1015;
 
   /* ===========================================
    * TAILWIND GENERIC COLOR OVERRIDES IN DARK MODE
@@ -144,7 +147,7 @@
    * =========================================== */
 
   /* White backgrounds → dark card bg */
-  .dark .bg-white { background-color: var(--bg-card) !important; }
+  .dark .bg-white { background-color: var(--bg-card); }
 
   /* Gray text → cool neutral text */
   .dark .text-gray-100 { color: var(--text-primary); }

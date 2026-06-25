@@ -1,13 +1,14 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 import Link from 'next/link'
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0D1015] dark:bg-[#0D1015] transition-colors duration-300">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0D1015]">
       {/* Gradient overlay — subtle rust wash */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-[#8C4434]/10 to-transparent dark:via-[#8C4434]/10" />
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-[#8C4434]/10 to-transparent" />
 
       {/* Floating orbs — always dark-themed for drama */}
       <div className="absolute inset-0 overflow-hidden">
@@ -23,19 +24,26 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="font-[family-name:var(--font-accent)] text-[#E48C04] text-2xl md:text-3xl mb-4"
+          className="font-[family-name:var(--font-accent)] text-[#E48C04] text-2xl md:text-3xl mb-6"
         >
           Bogotá
         </motion.p>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.4 }}
-          className="font-[family-name:var(--font-heading)] text-6xl md:text-8xl text-[#F4ECE4] mb-6"
+          className="mb-6"
         >
-          ATTIC &amp; KELLER
-        </motion.h1>
+          <Image
+            src="/logo_hero.webp"
+            alt="Attic & Keller"
+            width={600}
+            height={160}
+            priority
+            className="w-[280px] md:w-[420px] lg:w-[520px] h-auto mx-auto"
+          />
+        </motion.div>
 
         <motion.p
           initial={{ opacity: 0, y: 20 }}

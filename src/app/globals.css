@@ -104,6 +104,16 @@
   --chart-text: #6B7B8D;
   --chart-tooltip-bg: #FFFFFF;
   --chart-tooltip-border: rgba(154,67,53,0.2);
+
+  /* A&K tokens — light mode overrides (logo palette) */
+  --color-ak-night: #F7F3E9;
+  --color-ak-night-card: #FFFFFF;
+  --color-ak-night-input: #F2EBE1;
+  --color-ak-night-border: rgba(154,67,53,0.2);
+  --color-ak-night-text: #34495E;
+  --color-ak-night-muted: #6B7B8D;
+  --color-ak-rust: #9A4335;
+  --color-ak-rust-light: #A65D4A;
 }
 
 .dark {
@@ -139,6 +149,14 @@
   --color-ak-ladrillo: #A0522D;
   --color-ak-cal: #F4ECE4;
   --color-ak-carbon: #0D1015;
+  --color-ak-night: #0D1015;
+  --color-ak-night-card: #161B22;
+  --color-ak-night-input: #1E2733;
+  --color-ak-night-border: #2D3748;
+  --color-ak-night-text: #F4ECE4;
+  --color-ak-night-muted: #9BA8B7;
+  --color-ak-rust: #8C4434;
+  --color-ak-rust-light: #A05840;
 
   /* ===========================================
    * TAILWIND GENERIC COLOR OVERRIDES IN DARK MODE

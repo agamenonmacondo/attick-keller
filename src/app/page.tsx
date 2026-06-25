@@ -6,7 +6,7 @@ import Footer from '@/components/layout/Footer'
 
 export default function Home() {
   return (
-    <div className="dark">
+    <div>
       <Navbar />
       <HeroSection />
       <MenuSection />

@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
 import { useAuth } from '@/lib/auth/auth-provider'
+import { useTheme } from '@/lib/ThemeProvider'
 import { List, X } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const
 
 export default function Navbar() {
+  const { theme } = useTheme()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -31,7 +33,7 @@ export default function Navbar() {
     <nav className={cn(
       'fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-4 md:px-6 py-4',
       scrolled
-        ? 'bg-[var(--color-ak-night)]/95 shadow-lg backdrop-blur-sm'
+        ? 'bg-[var(--bg-primary)]/95 shadow-lg backdrop-blur-sm'
         : 'bg-transparent'
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -45,7 +47,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3 md:gap-4">
           <Link
             href="/reservar"
-            className="hidden sm:inline-flex px-5 py-2 bg-[var(--color-ak-rust)] text-white rounded-full font-semibold hover:bg-[var(--color-ak-rust-light)] active:scale-[0.97] transition-all duration-200 text-sm"
+            className="hidden sm:inline-flex px-5 py-2 bg-[var(--color-ak-rust)] text-white dark:text-white rounded-full font-semibold hover:bg-[var(--color-ak-rust-light)] active:scale-[0.97] transition-all duration-200 text-sm"
           >
             Reservar Mesa
           </Link>
@@ -54,7 +56,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center text-white hover:text-[var(--color-ak-dorado)] transition-colors rounded-lg"
+            className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center text-[var(--text-primary)] hover:text-[var(--color-ak-dorado)] transition-colors rounded-lg"
             aria-label="Abrir menú"
           >
             <List size={28} />
@@ -63,7 +65,7 @@ export default function Navbar() {
       </div>
 
       <AnimatePresence>
-        {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} />}
+        {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} theme={theme} />}
       </AnimatePresence>
     </nav>
   )
@@ -100,7 +102,7 @@ function ProfileLink({ className }: { className?: string }) {
   )
 }
 
-function MobileMenu({ onClose }: { onClose: () => void }) {
+function MobileMenu({ onClose, theme }: { onClose: () => void; theme: string }) {
   const { user, isAdmin } = useAuth()
 
   const links = [
@@ -120,7 +122,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
         className="fixed inset-0 z-[60] md:hidden backdrop-blur-md"
-        style={{ backgroundColor: 'rgba(13,16,21,0.7)' }}
+        style={{ backgroundColor: theme === 'dark' ? 'rgba(13,16,21,0.7)' : 'rgba(247,243,233,0.7)' }}
         onClick={onClose}
         aria-hidden="true"
       />

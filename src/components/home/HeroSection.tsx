@@ -62,7 +62,7 @@ export default function HeroSection() {
         >
           <Link
             href="/reservar"
-            className="relative inline-block px-10 py-4 bg-[var(--color-ak-rust)] text-[var(--color-ak-cal)] rounded-lg text-lg font-semibold hover:bg-[var(--color-ak-rust-light)] active:scale-[0.97] transition-all duration-300 overflow-hidden shadow-lg shadow-black/20"
+            className="relative inline-block px-10 py-4 bg-[var(--color-ak-rust)] text-[var(--color-ak-cal)] rounded-lg text-lg font-semibold hover:bg-[var(--color-ak-rust-light)] active:scale-[0.97] transition-all duration-300 overflow-hidden shadow-lg shadow-[var(--color-ak-night)]/20"
           >
             <span className="relative z-10">Reservar Mesa</span>
             <div

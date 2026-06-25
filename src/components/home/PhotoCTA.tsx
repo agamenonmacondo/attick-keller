@@ -31,7 +31,7 @@ export default function PhotoCTA() {
               style={{ backgroundImage: `url(${photo.src})`, backgroundPosition: photo.position }}
             />
             {/* Dark gradient — intensified for legibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-ak-night)]/90 via-[var(--color-ak-night)]/55 to-[var(--color-ak-night)]/20" />
           </motion.div>
         ))}
       </div>
@@ -64,7 +64,7 @@ export default function PhotoCTA() {
           </motion.div>
           <Link
             href="/reservar"
-            className="inline-block bg-[var(--color-ak-rust)] text-[var(--color-ak-cal)] px-12 py-5 rounded-lg font-[family-name:var(--font-heading)] text-xl font-bold tracking-tight hover:bg-[var(--color-ak-rust-light)] hover:scale-[1.02] shadow-xl shadow-black/30 transition-all duration-300 active:scale-[0.97]"
+            className="inline-block bg-[var(--color-ak-rust)] text-[var(--color-ak-cal)] px-12 py-5 rounded-lg font-[family-name:var(--font-heading)] text-xl font-bold tracking-tight hover:bg-[var(--color-ak-rust-light)] hover:scale-[1.02] shadow-xl shadow-[var(--color-ak-night)]/30 transition-all duration-300 active:scale-[0.97]"
           >
             Reservar Mesa
           </Link>

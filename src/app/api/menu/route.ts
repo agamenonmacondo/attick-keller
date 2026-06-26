@@ -30,8 +30,9 @@ export async function GET() {
     return handleApiError(itemsResult.error, 'menu/items')
   }
 
-  return NextResponse.json({
-    categories: categoriesResult.data,
-    items: itemsResult.data,
-  })
+  // Strip internal fields from public response
+  const categories = (categoriesResult.data || []).map(({ sort_order, ...rest }) => rest)
+  const items = (itemsResult.data || []).map(({ sort_order, is_available, ...rest }) => rest)
+
+  return NextResponse.json({ categories, items })
 }

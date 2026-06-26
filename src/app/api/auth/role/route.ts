@@ -6,7 +6,9 @@ export async function GET() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) return NextResponse.json({ roles: [], area: null })
+  if (!user) {
+    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+  }
 
   const sb = getServiceClient()
   const { data: rolesData } = await sb

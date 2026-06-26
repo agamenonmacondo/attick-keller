@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { rateLimit, getClientIP } from '@/lib/utils/api-security'
+import { rateLimit, getClientIP, handleApiError } from '@/lib/utils/api-security'
 
 // POST /api/auth/signup - Auto-confirm user after Supabase signup
 // Security: requires userId from Supabase signUp response (proves caller just created the account)
@@ -10,22 +10,31 @@ export async function POST(request: NextRequest) {
   if (!rateLimit(`auth:signup:${ip}`, 5, 60_000)) {
     return NextResponse.json({ error: 'Demasiados intentos. Intenta de nuevo en un minuto.' }, { status: 429 })
   }
+
+  let email: string, name: string | undefined, userId: string
+  try {
+    const body = await request.json()
+    email = body.email
+    name = body.name
+    userId = body.userId
+  } catch {
+    return NextResponse.json({ error: 'Solicitud no válida' }, { status: 400 })
+  }
+
+  if (!email || !userId) {
+    return NextResponse.json({ error: 'Solicitud no válida' }, { status: 400 })
+  }
+
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { email, name, userId } = await request.json()
-
-  if (!email || !userId) {
-    return NextResponse.json({ error: 'Email y userId requeridos' }, { status: 400 })
-  }
-
   // Verify the userId exists and matches the email (proof of possession)
   const { data: userData, error: userError } = await sb.auth.admin.getUserById(userId)
 
   if (userError || !userData?.user) {
-    return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 403 })
+    return NextResponse.json({ error: 'Solicitud no válida' }, { status: 403 })
   }
 
   if (userData.user.email?.toLowerCase() !== email.toLowerCase()) {
@@ -37,7 +46,7 @@ export async function POST(request: NextRequest) {
     const { error: confirmError } = await sb.auth.admin.updateUserById(userId, { email_confirm: true })
     if (confirmError) {
       console.error('[auth] Auto-confirm failed:', confirmError.message)
-      return NextResponse.json({ error: 'Error al confirmar usuario' }, { status: 500 })
+      return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
     }
   }
 

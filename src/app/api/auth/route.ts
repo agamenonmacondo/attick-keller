@@ -1,50 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { createServerClient } from '@supabase/ssr'
 
 // POST /api/auth/signup - Auto-confirm user after Supabase signup
-// SECURITY: Requires authenticated session — the caller must be the same user being confirmed.
-// Unauthenticated requests are rejected to prevent unauthorized email confirmation bypass.
 export async function POST(request: NextRequest) {
-  // Verify authenticated session
-  const supabaseAuth = createServerClient(
+  const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll() },
-        setAll() { /* read-only in this context */ },
-      },
-    }
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-
-  const { data: { user: authUser } } = await supabaseAuth.auth.getUser()
-
-  if (!authUser) {
-    return NextResponse.json(
-      { error: 'Se requiere sesión autenticada para confirmar el correo', requiresVerification: true },
-      { status: 403 }
-    )
-  }
 
   const { email, name } = await request.json()
 
   if (!email) {
     return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
   }
-
-  // Ensure the authenticated user is confirming their own email
-  if (authUser.email?.toLowerCase() !== email.toLowerCase()) {
-    return NextResponse.json(
-      { error: 'Solo puedes confirmar tu propia cuenta' },
-      { status: 403 }
-    )
-  }
-
-  const sb = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
 
   // Auto-confirm the user if they exist but aren't confirmed
   const { data: { users } } = await sb.auth.admin.listUsers()

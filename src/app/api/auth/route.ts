@@ -2,51 +2,68 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 // POST /api/auth/signup - Auto-confirm user after Supabase signup
+// Security: requires userId from Supabase signUp response (proves caller just created the account)
 export async function POST(request: NextRequest) {
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { email, name } = await request.json()
+  const { email, name, userId } = await request.json()
 
-  if (!email) {
-    return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
+  if (!email || !userId) {
+    return NextResponse.json({ error: 'Email y userId requeridos' }, { status: 400 })
   }
 
-  // Auto-confirm the user if they exist but aren't confirmed
-  const { data: { users } } = await sb.auth.admin.listUsers()
+  // Verify the userId exists and matches the email (proof of possession)
+  const { data: userData, error: userError } = await sb.auth.admin.getUserById(userId)
 
-  const existingUser = users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
+  if (userError || !userData?.user) {
+    return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 403 })
+  }
 
-  if (existingUser) {
-    // Auto-confirm if not confirmed
-    if (!existingUser.email_confirmed_at) {
-      await sb.auth.admin.updateUserById(existingUser.id, { email_confirm: true })
+  if (userData.user.email?.toLowerCase() !== email.toLowerCase()) {
+    return NextResponse.json({ error: 'Email no coincide con el usuario' }, { status: 403 })
+  }
+
+  // Auto-confirm if not confirmed
+  if (!userData.user.email_confirmed_at) {
+    const { error: confirmError } = await sb.auth.admin.updateUserById(userId, { email_confirm: true })
+    if (confirmError) {
+      console.error('[auth] Auto-confirm failed:', confirmError.message)
+      return NextResponse.json({ error: 'Error al confirmar usuario' }, { status: 500 })
     }
+  }
 
-    // Create customer record if missing
-    const { data: existingCustomer } = await sb
-      .from('customers')
-      .select('id')
-      .eq('auth_user_id', existingUser.id)
-      .single()
+  // Create customer record if missing
+  const { data: existingCustomer } = await sb
+    .from('customers')
+    .select('id')
+    .eq('auth_user_id', userId)
+    .single()
 
-    if (!existingCustomer) {
-      const phoneValue = existingUser.user_metadata?.phone || existingUser.phone || ''
-      await sb.from('customers').insert({
-        auth_user_id: existingUser.id,
-        email: existingUser.email,
-        full_name: name || existingUser.user_metadata?.full_name || existingUser.email?.split('@')[0],
-        phone: phoneValue || `pending_${existingUser.id}`,
-        restaurant_id: 'a0000000-0000-0000-0000-000000000001',
-      })
+  if (!existingCustomer) {
+    const phoneValue = userData.user.user_metadata?.phone || userData.user.phone || ''
+    const { error: insertError } = await sb.from('customers').insert({
+      auth_user_id: userId,
+      email: userData.user.email,
+      full_name: name || userData.user.user_metadata?.full_name || userData.user.email?.split('@')[0],
+      phone: phoneValue || `pending_${userId}`,
+      restaurant_id: 'a0000000-0000-0000-0000-000000000001',
+    })
+    if (insertError) {
+      console.error('[auth] Customer insert failed:', insertError.message)
     }
   }
 
   // Send welcome email
-  const { sendWelcomeEmail } = await import('@/lib/email/send')
-  await sendWelcomeEmail(email, name || 'Cliente')
+  try {
+    const { sendWelcomeEmail } = await import('@/lib/email/send')
+    await sendWelcomeEmail(email, name || 'Cliente')
+  } catch (err) {
+    console.error('[auth] Welcome email failed:', err instanceof Error ? err.message : String(err))
+    // Don't fail the whole request if email fails
+  }
 
   return NextResponse.json({ success: true })
 }

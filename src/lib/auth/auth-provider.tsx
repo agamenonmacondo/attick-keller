@@ -115,11 +115,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (data.session) return { error: null }
 
+    // Auto-confirm using userId from signUp response (proves we just created this account)
+    const userId = data.user?.id
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name: fullName }),
+        body: JSON.stringify({ email, name: fullName, userId }),
       })
       if (res.ok) {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
@@ -129,7 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res2 = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name: fullName }),
+        body: JSON.stringify({ email, name: fullName, userId }),
       })
       if (res2.ok) {
         const { error: signInError2 } = await supabase.auth.signInWithPassword({ email, password })

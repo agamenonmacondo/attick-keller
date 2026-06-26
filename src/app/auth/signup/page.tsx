@@ -41,13 +41,7 @@ export default function SignupPage() {
       setError(err)
       setLoading(false)
     } else {
-      // Send welcome email (fire and forget)
-      fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name }),
-      }).catch(() => {})
-      // Role-based redirect
+      // Role-based redirect (auth-provider already sent the auto-confirm request)
       try {
         const res = await fetch('/api/auth/role')
         if (res.ok) {

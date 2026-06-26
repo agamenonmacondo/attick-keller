@@ -73,10 +73,8 @@ export async function GET(request: NextRequest) {
       vip,
     })
   } catch (err: unknown) {
-    const errorDetails = err instanceof Error
-      ? { message: err.message, stack: err.stack, name: err.name }
-      : { message: String(err), type: typeof err }
-    console.error('[segment-counts] FATAL GET error:', JSON.stringify(errorDetails))
-    return NextResponse.json({ error: errorDetails.message }, { status: 500 })
+    // Log full error server-side for debugging, but return generic message to client
+    console.error('[segment-counts] FATAL GET error:', err instanceof Error ? err.stack : String(err))
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }

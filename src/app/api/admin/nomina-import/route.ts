@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServiceClient, getAdminUser } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 // ── Nómina Import API ──────────────────────────────────
 // Accepts imports via X-Import-Token header (for scripts) or admin session cookie
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
               .eq('id', existing.id)
             if (error) {
               console.error(`Error updating staff ${emp.cedula}:`, error)
-              results.push({ cedula: emp.cedula, status: 'error', error: error.message })
+              results.push({ cedula: emp.cedula, status: 'error' })
             } else {
               results.push({ cedula: emp.cedula, id: existing.id, status: 'updated' })
             }
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
               .single()
             if (error) {
               console.error(`Error inserting staff ${emp.cedula}:`, error)
-              results.push({ cedula: emp.cedula, status: 'error', error: error.message })
+              results.push({ cedula: emp.cedula, status: 'error' })
             } else {
               results.push({ cedula: emp.cedula, id: inserted.id, status: 'inserted' })
             }
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (err) {
     console.error('Nomina import error:', err)
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    return handleApiError(err, 'nomina-import')
   }
 }
 
@@ -179,7 +180,7 @@ export async function GET(request: NextRequest) {
       .from(table)
       .select('*', { count: 'exact', head: true })
     if (error) {
-      status[table] = { exists: false, error: error.message }
+      status[table] = { exists: false }
     } else {
       status[table] = { exists: true, count }
     }

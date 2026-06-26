@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAdminUser, getServiceClient as getAdminServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 import { getZoneLetter } from '@/lib/utils/zone-letter'
-import { rateLimit, getClientIP } from '@/lib/utils/api-security'
+import { rateLimit, getClientIP, handleApiError } from '@/lib/utils/api-security'
 
 const RESTAURANT_ID_LOCAL = 'a0000000-0000-0000-0000-000000000001'
 
@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
 
       if (!customerId) {
         console.error('Customer insert error:', customerError)
-        return NextResponse.json({ error: customerError.message || 'Error al crear cliente' }, { status: 500 })
+        return NextResponse.json({ error: 'Error al crear cliente' }, { status: 500 })
       }
     } else {
       customerId = newCustomer?.id ?? null
@@ -299,7 +299,7 @@ export async function POST(request: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return handleApiError(error, 'reservations')
 
   sendStatusEmail(sb, reservation.id, 'confirmed').catch(e => console.error('Email error:', e))
   return NextResponse.json({ reservation })
@@ -427,7 +427,7 @@ export async function PUT(request: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return handleApiError(error, 'reservations')
 
   // Send update email (re-use confirmed status to notify of changes)
   sendStatusEmail(sb, reservation_id, reservation.status).catch(e => console.error('Email error:', e))
@@ -479,7 +479,7 @@ export async function PATCH(request: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return handleApiError(error, 'reservations')
 
     sendStatusEmail(sb, reservation_id, 'cancelled').catch(e => console.error('Email error:', e))
     return NextResponse.json({ reservation: data })
@@ -563,7 +563,7 @@ export async function PATCH(request: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return handleApiError(error, 'reservations')
 
   sendStatusEmail(sb, reservation_id, status).catch(e => console.error('Email error:', e))
   return NextResponse.json({ reservation: data })
@@ -583,7 +583,7 @@ export async function GET(request: NextRequest) {
       .select('*, customers(email, full_name)')
       .eq('restaurant_id', RESTAURANT_ID)
       .order('date', { ascending: false })
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return handleApiError(error, 'reservations')
     return NextResponse.json({ reservations: data, isAdmin: true })
   }
 
@@ -604,6 +604,6 @@ export async function GET(request: NextRequest) {
     .in('status', ['pending', 'confirmed', 'completed'])
     .order('date', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return handleApiError(error, 'reservations')
   return NextResponse.json({ reservations: data, isAdmin: false })
 }

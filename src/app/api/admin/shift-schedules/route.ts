@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStaffOrLeaderUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 // Force dynamic — never cache shift data
 export const dynamic = 'force-dynamic'
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
     .maybeSingle()
 
   if (schedError) {
-    return NextResponse.json({ error: schedError.message }, { status: 500 })
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 
   if (!schedule) {
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
     .eq('schedule_id', schedule.id)
 
   if (assignError) {
-    return NextResponse.json({ error: assignError.message }, { status: 500 })
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 
   // Incluir personal del area + personal con secondary_areas que incluya el area

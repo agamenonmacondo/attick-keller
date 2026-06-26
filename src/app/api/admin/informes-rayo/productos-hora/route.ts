@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -33,6 +34,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (err: any) {
     console.error('[ProductoHourly] Error:', err)
-    return NextResponse.json({ error: err.message || 'Error fetching product hourly data' }, { status: 500 })
+    return handleApiError(err, 'productos-hora')
   }
 }

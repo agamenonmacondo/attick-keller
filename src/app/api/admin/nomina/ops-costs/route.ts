@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -246,6 +247,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (e: any) {
     console.error('Error in nomina ops-costs:', e)
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    return handleApiError(e, 'nomina ops-costs')
   }
 }

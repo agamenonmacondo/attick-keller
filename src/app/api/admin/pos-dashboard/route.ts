@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { unstable_cache } from 'next/cache'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 // ── Helpers ──────────────────────────────────────────────
 function qparam(request: NextRequest, key: string): string | null {
@@ -689,6 +690,6 @@ export async function GET(request: NextRequest) {
     const data = await getCachedData(zoneParam, categoryParam, from, to, monthsList)
     return NextResponse.json(data)
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Error cargando dashboard' }, { status: 500 })
+    return handleApiError(err, 'pos-dashboard')
   }
 }

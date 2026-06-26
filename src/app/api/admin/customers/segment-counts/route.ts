@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     if (countError) {
       console.error('[segment-counts] Error counting customers:', countError.message)
-      return NextResponse.json({ error: countError.message }, { status: 500 })
+      return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
     }
 
     // Fetch all total_visits from customer_stats in batches

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 // GET /api/admin/inventory/combinations — list all combinations
 export async function GET(request: NextRequest) {
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
       .eq('restaurant_id', RESTAURANT_ID)
       .in('id', table_ids)
 
-    if (tablesError) return NextResponse.json({ error: tablesError.message }, { status: 500 })
+    if (tablesError) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
     if (!tables || tables.length !== table_ids.length) {
       const foundIds = new Set((tables || []).map((t: Record<string, unknown>) => t.id))
@@ -103,7 +104,7 @@ export async function PATCH(request: NextRequest) {
         .eq('restaurant_id', RESTAURANT_ID)
         .in('id', table_ids)
 
-      if (tablesError) return NextResponse.json({ error: tablesError.message }, { status: 500 })
+      if (tablesError) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
       if (!tables || tables.length !== table_ids.length) {
         const foundIds = new Set((tables || []).map((t: Record<string, unknown>) => t.id))
@@ -172,7 +173,7 @@ export async function DELETE(request: NextRequest) {
       .eq('id', id)
       .eq('restaurant_id', RESTAURANT_ID)
 
-    if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })
+    if (deleteError) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
     // Reset can_combine and combine_group on affected tables
     const tableIds = (combo as Record<string, unknown>).table_ids as string[]

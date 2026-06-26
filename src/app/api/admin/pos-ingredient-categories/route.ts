@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     .eq('classification', '1')
     .order('priority', { ascending: true })
 
-  if (catError) return NextResponse.json({ error: catError.message }, { status: 500 })
+  if (catError) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   // Step 2: Count ingredients per category
   const catIds = (categories || []).map((c: { pos_category_id: string }) => c.pos_category_id)

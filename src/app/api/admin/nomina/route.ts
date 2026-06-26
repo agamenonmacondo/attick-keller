@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 // ── Helpers ──────────────────────────────────────────
 function qparam(request: NextRequest, key: string): string | null {
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
     if (sede) periodoQuery = periodoQuery.eq('sede', sede)
 
     const { data: periodos, error: periodosError } = await periodoQuery
-    if (periodosError) return NextResponse.json({ error: periodosError.message }, { status: 500 })
+    if (periodosError) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
     if (!periodos || periodos.length === 0) {
       return NextResponse.json({ periodos: [], detalle: [], resumen: null })
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
         .eq('sede', sede)
         .order('neto_a_pagar', { ascending: false })
 
-      if (detalleError) return NextResponse.json({ error: detalleError.message }, { status: 500 })
+      if (detalleError) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
       // Flatten staff name into each row
       const flatDetalle = (detalle || []).map((d: any) => ({
@@ -140,7 +141,7 @@ export async function GET(request: NextRequest) {
       sb.from('pos_nomina_daily').select('*').eq('staff_id', staffId).gte('fecha', from).lte('fecha', to).order('fecha'),
     ])
 
-    if (staffMember.error) return NextResponse.json({ error: staffMember.error.message }, { status: 404 })
+    if (staffMember.error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
     const daily = staffDays.data || []
 
@@ -278,7 +279,7 @@ export async function GET(request: NextRequest) {
     sb.from('pos_nomina_daily').select('*').gte('fecha', from).lte('fecha', to).order('fecha'),
   ])
 
-  if (staff.error) return NextResponse.json({ error: staff.error.message }, { status: 500 })
+  if (staff.error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   const staffList = staff.data || []
   const dailyData = daily.data || []

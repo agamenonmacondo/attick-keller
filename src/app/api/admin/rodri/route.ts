@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAdminUser } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 // Service-role client for Rodrigo's (Seadotec) database
 function getRodriServiceClient() {
@@ -51,7 +52,6 @@ export async function GET(request: NextRequest) {
     if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
     return NextResponse.json({ data })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Error desconocido'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return handleApiError(err, 'rodri')
   }
 }

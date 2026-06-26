@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { data: ingredients, error: ingError } = await query
-  if (ingError) return NextResponse.json({ error: ingError.message }, { status: 500 })
+  if (ingError) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   if (!ingredients || ingredients.length === 0) {
     return NextResponse.json({ ingredients: [] })

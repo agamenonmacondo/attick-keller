@@ -3,6 +3,7 @@ import { getStaffOrLeaderUser, getServiceClient } from '@/lib/utils/admin-auth'
 import type { ShiftType } from '@/lib/types/shifts'
 import { calcularCostoTurnoEmpresa, calcularRecargosTurnoEmpresa } from '@/lib/utils/costCalculator'
 import { sendShiftChangeEmail } from '@/lib/email/send'
+import { handleApiError } from '@/lib/utils/api-security'
 
 // Force dynamic — never cache shift data
 export const dynamic = 'force-dynamic'
@@ -130,7 +131,7 @@ export async function PUT(request: NextRequest) {
     .eq('schedule_id', schedule_id)
 
   if (deleteError) {
-    return NextResponse.json({ error: deleteError.message }, { status: 500 })
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 
   // Insertar nuevas
@@ -140,8 +141,8 @@ export async function PUT(request: NextRequest) {
     .select()
 
   if (insertError) {
-    console.error('[API shift-assignments PUT] Insert error:', insertError.message, insertError.code, insertError.details)
-    return NextResponse.json({ error: insertError.message }, { status: 500 })
+    console.error('[API shift-assignments PUT] Insert error:', insertError.code, insertError.details)
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 
   // Calcular costo total del cronograma

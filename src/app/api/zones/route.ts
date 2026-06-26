@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { handleApiError } from '@/lib/utils/api-security'
 
 export async function GET() {
   const sb = createClient(
@@ -14,7 +15,7 @@ export async function GET() {
     .order('name')
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return handleApiError(error, 'zones')
   }
 
   return NextResponse.json({ zones: data })

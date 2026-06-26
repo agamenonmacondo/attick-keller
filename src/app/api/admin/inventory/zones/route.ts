@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 // GET /api/admin/inventory/zones — list all zones with description and sort_order
 export async function GET(request: NextRequest) {
@@ -106,7 +107,7 @@ export async function DELETE(request: NextRequest) {
       .eq('zone_id', id)
       .eq('restaurant_id', RESTAURANT_ID)
 
-    if (countError) return NextResponse.json({ error: countError.message }, { status: 500 })
+    if (countError) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
     if (count && count > 0) {
       return NextResponse.json(

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { handleApiError } from '@/lib/utils/api-security'
 
 export async function GET() {
   const sb = createClient(
@@ -23,10 +24,10 @@ export async function GET() {
   ])
 
   if (categoriesResult.error) {
-    return NextResponse.json({ error: categoriesResult.error.message }, { status: 500 })
+    return handleApiError(categoriesResult.error, 'menu/categories')
   }
   if (itemsResult.error) {
-    return NextResponse.json({ error: itemsResult.error.message }, { status: 500 })
+    return handleApiError(itemsResult.error, 'menu/items')
   }
 
   return NextResponse.json({

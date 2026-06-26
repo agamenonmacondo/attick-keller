@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 import { sanitizeLike } from '@/lib/utils/sanitize'
+import { handleApiError } from '@/lib/utils/api-security'
 
 export async function POST(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest) {
       console.log('[customers] Auth OK - admin:', admin.email, admin.role)
     } catch (authErr) {
       console.error('[customers] Auth exception:', authErr instanceof Error ? authErr.message : String(authErr))
-      return NextResponse.json({ error: 'Auth error: ' + (authErr instanceof Error ? authErr.message : String(authErr)) }, { status: 500 })
+      return NextResponse.json({ error: 'Error de autenticación' }, { status: 500 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -238,7 +239,7 @@ export async function GET(request: NextRequest) {
 
     if (customersError) {
       console.error('[customers] Error fetching customers:', customersError.message, customersError.code)
-      return NextResponse.json({ error: customersError.message, code: customersError.code }, { status: 500 })
+      return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
     }
 
     // Sort by created_at descending (client-side)
@@ -312,11 +313,7 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil((count || 0) / validLimit),
     })
   } catch (err: unknown) {
-    // Enhanced error logging — include full details so Vercel logs show the root cause
-    const errorDetails = err instanceof Error
-      ? { message: err.message, stack: err.stack, name: err.name }
-      : { message: String(err), type: typeof err }
-    console.error('[customers] FATAL GET error:', JSON.stringify(errorDetails))
-    return NextResponse.json({ error: errorDetails.message, details: errorDetails }, { status: 500 })
+    console.error('[customers] FATAL GET error:', err instanceof Error ? err.stack : String(err))
+    return handleApiError(err, 'customers')
   }
 }

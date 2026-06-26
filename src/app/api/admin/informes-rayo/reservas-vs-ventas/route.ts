@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request)
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     .lte('fecha', to)
     .order('fecha', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
 
   const rows = data || []
   const totalReservas = rows.reduce((s: number, r: any) => s + Number(r.num_reservas ?? 0), 0)

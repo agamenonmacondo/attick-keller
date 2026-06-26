@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth';
+import { handleApiError } from '@/lib/utils/api-security';
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser(request);
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     .order('pos_group_id');
 
   if (groupsError) {
-    return NextResponse.json({ error: groupsError.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 
   // Build products query

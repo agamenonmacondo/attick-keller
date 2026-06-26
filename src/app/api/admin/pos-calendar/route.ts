@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { unstable_cache } from 'next/cache'
 import { getAdminUser, getServiceClient } from '@/lib/utils/admin-auth'
+import { handleApiError } from '@/lib/utils/api-security'
 
 function qparam(request: NextRequest, key: string): string | null {
   return request.nextUrl.searchParams.get(key)
@@ -18,7 +19,7 @@ async function fetchCalendarData(zoneParam: string) {
   })
 
   if (dailyError) {
-    throw new Error('Error cargando tendencia diaria: ' + dailyError.message)
+    throw new Error('Error cargando tendencia diaria')
   }
 
   const dailyTrend = (dailyData || []).map((d: any) => ({
@@ -33,7 +34,7 @@ async function fetchCalendarData(zoneParam: string) {
   const { data: monthsData, error: monthsError } = await sb.rpc('pos_dashboard_months')
 
   if (monthsError) {
-    throw new Error('Error cargando meses: ' + monthsError.message)
+    throw new Error('Error cargando meses')
   }
 
   const availableMonths = (monthsData || []).map((m: any) => m.month)
@@ -59,6 +60,6 @@ export async function GET(request: NextRequest) {
     const data = await getCachedCalendarData(zoneParam)
     return NextResponse.json(data)
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Error cargando calendario' }, { status: 500 })
+    return handleApiError(err, 'pos-calendar')
   }
 }

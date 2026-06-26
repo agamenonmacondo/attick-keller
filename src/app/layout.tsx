@@ -1,30 +1,13 @@
 import type { Metadata } from "next"
-import { Inter, Caveat } from "next/font/google"
+import { Playfair_Display, DM_Sans, Caveat } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/lib/auth/auth-provider"
 import { ThemeProvider } from "@/lib/ThemeProvider"
 
 export const dynamic = 'force-dynamic'
 
-export function TextureOverlay() {
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-[9999]"
-      style={{ opacity: 0.04, mixBlendMode: 'overlay' }}
-    >
-      {/* SVG noise pattern — subtle grain */}
-      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-        <filter id="grain">
-          <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
-        </filter>
-        <rect width="100%" height="100%" filter="url(#grain)" opacity="0.5" />
-      </svg>
-    </div>
-  )
-}
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", weight: ["400", "500", "600", "700", "800", "900"] })
+const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm" })
 const caveat = Caveat({ subsets: ["latin"], variable: "--font-caveat" })
 
 export const metadata: Metadata = {
@@ -34,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${inter.variable} ${caveat.variable}`} suppressHydrationWarning>
+    <html lang="es" className={`${playfair.variable} ${dmSans.variable} ${caveat.variable}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -47,7 +30,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ThemeProvider>
             {children}
           </ThemeProvider>
-          <TextureOverlay />
         </AuthProvider>
       </body>
     </html>

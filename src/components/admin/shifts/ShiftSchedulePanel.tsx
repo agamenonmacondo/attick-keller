@@ -497,7 +497,7 @@ export default function ShiftSchedulePanel({ areaFilter }: ShiftSchedulePanelPro
         </span>
 
         {/* Rango de semana */}
-        <span className="font-[family-name:var(--font-heading)] text-sm font-semibold text-[var(--text-primary)] min-w-[120px] text-center">
+        <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--text-primary)] min-w-[120px] text-center">
           {weekDates[0] && (() => {
             const from = weekDates[0];
             const to = weekDates[6];

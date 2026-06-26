@@ -102,7 +102,7 @@ export function OperacionHoraChart({ data }: OperacionHoraChartProps) {
                 />
                 <div
                   className="w-1/2 rounded-t-sm transition-all"
-                  style={{ height: `${perH}%`, background: 'var(--color-ak-borgona)', minHeight: h.personas > 0 ? 2 : 0 }}
+                  style={{ height: `${perH}%`, background: 'linear-gradient(90deg, var(--color-ak-borgona), var(--color-ak-ambar))', minHeight: h.personas > 0 ? 2 : 0 }}
                 />
               </div>
             </div>

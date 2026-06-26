@@ -1,93 +1,162 @@
 @import "tailwindcss";
 
-@theme inline {
-  /* Colors — Rústico Editorial Moderno */
-  --color-ak-madera: #3E2723;
-  --color-ak-borgona: #6B2737;
-  --color-ak-cal: #F5EDE0;
-  --color-ak-oliva: #5C7A4D;
-  --color-ak-ambar: #D4922A;
-  --color-ak-dorado: #C9A94E;
-  --color-ak-carbon: #1E1E1E;
-  --color-ak-ladrillo: #A0522D;
-
-  /* Dark mode palette */
-  --color-ak-night: #1A1412;
-  --color-ak-night-card: #2C2018;
-  --color-ak-night-input: #362A22;
-  --color-ak-night-border: #4A3A30;
-  --color-ak-night-text: #E8DDD0;
-  --color-ak-night-muted: #A89080;
-  --color-ak-borgona-light: #C44D63;
-  --color-ak-oliva-light: #7BA86A;
-  --color-ak-ambar-light: #E8A840;
-
-  /* Fonts */
-  --font-display: var(--font-playfair), 'Playfair Display', serif;
-  --font-body: var(--font-dm), 'DM Sans', sans-serif;
-  --font-accent: var(--font-caveat), 'Caveat', cursive;
+/* ===== BRAND FONTS (DESIGN.md v2.0) ===== */
+@font-face {
+  font-family: 'SmithyXT';
+  src: url('/fonts/SmithyXT-Heavy.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'SmithyXT';
+  src: url('/fonts/SmithyXT-VeryHeavy.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'OldPress';
+  src: url('/fonts/OldPress.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
-/* Light theme (default) */
+@theme inline {
+  /* Colors — Dark Premium Grunge (DESIGN.md v2.0, Flyer palette) */
+  /* In light mode, some tokens swap to logo palette colors */
+  --color-ak-madera: #34495E;
+  --color-ak-borgona: #9A4335;
+  --color-ak-cal: #34495E;
+  --color-ak-oliva: #5C7A4D;
+  --color-ak-ambar: #E48C04;
+  --color-ak-dorado: #FCCC04;
+  --color-ak-carbon: #34495E;
+  --color-ak-ladrillo: #A65D4A;
+
+  /* Flyer palette tokens (from pixel analysis of 4 production flyers) */
+  --color-ak-rust: #8C4434;
+  --color-ak-rust-light: #A05840;
+  --color-ak-night: #0D1015;
+  --color-ak-night-card: #161B22;
+  --color-ak-night-input: #1E2733;
+  --color-ak-night-border: #2D3748;
+  --color-ak-night-text: #F4ECE4;
+  --color-ak-night-muted: #9BA8B7;
+  --color-ak-borgona-light: #A05840;
+  --color-ak-oliva-light: #7BA86A;
+  --color-ak-ambar-light: #F0A030;
+  --color-ak-gold: #FCCC04;
+  --color-ak-gold-dim: #E48C04;
+  --color-ak-navy: #2C435B;
+  --color-ak-navy-light: #3C5A7A;
+  --color-ak-foxing: #A67B5B;
+  --color-ak-flyer-cream: #F4ECE4;
+  --color-ak-flyer-steel: #3C4C5C;
+  --color-ak-flyer-muted: #6B7B8D;
+  --color-ak-danger: #B24D42;
+
+  /* Elevation (from DESIGN.md v2.0) */
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.4);
+  --shadow-card-hover: 0 8px 32px rgba(0,0,0,0.6);
+  --shadow-kpi-hero: 0 4px 20px rgba(228,140,4,0.12);
+  --border-card: 1px solid rgba(140,68,52,0.2);
+  --border-kpi-hero: 1px solid rgba(228,140,4,0.25);
+
+  /* Bar fills */
+  --gradient-rust-amber: linear-gradient(90deg, #8C4434, #E48C04);
+  --gradient-gold: linear-gradient(90deg, #E48C04, #FCCC04);
+
+  /* Ornament */
+  --color-ornament: #FCCC04;
+
+  /* Fonts — DESIGN.md v2.0 */
+  --font-display: 'SmithyXT', var(--font-inter), 'Inter', sans-serif;
+  --font-heading: 'SmithyXT', var(--font-inter), 'Inter', sans-serif;
+  --font-body: var(--font-inter), 'Inter', sans-serif;
+  --font-accent: var(--font-caveat), 'Caveat', cursive;
+  --font-decorative: 'OldPress', serif;
+}
+
 :root {
   color-scheme: light;
-  --bg-primary: #F5EDE0;
+  /* Light theme — Logo palette: white bg, slate-blue text, rust accents */
+  --bg-primary: #F7F3E9;
   --bg-card: #FFFFFF;
-  --bg-input: #F5EDE0;
-  --bg-hover: rgba(62, 39, 35, 0.06);
-  --text-primary: #3E2723;
-  --text-secondary: #8D6E63;
-  --text-muted: #A1887F;
-  --border-default: #D7CCC8;
-  --border-light: #E8DDD0;
-  --shadow-sm: 0 1px 2px rgba(62, 39, 35, 0.06);
-  --shadow-md: 0 4px 12px rgba(62, 39, 35, 0.08);
-  --accent-primary: #6B2737;
-  --color-accent: #6B2737;
+  --bg-input: #F2EBE1;
+  --bg-hover: rgba(44,67,91,0.06);
+  --text-primary: #34495E;
+  --text-secondary: #4A6274;
+  --text-muted: #6B7B8D;
+  --border-default: rgba(154,67,53,0.2);
+  --border-light: rgba(44,67,91,0.12);
+  --shadow-sm: 0 2px 12px rgba(52,73,94,0.08);
+  --shadow-md: 0 8px 32px rgba(52,73,94,0.16);
+  --accent-primary: #9A4335;
+  --color-accent: #9A4335;
   --color-success: #5C7A4D;
-  --color-warning: #D4922A;
-  --color-danger: #C62828;
-  --color-info: #1565C0;
-  --badge-bg: rgba(107, 39, 55, 0.08);
-  --chart-grid: #E8DDD0;
-  --chart-text: #8D6E63;
+  --color-warning: #E48C04;
+  --color-danger: #B2473D;
+  --color-info: #2C435B;
+  --badge-bg: rgba(154,67,53,0.12);
+  --chart-grid: #4A6274;
+  --chart-text: #6B7B8D;
   --chart-tooltip-bg: #FFFFFF;
-  --chart-tooltip-border: #D7CCC8;
+  --chart-tooltip-border: rgba(154,67,53,0.2);
+
+  /* A&K tokens — light mode overrides (logo palette) */
+  --color-ak-night: #F7F3E9;
+  --color-ak-night-card: #FFFFFF;
+  --color-ak-night-input: #F2EBE1;
+  --color-ak-night-border: rgba(154,67,53,0.2);
+  --color-ak-night-text: #34495E;
+  --color-ak-night-muted: #6B7B8D;
+  --color-ak-rust: #9A4335;
+  --color-ak-rust-light: #A65D4A;
 }
 
-/* Dark theme — improved contrast for readability */
 .dark {
   color-scheme: dark;
-  --bg-primary: #1A1412;
-  --bg-card: #2C2018;
-  --bg-input: #362A22;
-  --bg-hover: rgba(232, 221, 208, 0.08);
-  --text-primary: #E8DDD0;
-  --text-secondary: #BCA898;
-  --text-muted: #9A8A7E;
-  --border-default: #5A4A3E;
-  --border-light: #4A3E34;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --accent-primary: #C44D63;
-  --color-accent: #C44D63;
+  --bg-primary: #0D1015;
+  --bg-card: #161B22;
+  --bg-input: #1E2733;
+  --bg-hover: rgba(244,236,228,0.06);
+  --text-primary: #F4ECE4;
+  --text-secondary: #9BA8B7;
+  --text-muted: #6B7B8D;
+  --border-default: #2D3748;
+  --border-light: rgba(140,68,52,0.2);
+  --shadow-sm: 0 2px 12px rgba(0,0,0,0.4);
+  --shadow-md: 0 8px 32px rgba(0,0,0,0.6);
+  --accent-primary: #E48C04;
+  --color-accent: #E48C04;
   --color-success: #7BA86A;
-  --color-warning: #E8A840;
+  --color-warning: #F0A030;
   --color-danger: #EF5350;
   --color-info: #60A5FA;
-  --badge-bg: rgba(196, 77, 99, 0.15);
-  --chart-grid: #5A4A3E;
-  --chart-text: #BCA898;
-  --chart-tooltip-bg: #2C2018;
-  --chart-tooltip-border: #5A4A3E;
+  --badge-bg: rgba(228,140,4,0.15);
+  --chart-grid: #2D3748;
+  --chart-text: #9BA8B7;
+  --chart-tooltip-bg: #161B22;
+  --chart-tooltip-border: #2D3748;
 
-  /* Brand colors — lighter variants for visibility on dark backgrounds */
-  --color-ak-borgona: #C44D63;
-  --color-ak-madera: #A07868;
+  /* Brand colors — dark mode overrides */
+  --color-ak-borgona: #8C4434;
+  --color-ak-madera: #9BA8B7;
   --color-ak-oliva: #7BA86A;
-  --color-ak-ambar: #E8A840;
-  --color-ak-ladrillo: #D4714D;
-  --color-ak-cal: #F5EDE0;
+  --color-ak-ambar: #E48C04;
+  --color-ak-ladrillo: #A0522D;
+  --color-ak-cal: #F4ECE4;
+  --color-ak-carbon: #0D1015;
+  --color-ak-night: #0D1015;
+  --color-ak-night-card: #161B22;
+  --color-ak-night-input: #1E2733;
+  --color-ak-night-border: #2D3748;
+  --color-ak-night-text: #F4ECE4;
+  --color-ak-night-muted: #9BA8B7;
+  --color-ak-rust: #8C4434;
+  --color-ak-rust-light: #A05840;
 
   /* ===========================================
    * TAILWIND GENERIC COLOR OVERRIDES IN DARK MODE
@@ -96,20 +165,20 @@
    * =========================================== */
 
   /* White backgrounds → dark card bg */
-  .dark .bg-white { background-color: var(--bg-card) !important; }
+  .dark .bg-white { background-color: var(--bg-card); }
 
-  /* Gray text → warm neutral text */
+  /* Gray text → cool neutral text */
   .dark .text-gray-100 { color: var(--text-primary); }
   .dark .text-gray-200 { color: var(--text-primary); }
   .dark .text-gray-300 { color: var(--text-secondary); }
   .dark .text-gray-400 { color: var(--text-muted); }
   .dark .text-gray-500 { color: var(--text-muted); }
-  .dark .text-gray-600 { color: var(--text-muted); }
-  .dark .text-gray-700 { color: #8A7A6E; }
-  .dark .text-gray-800 { color: #7A6A5E; }
-  .dark .text-gray-900 { color: #6A5A4E; }
+  .dark .text-gray-600 { color: #7B8BA0; }
+  .dark .text-gray-700 { color: #6B7B8D; }
+  .dark .text-gray-800 { color: #5C6C7D; }
+  .dark .text-gray-900 { color: #4C5C6D; }
 
-  /* Gray backgrounds → warm dark surfaces */
+  /* Gray backgrounds → cool dark surfaces */
   .dark .bg-gray-50 { background-color: var(--bg-primary); }
   .dark .bg-gray-100 { background-color: var(--bg-input); }
   .dark .bg-gray-200 { background-color: var(--bg-hover); }
@@ -121,7 +190,7 @@
   .dark .bg-gray-800 { background-color: var(--bg-card); }
   .dark .bg-gray-900 { background-color: var(--bg-primary); }
 
-  /* Gray borders → warm dark borders */
+  /* Gray borders → cool dark borders */
   .dark .border-gray-100 { border-color: var(--border-light); }
   .dark .border-gray-200 { border-color: var(--border-light); }
   .dark .border-gray-300 { border-color: var(--border-default); }
@@ -173,18 +242,18 @@
   /* Amber → warning */
   .dark .text-amber-300 { color: #FCD34D; }
   .dark .text-amber-400 { color: var(--color-warning); }
-  .dark .text-amber-500 { color: #E8A840; }
-  .dark .text-amber-800 { color: #D4922A; }
-  .dark .bg-amber-100 { background-color: rgba(232, 168, 64, 0.08); }
-  .dark .bg-amber-400 { background-color: rgba(232, 168, 64, 0.3); }
+  .dark .text-amber-500 { color: #E48C04; }
+  .dark .text-amber-800 { color: #E48C04; }
+  .dark .bg-amber-100 { background-color: rgba(228, 140, 4, 0.08); }
+  .dark .bg-amber-400 { background-color: rgba(228, 140, 4, 0.3); }
   .dark .bg-amber-500 { background-color: var(--color-warning); }
-  .dark .bg-amber-600 { background-color: #D4922A; }
+  .dark .bg-amber-600 { background-color: #E48C04; }
   .dark .bg-amber-700 { background-color: #B87A1A; }
   .dark .bg-amber-900 { background-color: #3A2800; }
 
   /* Yellow → warning */
   .dark .text-yellow-400 { color: var(--color-warning); }
-  .dark .text-yellow-500 { color: #E8A840; }
+  .dark .text-yellow-500 { color: #F0A030; }
 
   /* Blue → info accent */
   .dark .text-blue-300 { color: #93C5FD; }
@@ -192,7 +261,7 @@
   .dark .text-blue-500 { color: #3B82F6; }
   .dark .bg-blue-500 { background-color: rgba(59, 130, 246, 0.6); }
 
-  /* Border white → subtle warm border */
+  /* Border white → subtle cool border */
   .dark .border-white { border-color: var(--border-light); }
 
   /* Select dropdown options in dark mode */
@@ -234,8 +303,6 @@
 .animate-float-orb-2 { animation: float-orb-2 10s ease-in-out infinite; }
 .animate-float-orb-3 { animation: float-orb-3 12s ease-in-out infinite; }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
-  background-size: 200% 100%;
   animation: shimmer 3s ease-in-out infinite;
 }
 .animate-fade-up { animation: fade-up 0.8s ease-out forwards; }

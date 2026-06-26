@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { rateLimit, getClientIP } from '@/lib/utils/api-security'
 
 // POST /api/auth/signup - Auto-confirm user after Supabase signup
 // Security: requires userId from Supabase signUp response (proves caller just created the account)
+// Rate limited: 5 requests per minute per IP
 export async function POST(request: NextRequest) {
+  const ip = getClientIP(request)
+  if (!rateLimit(`auth:signup:${ip}`, 5, 60_000)) {
+    return NextResponse.json({ error: 'Demasiados intentos. Intenta de nuevo en un minuto.' }, { status: 429 })
+  }
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -69,7 +75,12 @@ export async function POST(request: NextRequest) {
 }
 
 // PUT /api/auth - Password reset
+// Rate limited: 3 requests per minute per IP
 export async function PUT(request: NextRequest) {
+  const ip = getClientIP(request)
+  if (!rateLimit(`auth:reset:${ip}`, 3, 60_000)) {
+    return NextResponse.json({ error: 'Demasiados intentos. Intenta de nuevo en un minuto.' }, { status: 429 })
+  }
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!

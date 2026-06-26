@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAdminUser, getServiceClient as getAdminServiceClient, RESTAURANT_ID } from '@/lib/utils/admin-auth'
 import { getZoneLetter } from '@/lib/utils/zone-letter'
+import { rateLimit, getClientIP } from '@/lib/utils/api-security'
 
 const RESTAURANT_ID_LOCAL = 'a0000000-0000-0000-0000-000000000001'
 
@@ -66,7 +67,12 @@ async function sendStatusEmail(sb: ReturnType<typeof getServiceClient>, reservat
 }
 
 // POST - Create reservation
+// Rate limited: 10 requests per minute per IP
 export async function POST(request: NextRequest) {
+  const ip = getClientIP(request)
+  if (!rateLimit(`reservations:create:${ip}`, 10, 60_000)) {
+    return NextResponse.json({ error: 'Demasiadas reservas. Intenta de nuevo en un minuto.' }, { status: 429 })
+  }
   const sb = getServiceClient()
   const body = await request.json()
   const { date, time_start, time_end, party_size, special_requests } = body

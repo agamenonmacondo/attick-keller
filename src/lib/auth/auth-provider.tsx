@@ -16,7 +16,7 @@ interface AuthContextType {
   adminRole: string | null
   roleLoading: boolean
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>
-  signUpWithEmail: (email: string, password: string, fullName: string, phone: string) => Promise<{ error: string | null }>
+  signUpWithEmail: (email: string, password: string, fullName: string, phone: string) => Promise<{ error: string | null; verificationSent?: boolean }>
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -115,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (data.session) return { error: null }
 
+    // If no immediate session, try auto-confirm via server (requires auth session)
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
@@ -125,6 +126,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
         if (!signInError) return { error: null }
       }
+
+      // If auto-confirm was rejected (403 = requires verification), fall back to
+      // Supabase's native verification flow: resend the confirmation email
+      if (res.status === 403) {
+        await supabase.auth.resend({ type: 'signup', email })
+        // Return a special message so the UI knows to show "check your email"
+        return { error: null, verificationSent: true }
+      }
+
+      // Retry once
       await new Promise(r => setTimeout(r, 2000))
       const res2 = await fetch('/api/auth', {
         method: 'POST',
@@ -135,8 +146,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error: signInError2 } = await supabase.auth.signInWithPassword({ email, password })
         if (!signInError2) return { error: null }
       }
+      // If second attempt also rejected, resend verification
+      if (res2.status === 403) {
+        await supabase.auth.resend({ type: 'signup', email })
+        return { error: null, verificationSent: true }
+      }
     } catch {
-      // Auto-confirm failed
+      // Auto-confirm failed — fall back to Supabase verification email
+      try {
+        await supabase.auth.resend({ type: 'signup', email })
+        return { error: null, verificationSent: true }
+      } catch {
+        // Even resend failed, just proceed — user can request a new verification link later
+      }
     }
 
     return { error: null }
